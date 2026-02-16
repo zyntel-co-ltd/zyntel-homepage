@@ -1,25 +1,57 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth';
-import { requireRole } from '../middleware/roleCheck';
-import {
-  loginController,
-  getUsersController,
-  createUserController,
-  updateUserController,
-  deleteUserController,
-  resetPasswordController,
-} from '../controllers/authController';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-// Public route
-router.post('/login', loginController);
+// Mock user - replace with database query
+const USERS = [
+  {
+    id: 1,
+    username: 'admin',
+    password: '$2a$10$...' // bcrypt hash of 'admin123'
+  }
+];
 
-// Protected routes - require authentication
-router.get('/users', authenticate, requireRole('admin', 'manager'), getUsersController);
-router.post('/users', authenticate, requireRole('admin'), createUserController);
-router.put('/users/:id', authenticate, requireRole('admin', 'manager'), updateUserController);
-router.delete('/users/:id', authenticate, requireRole('admin'), deleteUserController);
-router.post('/users/:id/reset-password', authenticate, requireRole('admin'), resetPasswordController);
+router.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    // Find user
+    const user = USERS.find(u => u.username === username);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check password
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate token
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        username: user.username
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 export default router;

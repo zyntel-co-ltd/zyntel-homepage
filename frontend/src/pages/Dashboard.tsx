@@ -1,6 +1,15 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/');
+  };
+
   return (
     <div className="dashboard-page">
       <header>
@@ -13,7 +22,7 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="page">
             <span>Home</span>
-            <a href="/login" className="logout-button" id="logout-button">
+            <a href="#" className="logout-button" onClick={(e) => { e.preventDefault(); handleLogout(); }}>
               Logout
             </a>
             <span className="three-dots-menu-container">

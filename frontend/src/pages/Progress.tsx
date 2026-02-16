@@ -1,54 +1,81 @@
 // frontend/src/pages/Progress.tsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header, Navbar, Filters, Loader } from '@/components/shared';
-import { ProgressTable, type ProgressRecord } from '@/components/tables';
 
 const Progress: React.FC = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
-    startDate: '',
-    endDate: '',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
     period: 'custom',
     labSection: 'all',
     shift: 'all',
-    hospitalUnit: 'all',
-    status: 'all'
+    laboratory: 'all',
+    search: ''
   });
   
   const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState<ProgressRecord[]>([]);
+  const [data, setData] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/');
+    }
+  }, [navigate]);
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
   }, [filters]);
 
   const fetchData = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const params = new URLSearchParams();
-      if (filters.period) params.append('period', filters.period);
-      if (filters.startDate) params.append('startDate', filters.startDate);
-      if (filters.endDate) params.append('endDate', filters.endDate);
+      if (filters.period && filters.period !== 'custom') {
+        params.append('period', filters.period);
+      } else {
+        if (filters.startDate) params.append('startDate', filters.startDate);
+        if (filters.endDate) params.append('endDate', filters.endDate);
+      }
+      
       if (filters.labSection && filters.labSection !== 'all') params.append('labSection', filters.labSection);
       if (filters.shift && filters.shift !== 'all') params.append('shift', filters.shift);
-      if (filters.hospitalUnit && filters.hospitalUnit !== 'all') params.append('laboratory', filters.hospitalUnit);
-      if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+      if (filters.laboratory && filters.laboratory !== 'all') params.append('laboratory', filters.laboratory);
+      if (filters.search) params.append('search', filters.search);
 
       const response = await fetch(`/api/progress?${params.toString()}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+        return;
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to fetch progress data');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
       setData(result);
     } catch (error) {
       console.error('Error fetching progress data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to fetch data');
       setData([]);
     } finally {
       setIsLoading(false);
@@ -60,25 +87,21 @@ const Progress: React.FC = () => {
   };
 
   const handleLogout = () => {
-    console.log('Logout clicked');
-    window.location.href = '/';
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/');
   };
 
   const handleResetFilters = () => {
     setFilters({
-      startDate: '',
-      endDate: '',
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date().toISOString().split('T')[0],
       period: 'custom',
       labSection: 'all',
       shift: 'all',
-      hospitalUnit: 'all',
-      status: 'all'
+      laboratory: 'all',
+      search: ''
     });
-  };
-
-  const handleExportCSV = () => {
-    console.log('Exporting CSV...');
-    // CSV export logic here
   };
 
   return (
@@ -89,31 +112,20 @@ const Progress: React.FC = () => {
         onLogout={handleLogout}
         onResetFilters={handleResetFilters}
         showResetFilters={true}
-        menuItems={[
-          { label: 'Export CSV', href: '#', icon: 'fas fa-file-csv', onClick: handleExportCSV },
-          { label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' },
-          { label: 'Reception Table', href: '/reception', icon: 'fas fa-table' },
-          { label: 'Performance Table', href: '/performance', icon: 'fas fa-chart-line' },
-          { label: 'Tracker Table', href: '/tracker', icon: 'fas fa-list' },
-          { label: 'Meta Table', href: '/meta', icon: 'fas fa-database' },
-          { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' }
-        ]}
       />
 
       <Navbar type="table" />
 
       <div className="main-search-container">
-        <div className="search-actions-row">
-          <div className="search-container">
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search test / lab Number..."
-              value={filters.search || ''}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-            />
-            <i className="fas fa-search search-icon"></i>
-          </div>
+        <div className="search-container">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search test / lab number..."
+            value={filters.search}
+            onChange={(e) => handleFilterChange('search', e.target.value)}
+          />
+          <i className="fas fa-search search-icon"></i>
         </div>
         <Filters
           filters={filters}
@@ -126,21 +138,54 @@ const Progress: React.FC = () => {
       </div>
 
       <main>
+        {error && (
+          <div style={{
+            padding: '20px',
+            margin: '20px 30px',
+            backgroundColor: '#fee',
+            border: '1px solid #fcc',
+            borderRadius: '5px',
+            color: '#c00'
+          }}>
+            <strong>Error loading data:</strong> {error}
+          </div>
+        )}
+        
         {isLoading ? (
           <Loader isLoading={true} />
         ) : (
           <section className="card">
-            <ProgressTable
-              data={data}
-              isLoading={isLoading}
-            />
+            {data.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                <p>No progress data available</p>
+              </div>
+            ) : (
+              <div className="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Lab Number</th>
+                      <th>Test Name</th>
+                      <th>Status</th>
+                      <th>Progress</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.map((row, index) => (
+                      <tr key={index}>
+                        <td>{row.labNo}</td>
+                        <td>{row.testName}</td>
+                        <td>{row.status}</td>
+                        <td>{row.progress}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         )}
       </main>
-
-      <div className="notice">
-        <p>Sorry! You need a wider screen to view the table.</p>
-      </div>
 
       <footer>
         <p>&copy;2025 Zyntel</p>

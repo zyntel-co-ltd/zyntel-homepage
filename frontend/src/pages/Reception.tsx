@@ -1,9 +1,11 @@
 // frontend/src/pages/Reception.tsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header, Navbar, Filters, Loader } from '@/components/shared';
 import { ReceptionTable, type ReceptionRecord } from '@/components/tables';
 
 const Reception: React.FC = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
@@ -18,6 +20,14 @@ const Reception: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<ReceptionRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Check auth on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/');
+    }
+  }, [navigate]);
 
   useEffect(() => {
     fetchData();
@@ -46,8 +56,6 @@ const Reception: React.FC = () => {
       if (filters.laboratory && filters.laboratory !== 'all') params.append('laboratory', filters.laboratory);
       if (filters.search) params.append('search', filters.search);
 
-      console.log('Fetching reception data with params:', params.toString());
-
       const response = await fetch(`/api/reception?${params.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -55,12 +63,18 @@ const Reception: React.FC = () => {
         }
       });
 
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('Reception data received:', result);
       
       // Transform backend data to match frontend interface
       const transformedData: ReceptionRecord[] = result.map((item: any) => ({
@@ -81,7 +95,7 @@ const Reception: React.FC = () => {
     } catch (error) {
       console.error('Error fetching reception data:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch data');
-      setData([]); // Set empty array on error instead of mock data
+      setData([]);
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +108,7 @@ const Reception: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    window.location.href = '/';
+    navigate('/');
   };
 
   const handleResetFilters = () => {
@@ -139,8 +153,12 @@ const Reception: React.FC = () => {
         })
       });
 
+      if (response.status === 401) {
+        navigate('/');
+        return;
+      }
+
       if (response.ok) {
-        // Refresh data
         fetchData();
       }
     } catch (error) {
@@ -161,6 +179,11 @@ const Reception: React.FC = () => {
           isReceived: true
         })
       });
+
+      if (response.status === 401) {
+        navigate('/');
+        return;
+      }
 
       if (response.ok) {
         fetchData();
@@ -184,6 +207,11 @@ const Reception: React.FC = () => {
         })
       });
 
+      if (response.status === 401) {
+        navigate('/');
+        return;
+      }
+
       if (response.ok) {
         fetchData();
       }
@@ -206,6 +234,11 @@ const Reception: React.FC = () => {
           action: 'urgent'
         })
       });
+
+      if (response.status === 401) {
+        navigate('/');
+        return;
+      }
 
       if (response.ok) {
         setSelectedTests([]);
@@ -231,6 +264,11 @@ const Reception: React.FC = () => {
         })
       });
 
+      if (response.status === 401) {
+        navigate('/');
+        return;
+      }
+
       if (response.ok) {
         setSelectedTests([]);
         fetchData();
@@ -254,6 +292,11 @@ const Reception: React.FC = () => {
           action: 'result'
         })
       });
+
+      if (response.status === 401) {
+        navigate('/');
+        return;
+      }
 
       if (response.ok) {
         setSelectedTests([]);

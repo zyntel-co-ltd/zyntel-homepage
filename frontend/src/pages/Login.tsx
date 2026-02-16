@@ -19,15 +19,35 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Simulate login - replace with actual API call
-      if (username && password) {
-        // Mock successful login
-        navigate('/dashboard');
-      } else {
+      if (!username || !password) {
         setError('Please enter username and password');
+        setIsLoading(false);
+        return;
       }
+
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Login failed');
+      }
+
+      const data = await response.json();
+      
+      // Store token and user data
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // Navigate to dashboard
+      navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+      setError(err.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
