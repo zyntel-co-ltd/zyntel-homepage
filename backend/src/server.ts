@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { initializeSocket } from './config/socket';
 import { errorHandler } from './middleware/errorHandler';
+import { authenticateToken } from './middleware/auth';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -36,25 +37,27 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
+// Health check (public)
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API Routes
+// Public routes (NO AUTH)
 app.use('/api/auth', authRoutes);
-app.use('/api/metadata', metadataRoutes);
-app.use('/api/revenue', revenueRoutes);
-app.use('/api/reception', receptionRoutes);
 app.use('/api/lrids', lridsRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/tat', tatRoutes);
-app.use('/api/tests', testsRoutes);
-app.use('/api/numbers', numbersRoutes);
-app.use('/api/tracker', trackerRoutes);
-app.use('/api/progress', progressRoutes);
-app.use('/api/performance', performanceRoutes);
+
+// Protected routes (REQUIRE AUTH)
+app.use('/api/metadata', authenticateToken, metadataRoutes);
+app.use('/api/revenue', authenticateToken, revenueRoutes);
+app.use('/api/reception', authenticateToken, receptionRoutes);
+app.use('/api/settings', authenticateToken, settingsRoutes);
+app.use('/api/admin', authenticateToken, adminRoutes);
+app.use('/api/tat', authenticateToken, tatRoutes);
+app.use('/api/tests', authenticateToken, testsRoutes);
+app.use('/api/numbers', authenticateToken, numbersRoutes);
+app.use('/api/tracker', authenticateToken, trackerRoutes);
+app.use('/api/progress', authenticateToken, progressRoutes);
+app.use('/api/performance', authenticateToken, performanceRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
@@ -65,6 +68,7 @@ server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Socket.io initialized`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔐 JWT Secret: ${process.env.JWT_SECRET ? 'Set' : 'Using default'}`);
 });
 
 // Graceful shutdown
