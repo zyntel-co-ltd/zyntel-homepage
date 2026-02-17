@@ -21,21 +21,15 @@ export const DailyRevenueChart: React.FC<DailyRevenueChartProps> = ({ data }) =>
     if (!ctx) return;
 
     chartRef.current = new Chart(ctx, {
-      type: 'line',
+      type: 'bar',
       data: {
         labels: data.map(d => d.date),
         datasets: [
           {
-            label: 'Daily Revenue',
+            label: 'Revenue (UGX)',
             data: data.map(d => d.revenue),
-            borderColor: '#7c3aed',
-            backgroundColor: 'rgba(124, 58, 237, 0.1)',
-            tension: 0.4,
-            fill: true,
-            pointRadius: 4,
-            pointBackgroundColor: '#7c3aed',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2
+            backgroundColor: '#21336a',
+            borderRadius: 0,
           }
         ]
       },
@@ -44,26 +38,26 @@ export const DailyRevenueChart: React.FC<DailyRevenueChartProps> = ({ data }) =>
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: true,
-            labels: {
-              color: '#666',
-              usePointStyle: true,
-              padding: 15
-            }
+            display: false
           },
-          filler: {
-            propagate: true
+          tooltip: {
+            callbacks: {
+              label: function (context: any) {
+                const value = context.parsed.y;
+                return `UGX ${value.toLocaleString()}`;
+              }
+            }
           }
         },
         scales: {
           y: {
             beginAtZero: true,
             ticks: {
-              callback: (value) => `UGX ${(value as number / 1000000).toFixed(0)}M`,
+              callback: (value) => `UGX ${(value as number).toLocaleString()}`,
               color: '#999'
             },
             grid: {
-              color: 'rgba(0, 0, 0, 0.05)'
+              color: 'rgba(0, 0, 0, 0.1)'
             }
           },
           x: {

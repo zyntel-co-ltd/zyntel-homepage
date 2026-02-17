@@ -11,9 +11,9 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="dashboard-page">
-      <header>
-        <div className="header-container">
+    <div className="dashboard-page" style={{ backgroundColor: 'var(--main-color)' }}>
+      <header style={{ backgroundColor: 'var(--pure-white)', height: '80px' }}>
+        <div className="header-container" style={{ padding: '15px 20px 0 20px' }}>
           <div className="header-left">
             <div className="logo">
               <img src="/images/logo-nakasero.png" alt="logo" />
@@ -28,23 +28,18 @@ const Dashboard: React.FC = () => {
             <span className="three-dots-menu-container">
               <button className="three-dots-button">&#x22EE;</button>
               <ul className="dropdown-menu">
-                <li><a href="/admin"><i className="fas fa-cog"></i> Admin Panel</a></li>
-                <li><a href="/reception"><i className="fas fa-table"></i> Reception</a></li>
-                <li><a href="/revenue"><i className="fas fa-chart-line"></i> Revenue</a></li>
-                <li><a href="/tests"><i className="fas fa-vials"></i> Tests</a></li>
+                <li><a href="/admin">Admin Panel</a></li>
+                <li><a href="/reception">Reception</a></li>
+                <li><a href="/revenue">Revenue</a></li>
+                <li><a href="/tests">Tests</a></li>
               </ul>
             </span>
           </div>
         </div>
       </header>
 
-      <div className="main-container">
+      <div className="main-container" style={{ padding: '5rem 1rem', flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <div className="dice-grid">
-          {/* Admin Panel - First Tile */}
-          <a href="/admin" className="dice-tile">
-            <span className="dice-label">Admin Panel</span>
-          </a>
-
           {/* Dashboard Chart Dice */}
           <a href="/revenue" className="dice-tile" data-type="chart">
             <span className="dice-label">Revenue</span>
@@ -81,11 +76,8 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <footer>
-        <p>&copy;2025 Zyntel</p>
-        <div className="zyntel">
-          <img src="/images/zyntel_no_background.png" alt="Zyntel Icon" />
-        </div>
+      <footer style={{ position: 'fixed', right: '1rem', bottom: '1rem', background: 'transparent', padding: '1rem', zIndex: 99, marginTop: 'auto' }}>
+        <img src="/images/zyntel_no_background.png" alt="Zyntel Icon" className="footer-logo" style={{ height: '200px' }} />
       </footer>
     </div>
   );

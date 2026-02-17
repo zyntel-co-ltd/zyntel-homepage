@@ -20,7 +20,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer 
             &times;
           </button>
         </div>
-        <div style={{ padding: '20px 0' }}>
+        <div className="modal-body">
           {children}
         </div>
         {footer && (

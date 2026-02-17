@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Header, Navbar, Filters, Loader } from '@/components/shared';
 import {
   TopTestsByUnitChart,
-  TestVolumeChart
+  TestVolumeChart,
+  TargetProgressChart
 } from '@/components/charts';
 
 interface TestsData {
@@ -26,6 +27,7 @@ const Tests: React.FC = () => {
     hospitalUnit: 'all'
   });
   const [data, setData] = useState<TestsData | null>(null);
+  const [rawData, setRawData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const handleUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -35,6 +37,54 @@ const Tests: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, [filters]);
+
+  // Re-process data when selected unit changes
+  useEffect(() => {
+    if (rawData) {
+      processData(rawData);
+    }
+  }, [selectedUnit]);
+
+  const processData = (result: any) => {
+    // Map backend response to frontend expected format
+    // Backend returns: testVolumeTrend, topTestsByUnit (object)
+    // Frontend expects: dailyVolume, topTestsByUnit (array), units
+    
+    // Extract units from topTestsByUnit object keys
+    const units = result.topTestsByUnit ? Object.keys(result.topTestsByUnit) : [];
+    
+    // Get tests for selected unit or all units
+    let topTests: Array<{ test: string; count: number }> = [];
+    if (selectedUnit === 'all') {
+      // Aggregate all tests across all units
+      const testMap: { [key: string]: number } = {};
+      Object.values(result.topTestsByUnit || {}).forEach((unitTests: any) => {
+        unitTests.forEach((t: any) => {
+          testMap[t.test_name] = (testMap[t.test_name] || 0) + t.count;
+        });
+      });
+      topTests = Object.entries(testMap)
+        .map(([test, count]) => ({ test, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 50);
+    } else if (result.topTestsByUnit && result.topTestsByUnit[selectedUnit]) {
+      // Get tests for specific unit
+      topTests = result.topTestsByUnit[selectedUnit].map((t: any) => ({
+        test: t.test_name,
+        count: t.count
+      }));
+    }
+    
+    setData({
+      totalTestsPerformed: result.totalTestsPerformed || 0,
+      targetTestsPerformed: result.targetTestsPerformed || 0,
+      percentage: result.percentage || 0,
+      avgDailyTests: result.avgDailyTests || 0,
+      dailyVolume: result.testVolumeTrend || [],
+      topTestsByUnit: topTests,
+      units
+    });
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -58,33 +108,22 @@ const Tests: React.FC = () => {
       }
 
       const result = await response.json();
+      console.log('Tests API Response:', result);
       
-      setData({
-        totalTestsPerformed: result.totalTestsPerformed || 1250,
-        targetTestsPerformed: result.targetTestsPerformed || 10000,
-        percentage: result.percentage || 12.5,
-        avgDailyTests: result.avgDailyTests || 42.3,
-        dailyVolume: result.dailyVolume || [
-          { date: '2025-02-05', count: 38 },
-          { date: '2025-02-06', count: 42 },
-          { date: '2025-02-07', count: 45 },
-          { date: '2025-02-08', count: 37 },
-          { date: '2025-02-09', count: 41 },
-          { date: '2025-02-10', count: 39 },
-          { date: '2025-02-11', count: 43 }
-        ],
-        topTestsByUnit: result.topTestsByUnit || [
-          { test: 'CBC', count: 145 },
-          { test: 'Malaria', count: 98 },
-          { test: 'LFT', count: 87 },
-          { test: 'RFT', count: 76 },
-          { test: 'Blood Culture', count: 54 },
-          { test: 'Urinalysis', count: 48 }
-        ],
-        units: result.units || ['Main Lab', 'Annex', 'Clinic A', 'Clinic B', 'Emergency']
-      });
+      setRawData(result);
+      processData(result);
     } catch (error) {
       console.error('Error:', error);
+      // Set empty data on error, no mock fallbacks
+      setData({
+        totalTestsPerformed: 0,
+        targetTestsPerformed: 0,
+        percentage: 0,
+        avgDailyTests: 0,
+        dailyVolume: [],
+        topTestsByUnit: [],
+        units: []
+      });
     } finally {
       setIsLoading(false);
     }
@@ -113,47 +152,32 @@ const Tests: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-color">
-      <header>
-        <div className="header-container">
-          <div className="header-left">
-            <div className="logo">
-              <img src="/images/logo-nakasero.png" alt="logo" />
-            </div>
-            <h1>NHL Laboratory Dashboard</h1>
-          </div>
-          <div className="page">
-            <span>Tests</span>
-            <a href="#" className="logout-button" onClick={(e) => { e.preventDefault(); handleLogout(); }}>
-              Logout
-            </a>
-            <a href="#" className="logout-button" onClick={(e) => { e.preventDefault(); resetFilters(); }}>
-              Reset Filters
-            </a>
-            <span className="three-dots-menu-container">
-              <button className="three-dots-button">&#x22EE;</button>
-              <ul className="dropdown-menu">
-                <li><a href="#" onClick={(e) => e.preventDefault()}>Export charts as PDF</a></li>
-                <li><a href="/admin">Admin Panel</a></li>
-                <li><a href="/meta">Meta table</a></li>
-                <li><a href="/dashboard">Dashboard</a></li>
-              </ul>
-            </span>
-          </div>
-        </div>
-
+      <div className="chart-page-top">
+        <Header
+          title="NHL Laboratory Dashboard"
+          pageTitle="Tests"
+          onLogout={handleLogout}
+          onResetFilters={resetFilters}
+          showResetFilters={true}
+          menuItems={[
+            { label: 'Export PDF', href: '#', icon: 'fas fa-file-pdf' },
+            { label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' },
+            { label: 'Meta table', href: '/meta', icon: 'fas fa-database' },
+            { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
+          ]}
+        />
         <Navbar type="chart" />
-
-        <div className="main-search-container">
-          <Filters 
-            filters={filters} 
-            onFilterChange={updateFilter} 
-            showLabSectionFilter={true} 
-            showShiftFilter={true} 
-            showLaboratoryFilter={true} 
+        <div className="chart-filters-section">
+          <Filters
+            filters={filters}
+            onFilterChange={updateFilter}
+            showLabSectionFilter={true}
+            showShiftFilter={true}
+            showLaboratoryFilter={true}
             showPeriodFilter={true}
           />
         </div>
-      </header>
+      </div>
 
       {isLoading && (
         <div className="loader">
@@ -165,29 +189,19 @@ const Tests: React.FC = () => {
       )}
 
       {!isLoading && (
-        <main className="dashboard-layout">
+        <main className="dashboard-layout chart-page-main">
           <aside className="revenue-progress-card">
-            <div className="kpi-card kpi-card-full-width">
-              <div className="kpi-label">
-                <i className="fas fa-flask mr-2"></i>
-                Total Tests Performed
-              </div>
-              <div className="kpi-value">{data?.totalTestsPerformed?.toLocaleString() || '0'}</div>
-              {data && (
-                <div className="kpi-sublabel">
-                  Target: {data.targetTestsPerformed.toLocaleString()} ({data.percentage.toFixed(1)}%)
-                </div>
-              )}
-              <div className="progress-bar-container" style={{ marginTop: '15px' }}>
-                <div 
-                  className="progress-bar-fill" 
-                  style={{ 
-                    width: `${Math.min(data?.percentage || 0, 100)}%`,
-                    backgroundColor: 'var(--hover-color)'
-                  }}
-                ></div>
-              </div>
-            </div>
+            {data && (
+              <TargetProgressChart
+                currentValue={data.totalTestsPerformed}
+                targetValue={data.targetTestsPerformed || 1}
+                title="Total Tests Performed"
+                achievedColor="#4caf50"
+                gapColor="#e0e0e0"
+                targetLabel={`of ${data.targetTestsPerformed.toLocaleString()} target`}
+                height={28}
+              />
+            )}
             <div className="kpi-card kpi-card-full-width">
               <div className="kpi-label">
                 <i className="fas fa-chart-line mr-2"></i>
@@ -232,7 +246,7 @@ const Tests: React.FC = () => {
                     </select>
                   </div>
                 </div>
-                <div className="chart-container" style={{ height: '350px' }}>
+                <div className="chart-container chart-container--tall">
                   {data?.topTestsByUnit && data.topTestsByUnit.length > 0 ? (
                     <TopTestsByUnitChart data={data.topTestsByUnit} />
                   ) : (
@@ -250,7 +264,7 @@ const Tests: React.FC = () => {
                   <i className="fas fa-calendar-alt mr-2"></i>
                   Daily Test Volume Trend
                 </h3>
-                <div className="chart-container" style={{ height: '350px' }}>
+                <div className="chart-container">
                   {data?.dailyVolume && data.dailyVolume.length > 0 ? (
                     <TestVolumeChart data={data.dailyVolume} />
                   ) : (
@@ -265,10 +279,6 @@ const Tests: React.FC = () => {
           </div>
         </main>
       )}
-
-      <div className="notice">
-        <p>Sorry! You need a wider screen to view the charts.</p>
-      </div>
 
       <footer>
         <p>&copy;2025 Zyntel</p>

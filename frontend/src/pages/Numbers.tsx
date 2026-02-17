@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Header, Navbar, Filters, Loader, KPICard } from '@/components/shared';
 import {
   DailyNumbersChart,
-  HourlyNumbersChart
+  HourlyNumbersChart,
+  TargetProgressChart
 } from '@/components/charts';
 
 interface NumbersData {
@@ -74,51 +75,47 @@ const Numbers: React.FC = () => {
     });
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  };
+
   return (
     <div className="min-h-screen bg-background-color">
-      <header>
-        <div className="header-container">
-          <div className="header-left">
-            <div className="logo">
-              <img src="/images/logo-nakasero.png" alt="logo" />
-            </div>
-            <h1>NHL Laboratory Dashboard</h1>
-          </div>
-          <div className="page">
-            <span>Numbers</span>
-            <a href="/login" className="logout-button">Logout</a>
-            <a href="#" className="logout-button" onClick={resetFilters}>Reset Filters</a>
-            <span className="three-dots-menu-container">
-              <button className="three-dots-button">&#x22EE;</button>
-              <ul className="dropdown-menu">
-                <li><a href="#">Export charts as PDF</a></li>
-                <li><a href="/admin">Admin Panel</a></li>
-                <li><a href="/dashboard">Dashboard</a></li>
-              </ul>
-            </span>
-          </div>
-        </div>
-
+      <div className="chart-page-top">
+        <Header
+          title="NHL Laboratory Dashboard"
+          pageTitle="Numbers"
+          onLogout={handleLogout}
+          onResetFilters={resetFilters}
+          showResetFilters={true}
+          menuItems={[
+            { label: 'Export PDF', href: '#', icon: 'fas fa-file-pdf' },
+            { label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' },
+            { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
+          ]}
+        />
         <Navbar type="chart" />
-
-        <div className="main-search-container">
+        <div className="chart-filters-section">
           <Filters filters={filters} onFilterChange={updateFilter} showLabSectionFilter={false} showShiftFilter={true} showLaboratoryFilter={true} />
         </div>
-      </header>
+      </div>
 
       {isLoading && <div className="loader"><div className="one"></div><div className="two"></div><div className="three"></div><div className="four"></div></div>}
 
-      <main className="dashboard-layout">
+      <main className="dashboard-layout chart-page-main">
         <aside className="numbers-summary-card">
-          <div className="kpi-card kpi-card-full-width">
-            <div className="kpi-label">Total Requests</div>
-            <div className="kpi-value">{data?.totalRequests?.toLocaleString() || '0'}</div>
-            {data && (
-              <div className="kpi-sublabel">
-                Target: {data.targetRequests.toLocaleString()} ({data.percentage.toFixed(1)}%)
-              </div>
-            )}
-          </div>
+          {data && (
+            <TargetProgressChart
+              currentValue={data.totalRequests}
+              targetValue={data.targetRequests || 1}
+              title="Total Requests"
+              achievedColor="#4caf50"
+              gapColor="#e0e0e0"
+              targetLabel={`of ${data.targetRequests.toLocaleString()} target`}
+              height={28}
+            />
+          )}
           <div className="kpi-grid">
             <div className="kpi-card">
               <div className="kpi-label">Average Daily Requests</div>
@@ -163,10 +160,6 @@ const Numbers: React.FC = () => {
           </div>
         </div>
       </main>
-
-      <div className="notice">
-        <p>Sorry! You need a wider screen to view the charts.</p>
-      </div>
 
       <footer>
         <p>&copy;2025 Zyntel</p>

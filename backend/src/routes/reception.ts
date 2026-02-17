@@ -16,5 +16,6 @@ router.get('/', getReceptionController);
 router.put('/:id/status', updateTestStatusController);
 router.post('/:id/cancel', cancelTestController);
 router.post('/bulk-update', bulkUpdateController);
+router.post('/update-bulk', bulkUpdateController); // alias for frontend
 
 export default router;

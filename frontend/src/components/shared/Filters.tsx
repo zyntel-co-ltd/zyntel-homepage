@@ -18,6 +18,7 @@ interface FiltersProps {
   showShiftFilter?: boolean;
   showLaboratoryFilter?: boolean;
   showStatusFilter?: boolean;
+  showDateFilter?: boolean;
 }
 
 const Filters: React.FC<FiltersProps> = ({
@@ -28,28 +29,32 @@ const Filters: React.FC<FiltersProps> = ({
   showShiftFilter = true,
   showLaboratoryFilter = true,
   showStatusFilter = false,
+  showDateFilter = true,
 }) => {
   return (
     <div className="dashboard-filters">
-      <div className="filter-group">
-        <label htmlFor="startDateFilter">Start Date:</label>
-        <input
-          type="date"
-          id="startDateFilter"
-          value={filters.startDate || ''}
-          onChange={(e) => onFilterChange('startDate', e.target.value)}
-        />
-      </div>
-
-      <div className="filter-group">
-        <label htmlFor="endDateFilter">End Date:</label>
-        <input
-          type="date"
-          id="endDateFilter"
-          value={filters.endDate || ''}
-          onChange={(e) => onFilterChange('endDate', e.target.value)}
-        />
-      </div>
+      {showDateFilter && (
+        <>
+          <div className="filter-group">
+            <label htmlFor="startDateFilter">Start Date:</label>
+            <input
+              type="date"
+              id="startDateFilter"
+              value={filters.startDate || ''}
+              onChange={(e) => onFilterChange('startDate', e.target.value)}
+            />
+          </div>
+          <div className="filter-group">
+            <label htmlFor="endDateFilter">End Date:</label>
+            <input
+              type="date"
+              id="endDateFilter"
+              value={filters.endDate || ''}
+              onChange={(e) => onFilterChange('endDate', e.target.value)}
+            />
+          </div>
+        </>
+      )}
 
       {showPeriodFilter && (
         <div className="filter-group">
@@ -110,8 +115,12 @@ const Filters: React.FC<FiltersProps> = ({
             onChange={(e) => onFilterChange('hospitalUnit', e.target.value)}
           >
             <option value="all">All</option>
-            <option value="mainLab">Main Laboratory</option>
-            <option value="annex">Annex</option>
+            <option value="Main Laboratory">Main Laboratory</option>
+            <option value="Annex">Annex</option>
+            <option value="ICU">ICU</option>
+            <option value="GW B">GW B</option>
+            <option value="DOCTORS PLAZA">Doctors Plaza</option>
+            <option value="THEATRE">Theatre</option>
           </select>
         </div>
       )}

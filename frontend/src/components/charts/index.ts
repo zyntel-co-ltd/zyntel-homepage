@@ -15,4 +15,5 @@ export { default as TATLineChart } from './TATLineChart';
 export { default as TATHourlyChart } from './TATHourlyChart';
 export { default as RevenueProgressChart } from './RevenueProgressChart';
 export { default as TATProgressChart } from './TATProgressChart';
+export { default as TargetProgressChart } from './TargetProgressChart';
 export { default as NumbersProgressChart } from './NumbersProgressChart';

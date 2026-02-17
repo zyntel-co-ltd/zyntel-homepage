@@ -78,39 +78,8 @@ const TAT: React.FC = () => {
       setData(result);
     } catch (error) {
       console.error('Error fetching TAT data:', error);
-      // Mock data for development
-      setData({
-        pieData: {
-          delayed: 45,
-          onTime: 230,
-          notUploaded: 12
-        },
-        dailyTrend: [
-          { date: '2025-02-05', delayed: 8, onTime: 32, notUploaded: 2 },
-          { date: '2025-02-06', delayed: 7, onTime: 35, notUploaded: 1 },
-          { date: '2025-02-07', delayed: 10, onTime: 30, notUploaded: 3 },
-          { date: '2025-02-08', delayed: 5, onTime: 38, notUploaded: 2 },
-          { date: '2025-02-09', delayed: 6, onTime: 36, notUploaded: 2 },
-          { date: '2025-02-10', delayed: 9, onTime: 33, notUploaded: 1 },
-          { date: '2025-02-11', delayed: 4, onTime: 40, notUploaded: 1 }
-        ],
-        hourlyTrend: Array.from({ length: 24 }, (_, i) => ({
-          hour: i,
-          delayed: Math.floor(Math.random() * 5),
-          onTime: Math.floor(Math.random() * 15) + 5,
-          notUploaded: Math.floor(Math.random() * 3)
-        })),
-        kpis: {
-          totalRequests: 287,
-          delayedRequests: 45,
-          onTimeRequests: 230,
-          avgDailyDelayed: 6.4,
-          avgDailyOnTime: 32.9,
-          avgDailyNotUploaded: 1.7,
-          mostDelayedHour: '10:00 AM',
-          mostDelayedDay: 'Monday'
-        }
-      });
+      // On error, clear data so charts do not display mock values
+      setData(null);
     } finally {
       setIsLoading(false);
     }
@@ -141,6 +110,7 @@ const TAT: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-color">
+      <div className="chart-page-top">
       <Header
         title="NHL Laboratory Dashboard"
         pageTitle="TAT"
@@ -157,7 +127,7 @@ const TAT: React.FC = () => {
 
       <Navbar type="chart" />
 
-      <div className="main-search-container">
+      <div className="chart-filters-section">
         <Filters
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -167,8 +137,9 @@ const TAT: React.FC = () => {
           showPeriodFilter={true}
         />
       </div>
+      </div>
 
-      <main className="dashboard-layout">
+      <main className="dashboard-layout chart-page-main">
         <aside className="revenue-progress-card">
           {data && (
             <>
@@ -237,7 +208,7 @@ const TAT: React.FC = () => {
                 <i className="fas fa-chart-pie mr-2"></i>
                 TAT Performance Distribution
               </div>
-              <div className="chart-container" style={{ height: '350px' }}>
+              <div className="chart-container chart-container--doughnut">
                 {data && <TATPieChart data={data.pieData} />}
               </div>
             </div>
@@ -247,7 +218,7 @@ const TAT: React.FC = () => {
                 <i className="fas fa-chart-line mr-2"></i>
                 Daily TAT Performance Trend
               </div>
-              <div className="chart-container" style={{ height: '350px' }}>
+              <div className="chart-container">
                 {data && <TATLineChart data={data.dailyTrend} />}
               </div>
             </div>
@@ -257,17 +228,13 @@ const TAT: React.FC = () => {
                 <i className="fas fa-clock mr-2"></i>
                 Hourly TAT Performance Trend
               </div>
-              <div className="chart-container" style={{ height: '350px' }}>
+              <div className="chart-container">
                 {data && <TATHourlyChart data={data.hourlyTrend} />}
               </div>
             </div>
           </div>
         </div>
       </main>
-
-      <div className="notice">
-        <p>Sorry! You need a wider screen to view the charts.</p>
-      </div>
 
       <footer>
         <p>&copy;2025 Zyntel</p>

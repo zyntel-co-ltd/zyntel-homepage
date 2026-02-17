@@ -24,6 +24,7 @@ interface ReceptionTableProps {
   onUrgentClick: (id: number, currentUrgency: 'routine' | 'urgent') => void;
   onReceiveClick: (id: number) => void;
   onResultClick: (id: number) => void;
+  onLabNumberDoubleClick?: (labNumber: string) => void;
   isLoading?: boolean;
 }
 
@@ -35,6 +36,7 @@ const ReceptionTable: React.FC<ReceptionTableProps> = ({
   onUrgentClick,
   onReceiveClick,
   onResultClick,
+  onLabNumberDoubleClick,
   isLoading = false
 }) => {
   const allSelected = data.length > 0 && selectedIds.length === data.length;
@@ -141,7 +143,13 @@ const ReceptionTable: React.FC<ReceptionTableProps> = ({
                 />
               </td>
               <td>{new Date(row.date).toLocaleDateString()}</td>
-              <td className="lab-number-cell">{row.labNumber}</td>
+              <td
+                className="lab-number-cell lab-number-cell-dbl"
+                onDoubleClick={() => onLabNumberDoubleClick?.(row.labNumber)}
+                title={onLabNumberDoubleClick ? 'Double-click to view all tests' : undefined}
+              >
+                {row.labNumber}
+              </td>
               <td>{row.shift}</td>
               <td>{row.unit}</td>
               <td>{row.labSection}</td>

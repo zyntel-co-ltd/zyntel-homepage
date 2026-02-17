@@ -21,38 +21,56 @@ export const TestRevenueChart: React.FC<TestRevenueChartProps> = ({ data }) => {
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
 
-    // Get top 10 tests
-    const topTests = data.slice(0, 10);
+    // Get top tests (all data or top 50)
+    const topTests = data.slice(0, 50);
 
     chartRef.current = new Chart(ctx, {
-      type: 'doughnut',
+      type: 'bar',
       data: {
         labels: topTests.map(d => d.test_name),
         datasets: [
           {
+            label: 'Revenue by Test (UGX)',
             data: topTests.map(d => d.revenue),
-            backgroundColor: [
-              '#7c3aed', '#ec4899', '#f59e0b', '#10b981', 
-              '#06b6d4', '#f43f5e', '#8b5cf6', '#14b8a6',
-              '#0d9488', '#6366f1'
-            ],
-            borderColor: '#fff',
-            borderWidth: 2
+            backgroundColor: '#21336a',
+            borderRadius: 0,
           }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        indexAxis: 'y',
         plugins: {
           legend: {
-            position: 'right',
-            labels: {
-              color: '#666',
-              padding: 15,
-              font: {
-                size: 12
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context: any) {
+                return `UGX ${context.parsed.x.toLocaleString()}`;
               }
+            }
+          }
+        },
+        scales: {
+          x: {
+            position: 'top',
+            beginAtZero: true,
+            ticks: {
+              callback: (value) => `UGX ${(value as number).toLocaleString()}`,
+              color: '#999'
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          },
+          y: {
+            ticks: {
+              color: '#999'
+            },
+            grid: {
+              display: false
             }
           }
         }

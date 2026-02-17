@@ -1,7 +1,7 @@
 // frontend/src/pages/Reception.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Header, Navbar, Filters, Loader } from '@/components/shared';
+import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog } from '@/components/shared';
 import { ReceptionTable, type ReceptionRecord } from '@/components/tables';
 
 const Reception: React.FC = () => {
@@ -20,6 +20,13 @@ const Reception: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<ReceptionRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const rowsPerPage = 50;
+  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
+  const [testsDialogLabNo, setTestsDialogLabNo] = useState<string | null>(null);
 
   // Check auth on mount
   useEffect(() => {
@@ -31,7 +38,7 @@ const Reception: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, [filters, currentPage]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -55,6 +62,8 @@ const Reception: React.FC = () => {
       if (filters.shift && filters.shift !== 'all') params.append('shift', filters.shift);
       if (filters.laboratory && filters.laboratory !== 'all') params.append('laboratory', filters.laboratory);
       if (filters.search) params.append('search', filters.search);
+      params.append('page', String(currentPage));
+      params.append('limit', String(rowsPerPage));
 
       const response = await fetch(`/api/reception?${params.toString()}`, {
         headers: {
@@ -75,9 +84,8 @@ const Reception: React.FC = () => {
       }
 
       const result = await response.json();
-      
-      // Transform backend data to match frontend interface
-      const transformedData: ReceptionRecord[] = result.map((item: any) => ({
+      const raw = Array.isArray(result) ? result : (result?.data ?? []);
+      const transformedData: ReceptionRecord[] = raw.map((item: any) => ({
         id: item.id,
         date: item.encounter_date,
         labNumber: item.lab_no,
@@ -85,13 +93,19 @@ const Reception: React.FC = () => {
         unit: item.laboratory,
         labSection: item.lab_section_at_test,
         testName: item.test_name,
-        urgency: item.is_urgent ? 'urgent' : 'routine',
+        urgency: item.is_urgent === true ? 'urgent' : 'routine',
         received: item.is_received || false,
         result: item.is_resulted || false,
         timeIn: item.time_in ? new Date(item.time_in).toLocaleTimeString() : ''
       }));
-      
       setData(transformedData);
+      if (result?.totalRecords != null) {
+        setTotalRecords(result.totalRecords);
+        setTotalPages(result.totalPages ?? 1);
+      } else {
+        setTotalRecords(transformedData.length);
+        setTotalPages(1);
+      }
     } catch (error) {
       console.error('Error fetching reception data:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch data');
@@ -102,7 +116,92 @@ const Reception: React.FC = () => {
   };
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    const stateKey = key === 'hospitalUnit' ? 'laboratory' : key;
+    setFilters(prev => ({ ...prev, [stateKey]: value }));
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBulkUrgent = async () => {
+    if (selectedTests.length === 0) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/reception/update-bulk', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          testIds: selectedTests,
+          action: 'urgent'
+        })
+      });
+      
+      if (response.ok) {
+        setSelectedTests([]);
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Bulk urgent error:', error);
+    }
+  };
+
+  const handleBulkReceive = async () => {
+    if (selectedTests.length === 0) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/reception/update-bulk', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          testIds: selectedTests,
+          action: 'receive'
+        })
+      });
+      
+      if (response.ok) {
+        setSelectedTests([]);
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Bulk receive error:', error);
+    }
+  };
+
+  const handleBulkResult = async () => {
+    if (selectedTests.length === 0) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/reception/update-bulk', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          testIds: selectedTests,
+          action: 'result'
+        })
+      });
+      
+      if (response.ok) {
+        setSelectedTests([]);
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Bulk result error:', error);
+    }
   };
 
   const handleLogout = () => {
@@ -309,42 +408,73 @@ const Reception: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-color">
-      <Header
-        title="Nakasero Hospital Laboratory"
-        pageTitle="Reception Table"
-        onLogout={handleLogout}
-        onResetFilters={handleResetFilters}
-        showResetFilters={true}
-      />
-
-      <Navbar type="table" />
-
-      <div className="main-search-container">
-        <div className="search-actions-row">
-          <div className={`multi-select-container ${selectedTests.length === 0 ? 'hidden' : ''}`}>
+      <div className={`table-page-top ${!filtersOpen ? 'collapsed' : ''}`}>
+        <div className="header-wrapper">
+          <Header
+            title="Nakasero Hospital Laboratory"
+            pageTitle="Reception Table"
+            onLogout={handleLogout}
+            onResetFilters={handleResetFilters}
+            showResetFilters={true}
+          />
+          <Navbar type="table" />
+        </div>
+        <button
+          type="button"
+          className="table-page-toggle"
+          onClick={() => setFiltersOpen((o) => !o)}
+          aria-expanded={filtersOpen}
+        >
+          <i className={`fas fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden />
+          {filtersOpen ? 'Hide menu' : 'Menu'}
+        </button>
+        <div className="filters-row">
+          <button type="button" className="filters-panel-trigger" onClick={() => setFiltersPanelOpen(true)} aria-label="Open filters">
+            <i className="fas fa-filter" aria-hidden /> Filters
+          </button>
+          <div className="filters-inline">
+            <Filters
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              showPeriodFilter={true}
+              showLabSectionFilter={true}
+              showShiftFilter={true}
+              showLaboratoryFilter={true}
+            />
+          </div>
+        </div>
+        <div className="table-search-bar">
+          <div className="search-actions-row">
+            <div className="multi-select-container">
             <button 
               className="urgent-btn"
               id="multi-urgent-btn"
               onClick={handleMultiUrgent}
+              disabled={selectedTests.length === 0}
+              title={selectedTests.length === 0 ? 'Select rows first' : ''}
             >
               <i className="fas fa-exclamation-triangle mr-2"></i>
-              Mark as Urgent ({selectedTests.length})
+              Mark as Urgent
             </button>
             <button 
               className="receive-btn"
               id="multi-receive-btn"
               onClick={handleMultiReceive}
+              disabled={selectedTests.length === 0}
+              title={selectedTests.length === 0 ? 'Select rows first' : ''}
             >
               <i className="fas fa-check mr-2"></i>
-              Receive Selected ({selectedTests.length})
+              Receive Selected
             </button>
             <button 
               className="result-btn"
               id="multi-result-btn"
               onClick={handleMultiResult}
+              disabled={selectedTests.length === 0}
+              title={selectedTests.length === 0 ? 'Select rows first' : ''}
             >
               <i className="fas fa-clipboard-check mr-2"></i>
-              Result Selected ({selectedTests.length})
+              Result Selected
             </button>
           </div>
           <div className="search-container">
@@ -358,6 +488,15 @@ const Reception: React.FC = () => {
             <i className="fas fa-search search-icon"></i>
           </div>
         </div>
+        </div>
+      </div>
+
+      <div className={`filters-panel-overlay ${filtersPanelOpen ? 'visible' : ''}`} onClick={() => setFiltersPanelOpen(false)} aria-hidden />
+      <div className={`filters-panel ${filtersPanelOpen ? 'open' : ''}`}>
+        <div className="filters-panel-header">
+          <h3>Filters</h3>
+          <button type="button" className="filters-panel-close" onClick={() => setFiltersPanelOpen(false)} aria-label="Close filters">&times;</button>
+        </div>
         <Filters
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -368,7 +507,7 @@ const Reception: React.FC = () => {
         />
       </div>
 
-      <main>
+      <main className={`table-page-main ${filtersOpen ? 'filters-expanded' : ''}`}>
         {error && (
           <div style={{
             padding: '20px',
@@ -400,25 +539,35 @@ const Reception: React.FC = () => {
         {isLoading ? (
           <Loader isLoading={true} />
         ) : (
-          <section className="card">
-            <ReceptionTable
-              data={data}
-              selectedIds={selectedTests}
-              onSelectRow={handleSelectRow}
-              onSelectAll={handleSelectAll}
-              onUrgentClick={handleUrgentClick}
-              onReceiveClick={handleReceiveClick}
-              onResultClick={handleResultClick}
-              isLoading={isLoading}
+          <>
+            <section className="card">
+              <ReceptionTable
+                data={data}
+                selectedIds={selectedTests}
+                onSelectRow={handleSelectRow}
+                onSelectAll={handleSelectAll}
+                onUrgentClick={handleUrgentClick}
+                onReceiveClick={handleReceiveClick}
+                onResultClick={handleResultClick}
+                onLabNumberDoubleClick={(labNumber) => setTestsDialogLabNo(labNumber)}
+                isLoading={isLoading}
+              />
+            </section>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalRecords={totalRecords}
+              onPageChange={handlePageChange}
             />
-          </section>
+          </>
         )}
       </main>
 
-      <div className="notice">
-        <p>Sorry! You need a wider screen to view the table.</p>
-      </div>
-
+      <TestsForLabDialog
+        labNo={testsDialogLabNo}
+        open={testsDialogLabNo !== null}
+        onClose={() => setTestsDialogLabNo(null)}
+      />
       <footer>
         <p>&copy;2025 Zyntel</p>
         <div className="zyntel">

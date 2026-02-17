@@ -1,14 +1,14 @@
 // frontend/src/pages/Progress.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Header, Navbar, Filters, Loader } from '@/components/shared';
+import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog } from '@/components/shared';
 
 const Progress: React.FC = () => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState({
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
-    period: 'custom',
+    startDate: '',
+    endDate: '',
+    period: 'thisMonth',
     labSection: 'all',
     shift: 'all',
     laboratory: 'all',
@@ -18,6 +18,13 @@ const Progress: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const rowsPerPage = 50;
+  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
+  const [testsDialogLabNo, setTestsDialogLabNo] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -28,7 +35,7 @@ const Progress: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, [filters, currentPage]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -52,6 +59,8 @@ const Progress: React.FC = () => {
       if (filters.shift && filters.shift !== 'all') params.append('shift', filters.shift);
       if (filters.laboratory && filters.laboratory !== 'all') params.append('laboratory', filters.laboratory);
       if (filters.search) params.append('search', filters.search);
+      params.append('page', String(currentPage));
+      params.append('limit', String(rowsPerPage));
 
       const response = await fetch(`/api/progress?${params.toString()}`, {
         headers: {
@@ -72,7 +81,15 @@ const Progress: React.FC = () => {
       }
 
       const result = await response.json();
-      setData(result);
+      if (result.data) {
+        setData(result.data);
+        setTotalPages(result.totalPages || 1);
+        setTotalRecords(result.totalRecords || result.data.length);
+      } else {
+        setData(Array.isArray(result) ? result : []);
+        setTotalPages(1);
+        setTotalRecords(Array.isArray(result) ? result.length : 0);
+      }
     } catch (error) {
       console.error('Error fetching progress data:', error);
       setError(error instanceof Error ? error.message : 'Failed to fetch data');
@@ -84,6 +101,12 @@ const Progress: React.FC = () => {
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleLogout = () => {
@@ -94,9 +117,9 @@ const Progress: React.FC = () => {
 
   const handleResetFilters = () => {
     setFilters({
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: new Date().toISOString().split('T')[0],
-      period: 'custom',
+      startDate: '',
+      endDate: '',
+      period: 'thisMonth',
       labSection: 'all',
       shift: 'all',
       laboratory: 'all',
@@ -106,26 +129,55 @@ const Progress: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-color">
-      <Header
-        title="Nakasero Hospital Laboratory"
-        pageTitle="Progress Table"
-        onLogout={handleLogout}
-        onResetFilters={handleResetFilters}
-        showResetFilters={true}
-      />
-
-      <Navbar type="table" />
-
-      <div className="main-search-container">
-        <div className="search-container">
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search test / lab number..."
-            value={filters.search}
-            onChange={(e) => handleFilterChange('search', e.target.value)}
+      <div className={`table-page-top ${!filtersOpen ? 'collapsed' : ''}`}>
+        <div className="header-wrapper">
+          <Header
+            title="Nakasero Hospital Laboratory"
+            pageTitle="Progress Table"
+            onLogout={handleLogout}
+            onResetFilters={handleResetFilters}
+            showResetFilters={true}
           />
-          <i className="fas fa-search search-icon"></i>
+          <Navbar type="table" />
+        </div>
+        <button type="button" className="table-page-toggle" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
+          <i className={`fas fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden />
+          {filtersOpen ? 'Hide menu' : 'Menu'}
+        </button>
+        <div className="filters-row">
+          <button type="button" className="filters-panel-trigger" onClick={() => setFiltersPanelOpen(true)} aria-label="Open filters">
+            <i className="fas fa-filter" aria-hidden /> Filters
+          </button>
+          <div className="filters-inline">
+            <Filters
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              showPeriodFilter={true}
+              showLabSectionFilter={true}
+              showShiftFilter={true}
+              showLaboratoryFilter={true}
+            />
+          </div>
+        </div>
+        <div className="table-search-bar">
+          <div className="search-container">
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search test / lab number..."
+              value={filters.search}
+              onChange={(e) => handleFilterChange('search', e.target.value)}
+            />
+            <i className="fas fa-search search-icon"></i>
+          </div>
+        </div>
+      </div>
+
+      <div className={`filters-panel-overlay ${filtersPanelOpen ? 'visible' : ''}`} onClick={() => setFiltersPanelOpen(false)} aria-hidden />
+      <div className={`filters-panel ${filtersPanelOpen ? 'open' : ''}`}>
+        <div className="filters-panel-header">
+          <h3>Filters</h3>
+          <button type="button" className="filters-panel-close" onClick={() => setFiltersPanelOpen(false)} aria-label="Close filters">&times;</button>
         </div>
         <Filters
           filters={filters}
@@ -137,7 +189,7 @@ const Progress: React.FC = () => {
         />
       </div>
 
-      <main>
+      <main className={`table-page-main ${filtersOpen ? 'filters-expanded' : ''}`}>
         {error && (
           <div style={{
             padding: '20px',
@@ -161,32 +213,113 @@ const Progress: React.FC = () => {
               </div>
             ) : (
               <div className="table-container">
-                <table>
+                <table className="neon-table">
                   <thead>
                     <tr>
-                      <th>Lab Number</th>
-                      <th>Test Name</th>
-                      <th>Status</th>
+                      <th>Date</th>
+                      <th>Shift</th>
+                      <th className="lab-number-cell">Lab Number</th>
+                      <th>Unit</th>
+                      <th>Time In</th>
+                      <th>Daily TAT <span className="subtext">(minutes)</span></th>
+                      <th>Time Expected</th>
                       <th>Progress</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {data.map((row, index) => (
-                      <tr key={index}>
-                        <td>{row.labNo}</td>
-                        <td>{row.testName}</td>
-                        <td>{row.status}</td>
-                        <td>{row.progress}%</td>
-                      </tr>
-                    ))}
+                    {data.map((row, index) => {
+                      const calculateProgress = (timeExpected: string, timeOut?: string) => {
+                        const now = new Date();
+                        
+                        const hasTimeOut = timeOut && timeOut !== 'N/A' && timeOut !== null && timeOut !== undefined;
+                        const timeOutDate = hasTimeOut ? new Date(timeOut) : null;
+                        const isTimeOutValid = timeOutDate && !isNaN(timeOutDate.getTime());
+                        const isTimeOutInPast = isTimeOutValid && timeOutDate <= now;
+
+                        const hasTimeExpected = timeExpected && timeExpected !== 'N/A' && timeExpected !== null && timeExpected !== undefined;
+                        const timeExpectedDate = hasTimeExpected ? new Date(timeExpected) : null;
+                        const isTimeExpectedValid = timeExpectedDate && !isNaN(timeExpectedDate.getTime());
+                        const isTimeExpectedInPast = isTimeExpectedValid && timeExpectedDate <= now;
+
+                        if (isTimeOutValid && isTimeOutInPast) {
+                          return { text: 'Completed', cssClass: 'progress-complete-actual' };
+                        }
+                        
+                        if (isTimeExpectedValid && isTimeExpectedInPast && !isTimeOutValid) {
+                          return { text: 'Delayed', cssClass: 'progress-overdue' };
+                        }
+                        
+                        if (isTimeExpectedValid && !isTimeExpectedInPast) {
+                          const timeLeft = timeExpectedDate.getTime() - now.getTime();
+                          const timeLeftInMinutes = Math.floor(timeLeft / (1000 * 60));
+                          const timeLeftInHours = Math.floor(timeLeft / (1000 * 60 * 60));
+                          const timeLeftInDays = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                          
+                          if (timeLeftInMinutes <= 10 && timeLeftInMinutes > 0) {
+                            return { text: `${timeLeftInMinutes} min(s) remaining`, cssClass: 'progress-urgent' };
+                          } else if (timeLeftInDays > 0) {
+                            return { text: `${timeLeftInDays} day(s) remaining`, cssClass: 'progress-pending' };
+                          } else if (timeLeftInHours > 0) {
+                            return { text: `${timeLeftInHours} hr(s) remaining`, cssClass: 'progress-pending' };
+                          } else if (timeLeftInMinutes > 0) {
+                            return { text: `${timeLeftInMinutes} min(s) remaining`, cssClass: 'progress-pending' };
+                          }
+                          return { text: 'Due now', cssClass: 'progress-pending' };
+                        }
+                        
+                        return { text: 'No ETA', cssClass: 'progress-pending' };
+                      };
+
+                      const dateIn = row.date ? new Date(row.date) : new Date();
+                      const formattedDate = dateIn.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      });
+                      
+                      const progress = calculateProgress(row.request_time_expected || '', row.request_time_out);
+                      
+                      return (
+                        <tr key={index}>
+                          <td>{formattedDate}</td>
+                          <td>{row.shift || 'N/A'}</td>
+                          <td
+                                className="lab-number-cell lab-number-cell-dbl"
+                                onDoubleClick={() => setTestsDialogLabNo(row.lab_number || null)}
+                                title="Double-click to view all tests"
+                              >
+                                {row.lab_number || 'N/A'}
+                              </td>
+                          <td>{row.Hospital_Unit || 'N/A'}</td>
+                          <td>{row.time_in ? new Date(row.time_in).toLocaleString() : 'N/A'}</td>
+                          <td>{row.daily_tat || 'N/A'}</td>
+                          <td>{row.request_time_expected ? new Date(row.request_time_expected).toLocaleString() : 'N/A'}</td>
+                          <td className={progress.cssClass}>{progress.text}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
+            )}
+            {!isLoading && data.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalRecords={totalRecords}
+                onPageChange={handlePageChange}
+              />
             )}
           </section>
         )}
       </main>
 
+      <TestsForLabDialog
+        labNo={testsDialogLabNo}
+        open={testsDialogLabNo !== null}
+        onClose={() => setTestsDialogLabNo(null)}
+      />
       <footer>
         <p>&copy;2025 Zyntel</p>
         <div className="zyntel">

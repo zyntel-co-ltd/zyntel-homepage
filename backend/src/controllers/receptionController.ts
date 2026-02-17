@@ -11,15 +11,23 @@ export const getReceptionController = async (req: AuthRequest, res: Response) =>
       labSection: req.query.labSection as string,
       shift: req.query.shift as string,
       laboratory: req.query.laboratory as string,
+      page: req.query.page,
+      limit: req.query.limit,
     };
 
     const search = req.query.search as string;
 
-    const data = await receptionService.getReceptionData(filters, search);
-    res.json(data);
-  } catch (error) {
-    console.error('Get reception error:', error);
-    res.status(500).json({ error: 'Failed to fetch reception data' });
+    const result = await receptionService.getReceptionData(filters, search);
+    if (result && typeof result === 'object' && 'data' in result && 'totalRecords' in result) {
+      res.json(result);
+    } else {
+      res.json(Array.isArray(result) ? result : []);
+    }
+  } catch (error: any) {
+    console.error('Get reception error:', error?.message ?? error);
+    const body: { error: string; detail?: string } = { error: 'Failed to fetch reception data' };
+    if (process.env.NODE_ENV !== 'production') body.detail = error?.message;
+    res.status(500).json(body);
   }
 };
 

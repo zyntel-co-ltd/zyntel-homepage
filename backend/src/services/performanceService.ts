@@ -1,6 +1,7 @@
 import { query } from '../config/database';
 import { FilterParams } from '../types';
 import { getPeriodDates } from '../utils/dateUtils';
+import moment from 'moment';
 
 export const getPerformanceData = async (filters: FilterParams) => {
   let startDate: Date;
@@ -15,18 +16,11 @@ export const getPerformanceData = async (filters: FilterParams) => {
     endDate = filters.endDate ? new Date(filters.endDate) : new Date();
   }
 
-  const conditions = [
-    'encounter_date BETWEEN $1 AND $2',
-    'is_cancelled = false',
-    'time_out IS NOT NULL',
-  ];
-  const params: any[] = [startDate, endDate];
+  const startStr = moment(startDate).format('YYYY-MM-DD');
+  const endStr = moment(endDate).format('YYYY-MM-DD');
+  const conditions = ['date::date BETWEEN $1::date AND $2::date'];
+  const params: any[] = [startStr, endStr];
   let paramCount = 3;
-
-  if (filters.labSection && filters.labSection !== 'all') {
-    conditions.push(`LOWER(lab_section_at_test) = LOWER($${paramCount++})`);
-    params.push(filters.labSection);
-  }
 
   if (filters.shift && filters.shift !== 'all') {
     conditions.push(`LOWER(shift) = LOWER($${paramCount++})`);
@@ -34,41 +28,62 @@ export const getPerformanceData = async (filters: FilterParams) => {
   }
 
   if (filters.laboratory && filters.laboratory !== 'all') {
-    conditions.push(`laboratory = $${paramCount++}`);
+    conditions.push(`LOWER(TRIM(unit)) = LOWER(TRIM($${paramCount++}))`);
     params.push(filters.laboratory);
   }
 
   const whereClause = conditions.join(' AND ');
+  const hasPage = (filters as any).page != null && (filters as any).page !== '';
+  const limitNum = Math.min(parseInt(String((filters as any).limit), 10) || 50, 100);
+
+  if (hasPage) {
+    const page = Math.max(1, parseInt(String((filters as any).page), 10) || 1);
+    const offset = (page - 1) * limitNum;
+
+    const countResult = await query(
+      `SELECT COUNT(*) AS total FROM patients WHERE ${whereClause}`,
+      params
+    );
+    const totalRecords = parseInt(countResult.rows[0].total as string, 10);
+    const totalPages = Math.max(1, Math.ceil(totalRecords / limitNum));
+
+    params.push(limitNum, offset);
+    const result = await query(
+      `SELECT 
+      date,
+      shift AS "Shift",
+      lab_number,
+      unit AS "Hospital_Unit",
+      time_in,
+      daily_tat,
+      request_time_expected,
+      request_time_out,
+      request_delay_status,
+      request_time_range
+     FROM patients 
+     WHERE ${whereClause}
+     ORDER BY date DESC, time_in DESC
+     LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+    return { data: result.rows, totalRecords, totalPages };
+  }
 
   const result = await query(
     `SELECT 
-      id,
-      encounter_date,
-      lab_no,
-      shift,
-      laboratory,
-      lab_section_at_test,
-      test_name,
+      date,
+      shift AS "Shift",
+      lab_number,
+      unit AS "Hospital_Unit",
       time_in,
-      time_out,
-      actual_tat,
-      tat_at_test,
-      CASE 
-        WHEN actual_tat <= tat_at_test THEN 'on-time'
-        WHEN actual_tat > tat_at_test AND (actual_tat - tat_at_test) < 15 THEN 'delayed-less-15'
-        ELSE 'over-delayed'
-      END as delay_status,
-      CASE 
-        WHEN actual_tat <= tat_at_test THEN 'Swift'
-        WHEN actual_tat > tat_at_test AND (actual_tat - tat_at_test) < 15 THEN '<15min'
-        WHEN actual_tat > tat_at_test AND (actual_tat - tat_at_test) BETWEEN 15 AND 60 THEN '15-60min'
-        WHEN actual_tat > tat_at_test AND (actual_tat - tat_at_test) BETWEEN 60 AND 180 THEN '1-3hrs'
-        WHEN actual_tat > tat_at_test AND (actual_tat - tat_at_test) BETWEEN 180 AND 1440 THEN '3-24hrs'
-        ELSE '>24hrs'
-      END as time_range
-     FROM test_records 
+      daily_tat,
+      request_time_expected,
+      request_time_out,
+      request_delay_status,
+      request_time_range
+     FROM patients 
      WHERE ${whereClause}
-     ORDER BY encounter_date DESC, time_in DESC`,
+     ORDER BY date DESC, time_in DESC`,
     params
   );
 

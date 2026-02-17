@@ -15,9 +15,11 @@ export const getRevenueController = async (req: AuthRequest, res: Response) => {
 
     const data = await revenueService.getRevenueData(filters);
     res.json(data);
-  } catch (error) {
-    console.error('Get revenue error:', error);
-    res.status(500).json({ error: 'Failed to fetch revenue data' });
+  } catch (error: any) {
+    console.error('Get revenue error:', error?.message ?? error);
+    const body: { error: string; detail?: string } = { error: 'Failed to fetch revenue data' };
+    if (process.env.NODE_ENV !== 'production') body.detail = error?.message;
+    res.status(500).json(body);
   }
 };
 

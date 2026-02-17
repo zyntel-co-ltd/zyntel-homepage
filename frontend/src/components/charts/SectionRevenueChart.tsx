@@ -22,54 +22,57 @@ export const SectionRevenueChart: React.FC<SectionRevenueChartProps> = ({ data }
     if (!ctx) return;
 
     const colors = [
-      '#7c3aed', '#ec4899', '#f59e0b', '#10b981', 
-      '#06b6d4', '#f43f5e', '#8b5cf6', '#14b8a6'
+      '#21336a',
+      '#4CAF50',
+      '#795548',
+      '#9C27B0',
+      'rgb(250, 39, 11)',
+      '#00BCD4',
+      '#607D8B',
+      '#deab5f',
+      '#E91E63',
+      '#FFC107',
     ];
 
+    const totalRevenue = data.reduce((sum, d) => sum + d.revenue, 0);
+
     chartRef.current = new Chart(ctx, {
-      type: 'bar',
+      type: 'doughnut',
       data: {
-        labels: data.map(d => d.section),
+        labels: data.map(d => d.section.toUpperCase()),
         datasets: [
           {
-            label: 'Revenue by Section',
             data: data.map(d => d.revenue),
             backgroundColor: colors.slice(0, data.length),
-            borderRadius: 6,
-            borderSkipped: false
+            hoverOffset: 4,
           }
         ]
       },
       options: {
-        indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
+        cutout: '60%',
         plugins: {
           legend: {
-            display: true,
+            position: 'right',
             labels: {
-              color: '#666',
-              padding: 15
-            }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            ticks: {
-              callback: (value) => `UGX ${(value as number / 1000000).toFixed(0)}M`,
-              color: '#999'
-            },
-            grid: {
-              color: 'rgba(0, 0, 0, 0.05)'
+              boxWidth: 20,
+              padding: 10,
+              font: {
+                size: 12
+              },
+              color: '#666'
             }
           },
-          y: {
-            ticks: {
-              color: '#999'
-            },
-            grid: {
-              display: false
+          tooltip: {
+            callbacks: {
+              label: function (context: any) {
+                const value = context.parsed;
+                const percentage = totalRevenue > 0 
+                  ? (value / totalRevenue) * 100 
+                  : 0;
+                return `${context.label}: UGX ${value.toLocaleString()} (${percentage.toFixed(2)}%)`;
+              }
             }
           }
         }

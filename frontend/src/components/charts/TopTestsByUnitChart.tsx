@@ -21,8 +21,7 @@ export const TopTestsByUnitChart: React.FC<TopTestsByUnitChartProps> = ({ data }
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
 
-    // Get top 8 tests
-    const topTests = data.slice(0, 8);
+    const topTests = data.slice(0, 50);
 
     chartRef.current = new Chart(ctx, {
       type: 'bar',
@@ -32,9 +31,8 @@ export const TopTestsByUnitChart: React.FC<TopTestsByUnitChartProps> = ({ data }
           {
             label: 'Test Count',
             data: topTests.map(d => d.count),
-            backgroundColor: '#f59e0b',
-            borderRadius: 6,
-            borderSkipped: false
+            backgroundColor: '#21336a',
+            borderRadius: 0,
           }
         ]
       },
@@ -43,22 +41,24 @@ export const TopTestsByUnitChart: React.FC<TopTestsByUnitChartProps> = ({ data }
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: true,
-            labels: {
-              color: '#666',
-              padding: 15
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: (context: any) => `${context.parsed.x.toLocaleString()} tests`
             }
           }
         },
         indexAxis: 'y',
         scales: {
           x: {
+            position: 'top',
             beginAtZero: true,
             ticks: {
               color: '#999'
             },
             grid: {
-              color: 'rgba(0, 0, 0, 0.05)'
+              color: 'rgba(0, 0, 0, 0.1)'
             }
           },
           y: {

@@ -81,7 +81,22 @@ npm install
 npm run dev
 ```
 
-4. Open browser at `http://localhost:5173`
+4. **You must run both backend and frontend** for the dashboard to work. The frontend (port 5173) proxies `/api` to the backend (port 5000). If you see **404** for `/api/numbers`, `/api/tat`, `/api/tests`, etc., the backend is not running.
+
+   **Option A** – From the project root (run both in one terminal):
+   ```bash
+   npm install
+   npm run dev
+   ```
+   **Option B** – Two terminals:
+   ```bash
+   # Terminal 1
+   cd backend && npm run dev
+   # Terminal 2
+   cd frontend && npm run dev
+   ```
+
+5. Open browser at `http://localhost:5173`
 
 ### Default Login
 

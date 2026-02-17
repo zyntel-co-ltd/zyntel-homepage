@@ -15,8 +15,10 @@ export const getNumbersController = async (req: AuthRequest, res: Response) => {
 
     const data = await numbersService.getNumbersData(filters);
     res.json(data);
-  } catch (error) {
-    console.error('Get numbers error:', error);
-    res.status(500).json({ error: 'Failed to fetch numbers data' });
+  } catch (error: any) {
+    console.error('Get numbers error:', error?.message ?? error);
+    const body: { error: string; detail?: string } = { error: 'Failed to fetch numbers data' };
+    if (process.env.NODE_ENV !== 'production') body.detail = error?.message;
+    res.status(500).json(body);
   }
 };

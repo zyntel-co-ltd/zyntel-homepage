@@ -24,14 +24,13 @@ export const HospitalUnitRevenueChart: React.FC<HospitalUnitRevenueChartProps> =
     chartRef.current = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: data.map(d => d.unit),
+        labels: data.map(d => d.unit === 'mainLab' ? 'Main Laboratory' : d.unit === 'annex' ? 'Annex' : d.unit),
         datasets: [
           {
-            label: 'Revenue by Hospital Unit',
+            label: 'Revenue (UGX)',
             data: data.map(d => d.revenue),
-            backgroundColor: '#06b6d4',
-            borderRadius: 6,
-            borderSkipped: false
+            backgroundColor: '#21336a',
+            borderRadius: 0,
           }
         ]
       },
@@ -41,10 +40,14 @@ export const HospitalUnitRevenueChart: React.FC<HospitalUnitRevenueChartProps> =
         indexAxis: 'y',
         plugins: {
           legend: {
-            display: true,
-            labels: {
-              color: '#666',
-              padding: 15
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context: any) {
+                const value = context.parsed.x;
+                return `UGX ${value.toLocaleString()}`;
+              }
             }
           }
         },
@@ -52,11 +55,11 @@ export const HospitalUnitRevenueChart: React.FC<HospitalUnitRevenueChartProps> =
           x: {
             beginAtZero: true,
             ticks: {
-              callback: (value) => `UGX ${(value as number / 1000000).toFixed(0)}M`,
+              callback: (value) => `UGX ${(value as number).toLocaleString()}`,
               color: '#999'
             },
             grid: {
-              color: 'rgba(0, 0, 0, 0.05)'
+              color: 'rgba(0, 0, 0, 0.1)'
             }
           },
           y: {

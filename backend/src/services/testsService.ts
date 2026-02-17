@@ -32,7 +32,7 @@ export const getTestsData = async (filters: FilterParams) => {
   }
 
   if (filters.laboratory && filters.laboratory !== 'all') {
-    conditions.push(`laboratory = $${paramCount++}`);
+    conditions.push(`LOWER(TRIM(laboratory)) = LOWER(TRIM($${paramCount++}))`);
     params.push(filters.laboratory);
   }
 
@@ -88,7 +88,7 @@ export const getTestsData = async (filters: FilterParams) => {
     if (!topTestsByUnit[row.unit]) {
       topTestsByUnit[row.unit] = [];
     }
-    if (topTestsByUnit[row.unit].length < 10) {
+    if (topTestsByUnit[row.unit].length < 50) {
       topTestsByUnit[row.unit].push({ 
         test_name: row.test_name, 
         count: parseInt(row.count) 

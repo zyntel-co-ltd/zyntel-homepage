@@ -31,7 +31,7 @@ export const getReceptionData = async (filters: FilterParams, search?: string) =
   }
 
   if (filters.laboratory && filters.laboratory !== 'all') {
-    conditions.push(`laboratory = $${paramCount++}`);
+    conditions.push(`LOWER(TRIM(laboratory)) = LOWER(TRIM($${paramCount++}))`);
     params.push(filters.laboratory);
   }
 
@@ -42,6 +42,46 @@ export const getReceptionData = async (filters: FilterParams, search?: string) =
   }
 
   const whereClause = conditions.join(' AND ');
+  const hasPage = (filters as any).page != null && (filters as any).page !== '';
+  const limitNum = Math.min(parseInt(String((filters as any).limit), 10) || 50, 100);
+
+  if (hasPage) {
+    const page = Math.max(1, parseInt(String((filters as any).page), 10) || 1);
+    const offset = (page - 1) * limitNum;
+
+    const countResult = await query(
+      `SELECT COUNT(*) AS total FROM test_records WHERE ${whereClause}`,
+      params
+    );
+    const totalRecords = parseInt(countResult.rows[0].total as string, 10);
+    const totalPages = Math.max(1, Math.ceil(totalRecords / limitNum));
+
+    params.push(limitNum, offset);
+    const result = await query(
+      `SELECT 
+      id,
+      encounter_date,
+      lab_no,
+      shift,
+      laboratory,
+      lab_section_at_test,
+      test_name,
+      is_urgent,
+      is_received,
+      is_resulted,
+      is_cancelled,
+      cancellation_reason,
+      time_in,
+      time_out,
+      actual_tat
+     FROM test_records 
+     WHERE ${whereClause}
+     ORDER BY encounter_date DESC, time_in DESC
+     LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+    return { data: result.rows, totalRecords, totalPages };
+  }
 
   const result = await query(
     `SELECT 

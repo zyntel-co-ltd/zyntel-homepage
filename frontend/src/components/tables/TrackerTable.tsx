@@ -20,10 +20,11 @@ export interface TrackerRecord {
 
 interface TrackerTableProps {
   data: TrackerRecord[];
+  onLabNumberDoubleClick?: (labNumber: string) => void;
   isLoading?: boolean;
 }
 
-const TrackerTable: React.FC<TrackerTableProps> = ({ data, isLoading = false }) => {
+const TrackerTable: React.FC<TrackerTableProps> = ({ data, onLabNumberDoubleClick, isLoading = false }) => {
   const getProgressColor = (progress: string) => {
     switch (progress) {
       case 'completed':
@@ -148,7 +149,13 @@ const TrackerTable: React.FC<TrackerTableProps> = ({ data, isLoading = false }) 
             <tr key={row.id}>
               <td>{new Date(row.date).toLocaleDateString()}</td>
               <td>{row.shift}</td>
-              <td className="lab-number-cell">{row.labNumber}</td>
+              <td
+                className="lab-number-cell lab-number-cell-dbl"
+                onDoubleClick={() => onLabNumberDoubleClick?.(row.labNumber)}
+                title={onLabNumberDoubleClick ? 'Double-click to view all tests' : undefined}
+              >
+                {row.labNumber}
+              </td>
               <td>{row.unit}</td>
               <td>{row.labSection}</td>
               <td>{row.testName}</td>

@@ -4,8 +4,10 @@ export { default as Navbar } from './Navbar';
 export { default as Filters } from './Filters';
 export { default as Loader } from './Loader';
 export { default as Modal } from './Modal';
+export { default as TestsForLabDialog } from './TestsForLabDialog';
 export { default as DiceTile } from './DiceTile';
 export { default as KPICard } from './KPICard';
+export { Pagination } from './Pagination';
 
 // Buttons
 export { default as UrgentButton } from './buttons/UrgentButton';

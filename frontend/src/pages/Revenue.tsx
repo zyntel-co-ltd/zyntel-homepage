@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Header, Navbar, Filters, Loader, KPICard } from '@/components/shared';
+import { Header, Navbar, Filters, Loader } from '@/components/shared';
 import {
   DailyRevenueChart,
   SectionRevenueChart,
   TestRevenueChart,
-  HospitalUnitRevenueChart
+  HospitalUnitRevenueChart,
+  TargetProgressChart
 } from '@/components/charts';
 
 interface RevenueData {
@@ -80,50 +81,58 @@ const Revenue: React.FC = () => {
     });
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  };
+
   return (
     <div className="min-h-screen bg-background-color">
-      <header>
-        <div className="header-container">
-          <div className="header-left">
-            <div className="logo">
-              <img src="/images/logo-nakasero.png" alt="logo" />
-            </div>
-            <h1>NHL Laboratory Dashboard</h1>
-          </div>
-          <div className="page">
-            <span>Revenue</span>
-            <a href="/login" className="logout-button">Logout</a>
-            <a href="#" className="logout-button" onClick={resetFilters}>Reset Filters</a>
-            <span className="three-dots-menu-container">
-              <button className="three-dots-button">&#x22EE;</button>
-              <ul className="dropdown-menu">
-                <li><a href="#">Export charts as PDF</a></li>
-                <li><a href="/admin">Admin Panel</a></li>
-                <li><a href="/meta">Meta table</a></li>
-                <li><a href="/dashboard">Dashboard</a></li>
-              </ul>
-            </span>
-          </div>
-        </div>
-
+      <div className="chart-page-top">
+        <Header
+          title="NHL Laboratory Dashboard"
+          pageTitle="Revenue"
+          onLogout={handleLogout}
+          onResetFilters={resetFilters}
+          showResetFilters={true}
+          menuItems={[
+            { label: 'Export PDF', href: '#', icon: 'fas fa-file-pdf' },
+            { label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' },
+            { label: 'Meta table', href: '/meta', icon: 'fas fa-database' },
+            { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
+          ]}
+        />
         <Navbar type="chart" />
-
-        <div className="main-search-container">
+        <div className="chart-filters-section">
           <Filters filters={filters} onFilterChange={updateFilter} showLabSectionFilter={true} showShiftFilter={true} showLaboratoryFilter={true} />
         </div>
-      </header>
+      </div>
 
       {isLoading && <div className="loader"><div className="one"></div><div className="two"></div><div className="three"></div><div className="four"></div></div>}
 
-      <main className="dashboard-layout">
+      <main className="dashboard-layout chart-page-main">
         <aside className="revenue-progress-card">
-          <div className="label">Total Revenue</div>
-          <div className="percentage">{data?.percentage?.toFixed(1) || '0'}%</div>
-          <div className="amounts">
-            <span>UGX {data?.totalRevenue?.toLocaleString() || '0'}</span>
-            <span className="target">of UGX {data?.targetRevenue?.toLocaleString() || '1.5B'}</span>
-          </div>
-          <canvas className="chart-bar"></canvas>
+          {data ? (
+            <TargetProgressChart
+              currentValue={data.totalRevenue}
+              targetValue={data.targetRevenue || 1_500_000_000}
+              title="Total Revenue"
+              achievedColor="#4caf50"
+              gapColor="#e0e0e0"
+              valuePrefix="UGX "
+              targetLabel={`of UGX ${(data.targetRevenue || 1_500_000_000).toLocaleString()}`}
+              height={28}
+            />
+          ) : (
+            <div className="target-progress-chart">
+              <div className="target-progress-chart__label">Total Revenue</div>
+              <div className="target-progress-chart__percentage">0%</div>
+              <div className="target-progress-chart__amounts">
+                <span>UGX 0</span>
+                <span className="target-progress-chart__target">of UGX 0</span>
+              </div>
+            </div>
+          )}
 
           <div className="kpi-grid">
             <div className="kpi-card">
@@ -139,19 +148,7 @@ const Revenue: React.FC = () => {
 
         <div className="charts-area">
           <div className="dashboard-charts">
-            {/* Daily Revenue Chart */}
-            <div className="revenue">
-              <div className="chart-title">Daily Revenue</div>
-              <div className="chart-container">
-                {data?.dailyRevenue ? (
-                  <DailyRevenueChart data={data.dailyRevenue} />
-                ) : (
-                  <p style={{ textAlign: 'center', color: '#999' }}>No data available</p>
-                )}
-              </div>
-            </div>
-
-            {/* Section Revenue Chart */}
+            {/* 1. Section Revenue Chart - FIRST (Doughnut) */}
             <div className="section-revenue">
               <div className="chart-title">Revenue by Laboratory Section</div>
               <div className="chart-container">
@@ -163,7 +160,19 @@ const Revenue: React.FC = () => {
               </div>
             </div>
 
-            {/* Hospital Unit Revenue Chart */}
+            {/* 2. Daily Revenue Chart - SECOND (Line) */}
+            <div className="revenue">
+              <div className="chart-title">Daily Revenue</div>
+              <div className="chart-container">
+                {data?.dailyRevenue ? (
+                  <DailyRevenueChart data={data.dailyRevenue} />
+                ) : (
+                  <p style={{ textAlign: 'center', color: '#999' }}>No data available</p>
+                )}
+              </div>
+            </div>
+
+            {/* 3. Hospital Unit Revenue Chart - THIRD (Bar) */}
             <div className="hospital-unit">
               <div className="chart-title">Revenue by Hospital Unit</div>
               <div className="chart-container">
@@ -175,9 +184,9 @@ const Revenue: React.FC = () => {
               </div>
             </div>
 
-            {/* Test Revenue Chart */}
+            {/* 4. Test Revenue Chart - FOURTH (Bar) */}
             <div className="test-revenue">
-              <div className="chart-title">Revenue by Test (Top 50)</div>
+              <div className="chart-title">Revenue by Test</div>
               <div className="chart-container">
                 {data?.testRevenue ? (
                   <TestRevenueChart data={data.testRevenue} />
@@ -189,10 +198,6 @@ const Revenue: React.FC = () => {
           </div>
         </div>
       </main>
-
-      <div className="notice">
-        <p>Sorry! You need a wider screen to view the charts.</p>
-      </div>
 
       <footer>
         <p>&copy;2025 Zyntel</p>

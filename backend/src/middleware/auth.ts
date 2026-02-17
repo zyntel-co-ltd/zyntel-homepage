@@ -11,7 +11,8 @@ export interface AuthRequest extends Request {
   };
 }
 
-export const authenticateToken = (
+// Export as authenticate (what the routes are importing)
+export const authenticate = (
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -41,3 +42,6 @@ export const authenticateToken = (
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
+
+// Also export as authenticateToken for backward compatibility
+export const authenticateToken = authenticate;

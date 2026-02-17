@@ -1,34 +1,35 @@
 // frontend/src/pages/Meta.tsx
 import React, { useState, useEffect } from 'react';
-import { Header, Navbar, Filters, Loader, Modal } from '@/components/shared';
+import { Header, Navbar, Filters, Loader, Modal, Pagination } from '@/components/shared';
 import { MetaTable, type MetaRecord } from '@/components/tables';
 
 const Meta: React.FC = () => {
   const [filters, setFilters] = useState({
-    startDate: '',
-    endDate: '',
     labSection: 'all',
     search: ''
   });
-  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const rowsPerPage = 50;
+
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<MetaRecord[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<MetaRecord | null>(null);
-  
-  // Form state for modal
+  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     testName: '',
-    category: '',
     section: 'Chemistry',
     price: 0,
     expectedTAT: 60,
-    status: 'active' as 'active' | 'inactive' | 'archived'
   });
 
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, [filters, currentPage]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -36,8 +37,10 @@ const Meta: React.FC = () => {
       const params = new URLSearchParams();
       if (filters.labSection && filters.labSection !== 'all') params.append('labSection', filters.labSection);
       if (filters.search) params.append('search', filters.search);
+      params.append('page', String(currentPage));
+      params.append('limit', String(rowsPerPage));
 
-      const response = await fetch(`/api/meta?${params.toString()}`, {
+      const response = await fetch(`/api/metadata?${params.toString()}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -48,39 +51,27 @@ const Meta: React.FC = () => {
       }
 
       const result = await response.json();
-      setData(result);
+      const raw = Array.isArray(result) ? result : (result?.data ?? []);
+      const mapped: MetaRecord[] = raw.map((item: any) => ({
+        id: item.id,
+        testName: item.test_name,
+        section: item.current_lab_section,
+        price: item.current_price,
+        expectedTAT: item.current_tat,
+      }));
+
+      setData(mapped);
+      if (result?.totalRecords != null) {
+        setTotalRecords(result.totalRecords);
+        setTotalPages(result.totalPages ?? 1);
+      } else {
+        setTotalRecords(mapped.length);
+        setTotalPages(1);
+      }
     } catch (error) {
       console.error('Error fetching meta data:', error);
-      // Mock data for development
-      setData([
-        {
-          id: 1,
-          testName: 'Complete Blood Count',
-          category: 'Hematology',
-          section: 'Hematology',
-          price: 25000,
-          expectedTAT: 60,
-          status: 'active'
-        },
-        {
-          id: 2,
-          testName: 'Liver Function Test',
-          category: 'Chemistry',
-          section: 'Chemistry',
-          price: 35000,
-          expectedTAT: 90,
-          status: 'active'
-        },
-        {
-          id: 3,
-          testName: 'Malaria Parasite',
-          category: 'Microbiology',
-          section: 'Microbiology',
-          price: 15000,
-          expectedTAT: 45,
-          status: 'active'
-        }
-      ]);
+      // On error, clear data so the UI reflects that no real data is available
+      setData([]);
     } finally {
       setIsLoading(false);
     }
@@ -96,12 +87,13 @@ const Meta: React.FC = () => {
   };
 
   const handleResetFilters = () => {
-    setFilters({
-      startDate: '',
-      endDate: '',
-      labSection: 'all',
-      search: ''
-    });
+    setFilters({ labSection: 'all', search: '' });
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleEdit = (id: number) => {
@@ -110,33 +102,22 @@ const Meta: React.FC = () => {
       setEditingRecord(record);
       setFormData({
         testName: record.testName,
-        category: record.category,
         section: record.section,
         price: record.price,
         expectedTAT: record.expectedTAT,
-        status: record.status
       });
       setIsModalOpen(true);
     }
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this test?')) {
-      console.log('Deleting record:', id);
-      // API call to delete record
-      setData(prev => prev.filter(item => item.id !== id));
-    }
-  };
-
+  
   const handleAdd = () => {
     setEditingRecord(null);
     setFormData({
       testName: '',
-      category: '',
       section: 'Chemistry',
       price: 0,
       expectedTAT: 60,
-      status: 'active'
     });
     setIsModalOpen(true);
   };
@@ -161,7 +142,12 @@ const Meta: React.FC = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          testName: formData.testName,
+          price: formData.price,
+          tat: formData.expectedTAT,
+          labSection: formData.section,
+        })
       });
 
       if (response.ok) {
@@ -184,27 +170,47 @@ const Meta: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-color">
-      <Header
-        title="Nakasero Hospital Laboratory"
-        pageTitle="Meta Table"
-        onLogout={handleLogout}
-        onResetFilters={handleResetFilters}
-        showResetFilters={true}
-        menuItems={[
-          { label: 'Export CSV', href: '#', icon: 'fas fa-file-csv', onClick: handleExportCSV },
-          { label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' },
-          { label: 'Reception Table', href: '/reception', icon: 'fas fa-table' },
-          { label: 'Progress Table', href: '/progress', icon: 'fas fa-chart-bar' },
-          { label: 'Performance Table', href: '/performance', icon: 'fas fa-chart-line' },
-          { label: 'Tracker Table', href: '/tracker', icon: 'fas fa-list' },
-          { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' }
-        ]}
-      />
-
-      <Navbar type="table" />
-
-      <div className="main-search-container">
-        <div className="search-actions-row">
+      <div className={`table-page-top ${!filtersOpen ? 'collapsed' : ''}`}>
+        <div className="header-wrapper">
+          <Header
+            title="Nakasero Hospital Laboratory"
+            pageTitle="Meta Table"
+            onLogout={handleLogout}
+            onResetFilters={handleResetFilters}
+            showResetFilters={true}
+            menuItems={[
+              { label: 'Export CSV', href: '#', icon: 'fas fa-file-csv', onClick: handleExportCSV },
+              { label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' },
+              { label: 'Reception Table', href: '/reception', icon: 'fas fa-table' },
+              { label: 'Progress Table', href: '/progress', icon: 'fas fa-chart-bar' },
+              { label: 'Performance Table', href: '/performance', icon: 'fas fa-chart-line' },
+              { label: 'Tracker Table', href: '/tracker', icon: 'fas fa-list' },
+              { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' }
+            ]}
+          />
+          <Navbar type="table" />
+        </div>
+        <button type="button" className="table-page-toggle" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
+          <i className={`fas fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden />
+          {filtersOpen ? 'Hide menu' : 'Menu'}
+        </button>
+        <div className="filters-row">
+          <button type="button" className="filters-panel-trigger" onClick={() => setFiltersPanelOpen(true)} aria-label="Open filters">
+            <i className="fas fa-filter" aria-hidden /> Filters
+          </button>
+          <div className="filters-inline">
+            <Filters
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              showPeriodFilter={false}
+              showLabSectionFilter={true}
+              showShiftFilter={false}
+              showLaboratoryFilter={false}
+              showDateFilter={false}
+            />
+          </div>
+        </div>
+        <div className="table-search-bar">
           <div className="search-container">
             <input
               type="text"
@@ -216,6 +222,14 @@ const Meta: React.FC = () => {
             <i className="fas fa-search search-icon"></i>
           </div>
         </div>
+      </div>
+
+      <div className={`filters-panel-overlay ${filtersPanelOpen ? 'visible' : ''}`} onClick={() => setFiltersPanelOpen(false)} aria-hidden />
+      <div className={`filters-panel ${filtersPanelOpen ? 'open' : ''}`}>
+        <div className="filters-panel-header">
+          <h3>Filters</h3>
+          <button type="button" className="filters-panel-close" onClick={() => setFiltersPanelOpen(false)} aria-label="Close filters">&times;</button>
+        </div>
         <Filters
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -223,22 +237,30 @@ const Meta: React.FC = () => {
           showLabSectionFilter={true}
           showShiftFilter={false}
           showLaboratoryFilter={false}
+          showDateFilter={false}
         />
       </div>
 
-      <main>
+      <main className={`table-page-main ${filtersOpen ? 'filters-expanded' : ''}`}>
         {isLoading ? (
           <Loader isLoading={true} />
         ) : (
-          <section className="card">
-            <MetaTable
-              data={data}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onAdd={handleAdd}
-              isLoading={isLoading}
+          <>
+            <section className="card">
+              <MetaTable
+                data={data}
+                onEdit={handleEdit}
+                onAdd={handleAdd}
+                isLoading={isLoading}
+              />
+            </section>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalRecords={totalRecords}
+              onPageChange={handlePageChange}
             />
-          </section>
+          </>
         )}
       </main>
 
@@ -248,122 +270,83 @@ const Meta: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         title={editingRecord ? 'Edit Test' : 'Add New Test'}
       >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Test Name <span className="text-red-500">*</span>
+        <div className="form-grid">
+          <div className="form-field span-2">
+            <label className="form-label">
+              Test Name <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="form-input"
               value={formData.testName}
               onChange={(e) => handleFormChange('testName', e.target.value)}
               placeholder="Enter test name"
               required
             />
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.category}
-                onChange={(e) => handleFormChange('category', e.target.value)}
-                placeholder="Enter category"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Section <span className="text-red-500">*</span>
-              </label>
-              <select 
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.section}
-                onChange={(e) => handleFormChange('section', e.target.value)}
-              >
-                <option value="Chemistry">Chemistry</option>
-                <option value="Hematology">Hematology</option>
-                <option value="Microbiology">Microbiology</option>
-                <option value="Immunology">Immunology</option>
-                <option value="Molecular">Molecular</option>
-                <option value="Serology">Serology</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price (UGX) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.price}
-                onChange={(e) => handleFormChange('price', parseInt(e.target.value) || 0)}
-                placeholder="Enter price"
-                min="0"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Expected TAT (minutes) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.expectedTAT}
-                onChange={(e) => handleFormChange('expectedTAT', parseInt(e.target.value) || 60)}
-                placeholder="Enter TAT"
-                min="1"
-                required
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
+
+          <div className="form-field">
+            <label className="form-label">
+              Section <span style={{ color: '#ef4444' }}>*</span>
             </label>
-            <select 
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.status}
-              onChange={(e) => handleFormChange('status', e.target.value as any)}
+            <select
+              className="form-select"
+              value={formData.section}
+              onChange={(e) => handleFormChange('section', e.target.value)}
             >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="archived">Archived</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Hematology">Hematology</option>
+              <option value="Microbiology">Microbiology</option>
+              <option value="Immunology">Immunology</option>
+              <option value="Molecular">Molecular</option>
+              <option value="Serology">Serology</option>
             </select>
           </div>
+
+          <div className="form-field">
+            <label className="form-label">
+              Price (UGX) <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            <input
+              type="number"
+              className="form-input"
+              value={formData.price}
+              onChange={(e) => handleFormChange('price', parseInt(e.target.value) || 0)}
+              placeholder="0"
+              min="0"
+              required
+            />
+          </div>
+
+          <div className="form-field">
+            <label className="form-label">
+              Expected TAT (minutes) <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            <input
+              type="number"
+              className="form-input"
+              value={formData.expectedTAT}
+              onChange={(e) => handleFormChange('expectedTAT', parseInt(e.target.value) || 60)}
+              placeholder="60"
+              min="1"
+              required
+            />
+          </div>
         </div>
-        
-        <div className="mt-6 flex justify-end space-x-3">
-          <button
-            onClick={() => setIsModalOpen(false)}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-          >
+
+        <div className="form-actions">
+          <button onClick={() => setIsModalOpen(false)} className="btn btn--secondary">
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!formData.testName || !formData.section || formData.price <= 0 || formData.expectedTAT <= 0}
-            className="px-4 py-2 text-sm font-medium text-white bg-main-color rounded-md hover:bg-hover-color focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn--primary"
           >
             {editingRecord ? 'Update' : 'Create'}
           </button>
         </div>
       </Modal>
-
-      <div className="notice">
-        <p>Sorry! You need a wider screen to view the table.</p>
-      </div>
 
       <footer>
         <p>&copy;2025 Zyntel</p>

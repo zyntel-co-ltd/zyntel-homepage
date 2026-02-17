@@ -4,25 +4,31 @@ async function verifyData() {
   console.log('🔍 Verifying database schema and data integrity...\n');
 
   try {
-    // Check table counts
-    console.log('📊 Table Counts:');
+    // Show which DB we're using (mask password)
+    const dbUrl = process.env.DATABASE_URL || '';
+    const dbName = dbUrl.replace(/^[^@]+@/, '').split('/').pop()?.split('?')[0] || 'unknown';
+    console.log(`📌 Database: ${dbName}\n`);
+
+    // Primary table for dashboard: patients (lab encounters)
+    const patientsCount = await query('SELECT COUNT(*) as count FROM patients');
+    const patientsTotal = parseInt(patientsCount.rows[0].count as string);
+
+    console.log('📊 Table Counts (dashboard uses \'patients\'):');
+    console.log(`   Patients (lab encounters): ${patientsTotal}  ← main data for Performance / Progress / LRIDS`);
+    if (patientsTotal === 0) {
+      console.log('\n   ⚠️  No patient data. Run: npm run transform:full && npm run ingest');
+    }
 
     const encountersCount = await query('SELECT COUNT(*) as count FROM encounters');
-    console.log(`   Encounters: ${encountersCount.rows[0].count}`);
-
     const testRecordsCount = await query('SELECT COUNT(*) as count FROM test_records');
-    console.log(`   Test Records: ${testRecordsCount.rows[0].count}`);
-
     const testMetadataCount = await query('SELECT COUNT(*) as count FROM test_metadata');
-    console.log(`   Test Metadata: ${testMetadataCount.rows[0].count}`);
-
     const timeoutRecordsCount = await query('SELECT COUNT(*) as count FROM timeout_records');
-    console.log(`   Timeout Records: ${timeoutRecordsCount.rows[0].count}`);
-
-    const patientsCount = await query('SELECT COUNT(*) as count FROM patients');
-    console.log(`   Patients: ${patientsCount.rows[0].count} (expected to be empty initially)`);
-
     const unmatchedTestsCount = await query('SELECT COUNT(*) as count FROM unmatched_tests');
+
+    console.log(`   Encounters: ${encountersCount.rows[0].count}`);
+    console.log(`   Test Records: ${testRecordsCount.rows[0].count}`);
+    console.log(`   Test Metadata: ${testMetadataCount.rows[0].count}`);
+    console.log(`   Timeout Records: ${timeoutRecordsCount.rows[0].count}`);
     console.log(`   Unmatched Tests: ${unmatchedTestsCount.rows[0].count}`);
 
     // Check for data integrity
@@ -72,11 +78,30 @@ async function verifyData() {
     // Show sample data
     console.log('\n📝 Sample Data:');
 
+    if (patientsTotal > 0) {
+      const samplePatients = await query(
+        `SELECT lab_number, date, shift, unit, time_in, daily_tat, request_delay_status
+         FROM patients ORDER BY date DESC, time_in DESC NULLS LAST LIMIT 3`
+      );
+      console.log('\n   Sample Patients (lab encounters):');
+      samplePatients.rows.forEach((row: any) => {
+        const d = row.date ? new Date(row.date) : null;
+        const dateStr = d && !isNaN(d.getTime()) ? d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+        const timeIn = row.time_in ? new Date(row.time_in).toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'N/A';
+        const tatStr = row.daily_tat != null ? `${row.daily_tat}min` : 'N/A';
+        console.log(`   - Lab: ${row.lab_number}, Date: ${dateStr}, Time In: ${timeIn}, Shift: ${row.shift}, Unit: ${row.unit}, TAT: ${tatStr}, Status: ${row.request_delay_status}`);
+      });
+    }
+
     const sampleEncounters = await query('SELECT * FROM encounters LIMIT 3');
     console.log('\n   Sample Encounters:');
-    sampleEncounters.rows.forEach(row => {
-      console.log(`   - Lab: ${row.lab_no}, Invoice: ${row.invoice_no}, Date: ${row.encounter_date}, Source: ${row.source}`);
-    });
+    if (sampleEncounters.rows.length > 0) {
+      sampleEncounters.rows.forEach((row: any) => {
+        console.log(`   - Lab: ${row.lab_no}, Invoice: ${row.invoice_no}, Date: ${row.encounter_date}, Source: ${row.source}`);
+      });
+    } else {
+      console.log('   (none; dashboard uses patients table)');
+    }
 
     const sampleTests = await query(
       `SELECT tr.*, e.invoice_no, e.encounter_date
@@ -85,9 +110,13 @@ async function verifyData() {
        LIMIT 3`
     );
     console.log('\n   Sample Test Records (with encounter data):');
-    sampleTests.rows.forEach(row => {
-      console.log(`   - Test: ${row.test_name}, Lab: ${row.encounter_id}, Invoice: ${row.invoice_no}, Date: ${row.encounter_date}`);
-    });
+    if (sampleTests.rows.length > 0) {
+      sampleTests.rows.forEach((row: any) => {
+        console.log(`   - Test: ${row.test_name}, Lab: ${row.encounter_id}, Invoice: ${row.invoice_no}, Date: ${row.encounter_date}`);
+      });
+    } else {
+      console.log('   (none; dashboard uses patients table)');
+    }
 
     // Check for tests with time_out
     const testsWithTimeout = await query(
@@ -103,8 +132,13 @@ async function verifyData() {
     // Summary
     console.log('\n✅ Data verification complete!');
     console.log(`\n📈 Summary:`);
-    console.log(`   - Total encounters: ${encountersCount.rows[0].count}`);
-    console.log(`   - Total test records: ${testRecordsCount.rows[0].count}`);
+    if (patientsTotal > 0) {
+      console.log(`   ✅ Database has data: ${patientsTotal} patients (lab encounters) for dashboard.`);
+    } else {
+      console.log(`   ❌ No patient data. Run: npm run transform:full && npm run ingest`);
+    }
+    console.log(`   - Encounters: ${encountersCount.rows[0].count} (optional)`);
+    console.log(`   - Test records: ${testRecordsCount.rows[0].count} (optional)`);
     console.log(`   - Tests with results: ${withTimeout} (${timeoutPercentage}%)`);
     console.log(`   - Data integrity: ${duplicateLabNo.rows.length === 0 && parseInt(orphanedTests.rows[0].count) === 0 ? '✅ All checks passed' : '⚠️  Issues found above'}`);
 

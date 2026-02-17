@@ -2,16 +2,18 @@
 import React, { useState, useEffect } from 'react';
 
 interface LRIDSData {
-  labNo: string;
-  timeIn: string;
-  progress: 'Pending' | 'In Progress' | 'Ready';
+  lab_number?: string;
+  lab_no?: string;
+  time_in?: string;
+  request_time_expected?: string;
+  request_time_out?: string;
+  time_out?: string;
 }
 
 const LRIDS: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<LRIDSData[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -32,204 +34,143 @@ const LRIDS: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      // LRIDS is a public endpoint - NO AUTH REQUIRED
-      const response = await fetch('/api/lrids');
+      const response = await fetch('/api/progress?limit=100', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      setData(result);
-      setError(null);
+      const lridsData = result.data || result;
+      setData(Array.isArray(lridsData) ? lridsData : []);
     } catch (error) {
       console.error('Error fetching LRIDS data:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch data');
-      // Set empty array on error - this is a public display, show empty state
       setData([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getProgressColor = (progress: string) => {
-    switch (progress) {
-      case 'Ready':
-        return '#4CAF50';
-      case 'In Progress':
-        return '#FF9800';
-      default:
-        return '#9E9E9E';
-    }
-  };
+  const calculateProgress = (timeExpected: string, timeOut?: string) => {
+    const now = new Date();
+    
+    const hasTimeOut = timeOut && timeOut !== 'N/A' && timeOut !== null;
+    const timeOutDate = hasTimeOut ? new Date(timeOut) : null;
+    const isTimeOutValid = timeOutDate && !isNaN(timeOutDate.getTime());
+    const isTimeOutInPast = isTimeOutValid && timeOutDate! <= now;
 
-  const getProgressIcon = (progress: string) => {
-    switch (progress) {
-      case 'Ready':
-        return 'fa-check-circle';
-      case 'In Progress':
-        return 'fa-spinner fa-spin';
-      default:
-        return 'fa-clock';
+    const hasTimeExpected = timeExpected && timeExpected !== 'N/A' && timeExpected !== null;
+    const timeExpectedDate = hasTimeExpected ? new Date(timeExpected) : null;
+    const isTimeExpectedValid = timeExpectedDate && !isNaN(timeExpectedDate.getTime());
+    const isTimeExpectedInPast = isTimeExpectedValid && timeExpectedDate! <= now;
+
+    if (isTimeOutValid && isTimeOutInPast) {
+      return { text: 'Completed', cssClass: 'progress-complete-actual' };
     }
+    
+    if (isTimeExpectedValid && isTimeExpectedInPast && !isTimeOutValid) {
+      return { text: 'Delayed', cssClass: 'progress-overdue' };
+    }
+    
+    if (isTimeExpectedValid && !isTimeExpectedInPast) {
+      const timeLeft = timeExpectedDate!.getTime() - now.getTime();
+      const timeLeftInMinutes = Math.floor(timeLeft / (1000 * 60));
+      const timeLeftInHours = Math.floor(timeLeft / (1000 * 60 * 60));
+      const timeLeftInDays = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+      
+      if (timeLeftInMinutes <= 10 && timeLeftInMinutes > 0) {
+        return { text: `${timeLeftInMinutes} min(s) remaining`, cssClass: 'progress-urgent' };
+      } else if (timeLeftInDays > 0) {
+        return { text: `${timeLeftInDays} day(s) remaining`, cssClass: 'progress-pending' };
+      } else if (timeLeftInHours > 0) {
+        return { text: `${timeLeftInHours} hr(s) remaining`, cssClass: 'progress-pending' };
+      } else if (timeLeftInMinutes > 0) {
+        return { text: `${timeLeftInMinutes} min(s) remaining`, cssClass: 'progress-pending' };
+      }
+      return { text: 'Due now', cssClass: 'progress-pending' };
+    }
+    
+    return { text: 'No ETA', cssClass: 'progress-pending' };
   };
 
   return (
-    <div className="lrids min-h-screen">
+    <div className="min-h-screen bg-background-color lrids">
       <header>
-        <div className="header-container">
+        <div className="header-container header-container--lrids">
           <div className="header-left">
             <div className="logo">
               <img src="/images/logo-nakasero.png" alt="logo" />
             </div>
-            <h1>NHL Laboratory Dashboard</h1>
+            <h1>Nakasero Hospital Laboratory</h1>
           </div>
-          <div className="page">
-            <span>Live Results & IDS</span>
+          <div className="page page-table page--lrids">
+            <span>Laboratory Report Information Display System - LRIDS</span>
+          </div>
+        </div>
+        <div className="main-search-container">
+          <div className="search-actions-row">
+            <div className="current-date-time">
+              <span id="currentDate" style={{ color: 'white', fontWeight: 'bold' }}>
+                {currentTime.toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </span>
+              <span id="currentTime" style={{ color: 'white', fontWeight: 'bold', marginLeft: '20px' }}>
+                {currentTime.toLocaleTimeString('en-US')}
+              </span>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="main-search-container">
-        <div className="current-date-time">
-          <div>
-            <i className="fas fa-calendar mr-2"></i>
-            {currentTime.toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </div>
-          <div>
-            <i className="fas fa-clock mr-2"></i>
-            {currentTime.toLocaleTimeString('en-US')}
-          </div>
-        </div>
-      </div>
-
       <main>
-        {isLoading ? (
-          <div className="loader">
-            <div className="one"></div>
-            <div className="two"></div>
-            <div className="three"></div>
-            <div className="four"></div>
-          </div>
-        ) : (
-          <section className="card">
-            <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-              <h2 style={{ color: '#00f0ff', fontSize: '1.5rem', marginBottom: '10px' }}>
-                <i className="fas fa-heartbeat mr-2"></i>
-                Laboratory Results Information Display System
-              </h2>
-              <p style={{ color: '#00f0ff', fontSize: '0.9rem' }}>
-                Auto-refreshing every 30 seconds | Showing today's results
-              </p>
-            </div>
-
-            {error && (
-              <div style={{
-                padding: '15px',
-                margin: '20px 0',
-                backgroundColor: 'rgba(244, 67, 54, 0.1)',
-                border: '1px solid #f44336',
-                borderRadius: '5px',
-                color: '#f44336',
-                textAlign: 'center'
-              }}>
-                <i className="fas fa-exclamation-triangle mr-2"></i>
-                {error}
-              </div>
-            )}
-
-            <div className="table-container">
-              <table className="neon-table">
-                <thead>
+        <section className="card">
+          <div className="table-container">
+            <table id="lrids" className="neon-table">
+              <thead>
+                <tr>
+                  <th className="lab-number-cell">Lab Number</th>
+                  <th>Time In</th>
+                  <th>Progress</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
                   <tr>
-                    <th style={{ width: '30%' }}>
-                      <i className="fas fa-flask mr-2"></i>
-                      Lab Number
-                    </th>
-                    <th style={{ width: '30%' }}>
-                      <i className="fas fa-clock mr-2"></i>
-                      Time In
-                    </th>
-                    <th style={{ width: '40%' }}>
-                      <i className="fas fa-tasks mr-2"></i>
-                      Progress
-                    </th>
+                    <td colSpan={3} className="text-center py-4 text-gray-500">Loading data...</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {data.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} style={{ textAlign: 'center', padding: '40px' }}>
-                        <i className="fas fa-inbox" style={{ fontSize: '3rem', color: '#00f0ff', marginBottom: '15px', display: 'block' }}></i>
-                        <p style={{ color: '#00f0ff', fontSize: '1.1rem' }}>
-                          No test results available at the moment
-                        </p>
-                        <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '10px' }}>
-                          Results will appear here as they become ready
-                        </p>
-                      </td>
-                    </tr>
-                  ) : (
-                    data.map((row, index) => (
+                ) : data.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="text-center py-4 text-gray-500">No data available</td>
+                  </tr>
+                ) : (
+                  data.map((row, index) => {
+                    const labNumber = row.lab_number || row.lab_no;
+                    const timeIn = row.time_in;
+                    const timeExpected = row.request_time_expected;
+                    const timeOut = row.request_time_out || row.time_out;
+                    
+                    const progress = calculateProgress(timeExpected || '', timeOut);
+                    return (
                       <tr key={index}>
-                        <td style={{ 
-                          fontWeight: 'bold', 
-                          fontSize: '1.2rem',
-                          fontFamily: 'monospace'
-                        }}>
-                          {row.labNo}
-                        </td>
-                        <td style={{ fontSize: '1.1rem' }}>
-                          {row.timeIn}
-                        </td>
-                        <td>
-                          <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '10px'
-                          }}>
-                            <i 
-                              className={`fas ${getProgressIcon(row.progress)}`} 
-                              style={{ 
-                                color: getProgressColor(row.progress),
-                                fontSize: '1.5rem'
-                              }}
-                            ></i>
-                            <span style={{
-                              fontSize: '1.2rem',
-                              fontWeight: 'bold',
-                              color: getProgressColor(row.progress)
-                            }}>
-                              {row.progress}
-                            </span>
-                          </div>
-                        </td>
+                        <td className="lab-number-cell">{labNumber || 'N/A'}</td>
+                        <td>{timeIn ? new Date(timeIn).toLocaleString() : 'N/A'}</td>
+                        <td className={progress.cssClass}>{progress.text}</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {data.length > 0 && (
-              <div style={{
-                marginTop: '20px',
-                textAlign: 'center',
-                color: '#00f0ff',
-                fontSize: '0.9rem'
-              }}>
-                <i className="fas fa-info-circle mr-2"></i>
-                Showing {data.length} result{data.length !== 1 ? 's' : ''}
-              </div>
-            )}
-          </section>
-        )}
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </main>
 
       <footer>

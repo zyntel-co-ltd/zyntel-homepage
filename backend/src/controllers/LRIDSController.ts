@@ -3,7 +3,8 @@ import * as lridsService from '../services/lridsService';
 
 export const getLRIDSController = async (req: Request, res: Response) => {
   try {
-    const data = await lridsService.getLRIDSData();
+    const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
+    const data = await lridsService.getLRIDSData(limit);
     res.json(data);
   } catch (error) {
     console.error('Get LRIDS error:', error);

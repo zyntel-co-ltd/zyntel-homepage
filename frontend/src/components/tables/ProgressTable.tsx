@@ -2,16 +2,14 @@
 import React from 'react';
 
 export interface ProgressRecord {
-  id: number;
-  date: string;
-  shift: string;
-  labNumber: string;
-  unit: string;
-  timeIn: string;
-  dailyTAT: number;
-  timeExpected: string;
-  progress: 'pending' | 'in-progress' | 'completed';
-  progressPercentage?: number;
+  date?: string;
+  shift?: string;
+  lab_number?: string;
+  Hospital_Unit?: string;
+  time_in?: string;
+  daily_tat?: number;
+  request_time_expected?: string;
+  request_time_out?: string;
 }
 
 interface ProgressTableProps {
@@ -20,39 +18,52 @@ interface ProgressTableProps {
 }
 
 const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }) => {
-  const getProgressColor = (progress: string) => {
-    switch (progress) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'in-progress':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const calculateProgress = (timeExpected: string, timeOut?: string) => {
+    const now = new Date();
+    
+    // Check if timeOut exists and is valid
+    const hasTimeOut = timeOut && timeOut !== 'N/A' && timeOut !== null && timeOut !== undefined;
+    const timeOutDate = hasTimeOut ? new Date(timeOut) : null;
+    const isTimeOutValid = timeOutDate && !isNaN(timeOutDate.getTime());
+    const isTimeOutInPast = isTimeOutValid && timeOutDate! <= now;
 
-  const getProgressIcon = (progress: string) => {
-    switch (progress) {
-      case 'completed':
-        return 'fas fa-check-circle text-green-500';
-      case 'in-progress':
-        return 'fas fa-spinner text-yellow-500 fa-spin';
-      default:
-        return 'fas fa-clock text-gray-500';
-    }
-  };
+    // Check if timeExpected exists and is valid
+    const hasTimeExpected = timeExpected && timeExpected !== 'N/A' && timeExpected !== null && timeExpected !== undefined;
+    const timeExpectedDate = hasTimeExpected ? new Date(timeExpected) : null;
+    const isTimeExpectedValid = timeExpectedDate && !isNaN(timeExpectedDate.getTime());
+    const isTimeExpectedInPast = isTimeExpectedValid && timeExpectedDate! <= now;
 
-  const getProgressBar = (percentage?: number) => {
-    const percent = percentage || 0;
-    return (
-      <div className="w-full bg-gray-200 rounded-full h-2.5">
-        <div
-          className="bg-blue-600 h-2.5 rounded-full"
-          style={{ width: `${percent}%` }}
-        ></div>
-        <span className="text-xs text-gray-600 ml-2">{percent}%</span>
-      </div>
-    );
+    // ACTUALLY COMPLETED
+    if (isTimeOutValid && isTimeOutInPast) {
+      return { text: 'Completed', cssClass: 'progress-complete-actual' };
+    }
+    
+    // DELAYED
+    if (isTimeExpectedValid && isTimeExpectedInPast && !isTimeOutValid) {
+      return { text: 'Delayed', cssClass: 'progress-overdue' };
+    }
+    
+    // PENDING with time remaining
+    if (isTimeExpectedValid && !isTimeExpectedInPast) {
+      const timeLeft = timeExpectedDate!.getTime() - now.getTime();
+      const timeLeftInMinutes = Math.floor(timeLeft / (1000 * 60));
+      const timeLeftInHours = Math.floor(timeLeft / (1000 * 60 * 60));
+      const timeLeftInDays = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+      
+      if (timeLeftInMinutes <= 10 && timeLeftInMinutes > 0) {
+        return { text: `${timeLeftInMinutes} min(s) remaining`, cssClass: 'progress-urgent' };
+      } else if (timeLeftInDays > 0) {
+        return { text: `${timeLeftInDays} day(s) remaining`, cssClass: 'progress-pending' };
+      } else if (timeLeftInHours > 0) {
+        return { text: `${timeLeftInHours} hr(s) remaining`, cssClass: 'progress-pending' };
+      } else if (timeLeftInMinutes > 0) {
+        return { text: `${timeLeftInMinutes} min(s) remaining`, cssClass: 'progress-pending' };
+      } else {
+        return { text: 'Due now', cssClass: 'progress-pending' };
+      }
+    }
+    
+    return { text: 'No ETA', cssClass: 'progress-pending' };
   };
 
   if (isLoading) {
@@ -132,30 +143,31 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }
           </tr>
         </thead>
         <tbody>
-          {data.map((row) => (
-            <tr key={row.id}>
-              <td>{new Date(row.date).toLocaleDateString()}</td>
-              <td>{row.shift}</td>
-              <td className="lab-number-cell">{row.labNumber}</td>
-              <td>{row.unit}</td>
-              <td>{row.timeIn}</td>
-              <td>
-                <span className={`px-2 py-1 rounded-full ${row.dailyTAT > 120 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                  {row.dailyTAT} min
-                </span>
-              </td>
-              <td>{row.timeExpected}</td>
-              <td>
-                <div className="flex items-center space-x-2">
-                  <i className={getProgressIcon(row.progress)}></i>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getProgressColor(row.progress)}`}>
-                    {row.progress.charAt(0).toUpperCase() + row.progress.slice(1)}
-                  </span>
-                  {row.progress === 'in-progress' && getProgressBar(row.progressPercentage)}
-                </div>
-              </td>
-            </tr>
-          ))}
+          {data.map((row, index) => {
+            const dateIn = row.date ? new Date(row.date) : new Date();
+            const formattedDate = dateIn.toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
+            
+            // Calculate progress using Flask's logic
+            const progress = calculateProgress(row.request_time_expected || '', row.request_time_out);
+            
+            return (
+              <tr key={index}>
+                <td>{formattedDate}</td>
+                <td>{row.shift || 'N/A'}</td>
+                <td className="lab-number-cell">{row.lab_number || 'N/A'}</td>
+                <td>{row.Hospital_Unit || 'N/A'}</td>
+                <td>{row.time_in ? new Date(row.time_in).toLocaleString() : 'N/A'}</td>
+                <td>{row.daily_tat || 'N/A'}</td>
+                <td>{row.request_time_expected ? new Date(row.request_time_expected).toLocaleString() : 'N/A'}</td>
+                <td className={progress.cssClass}>{progress.text}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

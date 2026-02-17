@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Modal } from '@/components/shared';
 
 interface User {
   id: number;
@@ -1311,220 +1312,73 @@ const Admin: React.FC = () => {
         )}
       </main>
 
-      {/* User Modal */}
-      {userModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: '0',
-          left: '0',
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '30px',
-            width: '100%',
-            maxWidth: '500px',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)'
-          }}>
-            <h3 style={{
-              fontSize: '1.3rem',
-              fontWeight: '600',
-              color: 'var(--main-color)',
-              marginBottom: '25px'
-            }}>
-              {editingUser ? 'Edit User' : 'Add New User'}
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  fontWeight: '500',
-                  color: 'var(--border-color)',
-                  marginBottom: '8px'
-                }}>
-                  Username
-                </label>
-                <input
-                  type="text"
-                  value={userFormData.username}
-                  onChange={(e) =>
-                    setUserFormData({ ...userFormData, username: e.target.value })
-                  }
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    fontSize: '0.9rem',
-                    color: 'var(--main-color)',
-                    backgroundColor: editingUser ? '#f3f4f6' : 'white'
-                  }}
-                  disabled={!!editingUser}
-                />
-              </div>
+      <Modal
+        isOpen={userModalOpen}
+        onClose={() => setUserModalOpen(false)}
+        title={editingUser ? 'Edit User' : 'Add New User'}
+      >
+        <div className="form-grid">
+          <div className="form-field span-2">
+            <label className="form-label">Username</label>
+            <input
+              type="text"
+              className="form-input"
+              value={userFormData.username}
+              onChange={(e) => setUserFormData({ ...userFormData, username: e.target.value })}
+              disabled={!!editingUser}
+            />
+          </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  fontWeight: '500',
-                  color: 'var(--border-color)',
-                  marginBottom: '8px'
-                }}>
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={userFormData.email}
-                  onChange={(e) =>
-                    setUserFormData({ ...userFormData, email: e.target.value })
-                  }
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    fontSize: '0.9rem',
-                    color: 'var(--main-color)',
-                    backgroundColor: 'white'
-                  }}
-                />
-              </div>
+          <div className="form-field span-2">
+            <label className="form-label">Email</label>
+            <input
+              type="email"
+              className="form-input"
+              value={userFormData.email}
+              onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
+            />
+          </div>
 
-              {!editingUser && (
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.9rem',
-                    fontWeight: '500',
-                    color: 'var(--border-color)',
-                    marginBottom: '8px'
-                  }}>
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    value={userFormData.password}
-                    onChange={(e) =>
-                      setUserFormData({ ...userFormData, password: e.target.value })
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '6px',
-                      fontSize: '0.9rem',
-                      color: 'var(--main-color)',
-                      backgroundColor: 'white'
-                    }}
-                  />
-                </div>
-              )}
-
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  fontWeight: '500',
-                  color: 'var(--border-color)',
-                  marginBottom: '8px'
-                }}>
-                  Role
-                </label>
-                <select
-                  value={userFormData.role}
-                  onChange={(e) =>
-                    setUserFormData({ ...userFormData, role: e.target.value as any })
-                  }
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    fontSize: '0.9rem',
-                    color: 'var(--main-color)',
-                    backgroundColor: 'white'
-                  }}
-                >
-                  <option value="admin">Admin</option>
-                  <option value="manager">Manager</option>
-                  <option value="technician">Technician</option>
-                  <option value="viewer">Viewer</option>
-                </select>
-              </div>
+          {!editingUser && (
+            <div className="form-field span-2">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                className="form-input"
+                value={userFormData.password}
+                onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+              />
             </div>
+          )}
 
-            <div style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '15px',
-              marginTop: '30px'
-            }}>
-              <button
-                onClick={() => setUserModalOpen(false)}
-                style={{
-                  padding: '10px 20px',
-                  color: 'var(--border-color)',
-                  backgroundColor: 'transparent',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: '500',
-                  fontSize: '0.9rem',
-                  transition: 'all 0.3s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = 'var(--main-color)';
-                  e.currentTarget.style.borderColor = 'var(--main-color)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = 'var(--border-color)';
-                  e.currentTarget.style.borderColor = 'var(--border-color)';
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUserSubmit}
-                style={{
-                  padding: '10px 25px',
-                  backgroundColor: 'var(--main-color)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: '500',
-                  fontSize: '0.9rem',
-                  transition: 'background-color 0.3s',
-                  opacity: (!userFormData.username || (!editingUser && !userFormData.password)) ? 0.5 : 1
-                }}
-                disabled={!userFormData.username || (!editingUser && !userFormData.password)}
-                onMouseEnter={(e) => {
-                  if (!(!userFormData.username || (!editingUser && !userFormData.password))) {
-                    e.currentTarget.style.backgroundColor = 'var(--hover-color)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!(!userFormData.username || (!editingUser && !userFormData.password))) {
-                    e.currentTarget.style.backgroundColor = 'var(--main-color)';
-                  }
-                }}
-              >
-                {editingUser ? 'Update User' : 'Create User'}
-              </button>
-            </div>
+          <div className="form-field span-2">
+            <label className="form-label">Role</label>
+            <select
+              className="form-select"
+              value={userFormData.role}
+              onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value as any })}
+            >
+              <option value="admin">Admin</option>
+              <option value="manager">Manager</option>
+              <option value="technician">Technician</option>
+              <option value="viewer">Viewer</option>
+            </select>
           </div>
         </div>
-      )}
+
+        <div className="form-actions">
+          <button className="btn btn--secondary" onClick={() => setUserModalOpen(false)}>
+            Cancel
+          </button>
+          <button
+            className="btn btn--primary"
+            onClick={handleUserSubmit}
+            disabled={!userFormData.username || (!editingUser && !userFormData.password)}
+          >
+            {editingUser ? 'Update User' : 'Create User'}
+          </button>
+        </div>
+      </Modal>
 
       {/* Footer */}
       <footer>

@@ -4,11 +4,14 @@ import { getPeriodDates } from '../utils/dateUtils';
 import { getNumbersTargetForPeriod } from './numbersTargetService';
 import moment from 'moment';
 
+/**
+ * Numbers (requests) service - uses patients table (lab encounters).
+ * One row per request/encounter; targets from monthly_numbers_targets.
+ */
 export const getNumbersData = async (filters: FilterParams) => {
   let startDate: Date;
   let endDate: Date;
 
-  // Handle period or custom date range
   if (filters.period && filters.period !== 'custom') {
     const dates = getPeriodDates(filters.period);
     startDate = dates.startDate;
@@ -18,9 +21,10 @@ export const getNumbersData = async (filters: FilterParams) => {
     endDate = filters.endDate ? new Date(filters.endDate) : new Date();
   }
 
-  // Build WHERE clause
-  const conditions = ['encounter_date BETWEEN $1 AND $2', 'is_cancelled = false'];
-  const params: any[] = [startDate, endDate];
+  const startStr = moment(startDate).format('YYYY-MM-DD');
+  const endStr = moment(endDate).format('YYYY-MM-DD');
+  const conditions = ['date::date BETWEEN $1::date AND $2::date'];
+  const params: any[] = [startStr, endStr];
   let paramCount = 3;
 
   if (filters.shift && filters.shift !== 'all') {
@@ -29,77 +33,71 @@ export const getNumbersData = async (filters: FilterParams) => {
   }
 
   if (filters.laboratory && filters.laboratory !== 'all') {
-    conditions.push(`laboratory = $${paramCount++}`);
+    conditions.push(`LOWER(TRIM(unit)) = LOWER(TRIM($${paramCount++}))`);
     params.push(filters.laboratory);
   }
 
   const whereClause = conditions.join(' AND ');
 
-  // Get total requests
   const totalResult = await query(
-    `SELECT COUNT(*) as total FROM test_records WHERE ${whereClause}`,
+    `SELECT COUNT(*) as total FROM patients WHERE ${whereClause}`,
     params
   );
-  const totalRequests = parseInt(totalResult.rows[0].total);
+  const totalRequests = parseInt(totalResult.rows[0].total as string);
 
-  // Get target for the period
   const targetRequests = await getNumbersTargetForPeriod(startDate, endDate);
-  
-  // Calculate percentage
-  const percentage = targetRequests > 0 
-    ? (totalRequests / targetRequests) * 100 
+  const percentage = targetRequests > 0
+    ? (totalRequests / targetRequests) * 100
     : 0;
 
-  // Calculate average daily requests
   const daysInPeriod = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
   const avgDailyRequests = totalRequests / daysInPeriod;
 
-  // Get daily volume
   const dailyVolumeResult = await query(
-    `SELECT encounter_date::date as date, COUNT(*) as count
-     FROM test_records 
+    `SELECT date::date as date, COUNT(*) as count
+     FROM patients
      WHERE ${whereClause}
-     GROUP BY encounter_date::date 
-     ORDER BY encounter_date::date`,
+     GROUP BY date::date
+     ORDER BY date::date`,
     params
   );
 
-  const dailyVolume = dailyVolumeResult.rows.map(row => ({
+  const dailyVolume = dailyVolumeResult.rows.map((row: any) => ({
     date: moment(row.date).format('YYYY-MM-DD'),
-    count: parseInt(row.count)
+    count: parseInt(row.count),
   }));
 
-  // Get hourly volume
   const hourlyVolumeResult = await query(
-    `SELECT EXTRACT(HOUR FROM time_in) as hour, COUNT(*) as count
-     FROM test_records 
-     WHERE ${whereClause}
+    `SELECT EXTRACT(HOUR FROM time_in)::integer as hour, COUNT(*) as count
+     FROM patients
+     WHERE ${whereClause} AND time_in IS NOT NULL
      GROUP BY EXTRACT(HOUR FROM time_in)
      ORDER BY hour`,
     params
   );
 
   const hourlyVolume = Array.from({ length: 24 }, (_, hour) => {
-    const found = hourlyVolumeResult.rows.find(row => parseInt(row.hour) === hour);
+    const found = hourlyVolumeResult.rows.find((row: any) => parseInt(row.hour) === hour);
     return {
       hour,
-      count: found ? parseInt(found.count) : 0
+      count: found ? parseInt(found.count) : 0,
     };
   });
 
-  // Find busiest hour and day
-  const busiestHourRow = hourlyVolumeResult.rows.reduce((max, row) => 
-    parseInt(row.count) > parseInt(max.count || 0) ? row : max, {});
-  
-  const busiestDayRow = dailyVolumeResult.rows.reduce((max, row) => 
-    parseInt(row.count) > parseInt(max.count || 0) ? row : max, {});
+  const busiestHourRow = hourlyVolumeResult.rows.reduce(
+    (max: any, row: any) => (parseInt(row.count) > parseInt(max?.count || 0) ? row : max),
+    {}
+  );
+  const busiestDayRow = dailyVolumeResult.rows.reduce(
+    (max: any, row: any) => (parseInt(row.count) > parseInt(max?.count || 0) ? row : max),
+    {}
+  );
 
-  const busiestHour = busiestHourRow.hour 
-    ? `${busiestHourRow.hour}:00 - ${parseInt(busiestHourRow.hour) + 1}:00` 
+  const busiestHour = busiestHourRow?.hour != null
+    ? `${busiestHourRow.hour}:00 - ${parseInt(busiestHourRow.hour) + 1}:00`
     : 'N/A';
-  
-  const busiestDay = busiestDayRow.date 
-    ? `${moment(busiestDayRow.date).format('MMM DD, YYYY')} (${busiestDayRow.count} requests)` 
+  const busiestDay = busiestDayRow?.date
+    ? `${moment(busiestDayRow.date).format('MMM DD, YYYY')} (${busiestDayRow.count} requests)`
     : 'N/A';
 
   return {

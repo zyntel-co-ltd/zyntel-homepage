@@ -27,11 +27,10 @@ export const TestVolumeChart: React.FC<TestVolumeChartProps> = ({ data }) => {
         labels: data.map(d => d.date),
         datasets: [
           {
-            label: 'Test Volume',
+            label: 'Daily Test Volume',
             data: data.map(d => d.count),
-            backgroundColor: '#10b981',
-            borderRadius: 6,
-            borderSkipped: false
+            backgroundColor: '#21336a',
+            borderRadius: 0,
           }
         ]
       },
@@ -40,10 +39,11 @@ export const TestVolumeChart: React.FC<TestVolumeChartProps> = ({ data }) => {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: true,
-            labels: {
-              color: '#666',
-              padding: 15
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: (context: any) => `${context.parsed.y.toLocaleString()} tests`
             }
           }
         },
@@ -54,7 +54,7 @@ export const TestVolumeChart: React.FC<TestVolumeChartProps> = ({ data }) => {
               color: '#999'
             },
             grid: {
-              color: 'rgba(0, 0, 0, 0.05)'
+              color: 'rgba(0, 0, 0, 0.1)'
             }
           },
           x: {

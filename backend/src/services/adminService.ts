@@ -24,10 +24,17 @@ export const resolveUnmatchedTest = async (id: number, userId: number) => {
 };
 
 export const getDashboardStats = async () => {
-  // Total tests
+  // Total encounters (from patients table - main data source)
+  const patientsResult = await query(
+    'SELECT COUNT(*) as count FROM patients'
+  );
+  const totalEncounters = parseInt(patientsResult.rows[0].count as string);
+
+  // Total test records if populated (for backward compat)
   const testsResult = await query(
     'SELECT COUNT(*) as count FROM test_records WHERE is_cancelled = false'
   );
+  const totalTestRecords = parseInt(testsResult.rows[0].count as string);
 
   // Total users
   const usersResult = await query(
@@ -46,9 +53,10 @@ export const getDashboardStats = async () => {
   );
 
   return {
-    totalTests: parseInt(testsResult.rows[0].count),
-    totalUsers: parseInt(usersResult.rows[0].count),
-    unmatchedTests: parseInt(unmatchedResult.rows[0].count),
-    recentCancellations: parseInt(cancellationsResult.rows[0].count),
+    totalTests: totalTestRecords > 0 ? totalTestRecords : totalEncounters,
+    totalEncounters,
+    totalUsers: parseInt(usersResult.rows[0].count as string),
+    unmatchedTests: parseInt(unmatchedResult.rows[0].count as string),
+    recentCancellations: parseInt(cancellationsResult.rows[0].count as string),
   };
 };

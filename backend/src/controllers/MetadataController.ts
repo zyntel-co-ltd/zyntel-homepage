@@ -4,14 +4,20 @@ import * as metadataService from '../services/metadataService';
 
 export const getMetadataController = async (req: AuthRequest, res: Response) => {
   try {
-    const { labSection, search } = req.query;
+    const { labSection, search, page, limit } = req.query;
 
-    const metadata = await metadataService.getAllMetadata({
+    const result = await metadataService.getAllMetadata({
       labSection: labSection as string,
       search: search as string,
+      page: page as string,
+      limit: limit as string,
     });
 
-    res.json(metadata);
+    if (result && typeof result === 'object' && 'data' in result && 'totalRecords' in result) {
+      res.json(result);
+    } else {
+      res.json(Array.isArray(result) ? result : []);
+    }
   } catch (error) {
     console.error('Get metadata error:', error);
     res.status(500).json({ error: 'Failed to fetch metadata' });

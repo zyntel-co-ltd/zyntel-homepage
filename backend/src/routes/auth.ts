@@ -49,7 +49,7 @@ router.post('/login', async (req, res) => {
         role: user.role 
       },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '7d' }
     );
 
     console.log('Login successful for:', username);

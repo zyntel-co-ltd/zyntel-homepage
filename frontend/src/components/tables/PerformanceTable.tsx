@@ -2,62 +2,34 @@
 import React from 'react';
 
 export interface PerformanceRecord {
-  id: number;
-  date: string;
-  shift: string;
-  labNumber: string;
-  unit: string;
-  timeIn: string;
-  dailyTAT: number;
-  timeExpected: string;
-  timeOut: string;
-  delayStatus: 'on-time' | 'delayed' | 'over-delayed';
-  timeRange: string;
+  date?: string;
+  Shift?: string;
+  lab_number?: string;
+  Hospital_Unit?: string;
+  time_in?: string;
+  daily_tat?: number;
+  request_time_expected?: string;
+  request_time_out?: string;
+  request_delay_status?: string;
+  request_time_range?: string;
 }
 
 interface PerformanceTableProps {
   data: PerformanceRecord[];
+  onLabNumberDoubleClick?: (labNumber: string) => void;
   isLoading?: boolean;
 }
 
-const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, isLoading = false }) => {
-  const getDelayStatusColor = (status: string) => {
-    switch (status) {
-      case 'on-time':
-        return 'bg-green-100 text-green-800';
-      case 'delayed':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'over-delayed':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDoubleClick, isLoading = false }) => {
+  const getDelayStatusClass = (status: string) => {
+    if (status === 'On Time' || status === 'Swift') {
+      return 'status-on-time';
+    } else if (status === 'Delayed for less than 15 minutes' || status === '<15min') {
+      return 'status-delayed-less-15';
+    } else if (status === 'Over Delayed') {
+      return 'status-over-delayed';
     }
-  };
-
-  const getDelayStatusIcon = (status: string) => {
-    switch (status) {
-      case 'on-time':
-        return 'fas fa-check-circle text-green-500';
-      case 'delayed':
-        return 'fas fa-clock text-yellow-500';
-      case 'over-delayed':
-        return 'fas fa-exclamation-triangle text-red-500';
-      default:
-        return 'fas fa-question-circle text-gray-500';
-    }
-  };
-
-  const getDelayStatusText = (status: string) => {
-    switch (status) {
-      case 'on-time':
-        return 'On Time';
-      case 'delayed':
-        return 'Delayed';
-      case 'over-delayed':
-        return 'Over Delayed';
-      default:
-        return 'Unknown';
-    }
+    return 'status-not-uploaded';
   };
 
   if (isLoading) {
@@ -146,32 +118,29 @@ const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, isLoading = f
           </tr>
         </thead>
         <tbody>
-          {data.map((row) => (
-            <tr key={row.id}>
-              <td>{row.id}</td>
-              <td>{new Date(row.date).toLocaleDateString()}</td>
-              <td>{row.shift}</td>
-              <td className="lab-number-cell">{row.labNumber}</td>
-              <td>{row.unit}</td>
-              <td>{row.timeIn}</td>
-              <td>
-                <span className={`px-2 py-1 rounded-full ${row.dailyTAT > 120 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                  {row.dailyTAT} min
-                </span>
+          {data.map((row, index) => {
+            return (
+              <tr key={index}>
+                <td className="text-center text-gray-600 font-medium">{index + 1}</td>
+                <td>{row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}</td>
+                <td>{row.Shift || 'N/A'}</td>
+                <td
+                className="lab-number-cell lab-number-cell-dbl"
+                onDoubleClick={() => onLabNumberDoubleClick?.(row.lab_number || '')}
+                title={onLabNumberDoubleClick ? 'Double-click to view all tests' : undefined}
+              >
+                {row.lab_number || 'N/A'}
               </td>
-              <td>{row.timeExpected}</td>
-              <td>{row.timeOut || '-'}</td>
-              <td>
-                <div className="flex items-center space-x-2">
-                  <i className={getDelayStatusIcon(row.delayStatus)}></i>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDelayStatusColor(row.delayStatus)}`}>
-                    {getDelayStatusText(row.delayStatus)}
-                  </span>
-                </div>
-              </td>
-              <td>{row.timeRange}</td>
-            </tr>
-          ))}
+                <td>{row.Hospital_Unit || 'N/A'}</td>
+                <td>{row.time_in ? new Date(row.time_in).toLocaleString() : 'N/A'}</td>
+                <td>{row.daily_tat || 'N/A'}</td>
+                <td>{row.request_time_expected ? new Date(row.request_time_expected).toLocaleString() : 'N/A'}</td>
+                <td>{row.request_time_out ? new Date(row.request_time_out).toLocaleString() : 'N/A'}</td>
+                <td className={getDelayStatusClass(row.request_delay_status || '')}>{row.request_delay_status || 'N/A'}</td>
+                <td className={getDelayStatusClass(row.request_time_range || '')}>{row.request_time_range || 'N/A'}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

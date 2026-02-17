@@ -4,7 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { initializeSocket } from './config/socket';
 import { errorHandler } from './middleware/errorHandler';
-import { authenticateToken } from './middleware/auth';
+import { authenticate } from './middleware/auth'; // Changed from authenticateToken
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -20,6 +20,7 @@ import numbersRoutes from './routes/numbers';
 import trackerRoutes from './routes/tracker';
 import progressRoutes from './routes/progress';
 import performanceRoutes from './routes/performance';
+import encountersRoutes from './routes/encounters';
 
 dotenv.config();
 
@@ -47,17 +48,18 @@ app.use('/api/auth', authRoutes);
 app.use('/api/lrids', lridsRoutes);
 
 // Protected routes (REQUIRE AUTH)
-app.use('/api/metadata', authenticateToken, metadataRoutes);
-app.use('/api/revenue', authenticateToken, revenueRoutes);
-app.use('/api/reception', authenticateToken, receptionRoutes);
-app.use('/api/settings', authenticateToken, settingsRoutes);
-app.use('/api/admin', authenticateToken, adminRoutes);
-app.use('/api/tat', authenticateToken, tatRoutes);
-app.use('/api/tests', authenticateToken, testsRoutes);
-app.use('/api/numbers', authenticateToken, numbersRoutes);
-app.use('/api/tracker', authenticateToken, trackerRoutes);
-app.use('/api/progress', authenticateToken, progressRoutes);
-app.use('/api/performance', authenticateToken, performanceRoutes);
+app.use('/api/metadata', authenticate, metadataRoutes);
+app.use('/api/revenue', authenticate, revenueRoutes);
+app.use('/api/reception', authenticate, receptionRoutes);
+app.use('/api/settings', authenticate, settingsRoutes);
+app.use('/api/admin', authenticate, adminRoutes);
+app.use('/api/tat', authenticate, tatRoutes);
+app.use('/api/tests', authenticate, testsRoutes);
+app.use('/api/numbers', authenticate, numbersRoutes);
+app.use('/api/tracker', authenticate, trackerRoutes);
+app.use('/api/progress', authenticate, progressRoutes);
+app.use('/api/performance', authenticate, performanceRoutes);
+app.use('/api/encounters', encountersRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);

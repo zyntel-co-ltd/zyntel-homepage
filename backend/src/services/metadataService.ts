@@ -7,24 +7,49 @@ import { createObjectCsvWriter } from 'csv-writer';
 export const getAllMetadata = async (filters?: {
   labSection?: string;
   search?: string;
+  page?: number | string;
+  limit?: number | string;
 }) => {
-  let queryText = 'SELECT * FROM test_metadata WHERE 1=1';
+  let whereClause = '1=1';
   const params: any[] = [];
   let paramCount = 1;
 
   if (filters?.labSection && filters.labSection !== 'all') {
-    queryText += ` AND LOWER(current_lab_section) = LOWER($${paramCount++})`;
+    whereClause += ` AND LOWER(current_lab_section) = LOWER($${paramCount++})`;
     params.push(filters.labSection);
   }
 
   if (filters?.search) {
-    queryText += ` AND LOWER(test_name) LIKE LOWER($${paramCount++})`;
+    whereClause += ` AND LOWER(test_name) LIKE LOWER($${paramCount++})`;
     params.push(`%${filters.search}%`);
   }
 
-  queryText += ' ORDER BY test_name ASC';
+  const hasPage = filters?.page != null && filters?.page !== '';
+  const limitNum = Math.min(parseInt(String(filters?.limit), 10) || 50, 100);
 
-  const result = await query(queryText, params);
+  if (hasPage) {
+    const page = Math.max(1, parseInt(String(filters?.page), 10) || 1);
+    const offset = (page - 1) * limitNum;
+
+    const countResult = await query(
+      `SELECT COUNT(*) AS total FROM test_metadata WHERE ${whereClause}`,
+      params
+    );
+    const totalRecords = parseInt(countResult.rows[0].total as string, 10);
+    const totalPages = Math.max(1, Math.ceil(totalRecords / limitNum));
+
+    params.push(limitNum, offset);
+    const result = await query(
+      `SELECT * FROM test_metadata WHERE ${whereClause} ORDER BY test_name ASC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+    return { data: result.rows, totalRecords, totalPages };
+  }
+
+  const result = await query(
+    `SELECT * FROM test_metadata WHERE ${whereClause} ORDER BY test_name ASC`,
+    params
+  );
   return result.rows;
 };
 

@@ -22,21 +22,16 @@ export const DailyNumbersChart: React.FC<DailyNumbersChartProps> = ({ data }) =>
     if (!ctx) return;
 
     chartRef.current = new Chart(ctx, {
-      type: 'line',
+      type: 'bar',
       data: {
         labels: data.map(d => d.date),
         datasets: [
           {
-            label: 'Daily Requests',
+            label: 'Daily Request Volume',
             data: data.map(d => d.count),
-            borderColor: '#f59e0b',
-            backgroundColor: 'rgba(245, 158, 11, 0.1)',
-            tension: 0.4,
-            fill: true,
-            pointRadius: 4,
-            pointBackgroundColor: '#f59e0b',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2
+            backgroundColor: '#21336a',
+            borderColor: '#21336a',
+            borderWidth: 1,
           }
         ]
       },
@@ -45,28 +40,27 @@ export const DailyNumbersChart: React.FC<DailyNumbersChartProps> = ({ data }) =>
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: true,
-            labels: {
-              color: '#666',
-              usePointStyle: true,
-              padding: 15
-            }
+            display: false
           },
-          filler: {
-            propagate: true
+          tooltip: {
+            callbacks: {
+              label: (context: any) => `${context.parsed.y} requests`
+            }
           }
         },
         scales: {
           y: {
             beginAtZero: true,
+            title: { display: true, text: 'Number of Requests' },
             ticks: {
               color: '#999'
             },
             grid: {
-              color: 'rgba(0, 0, 0, 0.05)'
+              color: 'rgba(0, 0, 0, 0.1)'
             }
           },
           x: {
+            title: { display: true, text: 'Date' },
             ticks: {
               color: '#999'
             },

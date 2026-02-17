@@ -33,7 +33,7 @@ export const getRevenueData = async (filters: FilterParams) => {
   }
 
   if (filters.laboratory && filters.laboratory !== 'all') {
-    conditions.push(`laboratory = $${paramCount++}`);
+    conditions.push(`LOWER(TRIM(laboratory)) = LOWER(TRIM($${paramCount++}))`);
     params.push(filters.laboratory);
   }
 
