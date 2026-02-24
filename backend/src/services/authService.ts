@@ -4,10 +4,10 @@ import { query } from '../config/database';
 import { JWT_SECRET } from '../config/jwt';
 import { User, JWTPayload } from '../types';
 
-export const login = async (username: string, password: string) => {
+export const login = async (usernameOrEmail: string, password: string) => {
   const result = await query(
-    'SELECT * FROM users WHERE username = $1 AND is_active = true',
-    [username]
+    'SELECT * FROM users WHERE (username = $1 OR email = $1) AND is_active = true',
+    [usernameOrEmail.trim()]
   );
 
   if (result.rows.length === 0) {
@@ -31,8 +31,9 @@ export const login = async (username: string, password: string) => {
   };
 
   // Use any to bypass strict typing
+  const expiresIn = process.env.JWT_EXPIRE || '30d';
   const token = jwt.sign(payload, JWT_SECRET, {
-    expiresIn: '7d',
+    expiresIn,
   } as any);
 
   return {

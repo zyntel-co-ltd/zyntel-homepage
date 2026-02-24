@@ -7,7 +7,7 @@ import {
   updateMetadataController,
   deleteMetadataController,
   cleanDefaultsController,
-} from '../controllers/metadataController';
+} from '../controllers/MetadataController';
 
 const router = express.Router();
 

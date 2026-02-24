@@ -33,8 +33,14 @@ export const getRevenueData = async (filters: FilterParams) => {
   }
 
   if (filters.laboratory && filters.laboratory !== 'all') {
-    conditions.push(`LOWER(TRIM(laboratory)) = LOWER(TRIM($${paramCount++}))`);
-    params.push(filters.laboratory);
+    if (filters.laboratory === 'Annex') {
+      conditions.push(`LOWER(TRIM(laboratory)) = 'annex'`);
+    } else if (filters.laboratory === 'Main Laboratory') {
+      conditions.push(`(LOWER(TRIM(laboratory)) != 'annex' AND laboratory IS NOT NULL)`);
+    } else {
+      conditions.push(`LOWER(TRIM(laboratory)) = LOWER(TRIM($${paramCount++}))`);
+      params.push(filters.laboratory);
+    }
   }
 
   const whereClause = conditions.join(' AND ');
@@ -88,20 +94,68 @@ export const getRevenueData = async (filters: FilterParams) => {
   const avgDailyRevenue = totalRevenue / daysInPeriod;
 
   // Get revenue by lab section
-  const sectionResult = await query(
-    `SELECT lab_section_at_test as section, 
-            COALESCE(SUM(price_at_test), 0) as revenue 
-     FROM test_records 
-     WHERE ${whereClause}
-     GROUP BY lab_section_at_test 
-     ORDER BY revenue DESC`,
-    params
-  );
-
-  const sectionRevenue = sectionResult.rows.map(row => ({
-    section: row.section,
-    revenue: parseFloat(row.revenue),
-  }));
+  let sectionRevenue: Array<{ section: string; revenue: number }>;
+  if (filters.labSection && filters.labSection !== 'all') {
+    // When lab section filtered: show selected section + pale "Other sections"
+    const sectionResult = await query(
+      `SELECT lab_section_at_test as section, 
+              COALESCE(SUM(price_at_test), 0) as revenue 
+       FROM test_records 
+       WHERE ${whereClause}
+       GROUP BY lab_section_at_test 
+       ORDER BY revenue DESC`,
+      params
+    );
+    const filteredSectionRev = sectionResult.rows.find((r: any) =>
+      String(r.section).toLowerCase() === String(filters.labSection).toLowerCase()
+    );
+    const filteredRevenue = filteredSectionRev ? parseFloat(filteredSectionRev.revenue) : 0;
+    // Total without lab section filter (same period, shift, lab)
+    const baseConditions = ['encounter_date BETWEEN $1 AND $2', 'is_cancelled = false'];
+    const baseParams: any[] = [startDate, endDate];
+    let bp = 3;
+    if (filters.shift && filters.shift !== 'all') {
+      baseConditions.push(`LOWER(shift) = LOWER($${bp++})`);
+      baseParams.push(filters.shift);
+    }
+    if (filters.laboratory && filters.laboratory !== 'all') {
+      if (filters.laboratory === 'Annex') {
+        baseConditions.push(`LOWER(TRIM(laboratory)) = 'annex'`);
+      } else if (filters.laboratory === 'Main Laboratory') {
+        baseConditions.push(`(LOWER(TRIM(laboratory)) != 'annex' AND laboratory IS NOT NULL)`);
+      } else {
+        baseConditions.push(`LOWER(TRIM(laboratory)) = LOWER(TRIM($${bp++}))`);
+        baseParams.push(filters.laboratory);
+      }
+    }
+    const allSectionsResult = await query(
+      `SELECT COALESCE(SUM(price_at_test), 0) as total FROM test_records WHERE ${baseConditions.join(' AND ')}`,
+      baseParams
+    );
+    const allSectionsTotal = parseFloat(allSectionsResult.rows[0].total);
+    const otherRevenue = Math.max(0, allSectionsTotal - filteredRevenue);
+    sectionRevenue = [
+      { section: String(filters.labSection).toUpperCase(), revenue: filteredRevenue },
+      { section: 'Other sections', revenue: otherRevenue },
+    ];
+    if (filteredRevenue === 0 && otherRevenue === 0) {
+      sectionRevenue = [{ section: String(filters.labSection).toUpperCase(), revenue: 0 }];
+    }
+  } else {
+    const sectionResult = await query(
+      `SELECT lab_section_at_test as section, 
+              COALESCE(SUM(price_at_test), 0) as revenue 
+       FROM test_records 
+       WHERE ${whereClause}
+       GROUP BY lab_section_at_test 
+       ORDER BY revenue DESC`,
+      params
+    );
+    sectionRevenue = sectionResult.rows.map((row: any) => ({
+      section: row.section,
+      revenue: parseFloat(row.revenue),
+    }));
+  }
 
   // Get top 50 tests by revenue
   const testResult = await query(

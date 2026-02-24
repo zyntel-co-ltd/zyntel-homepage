@@ -100,6 +100,7 @@ export const deleteMetadataController = async (req: AuthRequest, res: Response) 
 export const cleanDefaultsController = async (req: AuthRequest, res: Response) => {
   try {
     const cleaned = await metadataService.cleanDefaultMetadata();
+    await metadataService.exportMetadataToCSV();
     res.json({ message: `Cleaned ${cleaned.length} default entries`, cleaned });
   } catch (error) {
     console.error('Clean defaults error:', error);

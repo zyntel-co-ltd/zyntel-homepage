@@ -92,8 +92,14 @@ async function ingestData() {
     let insertedCount = 0;
     let updatedCount = 0;
     let errorCount = 0;
+    const total = dataJson.length;
+    const logInterval = Math.max(5000, Math.floor(total / 20));
 
-    for (const record of dataJson) {
+    for (let i = 0; i < dataJson.length; i++) {
+      const record = dataJson[i];
+      if ((i + 1) % logInterval === 0 || i === 0) {
+        console.log(`   ⏳ Processed ${i + 1}/${total} records (${insertedCount} inserted, ${updatedCount} updated)...`);
+      }
       try {
         // Get metadata - only tests in test_metadata (from meta.csv or Meta table) are processed
         const metadataResult = await query(

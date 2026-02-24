@@ -32,7 +32,9 @@ const TargetProgressChart: React.FC<TargetProgressChartProps> = ({
   const achieved = Math.min(currentValue, targetValue);
   const gap = Math.max(0, targetValue - currentValue);
   const overTarget = Math.max(0, currentValue - targetValue);
-  const percentage = targetValue > 0 ? Math.min(100, (currentValue / targetValue) * 100) : 0;
+  const percentage = targetValue > 0 ? (currentValue / targetValue) * 100 : 0;
+  const isAtOrAboveTarget = currentValue >= targetValue && targetValue > 0;
+  const isOverTarget = currentValue > targetValue;
 
   useEffect(() => {
     if (!chartRef.current) return;
@@ -44,27 +46,19 @@ const TargetProgressChart: React.FC<TargetProgressChartProps> = ({
     const ctx = chartRef.current.getContext('2d');
     if (!ctx) return;
 
-    const datasets: { label: string; data: number[]; backgroundColor: string; stack: string }[] = [
-      {
-        label: 'Achieved',
-        data: [achieved],
-        backgroundColor: achievedColor,
-        stack: 'target',
-      },
-      {
-        label: 'Gap',
-        data: [gap],
-        backgroundColor: gapColor,
-        stack: 'target',
-      },
-    ];
-    if (overTarget > 0) {
-      datasets.push({
-        label: 'Over target',
-        data: [overTarget],
-        backgroundColor: '#81c784',
-        stack: 'target',
-      });
+    const datasets: { label: string; data: number[]; backgroundColor: string; stack: string }[] = [];
+    if (isOverTarget) {
+      datasets.push(
+        { label: 'Target', data: [targetValue], backgroundColor: achievedColor, stack: 'target' },
+        { label: 'Over target', data: [overTarget], backgroundColor: '#22c55e', stack: 'target' },
+      );
+    } else if (isAtOrAboveTarget) {
+      datasets.push({ label: 'Achieved', data: [achieved], backgroundColor: achievedColor, stack: 'target' });
+    } else {
+      datasets.push(
+        { label: 'Achieved', data: [achieved], backgroundColor: achievedColor, stack: 'target' },
+        { label: 'Gap', data: [gap], backgroundColor: gapColor, stack: 'target' },
+      );
     }
 
     chartInstance.current = new Chart(ctx, {
@@ -97,7 +91,7 @@ const TargetProgressChart: React.FC<TargetProgressChartProps> = ({
         chartInstance.current.destroy();
       }
     };
-  }, [currentValue, targetValue, achievedColor, gapColor, achieved, gap, overTarget, maxValue]);
+  }, [currentValue, targetValue, achievedColor, gapColor, achieved, gap, overTarget, maxValue, isAtOrAboveTarget, isOverTarget]);
 
   const targetText =
     targetLabel != null
@@ -107,7 +101,10 @@ const TargetProgressChart: React.FC<TargetProgressChartProps> = ({
   return (
     <div className="target-progress-chart">
       <div className="target-progress-chart__label">{title}</div>
-      <div className="target-progress-chart__percentage">{percentage.toFixed(1)}%</div>
+      <div className={`target-progress-chart__percentage ${isAtOrAboveTarget ? 'target-progress-chart__percentage--achieved' : ''} ${isOverTarget ? 'target-progress-chart__percentage--perfect' : ''}`}>
+        {percentage.toFixed(1)}%
+        {isOverTarget && <span className="target-progress-chart__badge">✓ Target met</span>}
+      </div>
       <div className="target-progress-chart__amounts">
         <span>
           {valuePrefix}

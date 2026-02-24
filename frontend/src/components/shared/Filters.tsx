@@ -2,8 +2,8 @@ import React from 'react';
 
 interface FiltersProps {
   filters: {
-    startDate: string;
-    endDate: string;
+    startDate?: string;
+    endDate?: string;
     period?: string;
     labSection?: string;
     shift?: string;
@@ -50,7 +50,11 @@ const Filters: React.FC<FiltersProps> = ({
               type="date"
               id="endDateFilter"
               value={filters.endDate || ''}
-              onChange={(e) => onFilterChange('endDate', e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                onFilterChange('endDate', value);
+                if (value) onFilterChange('period', 'custom');
+              }}
             />
           </div>
         </>
@@ -61,14 +65,29 @@ const Filters: React.FC<FiltersProps> = ({
           <label htmlFor="periodSelect">Period:</label>
           <select
             id="periodSelect"
-            value={filters.period || 'custom'}
+            value={filters.period || 'thisMonth'}
             onChange={(e) => onFilterChange('period', e.target.value)}
           >
             <option value="custom">Custom</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="thisWeek">This Week</option>
+            <option value="lastWeek">Last Week</option>
             <option value="thisMonth">This Month</option>
             <option value="lastMonth">Last Month</option>
             <option value="thisQuarter">This Quarter</option>
             <option value="lastQuarter">Last Quarter</option>
+            <option value="january">January</option>
+            <option value="february">February</option>
+            <option value="march">March</option>
+            <option value="april">April</option>
+            <option value="may">May</option>
+            <option value="june">June</option>
+            <option value="july">July</option>
+            <option value="august">August</option>
+            <option value="september">September</option>
+            <option value="october">October</option>
+            <option value="november">November</option>
+            <option value="december">December</option>
           </select>
         </div>
       )}
@@ -118,10 +137,6 @@ const Filters: React.FC<FiltersProps> = ({
             <option value="all">All</option>
             <option value="Main Laboratory">Main Laboratory</option>
             <option value="Annex">Annex</option>
-            <option value="ICU">ICU</option>
-            <option value="GW B">GW B</option>
-            <option value="DOCTORS PLAZA">Doctors Plaza</option>
-            <option value="THEATRE">Theatre</option>
           </select>
         </div>
       )}

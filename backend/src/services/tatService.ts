@@ -37,8 +37,14 @@ export const getTATData = async (filters: FilterParams) => {
   }
 
   if (filters.laboratory && filters.laboratory !== 'all') {
-    conditions.push(`LOWER(TRIM(unit)) = LOWER(TRIM($${paramCount++}))`);
-    params.push(filters.laboratory);
+    if (filters.laboratory === 'Annex') {
+      conditions.push(`LOWER(TRIM(unit)) = 'annex'`);
+    } else if (filters.laboratory === 'Main Laboratory') {
+      conditions.push(`(LOWER(TRIM(unit)) != 'annex' AND unit IS NOT NULL)`);
+    } else {
+      conditions.push(`LOWER(TRIM(unit)) = LOWER(TRIM($${paramCount++}))`);
+      params.push(filters.laboratory);
+    }
   }
 
   const whereClause = conditions.join(' AND ');
@@ -49,14 +55,23 @@ export const getTATData = async (filters: FilterParams) => {
   );
   const totalTests = parseInt(totalResult.rows[0].total as string);
 
-  const delayedResult = await query(
-    `SELECT COUNT(*) as delayed FROM patients
+  const delayedLess15Result = await query(
+    `SELECT COUNT(*) as cnt FROM patients
      WHERE ${whereClause}
-       AND request_delay_status IN ('Delayed', 'Over-Delayed')
+       AND request_delay_status IN ('Delayed', 'Delayed for less than 15 minutes', '<15min')
        AND request_time_out IS NOT NULL`,
     params
   );
-  const delayedTests = parseInt(delayedResult.rows[0].delayed as string);
+  const delayedLess15Tests = parseInt(delayedLess15Result.rows[0].cnt as string);
+
+  const overDelayedResult = await query(
+    `SELECT COUNT(*) as cnt FROM patients
+     WHERE ${whereClause}
+       AND request_delay_status IN ('Over-Delayed', 'Over Delayed')
+       AND request_time_out IS NOT NULL`,
+    params
+  );
+  const overDelayedTests = parseInt(overDelayedResult.rows[0].cnt as string);
 
   const onTimeResult = await query(
     `SELECT COUNT(*) as ontime FROM patients
@@ -67,7 +82,8 @@ export const getTATData = async (filters: FilterParams) => {
   );
   const onTimeTests = parseInt(onTimeResult.rows[0].ontime as string);
 
-  const notUploadedTests = totalTests - (delayedTests + onTimeTests);
+  const notUploadedTests = totalTests - (delayedLess15Tests + overDelayedTests + onTimeTests);
+  const delayedTests = delayedLess15Tests + overDelayedTests;
 
   const delayedPercentage = totalTests > 0 ? (delayedTests / totalTests) * 100 : 0;
   const onTimePercentage = totalTests > 0 ? (onTimeTests / totalTests) * 100 : 0;
@@ -80,7 +96,8 @@ export const getTATData = async (filters: FilterParams) => {
   const dailyTrendResult = await query(
     `SELECT
        date::date as date,
-       COUNT(CASE WHEN request_delay_status IN ('Delayed', 'Over-Delayed') AND request_time_out IS NOT NULL THEN 1 END) as delayed,
+       COUNT(CASE WHEN request_delay_status IN ('Delayed', 'Delayed for less than 15 minutes', '<15min') AND request_time_out IS NOT NULL THEN 1 END) as delayed_less15,
+       COUNT(CASE WHEN request_delay_status IN ('Over-Delayed', 'Over Delayed') AND request_time_out IS NOT NULL THEN 1 END) as over_delayed,
        COUNT(CASE WHEN request_delay_status = 'On-Time' AND request_time_out IS NOT NULL THEN 1 END) as on_time,
        COUNT(CASE WHEN request_time_out IS NULL THEN 1 END) as not_uploaded
      FROM patients
@@ -93,8 +110,10 @@ export const getTATData = async (filters: FilterParams) => {
   const hourlyTrendResult = await query(
     `SELECT
        EXTRACT(HOUR FROM time_in)::integer as hour,
-       COUNT(CASE WHEN request_delay_status IN ('Delayed', 'Over-Delayed') AND request_time_out IS NOT NULL THEN 1 END) as delayed,
-       COUNT(CASE WHEN request_delay_status = 'On-Time' AND request_time_out IS NOT NULL THEN 1 END) as ontime
+       COUNT(CASE WHEN request_delay_status IN ('Delayed', 'Delayed for less than 15 minutes', '<15min') AND request_time_out IS NOT NULL THEN 1 END) as delayed_less15,
+       COUNT(CASE WHEN request_delay_status IN ('Over-Delayed', 'Over Delayed') AND request_time_out IS NOT NULL THEN 1 END) as over_delayed,
+       COUNT(CASE WHEN request_delay_status = 'On-Time' AND request_time_out IS NOT NULL THEN 1 END) as ontime,
+       COUNT(CASE WHEN request_time_out IS NULL THEN 1 END) as not_uploaded
      FROM patients
      WHERE ${whereClause} AND time_in IS NOT NULL
      GROUP BY EXTRACT(HOUR FROM time_in)
@@ -103,31 +122,44 @@ export const getTATData = async (filters: FilterParams) => {
   );
 
   const mostDelayedHour = hourlyTrendResult.rows.reduce(
-    (max: any, row: any) => (parseInt(row.delayed) > parseInt(max?.delayed || 0) ? row : max),
+    (max: any, row: any) => {
+      const rowDelayed = parseInt(row.delayed_less15 || 0) + parseInt(row.over_delayed || 0);
+      const maxDelayed = parseInt(max?.delayed_less15 || 0) + parseInt(max?.over_delayed || 0);
+      return rowDelayed > maxDelayed ? row : max;
+    },
     {}
   );
   const mostDelayedDay = dailyTrendResult.rows.reduce(
-    (max: any, row: any) => (parseInt(row.delayed) > parseInt(max?.delayed || 0) ? row : max),
+    (max: any, row: any) => {
+      const rowDelayed = parseInt(row.delayed_less15 || 0) + parseInt(row.over_delayed || 0);
+      const maxDelayed = parseInt(max?.delayed_less15 || 0) + parseInt(max?.over_delayed || 0);
+      return rowDelayed > maxDelayed ? row : max;
+    },
     {}
   );
 
   return {
     pieData: {
-      delayed: delayedTests,
       onTime: onTimeTests,
+      delayedLess15: delayedLess15Tests,
+      overDelayed: overDelayedTests,
       notUploaded: notUploadedTests,
     },
     dailyTrend: dailyTrendResult.rows.map((row: any) => ({
       date: new Date(row.date).toISOString().split('T')[0],
-      delayed: parseInt(row.delayed),
+      delayed: parseInt(row.delayed_less15 || 0) + parseInt(row.over_delayed || 0),
+      delayedLess15: parseInt(row.delayed_less15 || 0),
+      overDelayed: parseInt(row.over_delayed || 0),
       onTime: parseInt(row.on_time),
-      notUploaded: parseInt(row.not_uploaded),
+      notUploaded: parseInt(row.not_uploaded || 0),
     })),
     hourlyTrend: hourlyTrendResult.rows.map((row: any) => ({
       hour: parseInt(row.hour),
-      delayed: parseInt(row.delayed),
+      delayed: parseInt(row.delayed_less15 || 0) + parseInt(row.over_delayed || 0),
+      delayedLess15: parseInt(row.delayed_less15 || 0),
+      overDelayed: parseInt(row.over_delayed || 0),
       onTime: parseInt(row.ontime),
-      notUploaded: 0,
+      notUploaded: parseInt(row.not_uploaded || 0),
     })),
     kpis: {
       totalRequests: totalTests,

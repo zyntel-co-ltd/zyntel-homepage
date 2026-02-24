@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Header, Navbar, Filters, Loader } from '@/components/shared';
+import { Header, Navbar, Filters } from '@/components/shared';
 import {
   TopTestsByUnitChart,
   TestVolumeChart,
@@ -36,7 +36,7 @@ const Tests: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
 
   // Re-process data when selected unit changes
   useEffect(() => {
@@ -213,7 +213,25 @@ const Tests: React.FC = () => {
 
           <div className="charts-area">
             <div className="dashboard-charts">
-              {/* Top Tests by Unit Chart */}
+              {/* Daily Test Volume Trend - first */}
+              <div className="test-count">
+                <h3 className="chart-title">
+                  <i className="fas fa-calendar-alt mr-2"></i>
+                  Daily Test Volume Trend
+                </h3>
+                <div className="chart-container">
+                  {data?.dailyVolume && data.dailyVolume.length > 0 ? (
+                    <TestVolumeChart data={data.dailyVolume} />
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '60px 20px', color: '#999' }}>
+                      <i className="fas fa-chart-line" style={{ fontSize: '3rem', marginBottom: '15px', opacity: 0.5 }}></i>
+                      <p>No test volume data available for the selected period</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Top Tests by Volume - LAST (50 tests, tall canvas) */}
               <div className="top-tests-container">
                 <div className="chart-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                   <h3 className="chart-title" style={{ margin: 0 }}>
@@ -246,31 +264,13 @@ const Tests: React.FC = () => {
                     </select>
                   </div>
                 </div>
-                <div className="chart-container chart-container--tall">
+                <div className="chart-container chart-container--50items">
                   {data?.topTestsByUnit && data.topTestsByUnit.length > 0 ? (
                     <TopTestsByUnitChart data={data.topTestsByUnit} />
                   ) : (
                     <div style={{ textAlign: 'center', padding: '60px 20px', color: '#999' }}>
                       <i className="fas fa-chart-bar" style={{ fontSize: '3rem', marginBottom: '15px', opacity: 0.5 }}></i>
                       <p>No test volume data available for the selected unit</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Test Volume Chart */}
-              <div className="test-count">
-                <h3 className="chart-title">
-                  <i className="fas fa-calendar-alt mr-2"></i>
-                  Daily Test Volume Trend
-                </h3>
-                <div className="chart-container">
-                  {data?.dailyVolume && data.dailyVolume.length > 0 ? (
-                    <TestVolumeChart data={data.dailyVolume} />
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '60px 20px', color: '#999' }}>
-                      <i className="fas fa-chart-line" style={{ fontSize: '3rem', marginBottom: '15px', opacity: 0.5 }}></i>
-                      <p>No test volume data available for the selected period</p>
                     </div>
                   )}
                 </div>

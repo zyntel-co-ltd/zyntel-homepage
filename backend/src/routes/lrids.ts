@@ -1,5 +1,5 @@
 import express from 'express';
-import { getLRIDSController } from '../controllers/lridsController';
+import { getLRIDSController } from '../controllers/LRIDSController';
 
 const router = express.Router();
 

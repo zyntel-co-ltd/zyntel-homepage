@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Header, Navbar, Filters, Loader, KPICard } from '@/components/shared';
+import { Header, Navbar, Filters } from '@/components/shared';
 import {
   DailyNumbersChart,
   HourlyNumbersChart,
@@ -30,7 +30,7 @@ const Numbers: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
 
   const fetchData = async () => {
     setIsLoading(true);

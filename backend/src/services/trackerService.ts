@@ -35,8 +35,14 @@ export const getTrackerData = async (filters: FilterParams, search?: string) => 
   }
 
   if (filters.laboratory && filters.laboratory !== 'all') {
-    conditions.push(`LOWER(TRIM(e.laboratory)) = LOWER(TRIM($${paramCount++}))`);
-    params.push(filters.laboratory);
+    if (filters.laboratory === 'Annex') {
+      conditions.push(`LOWER(TRIM(e.laboratory)) = 'annex'`);
+    } else if (filters.laboratory === 'Main Laboratory') {
+      conditions.push(`(LOWER(TRIM(e.laboratory)) != 'annex' AND e.laboratory IS NOT NULL)`);
+    } else {
+      conditions.push(`LOWER(TRIM(e.laboratory)) = LOWER(TRIM($${paramCount++}))`);
+      params.push(filters.laboratory);
+    }
   }
 
   if (search) {

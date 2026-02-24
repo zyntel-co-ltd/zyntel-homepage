@@ -66,7 +66,8 @@ app.use('/api/encounters', encountersRoutes);
 // Production: serve built frontend (before error handler)
 const isProduction = process.env.NODE_ENV === 'production';
 if (isProduction) {
-  const frontendDist = path.join(__dirname, '../../frontend/dist');
+  // Compiled output is backend/dist/src/server.js, so go up 3 levels to project root
+  const frontendDist = path.join(__dirname, '../../../frontend/dist');
   app.use(express.static(frontendDist));
   app.get('*', (_req, res) => {
     res.sendFile(path.join(frontendDist, 'index.html'));
@@ -76,7 +77,7 @@ if (isProduction) {
 // Error handler (must be last)
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 const HOST = process.env.HOST; // optional: bind to specific IP (e.g. 192.168.10.198 for hospital LAN only)
 
 const listenCallback = () => {

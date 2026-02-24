@@ -4,9 +4,13 @@ let socket: Socket | null = null;
 
 const getSocketUrl = () => {
   if (typeof window === 'undefined') return 'http://localhost:5001';
-  // Connect directly to backend (bypass proxy to avoid ws proxy errors)
-  const port = import.meta.env.VITE_SOCKET_PORT || '5001';
-  return `${window.location.protocol}//${window.location.hostname}:${port}`;
+  // When served from backend (port 5000) or same origin: use current origin
+  const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+  if (port === '5000' || port === '80' || port === '443') {
+    return window.location.origin;
+  }
+  // Development (Vite on 5173): backend is on 5001
+  return `${window.location.protocol}//${window.location.hostname}:5001`;
 };
 
 export const initializeSocket = (): Socket => {

@@ -127,84 +127,6 @@ const Reception: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleBulkUrgent = async () => {
-    if (selectedTests.length === 0) return;
-    
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/reception/update-bulk', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          testIds: selectedTests,
-          action: 'urgent'
-        })
-      });
-      
-      if (response.ok) {
-        setSelectedTests([]);
-        fetchData();
-      }
-    } catch (error) {
-      console.error('Bulk urgent error:', error);
-    }
-  };
-
-  const handleBulkReceive = async () => {
-    if (selectedTests.length === 0) return;
-    
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/reception/update-bulk', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          testIds: selectedTests,
-          action: 'receive'
-        })
-      });
-      
-      if (response.ok) {
-        setSelectedTests([]);
-        fetchData();
-      }
-    } catch (error) {
-      console.error('Bulk receive error:', error);
-    }
-  };
-
-  const handleBulkResult = async () => {
-    if (selectedTests.length === 0) return;
-    
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/reception/update-bulk', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          testIds: selectedTests,
-          action: 'result'
-        })
-      });
-      
-      if (response.ok) {
-        setSelectedTests([]);
-        fetchData();
-      }
-    } catch (error) {
-      console.error('Bulk result error:', error);
-    }
-  };
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -215,7 +137,7 @@ const Reception: React.FC = () => {
     setFilters({
       startDate: new Date().toISOString().split('T')[0],
       endDate: new Date().toISOString().split('T')[0],
-      period: 'custom',
+      period: 'thisMonth',
       labSection: 'all',
       shift: 'all',
       laboratory: 'all',

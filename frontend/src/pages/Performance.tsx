@@ -1,6 +1,7 @@
 // frontend/src/pages/Performance.tsx
 import React, { useState, useEffect } from 'react';
 import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog } from '@/components/shared';
+import { fetchWithAuth } from '@/services/api';
 import { PerformanceTable, type PerformanceRecord } from '@/components/tables';
 
 const Performance: React.FC = () => {
@@ -43,11 +44,7 @@ const Performance: React.FC = () => {
       params.append('page', String(currentPage));
       params.append('limit', String(rowsPerPage));
 
-      const response = await fetch(`/api/performance?${params.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await fetchWithAuth(`/api/performance?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch performance data');
@@ -74,7 +71,8 @@ const Performance: React.FC = () => {
   };
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    const stateKey = key === 'hospitalUnit' ? 'laboratory' : key;
+    setFilters(prev => ({ ...prev, [stateKey]: value }));
     setCurrentPage(1); // Reset to first page when filters change
   };
 
@@ -92,7 +90,7 @@ const Performance: React.FC = () => {
     setFilters({
       startDate: '',
       endDate: '',
-      period: 'custom',
+      period: 'thisMonth',
       shift: 'all',
       laboratory: 'all',
       search: ''

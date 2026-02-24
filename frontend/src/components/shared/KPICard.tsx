@@ -26,21 +26,19 @@ const KPICard: React.FC<KPICardProps> = ({
   className = ''
 }) => {
   const getTrendIcon = () => {
-    if (!trend) return null;
-    
+    if (!trend || trend.direction === 'neutral') return null;
     switch (trend.direction) {
       case 'up':
-        return <i className="fas fa-arrow-up progress-complete-actual mr-1"></i>;
+        return <i className="fas fa-arrow-up progress-complete-actual mr-1" aria-hidden />;
       case 'down':
-        return <i className="fas fa-arrow-down progress-overdue mr-1"></i>;
+        return <i className="fas fa-arrow-down progress-overdue mr-1" aria-hidden />;
       default:
-        return <i className="fas fa-minus" style={{color: '#666'}}></i>;
+        return null;
     }
   };
 
   const getTrendClass = () => {
-    if (!trend) return '';
-    
+    if (!trend || trend.direction === 'neutral') return '';
     switch (trend.direction) {
       case 'up':
         return 'progress-complete-actual';
@@ -51,6 +49,8 @@ const KPICard: React.FC<KPICardProps> = ({
     }
   };
 
+  const showTrend = trend && trend.direction !== 'neutral';
+
   return (
     <div className={`kpi-card ${fullWidth ? 'kpi-card-full-width' : ''} ${className}`}>
       <div className="kpi-label">
@@ -59,13 +59,13 @@ const KPICard: React.FC<KPICardProps> = ({
       </div>
       <div className="kpi-value">
         {prefix}
-        {typeof value === 'number' ? value.toLocaleString() : value}
+        {typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 }) : value}
         {suffix}
       </div>
-      {trend && (
+      {showTrend && (
         <div className={`kpi-trend ${getTrendClass()}`}>
           {getTrendIcon()}
-          {trend.value > 0 ? '+' : ''}{trend.value.toFixed(1)}%
+          <span>{Math.abs(trend!.value).toFixed(1)}%</span>
         </div>
       )}
     </div>

@@ -21,8 +21,9 @@ export const getPerformanceController = async (req: AuthRequest, res: Response) 
     } else {
       res.json(Array.isArray(result) ? result : []);
     }
-  } catch (error) {
-    console.error('Get performance error:', error);
-    res.status(500).json({ error: 'Failed to fetch performance data' });
+  } catch (error: any) {
+    console.error('Get performance error:', error?.message ?? error);
+    if (error?.stack) console.error(error.stack);
+    res.status(500).json({ error: 'Failed to fetch performance data', detail: error?.message });
   }
 };

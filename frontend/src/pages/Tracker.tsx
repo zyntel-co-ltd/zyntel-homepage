@@ -98,7 +98,7 @@ const Tracker: React.FC = () => {
     setFilters({
       startDate: '',
       endDate: '',
-      period: 'custom',
+      period: 'thisMonth',
       labSection: 'all',
       shift: 'all',
       hospitalUnit: 'all',
@@ -193,6 +193,12 @@ const Tracker: React.FC = () => {
               data={data}
               onLabNumberDoubleClick={(labNumber) => setTestsDialogLabNo(labNumber)}
               isLoading={isLoading}
+            />
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalRecords={totalRecords}
+              onPageChange={handlePageChange}
             />
           </section>
         )}

@@ -10,8 +10,9 @@ import {
 
 interface TATData {
   pieData: {
-    delayed: number;
     onTime: number;
+    delayedLess15: number;
+    overDelayed: number;
     notUploaded: number;
   };
   dailyTrend: Array<{
@@ -52,7 +53,7 @@ const TAT: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, [filters.endDate, filters.period, filters.shift, filters.hospitalUnit]);
 
   const fetchData = async () => {
     setIsLoading(true);

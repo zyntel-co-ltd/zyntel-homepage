@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Socket } from 'socket.io-client';
-import { initializeSocket, disconnectSocket, getSocket } from '../services/socket';
+import { initializeSocket, disconnectSocket } from '../services/socket';
 
 interface SocketContextType {
   socket: Socket | null;

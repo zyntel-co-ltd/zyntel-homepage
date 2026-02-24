@@ -1,4 +1,20 @@
 // Shared types between frontend and backend
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
+export interface FilterParams {
+  startDate?: string;
+  endDate?: string;
+  period?: string;
+  labSection?: string;
+  shift?: string;
+  hospitalUnit?: string;
+  laboratory?: string;
+  status?: string;
+}
+
 export interface User {
   id: number;
   username: string;

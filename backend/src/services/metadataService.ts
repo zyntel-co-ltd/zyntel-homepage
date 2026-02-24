@@ -208,7 +208,9 @@ export const exportMetadataToCSV = async () => {
     'SELECT test_name, current_tat, current_lab_section, current_price FROM test_metadata WHERE is_default = false ORDER BY test_name'
   );
 
-  const csvPath = path.join(process.env.PUBLIC_DIR || '../frontend/public', 'meta.csv');
+  // Resolve meta.csv path: backend/src/services -> project_root/frontend/public
+  const publicDir = process.env.PUBLIC_DIR || path.resolve(__dirname, '../../../frontend/public');
+  const csvPath = path.join(publicDir, 'meta.csv');
 
   const csvWriter = createObjectCsvWriter({
     path: csvPath,

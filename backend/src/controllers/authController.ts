@@ -6,11 +6,12 @@ export const loginController = async (req: AuthRequest, res: Response) => {
   try {
     const { username, password } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+    const identifier = (username ?? req.body.email)?.trim?.() ?? '';
+    if (!identifier || !password) {
+      return res.status(400).json({ error: 'Username/email and password are required' });
     }
 
-    const result = await authService.login(username, password);
+    const result = await authService.login(identifier, password);
     res.json(result);
   } catch (error: any) {
     console.error('Login error:', error);

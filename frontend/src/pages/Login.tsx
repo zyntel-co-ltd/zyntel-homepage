@@ -22,7 +22,7 @@ const Login: React.FC = () => {
 
     try {
       if (!username || !password) {
-        setError('Please enter username and password');
+        setError('Please enter username/email and password');
         setIsLoading(false);
         return;
       }
@@ -75,7 +75,7 @@ const Login: React.FC = () => {
             <div className="input-group">
               <input
                 type="text"
-                placeholder="Username"
+                placeholder="Username or email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required

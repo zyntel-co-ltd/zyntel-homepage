@@ -1,8 +1,19 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -25,8 +36,8 @@ const Dashboard: React.FC = () => {
             <a href="#" className="logout-button" onClick={(e) => { e.preventDefault(); handleLogout(); }}>
               Logout
             </a>
-            <span className="three-dots-menu-container">
-              <button className="three-dots-button">&#x22EE;</button>
+            <span className={`three-dots-menu-container${menuOpen ? ' menu-open' : ''}`} ref={menuRef}>
+              <button type="button" className="three-dots-button" onClick={() => setMenuOpen((o) => !o)} aria-expanded={menuOpen} aria-haspopup="true">&#x22EE;</button>
               <ul className="dropdown-menu">
                 <li><a href="/admin">Admin Panel</a></li>
                 <li><a href="/reception">Reception</a></li>

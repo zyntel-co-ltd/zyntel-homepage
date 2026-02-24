@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Toast, ConfirmDialog } from '@/components/shared';
+import React, { useState, useEffect, useRef } from 'react';
+import { Modal, Toast, ConfirmDialog, Pagination } from '@/components/shared';
 import { LAB_SECTIONS, TAT_OPTIONS } from '@/constants/metaOptions';
+
+const UNMATCHED_PAGE_SIZE = 15;
 
 interface User {
   id: number;
@@ -68,10 +70,22 @@ const Admin: React.FC = () => {
   const [resetPasswordValue, setResetPasswordValue] = useState('');
   const [unmatchedEdits, setUnmatchedEdits] = useState<Record<number, { labSection: string; tat: number; price: number }>>({});
   const [unmatchedSaving, setUnmatchedSaving] = useState<number | 'all' | null>(null);
+  const [unmatchedPage, setUnmatchedPage] = useState(1);
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const adminMenuRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     fetchData();
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!adminMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (adminMenuRef.current && !adminMenuRef.current.contains(e.target as Node)) setAdminMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [adminMenuOpen]);
 
   useEffect(() => {
     if (activeTab === 'settings') {
@@ -138,6 +152,7 @@ const Admin: React.FC = () => {
         if (unmatchedResponse.ok) {
           const unmatchedData = await unmatchedResponse.json();
           setUnmatchedTests(unmatchedData);
+          setUnmatchedPage(1);
         } else {
           setUnmatchedTests([]);
         }
@@ -509,8 +524,8 @@ const Admin: React.FC = () => {
                   ← Back to Dashboard
                 </a>
             <a href="#" className="logout-button" id="logout-button">Logout</a>
-            <span className="three-dots-menu-container">
-              <button className="three-dots-button">&#x22EE;</button>
+            <span className={`three-dots-menu-container${adminMenuOpen ? ' menu-open' : ''}`} ref={adminMenuRef}>
+              <button type="button" className="three-dots-button" onClick={() => setAdminMenuOpen((o) => !o)} aria-expanded={adminMenuOpen} aria-haspopup="true">&#x22EE;</button>
               <ul className="dropdown-menu">
                 <li><a href="/dashboard"><i className="fas fa-home mr-2"></i> Dashboard</a></li>
                 <li><a href="/reception"><i className="fas fa-table mr-2"></i> Reception</a></li>
@@ -974,7 +989,9 @@ const Admin: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {unmatchedTests.map((test) => {
+                          {unmatchedTests
+                            .slice((unmatchedPage - 1) * UNMATCHED_PAGE_SIZE, unmatchedPage * UNMATCHED_PAGE_SIZE)
+                            .map((test) => {
                             const edit = getUnmatchedEdit(test);
                             return (
                               <tr key={test.id}>
@@ -1039,10 +1056,20 @@ const Admin: React.FC = () => {
                                     onClick={() => handleAddUnmatchedToMeta(test.id)}
                                     disabled={unmatchedSaving !== null || edit.price <= 0}
                                     className="action-button edit-button"
-                                    style={{ margin: '0 auto' }}
+                                    style={{ margin: '0 4px' }}
                                   >
                                     <i className="fas fa-plus mr-1"></i>
                                     {unmatchedSaving === test.id ? 'Saving...' : 'Add to Meta'}
+                                  </button>
+                                  <button
+                                    onClick={() => handleResolveUnmatched(test.id)}
+                                    disabled={unmatchedSaving !== null}
+                                    className="action-button resolve-button"
+                                    style={{ margin: '0 4px' }}
+                                    title="Mark as resolved without adding to meta"
+                                  >
+                                    <i className="fas fa-check mr-1"></i>
+                                    Resolve
                                   </button>
                                 </td>
                               </tr>
@@ -1051,6 +1078,12 @@ const Admin: React.FC = () => {
                         </tbody>
                       </table>
                     </div>
+                    <Pagination
+                      currentPage={unmatchedPage}
+                      totalPages={Math.ceil(unmatchedTests.length / UNMATCHED_PAGE_SIZE) || 1}
+                      totalRecords={unmatchedTests.length}
+                      onPageChange={setUnmatchedPage}
+                    />
                   </>
                 )}
               </div>

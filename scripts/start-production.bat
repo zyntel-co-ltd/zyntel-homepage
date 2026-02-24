@@ -23,4 +23,5 @@ if errorlevel 1 (
 
 echo Starting production server...
 set NODE_ENV=production
+set PORT=5000
 call npm start

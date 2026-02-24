@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface HeaderProps {
   title: string;
@@ -10,6 +10,7 @@ interface HeaderProps {
     label: string;
     href: string;
     icon?: string;
+    onClick?: () => void;
   }>;
 }
 
@@ -21,7 +22,21 @@ const Header: React.FC<HeaderProps> = ({
   showResetFilters = false,
   menuItems = []
 }) => {
-  const defaultMenuItems = [
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
+
+  const defaultMenuItems: HeaderProps['menuItems'] = [
     { label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' },
     { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
   ];
@@ -63,12 +78,29 @@ const Header: React.FC<HeaderProps> = ({
               Reset Filters
             </a>
           )}
-          <span className="three-dots-menu-container">
-            <button className="three-dots-button">&#x22EE;</button>
+          <span className={`three-dots-menu-container${menuOpen ? ' menu-open' : ''}`} ref={menuRef}>
+            <button
+              type="button"
+              className="three-dots-button"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-expanded={menuOpen}
+              aria-haspopup="true"
+            >
+              &#x22EE;
+            </button>
             <ul className="dropdown-menu">
               {allMenuItems.map((item, index) => (
                 <li key={index}>
-                  <a href={item.href}>
+                  <a
+                    href={item.href}
+                    onClick={(e) => {
+                      if ('onClick' in item && item.onClick) {
+                        e.preventDefault();
+                        item.onClick();
+                      }
+                      setMenuOpen(false);
+                    }}
+                  >
                     {item.icon && <i className={item.icon}></i>} {item.label}
                   </a>
                 </li>

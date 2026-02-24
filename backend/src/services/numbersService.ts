@@ -33,8 +33,14 @@ export const getNumbersData = async (filters: FilterParams) => {
   }
 
   if (filters.laboratory && filters.laboratory !== 'all') {
-    conditions.push(`LOWER(TRIM(unit)) = LOWER(TRIM($${paramCount++}))`);
-    params.push(filters.laboratory);
+    if (filters.laboratory === 'Annex') {
+      conditions.push(`LOWER(TRIM(unit)) = 'annex'`);
+    } else if (filters.laboratory === 'Main Laboratory') {
+      conditions.push(`(LOWER(TRIM(unit)) != 'annex' AND unit IS NOT NULL)`);
+    } else {
+      conditions.push(`LOWER(TRIM(unit)) = LOWER(TRIM($${paramCount++}))`);
+      params.push(filters.laboratory);
+    }
   }
 
   const whereClause = conditions.join(' AND ');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Header, Navbar, Filters, Loader } from '@/components/shared';
+import { Header, Navbar, Filters } from '@/components/shared';
 import {
   DailyRevenueChart,
   SectionRevenueChart,
@@ -34,7 +34,7 @@ const Revenue: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -137,11 +137,11 @@ const Revenue: React.FC = () => {
           <div className="kpi-grid">
             <div className="kpi-card">
               <div className="kpi-label">Avg. Daily Revenue</div>
-              <div className="kpi-value">UGX {data?.avgDailyRevenue?.toLocaleString() || '0'}</div>
+              <div className="kpi-value">UGX {data?.avgDailyRevenue?.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) || '0.0'}</div>
             </div>
             <div className="kpi-card">
               <div className="kpi-label">Revenue Growth Rate</div>
-              <div className="kpi-value">{data?.revenueGrowthRate?.toFixed(1) || '0'}%</div>
+              <div className="kpi-value">{(data?.revenueGrowthRate ?? 0).toFixed(1)}%</div>
             </div>
           </div>
         </aside>
@@ -184,10 +184,10 @@ const Revenue: React.FC = () => {
               </div>
             </div>
 
-            {/* 4. Test Revenue Chart - FOURTH (Bar) */}
+            {/* 4. Revenue by Test - LAST (50 tests, tall canvas) */}
             <div className="test-revenue">
               <div className="chart-title">Revenue by Test</div>
-              <div className="chart-container">
+              <div className="chart-container chart-container--50items">
                 {data?.testRevenue ? (
                   <TestRevenueChart data={data.testRevenue} />
                 ) : (
@@ -209,4 +209,4 @@ const Revenue: React.FC = () => {
   );
 };
 
-export default Revenue;
+export { Revenue as default };

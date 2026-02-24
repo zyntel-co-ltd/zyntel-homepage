@@ -13,7 +13,7 @@ export const useFilters = (initialFilters?: Partial<FilterParams>) => {
   });
 
   const updateFilter = useCallback((key: keyof FilterParams, value: string) => {
-    setFilters((prev) => {
+    setFilters((prev: FilterParams) => {
       const newFilters = { ...prev, [key]: value };
 
       // Handle period changes

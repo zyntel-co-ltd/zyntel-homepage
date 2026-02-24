@@ -43,6 +43,18 @@ export const getPeriodDates = (period: string): { startDate: Date; endDate: Date
   let endDate: moment.Moment;
 
   switch (period) {
+    case 'yesterday':
+      startDate = now.clone().subtract(1, 'day').startOf('day');
+      endDate = now.clone().subtract(1, 'day').endOf('day');
+      break;
+    case 'thisWeek':
+      startDate = now.clone().startOf('week');
+      endDate = now.clone().endOf('week');
+      break;
+    case 'lastWeek':
+      startDate = now.clone().subtract(1, 'week').startOf('week');
+      endDate = now.clone().subtract(1, 'week').endOf('week');
+      break;
     case 'thisMonth':
       startDate = now.clone().startOf('month');
       endDate = now.clone().endOf('month');
@@ -59,6 +71,27 @@ export const getPeriodDates = (period: string): { startDate: Date; endDate: Date
       startDate = now.clone().subtract(1, 'quarter').startOf('quarter');
       endDate = now.clone().subtract(1, 'quarter').endOf('quarter');
       break;
+    case 'january':
+    case 'february':
+    case 'march':
+    case 'april':
+    case 'may':
+    case 'june':
+    case 'july':
+    case 'august':
+    case 'september':
+    case 'october':
+    case 'november':
+    case 'december': {
+      const monthMap: Record<string, number> = {
+        january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+        july: 6, august: 7, september: 8, october: 9, november: 10, december: 11
+      };
+      const m = monthMap[period] ?? 0;
+      startDate = now.clone().month(m).startOf('month');
+      endDate = now.clone().month(m).endOf('month');
+      break;
+    }
     default:
       startDate = now.clone().startOf('month');
       endDate = now.clone().endOf('month');

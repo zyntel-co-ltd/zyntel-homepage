@@ -19,15 +19,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored auth on mount
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const initAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+      if (!storedToken || !storedUser) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate token is still valid (avoid showing protected UI then 401)
+      try {
+        const res = await fetch('/api/metadata?limit=1', {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        });
+        if (res.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setIsLoading(false);
+          return;
+        }
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      } catch {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      }
+      setIsLoading(false);
+    };
+    initAuth();
   }, []);
 
   const login = async (username: string, password: string) => {
