@@ -1,0 +1,88 @@
+SUMMARY: Eliminating Intermediate Data Files, Invoice Number Storage, and Security Implementation
+
+Context: We continue to pull data from LIMS via web scraping until read-only database credentials are provided. This summary describes the target architecture once we implement the changes below.
+
+================================================================================
+1. ELIMINATING INTERMEDIATE DATA PROCESSING FILES
+================================================================================
+
+Current flow (what we have today):
+  LIMS (scrape) --> data.json (on disk)
+                 --> transform.ts reads data.json + meta.csv + TimeOut.csv
+                 --> patients_dataset.json (on disk)
+                 --> tests_dataset.json (on disk)
+                 --> ingest-patients.ts, sync-encounters.ts, ingest-test-records.ts read from disk
+                 --> PostgreSQL
+
+Files we eliminate from local storage:
+  - data.json (raw scrape output)
+  - patients_dataset.json (transformed patient/encounter records)
+  - tests_dataset.json (transformed test records)
+
+What we keep on disk:
+  - meta.csv (test metadata: name, price, TAT, lab section; used during transform; can stay as-is or be loaded from DB)
+  - TimeOut.csv (result upload timestamps from network drive scan; used during transform; must stay for time_out lookup)
+
+Target flow (in-memory pipeline, no intermediate files):
+  LIMS (scrape) --> in-memory array of records (same shape as current data.json)
+                 --> transform step runs in memory: reads meta.csv and TimeOut.csv only, produces in-memory patients + tests
+                 --> ingest step reads from memory (no patients_dataset.json or tests_dataset.json written)
+                 --> PostgreSQL
+
+Implementation outline:
+  - Single process or orchestrated script: fetch (Python or Node) outputs to stdout or an in-memory buffer; transform (TypeScript/Node) reads that buffer, loads meta.csv and TimeOut.csv, computes patients and tests in memory; ingest (TypeScript) receives the in-memory structures and writes directly to PostgreSQL.
+  - No write to frontend/public/data.json, and no write to patients_dataset.json or tests_dataset.json anywhere.
+  - Scheduler (e.g. cron every 2–5 minutes) runs this pipeline once per run; when it finishes, the only persistent output is the updated PostgreSQL database. No local storage of raw or transformed LIMS-derived data.
+
+================================================================================
+2. ELIMINATING INVOICE NUMBER STORAGE FROM THE DATABASE
+================================================================================
+
+Current state:
+  - invoice_no is stored in the encounters table and in deprecated columns on test_records.
+  - It is used in the application for display (e.g. Tracker) and was used during ingestion.
+
+Why we can remove it from storage:
+  - The only irreplaceable use of Invoice Number is during data processing: to look up the result upload time (time_out) from TimeOut.csv. TimeOut.csv is keyed by filename, which corresponds to Invoice Number. So during the transform step we need the invoice number in memory to do the lookup; once we have the time_out value, we do not need to store the invoice number.
+
+Target state:
+  - Remove invoice_no column from encounters table (and any deprecated columns on test_records that store invoice_no).
+  - During ingestion: for each record we have InvoiceNo in memory from the scrape; we use it only to look up time_out from TimeOut.csv; we write time_in, time_out, and all other derived fields to PostgreSQL; we never write InvoiceNo to the database.
+  - In the UI: remove any column or display that shows invoice number. Tracker and any other screens no longer show invoice number.
+
+Result:
+  - Invoice number exists only in memory during the pipeline run and is discarded. It is not stored in PostgreSQL or in any local file.
+
+================================================================================
+3. SECURITY IMPLEMENTATION: SECURE DATABASE, NO LOCAL STORAGE OF SENSITIVE DATA
+================================================================================
+
+Database security:
+  - Encryption at rest: Enable encryption for the PostgreSQL data directory (e.g. BitLocker on the VM, or PostgreSQL-level encryption / pgcrypto if required by policy). Ensures that if the disk or VM is copied, stored data is unreadable without the key.
+  - Service-account-only access: PostgreSQL is accessed only by a dedicated service account used by the Zyntel application. No interactive user logins to the database. Credentials live in environment variables (.env), not in code or in config files committed to the repo.
+  - Least privilege: The application database user has only the permissions needed for the app (read/write on application tables; no DDL, no access to other databases). If we add a read-only user for reporting, it is separate and read-only.
+  - Audit logging: All sensitive or state-changing operations (e.g. login attempts, status updates, cancellations, metadata changes) are logged with timestamp and user/source. Logs retained for an agreed period (e.g. 90 days) and available to IT and compliance on request.
+  - Formal data retention: Define and document how long we keep detailed records (e.g. encounter/test level) and how long we keep aggregated metrics. Purge or anonymize according to policy; compliance sign-off and annual review.
+
+No local storage of sensitive intermediate data:
+  - As above: data.json, patients_dataset.json, and tests_dataset.json are never written to disk. They exist only in memory during the pipeline run.
+  - TimeOut.csv and meta.csv: TimeOut.csv contains filenames (which map to invoice numbers) and creation times; meta.csv contains test names and metadata (no patient identifiers). Access to these files should be restricted to the service account that runs the pipeline; they are not exposed via the web server or to end users.
+  - Logs: Ensure that logs do not write full lab numbers, invoice numbers, or other identifiers in plain text. Use IDs or redaction where necessary.
+
+Summary of what is not stored:
+  - On disk: no data.json, no patients_dataset.json, no tests_dataset.json.
+  - In database: no invoice_no in any table. Lab number remains in the database as the necessary identifier for patient lookup and ingestion deduplication; all other handling of invoice number is transient in memory only.
+
+================================================================================
+4. PHASING: SCRAPING UNTIL CREDENTIALS ARE AVAILABLE
+================================================================================
+
+Until read-only LIMS database credentials are provided:
+  - Continue using the web scraper to pull data from LIMS (same five fields: EncounterDate, LabNo, InvoiceNo, Src, TestName).
+  - The only change in this phase is how we handle the scraper output: instead of writing to data.json, the scraper output is passed in memory to the transform step, and the transform output is passed in memory to the ingest step. No intermediate files. Invoice number is still used in memory for TimeOut.csv lookup but is never written to the database or to disk.
+
+When credentials are available:
+  - Replace the scraper with a direct read-only connection to the LIMS database. The same in-memory pipeline applies: query results (same five fields) flow into the transform step, then into ingest, with no data.json or dataset JSON files written. Invoice number is still not stored in our database.
+
+End state:
+  - No local storage of data.json or derived dataset files; no invoice number in the database; database and access controlled and audited as above; scraping replaced by direct DB read when credentials are provided.

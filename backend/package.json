@@ -20,6 +20,7 @@
     "sync-encounters": "ts-node scripts/data-processing/sync-encounters.ts",
     "ingest-test-records": "ts-node scripts/data-processing/ingest-test-records.ts",
     "ingest-old": "ts-node scripts/data-processing/ingest.ts",
+    "pipeline": "ts-node scripts/data-processing/pipeline-in-memory.ts",
     "populate-patients-old": "ts-node scripts/data-processing/populatePatients.ts",
     "populate-patients": "ts-node scripts/data-processing/populate-patients.ts",
     "import-meta": "ts-node scripts/data-processing/import-meta.ts",

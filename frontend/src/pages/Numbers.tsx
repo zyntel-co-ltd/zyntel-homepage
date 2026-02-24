@@ -30,7 +30,7 @@ const Numbers: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
+  }, [filters.endDate, filters.period, filters.shift, filters.hospitalUnit]);
 
   const fetchData = async () => {
     setIsLoading(true);

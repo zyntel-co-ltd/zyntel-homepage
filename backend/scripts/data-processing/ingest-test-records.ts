@@ -43,16 +43,32 @@ function computeActualTatMinutes(timeIn: Date, timeOut: Date): number | null {
   return Math.round(diff / 60000);
 }
 
-async function ingestTestRecords() {
-  if (!fs.existsSync(TESTS_DATASET_JSON_PATH)) {
-    console.error(`❌ File not found: ${TESTS_DATASET_JSON_PATH}`);
-    console.log('   Run: npm run transform:full (to generate tests_dataset.json)');
-    process.exit(1);
-  }
+export interface TestJsonRecordExport {
+  ID?: string;
+  Lab_Number: string;
+  Test_Name: string;
+  Lab_Section: string;
+  TAT: number;
+  Price: number;
+  Time_Received: string;
+  Test_Time_Expected?: string;
+  Urgency?: string;
+  Test_Time_Out: string;
+}
 
-  const raw = fs.readFileSync(TESTS_DATASET_JSON_PATH, 'utf-8');
-  const data: TestJsonRecord[] = JSON.parse(raw);
-  console.log(`📊 Found ${data.length} test records in tests_dataset.json`);
+/**
+ * Ingest test records from in-memory array. Used by the in-memory pipeline.
+ */
+export async function ingestTestRecordsFromMemory(data: TestJsonRecordExport[]): Promise<void> {
+  if (data.length === 0) {
+    console.log('ℹ️  No test records to ingest.');
+    return;
+  }
+  console.log(`📊 Ingesting ${data.length} test records from memory...`);
+  await runIngestTestRecords(data);
+}
+
+async function runIngestTestRecords(data: TestJsonRecordExport[]) {
 
   let inserted = 0;
   let updated = 0;
@@ -163,12 +179,25 @@ async function ingestTestRecords() {
   }
 
   console.log(`
-✅ Ingest complete:
+✅ Test records ingest complete:
    Inserted: ${inserted}
    Updated: ${updated}
    Skipped (no encounter): ${skippedNoEncounter}
    Skipped (no metadata): ${skippedNoMetadata}
    Errors: ${errors}`);
+}
+
+async function ingestTestRecords() {
+  if (!fs.existsSync(TESTS_DATASET_JSON_PATH)) {
+    console.error(`❌ File not found: ${TESTS_DATASET_JSON_PATH}`);
+    console.log('   Run: npm run transform:full (to generate tests_dataset.json)');
+    process.exit(1);
+  }
+
+  const raw = fs.readFileSync(TESTS_DATASET_JSON_PATH, 'utf-8');
+  const data: TestJsonRecord[] = JSON.parse(raw);
+  console.log(`📊 Found ${data.length} test records in tests_dataset.json`);
+  await runIngestTestRecords(data);
 }
 
 if (require.main === module) {

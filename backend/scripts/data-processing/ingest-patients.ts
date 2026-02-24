@@ -68,9 +68,10 @@ function parseDateTimeField(dtStr: string | null | undefined): Date | null {
 }
 
 /**
- * Ingests patient records in batches using INSERT ... ON CONFLICT DO UPDATE
+ * Ingests patient records in batches using INSERT ... ON CONFLICT DO UPDATE.
+ * Exported for use by the in-memory pipeline.
  */
-async function ingestPatientsData(data: PatientRecord[], batchSize: number = 1000) {
+export async function ingestPatientsData(data: PatientRecord[], batchSize: number = 1000) {
   if (data.length === 0) {
     console.log('ℹ️  No new patient records to ingest.');
     return { inserted: 0, updated: 0, errors: 0 };
@@ -223,54 +224,28 @@ async function runDataIngestion() {
       fs.readFileSync(PATIENTS_DATASET_JSON_PATH, 'utf-8')
     );
     console.log(`📊 Found ${patientsData.length} patient records`);
-
-    // Get existing lab numbers (for informational purposes)
-    const existingLabNos = await getExistingLabNumbers();
-    console.log(`ℹ️  Current patients in database: ${existingLabNos.size}`);
-
-    // Ingest data
-    const stats = await ingestPatientsData(patientsData);
-
-    console.log('\n✅ Data ingestion completed!');
-    console.log('\n📊 Ingestion Summary:');
-    console.log(`   Patients:`);
-    console.log(`   - Inserted: ${stats.inserted}`);
-    console.log(`   - Updated: ${stats.updated}`);
-    console.log(`   - Errors: ${stats.errors}`);
-    console.log(`   - Total processed: ${stats.inserted + stats.updated}`);
-    
-    // Verification
+    await ingestPatientsFromMemory(patientsData);
     const finalCount = await query('SELECT COUNT(*) as count FROM patients');
-    console.log(`\n📈 Total patients in database: ${finalCount.rows[0].count}`);
-
-    // Sample data verification (format date + time so time is correct, not midnight)
-    console.log('\n📋 Sample patient records:');
-    const samples = await query(`
-      SELECT lab_number, date, shift, unit, time_in, daily_tat, request_delay_status
-      FROM patients
-      ORDER BY date DESC, time_in DESC NULLS LAST
-      LIMIT 3
-    `);
-    
-    const fmtDate = (d: Date | string | null) => {
-      if (d == null) return 'N/A';
-      const x = typeof d === 'string' ? new Date(d) : d;
-      return isNaN(x.getTime()) ? 'N/A' : x.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    };
-    const fmtTime = (d: Date | string | null) => {
-      if (d == null) return 'N/A';
-      const x = typeof d === 'string' ? new Date(d) : d;
-      return isNaN(x.getTime()) ? 'N/A' : x.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    };
-
-    for (const row of samples.rows) {
-      const tatStr = row.daily_tat != null ? `${row.daily_tat}min` : 'N/A';
-      console.log(`   - Lab: ${row.lab_number}, Date: ${fmtDate(row.date)}, Time In: ${fmtTime(row.time_in)}, ` +
-                  `Shift: ${row.shift}, Unit: ${row.unit}, TAT: ${tatStr}, Status: ${row.request_delay_status}`);
-    }
-
+    console.log(`📈 Total patients in database: ${finalCount.rows[0].count}`);
   } catch (error) {
     console.error('❌ Data ingestion failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Ingest patient records from in-memory array. Used by the in-memory pipeline.
+ */
+export async function ingestPatientsFromMemory(patientsData: PatientRecord[]): Promise<void> {
+  try {
+    console.log(`📊 Ingesting ${patientsData.length} patient records...`);
+    const existingLabNos = await getExistingLabNumbers();
+    console.log(`ℹ️  Current patients in database: ${existingLabNos.size}`);
+    const stats = await ingestPatientsData(patientsData);
+    console.log('✅ Patients ingestion completed.');
+    console.log(`   Inserted: ${stats.inserted}, Updated: ${stats.updated}, Errors: ${stats.errors}`);
+  } catch (error) {
+    console.error('❌ Patients ingestion failed:', error);
     throw error;
   }
 }

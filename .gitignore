@@ -160,9 +160,19 @@ env/
 venv/
 .venv
 
-# Runtime state
+# Runtime state (fetch/transform/pipeline - do not commit)
 .last_run
 .last_comprehensive_run
+.lims_fetch.lock
+**/last_run.txt
+**/processed_invoice_numbers.json
+backend/.last_run
+backend/.last_comprehensive_run
+backend/.lims_fetch.lock
+frontend/public/last_run.txt
+frontend/public/processed_invoice_numbers.json
+frontend/public/patients_dataset.json
+frontend/public/tests_dataset.json
 
 # Data files (generated)
 frontend/public/data.json

@@ -644,3 +644,146 @@ if (require.main === module) {
 }
 
 export { runDataTransformation };
+
+// ============================================================================
+// IN-MEMORY TRANSFORM (no data.json / dataset file I/O)
+// ============================================================================
+
+export interface RawDataRecordExport {
+  EncounterDate: string;
+  InvoiceNo: string;
+  LabNo: string;
+  Src: string;
+  TestName: string;
+}
+
+export interface TestRecordExport {
+  ID: string;
+  Lab_Number: string;
+  Test_Name: string;
+  Lab_Section: string;
+  TAT: number;
+  Price: number;
+  Time_Received: string;
+  Test_Time_Expected: string;
+  Urgency: string;
+  Test_Time_Out: string;
+}
+
+export interface PatientRecordExport {
+  Lab_Number: string;
+  Client: string;
+  Date: string;
+  Shift: string;
+  Unit: string;
+  Time_In: string;
+  Daily_TAT: number;
+  Request_Time_Expected: string;
+  Request_Time_Out: string;
+  Request_Delay_Status: string;
+  Request_Time_Range: string;
+}
+
+/**
+ * Transform raw LIMS records in memory. Uses meta.csv and TimeOut.csv from disk.
+ * Does not read data.json or write any dataset JSON files.
+ */
+export function transformInMemory(
+  rawData: RawDataRecordExport[],
+  opts: { full?: boolean } = {}
+): { testsDataset: TestRecordExport[]; patientsDataset: PatientRecordExport[] } {
+  const metaMap = loadMetaData();
+  const timeoutMap = loadTimeoutData();
+  const isFullRun = opts.full !== false;
+
+  const testsDataset: TestRecordExport[] = [];
+  const patientsDataMap = new Map<string, {
+    Tats: number[];
+    InvoiceNos: Set<string>;
+    Details: { LabNo: string; Client: string; Date: string; Time_In: string; Unit: string };
+  }>();
+
+  for (const record of rawData) {
+    const labNo = record.LabNo;
+    const invoiceNo = record.InvoiceNo;
+    const testName = record.TestName;
+
+    if (!labNo || labNo.length < 10 || !/^\d{10}/.test(labNo)) continue;
+
+    const metaInfo = metaMap.get(testName);
+    const tat = metaInfo?.TAT ?? DEFAULT_NUMERIC;
+    const labSection = metaInfo?.LabSection ?? DEFAULT_STRING;
+    const price = metaInfo?.Price ?? DEFAULT_NUMERIC;
+
+    const timeInDt = parseLabNoTimestamp(labNo);
+    const testTimeExpectedDt = new Date(timeInDt.getTime() + tat * 60 * 1000);
+    const timeoutInfo = timeoutMap.get(invoiceNo);
+    const testTimeOutDt = timeoutInfo?.CreationTime ?? DEFAULT_DATETIME;
+
+    const testId = `${labNo}_${testName}_${invoiceNo}`;
+    testsDataset.push({
+      ID: testId,
+      Lab_Number: labNo,
+      Test_Name: testName,
+      Lab_Section: labSection,
+      TAT: tat,
+      Price: price,
+      Time_Received: formatDateTime(timeInDt),
+      Test_Time_Expected: formatDateTime(testTimeExpectedDt),
+      Urgency: DEFAULT_URGENCY,
+      Test_Time_Out: formatDateTime(testTimeOutDt)
+    });
+
+    if (!patientsDataMap.has(labNo)) {
+      patientsDataMap.set(labNo, {
+        Tats: [],
+        InvoiceNos: new Set(),
+        Details: {
+          LabNo,
+          Client: CLIENT_IDENTIFIER,
+          Date: record.EncounterDate || DEFAULT_DATE_STR,
+          Time_In: formatDateTime(timeInDt),
+          Unit: record.Src || DEFAULT_STRING
+        }
+      });
+    }
+    const patientData = patientsDataMap.get(labNo)!;
+    patientData.Tats.push(tat);
+    patientData.InvoiceNos.add(invoiceNo);
+  }
+
+  const patientsDataset: PatientRecordExport[] = [];
+  for (const [labNo, data] of patientsDataMap.entries()) {
+    const timeInDt = parseLabNoTimestamp(labNo);
+    const dailyTat = calculateDailyTAT(data.Tats);
+    let latestTimeout = DEFAULT_DATETIME;
+    for (const invoiceNo of data.InvoiceNos) {
+      const timeoutInfo = timeoutMap.get(invoiceNo);
+      if (timeoutInfo && timeoutInfo.CreationTime > latestTimeout) {
+        latestTimeout = timeoutInfo.CreationTime;
+      }
+    }
+    const requestTimeOutDt = latestTimeout;
+    const requestTimeExpectedDt = new Date(timeInDt.getTime() + dailyTat * 60 * 1000);
+    const { delayStatus, timeRange } = calculateDelayStatusAndRange(
+      timeInDt,
+      requestTimeOutDt,
+      requestTimeExpectedDt
+    );
+    patientsDataset.push({
+      Lab_Number: labNo,
+      Client: data.Details.Client,
+      Date: data.Details.Date,
+      Shift: getShift(timeInDt),
+      Unit: data.Details.Unit,
+      Time_In: data.Details.Time_In,
+      Daily_TAT: dailyTat,
+      Request_Time_Expected: formatDateTime(requestTimeExpectedDt),
+      Request_Time_Out: formatDateTime(requestTimeOutDt),
+      Request_Delay_Status: delayStatus,
+      Request_Time_Range: timeRange
+    });
+  }
+
+  return { testsDataset, patientsDataset };
+}

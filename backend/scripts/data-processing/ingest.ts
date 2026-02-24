@@ -4,7 +4,7 @@ import { query, transaction } from '../../src/config/database';
 import { extractTimeFromLabNo, determineShift, determineLaboratory } from '../../src/utils/dateUtils';
 import moment from 'moment';
 
-interface DataJsonRecord {
+export interface DataJsonRecord {
   EncounterDate: string;
   InvoiceNo: string;
   LabNo: string;
@@ -13,6 +13,95 @@ interface DataJsonRecord {
 }
 
 const PUBLIC_DIR = path.join(__dirname, '../../..', 'frontend', 'public');
+
+/**
+ * Ingest only encounters and unmatched_tests from in-memory raw data.
+ * Used by the in-memory pipeline (no test_records here; those come from testsDataset with time_out).
+ */
+export async function ingestEncountersFromRawData(dataJson: DataJsonRecord[]): Promise<void> {
+  if (dataJson.length === 0) {
+    console.log('ℹ️  No raw records to ingest encounters.');
+    return;
+  }
+  console.log(`📝 Processing ${dataJson.length} records for encounters...`);
+
+  const encountersMap = new Map<string, DataJsonRecord>();
+  for (const record of dataJson) {
+    if (!encountersMap.has(record.LabNo)) {
+      encountersMap.set(record.LabNo, record);
+    }
+  }
+  console.log(`🏥 Found ${encountersMap.size} unique encounters (lab numbers)`);
+
+  let encountersInserted = 0;
+  let encountersUpdated = 0;
+
+  for (const [labNo, record] of encountersMap) {
+    try {
+      const encounterDate = moment(record.EncounterDate, 'YYYY-MM-DD').toDate();
+      const timeIn = extractTimeFromLabNo(record.LabNo);
+      if (!timeIn) {
+        console.warn(`⚠️  Invalid lab number format: ${record.LabNo}`);
+        continue;
+      }
+      const shift = determineShift(timeIn);
+      const laboratory = determineLaboratory(record.Src);
+
+      const result = await query(
+        `INSERT INTO encounters (lab_no, invoice_no, encounter_date, source, time_in, shift, laboratory)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (lab_no)
+         DO UPDATE SET
+           invoice_no = EXCLUDED.invoice_no,
+           encounter_date = EXCLUDED.encounter_date,
+           source = EXCLUDED.source,
+           time_in = EXCLUDED.time_in,
+           shift = EXCLUDED.shift,
+           laboratory = EXCLUDED.laboratory,
+           updated_at = CURRENT_TIMESTAMP
+         RETURNING (xmax = 0) AS inserted`,
+        [labNo, record.InvoiceNo, encounterDate, record.Src, timeIn, shift, laboratory]
+      );
+      if (result.rows[0].inserted) encountersInserted++;
+      else encountersUpdated++;
+    } catch (error) {
+      console.error(`❌ Error processing encounter:`, labNo, error);
+    }
+  }
+  console.log(`✅ Encounters: ${encountersInserted} inserted, ${encountersUpdated} updated`);
+
+  // Unmatched tests (test names in rawData that are not in test_metadata)
+  const uniqueTestNames = [...new Set(dataJson.map((r) => r.TestName))];
+  const knownResult = await query(
+    'SELECT test_name FROM test_metadata WHERE test_name = ANY($1::text[])',
+    [uniqueTestNames]
+  );
+  const knownSet = new Set((knownResult.rows as { test_name: string }[]).map((r) => r.test_name));
+  const unmatchedTests = uniqueTestNames.filter((name) => !knownSet.has(name));
+  const sourceMap = new Map<string, string>();
+  for (const record of dataJson) {
+    if (unmatchedTests.includes(record.TestName)) {
+      const src = (record.Src || 'labguru').toLowerCase();
+      sourceMap.set(record.TestName, src);
+    }
+  }
+  for (const testName of unmatchedTests) {
+    const source = (sourceMap.get(testName) || 'labguru').substring(0, 50);
+    const safeTestName = testName.substring(0, 255);
+    await query(
+      `INSERT INTO unmatched_tests (test_name, source, occurrence_count)
+       VALUES ($1, $2, 1)
+       ON CONFLICT (test_name, source)
+       DO UPDATE SET
+         occurrence_count = unmatched_tests.occurrence_count + 1,
+         last_seen = CURRENT_TIMESTAMP`,
+      [safeTestName, source]
+    );
+  }
+  if (unmatchedTests.length > 0) {
+    console.log(`📝 Logged ${new Set(unmatchedTests).size} unmatched test names`);
+  }
+}
 
 async function ingestData() {
   console.log('🔄 Starting data ingestion...');

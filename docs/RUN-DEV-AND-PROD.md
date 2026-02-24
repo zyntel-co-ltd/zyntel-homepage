@@ -61,6 +61,8 @@ Single process: backend serves the built frontend and API.
 
 ### Build & Start
 
+**Stop the running server first** if it’s already running (e.g. in a terminal or as a service). Otherwise the new process can’t bind to port 5000 (you’ll see “port already in use”). Stop it by closing the terminal where `npm start` is running, or by stopping the Windows service if you use one.
+
 ```powershell
 cd C:\Users\TempAdmin\zyntel\zyntel-dashboard
 scripts\start-production.bat
@@ -94,6 +96,18 @@ FRONTEND_URL=http://192.168.10.198:5000
 ### URL
 
 - **App:** http://192.168.10.198:5000 (or http://localhost:5000 on the VM)
+
+### What happens when the VM restarts?
+
+- **If you do nothing:** The app does not start automatically. You must run `scripts\start-production.bat` (or start your service) again after the VM is back up.
+- **To auto-start after reboot:** Use **Task Scheduler** (or a Windows service like NSSM):
+  1. Open Task Scheduler → Create Task.
+  2. General: “Run whether user is logged on or not” (or “Run when user is logged on” if you prefer).
+  3. Triggers: “At startup” (or “At log on”).
+  4. Actions: Start a program → Program: `cmd.exe`; Arguments: `/c "cd /d C:\Users\TempAdmin\zyntel\zyntel-dashboard && scripts\start-production.bat"` (adjust the path if needed).
+  5. Start in: `C:\Users\TempAdmin\zyntel\zyntel-dashboard`.
+
+  Then after every VM restart, the task will run the script (build + start). For a service (NSSM), set it to run `node backend\dist\src\server.js` and set “Startup type” to Automatic; you still need to build before restarting the service when you deploy new code.
 
 ---
 

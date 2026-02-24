@@ -14,23 +14,14 @@ const runInBackend = (cmd: string) =>
 export const initializeScheduler = () => {
   console.log('📅 Initializing task scheduler...');
 
-  // Every 2 minutes: Full pipeline from fetch (LIMS) to database
+  // Every 2 minutes: In-memory pipeline (no data.json / patients_dataset / tests_dataset left on disk)
   cron.schedule('*/2 * * * *', async () => {
-    console.log('Running full data pipeline (fetch → timeout → transform → ingest)...');
+    console.log('Running in-memory data pipeline (fetch → timeout → transform → ingest)...');
     try {
-      // 1. Fetch from LIMS (data.json)
-      await runInBackend('npm run fetch-data');
-      // 2. Timeout (Z: drive / TimeOut.csv)
-      await runInBackend('npm run timeout');
-      // 3. Transform (patients_dataset.json) - must run before ingest-patients
-      await runInBackend('npm run transform:full');
-      // 4. Ingest encounters + test_records (Tests, Revenue, Tracker)
-      await runInBackend('npm run ingest-old');
-      // 5. Ingest patients (Numbers, TAT, Performance, Progress)
-      await runInBackend('npm run ingest');
+      await runInBackend('npm run pipeline');
 
       emitToAll('data-updated', { timestamp: new Date() });
-      console.log('✅ Full data pipeline completed');
+      console.log('✅ In-memory pipeline completed');
     } catch (error) {
       console.error('❌ Data pipeline failed:', error);
     }
