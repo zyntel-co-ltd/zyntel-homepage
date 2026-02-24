@@ -72,17 +72,38 @@ export const deleteUserController = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const requestPasswordResetController = async (req: AuthRequest, res: Response) => {
+  try {
+    const { username } = req.body;
+    if (!username || typeof username !== 'string') {
+      return res.status(400).json({ error: 'Username is required' });
+    }
+    const users = await authService.getAllUsers();
+    const user = users.find((u: any) => u.username === username.trim());
+    if (!user) {
+      return res.status(404).json({ error: 'No user found with that username. Contact your administrator.' });
+    }
+    res.json({
+      message: 'Contact your administrator to reset your password. Administrators can reset passwords in Admin > Users.',
+    });
+  } catch (error) {
+    console.error('Request password reset error:', error);
+    res.status(500).json({ error: 'Failed to process request' });
+  }
+};
+
 export const resetPasswordController = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { newPassword } = req.body;
+    const { newPassword, password } = req.body;
     const resetBy = req.user!.userId;
+    const newPass = newPassword ?? password;
 
-    if (!newPassword) {
+    if (!newPass) {
       return res.status(400).json({ error: 'New password is required' });
     }
 
-    await authService.resetPassword(parseInt(id), newPassword, resetBy);
+    await authService.resetPassword(parseInt(id), newPass, resetBy);
     res.json({ message: 'Password reset successfully' });
   } catch (error) {
     console.error('Reset password error:', error);

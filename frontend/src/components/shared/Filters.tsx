@@ -82,11 +82,12 @@ const Filters: React.FC<FiltersProps> = ({
             onChange={(e) => onFilterChange('labSection', e.target.value)}
           >
             <option value="all">All</option>
-            <option value="chemistry">Chemistry</option>
-            <option value="heamatology">Heamatology</option>
-            <option value="microbiology">Microbiology</option>
-            <option value="serology">Serology</option>
-            <option value="referral">Referral</option>
+            <option value="CHEMISTRY">CHEMISTRY</option>
+            <option value="HEAMATOLOGY">HEAMATOLOGY</option>
+            <option value="MICROBIOLOGY">MICROBIOLOGY</option>
+            <option value="SEROLOGY">SEROLOGY</option>
+            <option value="REFERRAL">REFERRAL</option>
+            <option value="N/A">N/A</option>
           </select>
         </div>
       )}

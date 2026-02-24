@@ -110,22 +110,23 @@ body.lrids {
   margin-bottom: 15px;
 }
 
-.input-group:hover {
-  border: 1px solid rgb(37, 239, 44);
-  border-radius: 5px;
+.input-group input:focus {
+  border-color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
 }
 
-input[type="text"],
-input[type="password"],
-input[type="email"] {
+.login-box input[type="text"],
+.login-box input[type="password"],
+.login-box input[type="email"] {
   width: calc(100% - 20px);
   padding: 10px;
-  border: 1px solid #4caf4f4d;
+  border: 1px solid #00eeff40;
   border-radius: 5px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   color: white;
   font-size: 16px;
   outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 input[type="text"]::placeholder,
@@ -157,19 +158,20 @@ input[type="email"]::placeholder {
 .login-button {
   width: 100%;
   padding: 8px;
-  background-color: #4CAF50;
+  background-color: var(--main-color);
   font-size: 18px;
   color: white;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 5px;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.2s ease;
   margin-bottom: 15px;
 }
 
-.login-button:hover {
-  background: none;
-  border: 1px solid rgb(37, 239, 44);
+.login-button:hover:not(:disabled) {
+  background: transparent;
+  border-color: #00f0ff;
+  color: #00f0ff;
 }
 
 .login-button:active {
@@ -190,6 +192,77 @@ input[type="email"]::placeholder {
 
 .forgot-password a:hover {
   text-decoration: underline;
+  color: #00f0ff;
+}
+
+/* Login page reset modal - Zyntel brand (match login styles) */
+.login-page .modal {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.login-page .modal-content {
+  background: #0a0a0a;
+  color: #ccc;
+  border: 1px solid #00eeff20;
+  box-shadow: 0 0 20px var(--glow-color);
+}
+
+.login-page .modal-header h3 {
+  color: #00f0ff;
+}
+
+.login-page .modal .form-label {
+  color: #ccc;
+}
+
+.login-page .modal .form-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #4caf4f4d;
+  color: #fff;
+}
+
+.login-page .modal .btn--secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #4caf4f4d;
+  color: #ccc;
+}
+
+.login-page .modal .btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #00f0ff;
+  color: #00f0ff;
+}
+
+.login-page .modal .btn--primary {
+  background: var(--main-color);
+  border-color: var(--main-color);
+  color: #fff;
+}
+
+.login-page .modal .btn--primary:hover {
+  background: transparent;
+  border: 1px solid #00f0ff;
+  color: #00f0ff;
+}
+
+.login-page .modal .modal-close {
+  color: #888;
+}
+
+.login-page .modal .modal-close:hover {
+  color: #00f0ff;
+}
+
+.login-page .message-box.success {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid #10b981;
+  color: #10b981;
+}
+
+.login-page .message-box.error {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  color: #ef4444;
 }
 
 /* ===========================
@@ -435,22 +508,39 @@ input[type="email"]::placeholder {
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 0.92rem;
-  color: #111827;
-  background: #ffffff;
+  color: #111827 !important;
+  background-color: #ffffff !important;
+  caret-color: #111827;
   outline: none;
 }
 
 .form-input:disabled,
 .form-select:disabled {
-  background: #f3f4f6;
-  color: #6b7280;
+  background-color: #f3f4f6 !important;
+  color: #6b7280 !important;
   cursor: not-allowed;
+  -webkit-text-fill-color: #6b7280;
 }
 
 .form-input:focus,
 .form-select:focus {
   border-color: rgba(33, 51, 106, 0.6);
   box-shadow: 0 0 0 3px rgba(33, 51, 106, 0.12);
+}
+
+/* Ensure inputs in modals are visible and editable (override global * color) */
+.modal .form-input,
+.modal .form-select {
+  color: #111827;
+  background-color: #ffffff;
+  caret-color: #111827;
+  -webkit-text-fill-color: #111827;
+}
+.modal .form-input:disabled,
+.modal .form-select:disabled {
+  color: #6b7280;
+  background-color: #f3f4f6;
+  -webkit-text-fill-color: #6b7280;
 }
 
 .btn {
@@ -485,6 +575,71 @@ input[type="email"]::placeholder {
 
 .btn--primary:hover:not(:disabled) {
   background: var(--hover-color);
+  color: var(--main-color);
+}
+
+.btn--danger {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.btn--warning {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: #ffffff;
+}
+
+.btn--warning:hover:not(:disabled) {
+  background: #d97706;
+}
+
+/* Toast notifications */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 9999;
+  animation: toast-in 0.3s ease;
+  font-size: 0.95rem;
+  max-width: 400px;
+}
+
+.toast-success {
+  background: #10b981;
+  color: #fff;
+}
+
+.toast-error {
+  background: #ef4444;
+  color: #fff;
+}
+
+.toast-info {
+  background: var(--main-color);
+  color: #fff;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Confirm dialog */
+.confirm-dialog-message {
+  margin: 0 0 16px;
+  color: #374151;
+  line-height: 1.5;
 }
 
 @media (max-width: 640px) {
@@ -1423,6 +1578,27 @@ select:active {
 }
 
 .meta-actions-button:hover {
+  background-color: var(--hover-color);
+  color: var(--main-color);
+}
+
+/* Meta table edit button - matches meta-actions-button */
+.action-button.edit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: white;
+  background-color: var(--main-color);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button.edit-button:hover {
   background-color: var(--hover-color);
   color: var(--main-color);
 }

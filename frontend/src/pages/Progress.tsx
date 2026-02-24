@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog } from '@/components/shared';
+import { formatDateTimeWithAMPM } from '@/constants/metaOptions';
 
 const Progress: React.FC = () => {
   const navigate = useNavigate();
@@ -292,9 +293,9 @@ const Progress: React.FC = () => {
                                 {row.lab_number || 'N/A'}
                               </td>
                           <td>{row.Hospital_Unit || 'N/A'}</td>
-                          <td>{row.time_in ? new Date(row.time_in).toLocaleString() : 'N/A'}</td>
+                          <td>{row.time_in ? formatDateTimeWithAMPM(row.time_in) : 'N/A'}</td>
                           <td>{row.daily_tat || 'N/A'}</td>
-                          <td>{row.request_time_expected ? new Date(row.request_time_expected).toLocaleString() : 'N/A'}</td>
+                          <td>{row.request_time_expected ? formatDateTimeWithAMPM(row.request_time_expected) : 'N/A'}</td>
                           <td className={progress.cssClass}>{progress.text}</td>
                         </tr>
                       );

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -12,6 +13,7 @@ const Login: React.FC = () => {
   const [resetMessage, setResetMessage] = useState('');
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,26 +27,7 @@ const Login: React.FC = () => {
         return;
       }
 
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Login failed');
-      }
-
-      const data = await response.json();
-      
-      // Store token and user data
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      
-      // Navigate to dashboard
+      await login(username, password);
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');
@@ -55,21 +38,25 @@ const Login: React.FC = () => {
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!resetUsername) {
+    if (!resetUsername?.trim()) {
       setResetMessage('Please enter your username');
       return;
     }
 
     try {
-      // Simulate password reset - replace with actual API call
-      setResetMessage('Password reset link sent to your email');
-      setTimeout(() => {
-        setShowResetModal(false);
-        setResetMessage('');
-        setResetUsername('');
-      }, 2000);
+      const response = await fetch('/api/auth/request-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: resetUsername.trim() }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        setResetMessage(data.message || 'Contact your administrator to reset your password in Admin > Users.');
+      } else {
+        setResetMessage(data.error || 'Request failed. Please try again.');
+      }
     } catch (err) {
-      setResetMessage('Error sending reset link. Please try again.');
+      setResetMessage('Network error. Please try again.');
     }
   };
 

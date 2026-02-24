@@ -1,5 +1,6 @@
 // frontend/src/components/tables/PerformanceTable.tsx
 import React from 'react';
+import { formatDateTimeWithAMPM } from '@/constants/metaOptions';
 
 export interface PerformanceRecord {
   date?: string;
@@ -132,10 +133,10 @@ const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDo
                 {row.lab_number || 'N/A'}
               </td>
                 <td>{row.Hospital_Unit || 'N/A'}</td>
-                <td>{row.time_in ? new Date(row.time_in).toLocaleString() : 'N/A'}</td>
+                <td>{row.time_in ? formatDateTimeWithAMPM(row.time_in) : 'N/A'}</td>
                 <td>{row.daily_tat || 'N/A'}</td>
-                <td>{row.request_time_expected ? new Date(row.request_time_expected).toLocaleString() : 'N/A'}</td>
-                <td>{row.request_time_out ? new Date(row.request_time_out).toLocaleString() : 'N/A'}</td>
+                <td>{row.request_time_expected ? formatDateTimeWithAMPM(row.request_time_expected) : 'N/A'}</td>
+                <td>{row.request_time_out ? formatDateTimeWithAMPM(row.request_time_out) : 'N/A'}</td>
                 <td className={getDelayStatusClass(row.request_delay_status || '')}>{row.request_delay_status || 'N/A'}</td>
                 <td className={getDelayStatusClass(row.request_time_range || '')}>{row.request_time_range || 'N/A'}</td>
               </tr>

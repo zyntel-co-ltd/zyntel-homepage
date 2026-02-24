@@ -23,6 +23,7 @@
     "populate-patients-old": "ts-node scripts/data-processing/populatePatients.ts",
     "populate-patients": "ts-node scripts/data-processing/populate-patients.ts",
     "import-meta": "ts-node scripts/data-processing/import-meta.ts",
+    "reset-and-load": "ts-node scripts/data-processing/reset-and-load.ts",
     "export-meta": "ts-node scripts/maintenance/export-meta-csv.ts",
     "verify-data": "ts-node scripts/verify-data.ts",
     "reset-admin": "ts-node scripts/reset-admin-password.ts",

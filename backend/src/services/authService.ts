@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query } from '../config/database';
+import { JWT_SECRET } from '../config/jwt';
 import { User, JWTPayload } from '../types';
 
 export const login = async (username: string, password: string) => {
@@ -29,10 +30,8 @@ export const login = async (username: string, password: string) => {
     role: user.role,
   };
 
-  const secret = process.env.JWT_SECRET || 'fallback-secret';
-  
   // Use any to bypass strict typing
-  const token = jwt.sign(payload, secret, {
+  const token = jwt.sign(payload, JWT_SECRET, {
     expiresIn: '7d',
   } as any);
 

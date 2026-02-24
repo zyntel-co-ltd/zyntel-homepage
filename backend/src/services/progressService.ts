@@ -11,9 +11,13 @@ export const getProgressData = async (filters: FilterParams) => {
     const dates = getPeriodDates(filters.period);
     startDate = dates.startDate;
     endDate = dates.endDate;
+  } else if (filters.startDate && filters.endDate) {
+    startDate = new Date(filters.startDate);
+    endDate = new Date(filters.endDate);
   } else {
-    startDate = filters.startDate ? new Date(filters.startDate) : new Date();
-    endDate = filters.endDate ? new Date(filters.endDate) : new Date();
+    const dates = getPeriodDates('thisMonth');
+    startDate = dates.startDate;
+    endDate = dates.endDate;
   }
 
   const startStr = moment(startDate).format('YYYY-MM-DD');

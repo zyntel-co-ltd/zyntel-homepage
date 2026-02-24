@@ -2,9 +2,16 @@ import { io, Socket } from 'socket.io-client';
 
 let socket: Socket | null = null;
 
+const getSocketUrl = () => {
+  if (typeof window === 'undefined') return 'http://localhost:5001';
+  // Connect directly to backend (bypass proxy to avoid ws proxy errors)
+  const port = import.meta.env.VITE_SOCKET_PORT || '5001';
+  return `${window.location.protocol}//${window.location.hostname}:${port}`;
+};
+
 export const initializeSocket = (): Socket => {
   if (!socket) {
-    socket = io('http://localhost:5000', {
+    socket = io(getSocketUrl(), {
       transports: ['websocket'],
       autoConnect: true,
     });

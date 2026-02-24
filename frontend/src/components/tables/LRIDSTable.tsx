@@ -1,5 +1,6 @@
 // frontend/src/components/tables/LRIDSTable.tsx
 import React, { useEffect, useState } from 'react';
+import { formatDateTimeWithAMPM } from '@/constants/metaOptions';
 
 export interface LRIDSRecord {
   id: number;
@@ -185,7 +186,7 @@ const LRIDSTable: React.FC<LRIDSTableProps> = ({
         <tbody>
           {data.map((row) => (
             <tr key={row.id} className="hover-row">
-              <td>{new Date(row.timestamp).toLocaleTimeString()}</td>
+              <td>{formatDateTimeWithAMPM(row.timestamp)}</td>
               <td className="lab-number-cell font-mono font-bold">{row.labNumber}</td>
               <td>{row.patientName}</td>
               <td>{row.testName}</td>

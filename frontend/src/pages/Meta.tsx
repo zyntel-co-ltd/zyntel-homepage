@@ -1,7 +1,8 @@
 // frontend/src/pages/Meta.tsx
 import React, { useState, useEffect } from 'react';
-import { Header, Navbar, Filters, Loader, Modal, Pagination } from '@/components/shared';
+import { Header, Navbar, Filters, Loader, Modal, Pagination, Toast } from '@/components/shared';
 import { MetaTable, type MetaRecord } from '@/components/tables';
+import { LAB_SECTIONS, TAT_OPTIONS } from '@/constants/metaOptions';
 
 const Meta: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -20,9 +21,10 @@ const Meta: React.FC = () => {
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
 
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [formData, setFormData] = useState({
     testName: '',
-    section: 'Chemistry',
+    section: 'CHEMISTRY',
     price: 0,
     expectedTAT: 60,
   });
@@ -115,7 +117,7 @@ const Meta: React.FC = () => {
     setEditingRecord(null);
     setFormData({
       testName: '',
-      section: 'Chemistry',
+      section: 'CHEMISTRY',
       price: 0,
       expectedTAT: 60,
     });
@@ -136,30 +138,28 @@ const Meta: React.FC = () => {
         : '/api/meta';
       const method = editingRecord ? 'PUT' : 'POST';
       
+      const payload = editingRecord
+        ? { price: formData.price, tat: formData.expectedTAT, labSection: formData.section }
+        : { testName: formData.testName, price: formData.price, tat: formData.expectedTAT, labSection: formData.section };
       const response = await fetch(url, {
         method,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          testName: formData.testName,
-          price: formData.price,
-          tat: formData.expectedTAT,
-          labSection: formData.section,
-        })
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
-        alert(`Test ${editingRecord ? 'updated' : 'created'} successfully`);
+        setToast({ message: `Test ${editingRecord ? 'updated' : 'created'} successfully`, type: 'success' });
         setIsModalOpen(false);
         fetchData();
       } else {
-        alert(`Failed to ${editingRecord ? 'update' : 'create'} test`);
+        setToast({ message: `Failed to ${editingRecord ? 'update' : 'create'} test`, type: 'error' });
       }
     } catch (error) {
       console.error('Error saving test:', error);
-      alert('Error saving test');
+      setToast({ message: 'Error saving test', type: 'error' });
     }
   };
 
@@ -279,10 +279,18 @@ const Meta: React.FC = () => {
               type="text"
               className="form-input"
               value={formData.testName}
-              onChange={(e) => handleFormChange('testName', e.target.value)}
+              onChange={(e) => !editingRecord && handleFormChange('testName', e.target.value)}
               placeholder="Enter test name"
               required
+              readOnly={!!editingRecord}
+              disabled={!!editingRecord}
+              style={editingRecord ? { backgroundColor: 'var(--light-grey-background)', cursor: 'not-allowed' } : undefined}
             />
+            {editingRecord && (
+              <p className="form-hint" style={{ marginTop: '6px', fontSize: '0.8rem', color: 'var(--border-color)' }}>
+                Test name cannot be edited. Changing it affects data matching and may break links to existing records.
+              </p>
+            )}
           </div>
 
           <div className="form-field">
@@ -291,16 +299,30 @@ const Meta: React.FC = () => {
             </label>
             <select
               className="form-select"
-              value={formData.section}
-              onChange={(e) => handleFormChange('section', e.target.value)}
+              value={LAB_SECTIONS.includes(formData.section as any) ? formData.section : '_custom'}
+              onChange={(e) => {
+                const v = e.target.value;
+                handleFormChange('section', v === '_custom' ? '' : v);
+              }}
             >
-              <option value="Chemistry">Chemistry</option>
-              <option value="Hematology">Hematology</option>
-              <option value="Microbiology">Microbiology</option>
-              <option value="Immunology">Immunology</option>
-              <option value="Molecular">Molecular</option>
-              <option value="Serology">Serology</option>
+              {LAB_SECTIONS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+              {!LAB_SECTIONS.includes(formData.section as any) && (
+                <option value="_custom">{formData.section}</option>
+              )}
+              <option value="_custom">+ Add new...</option>
             </select>
+            {!LAB_SECTIONS.includes(formData.section as any) && (
+              <input
+                type="text"
+                className="form-input"
+                style={{ marginTop: '8px' }}
+                value={formData.section}
+                onChange={(e) => handleFormChange('section', e.target.value.toUpperCase())}
+                placeholder="Enter custom section"
+              />
+            )}
           </div>
 
           <div className="form-field">
@@ -322,15 +344,30 @@ const Meta: React.FC = () => {
             <label className="form-label">
               Expected TAT (minutes) <span style={{ color: '#ef4444' }}>*</span>
             </label>
-            <input
-              type="number"
-              className="form-input"
-              value={formData.expectedTAT}
-              onChange={(e) => handleFormChange('expectedTAT', parseInt(e.target.value) || 60)}
-              placeholder="60"
-              min="1"
-              required
-            />
+            <select
+              className="form-select"
+              value={TAT_OPTIONS.includes(formData.expectedTAT as any) ? formData.expectedTAT : '_custom'}
+              onChange={(e) => {
+                const v = e.target.value;
+                handleFormChange('expectedTAT', v === '_custom' ? 1 : parseInt(v) || 60);
+              }}
+            >
+              {TAT_OPTIONS.map((t) => (
+                <option key={t} value={t}>{t} MIN</option>
+              ))}
+              <option value="_custom">+ Add new...</option>
+            </select>
+            {!TAT_OPTIONS.includes(formData.expectedTAT as any) && (
+              <input
+                type="number"
+                className="form-input"
+                style={{ marginTop: '8px' }}
+                value={formData.expectedTAT}
+                onChange={(e) => handleFormChange('expectedTAT', parseInt(e.target.value) || 60)}
+                placeholder="Enter minutes"
+                min="1"
+              />
+            )}
           </div>
         </div>
 
@@ -347,6 +384,10 @@ const Meta: React.FC = () => {
           </button>
         </div>
       </Modal>
+
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
 
       <footer>
         <p>&copy;2025 Zyntel</p>

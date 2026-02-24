@@ -1,5 +1,6 @@
 // frontend/src/components/tables/TrackerTable.tsx
 import React from 'react';
+import { formatTimeWithAMPM } from '@/constants/metaOptions';
 
 export interface TrackerRecord {
   id: number;
@@ -16,6 +17,8 @@ export interface TrackerRecord {
   timeExpected: string;
   progress: 'pending' | 'in-progress' | 'completed';
   timeOut: string;
+  timeOutRaw?: string;
+  timeExpectedRaw?: string;
 }
 
 interface TrackerTableProps {
@@ -25,26 +28,42 @@ interface TrackerTableProps {
 }
 
 const TrackerTable: React.FC<TrackerTableProps> = ({ data, onLabNumberDoubleClick, isLoading = false }) => {
-  const getProgressColor = (progress: string) => {
-    switch (progress) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'in-progress':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const calculateProgress = (timeExpected: string, timeOut?: string) => {
+    const now = new Date();
+    const hasTimeOut = timeOut && timeOut !== 'N/A' && timeOut !== null && timeOut !== undefined;
+    const timeOutDate = hasTimeOut ? new Date(timeOut) : null;
+    const isTimeOutValid = timeOutDate && !isNaN(timeOutDate.getTime());
+    const isTimeOutInPast = isTimeOutValid && timeOutDate! <= now;
 
-  const getProgressIcon = (progress: string) => {
-    switch (progress) {
-      case 'completed':
-        return 'fas fa-check-circle text-green-500';
-      case 'in-progress':
-        return 'fas fa-spinner text-yellow-500 fa-spin';
-      default:
-        return 'fas fa-clock text-gray-500';
+    const hasTimeExpected = timeExpected && timeExpected !== 'N/A' && timeExpected !== null && timeExpected !== undefined;
+    const timeExpectedDate = hasTimeExpected ? new Date(timeExpected) : null;
+    const isTimeExpectedValid = timeExpectedDate && !isNaN(timeExpectedDate.getTime());
+    const isTimeExpectedInPast = isTimeExpectedValid && timeExpectedDate! <= now;
+
+    if (isTimeOutValid && isTimeOutInPast) {
+      return { text: 'Completed', cssClass: 'progress-complete-actual' };
     }
+    if (isTimeExpectedValid && isTimeExpectedInPast && !isTimeOutValid) {
+      return { text: 'Delayed', cssClass: 'progress-overdue' };
+    }
+    if (isTimeExpectedValid && !isTimeExpectedInPast) {
+      const timeLeft = timeExpectedDate!.getTime() - now.getTime();
+      const timeLeftInMinutes = Math.floor(timeLeft / (1000 * 60));
+      const timeLeftInHours = Math.floor(timeLeft / (1000 * 60 * 60));
+      const timeLeftInDays = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+      if (timeLeftInMinutes <= 10 && timeLeftInMinutes > 0) {
+        return { text: `${timeLeftInMinutes} min(s) remaining`, cssClass: 'progress-urgent' };
+      } else if (timeLeftInDays > 0) {
+        return { text: `${timeLeftInDays} day(s) remaining`, cssClass: 'progress-pending' };
+      } else if (timeLeftInHours > 0) {
+        return { text: `${timeLeftInHours} hr(s) remaining`, cssClass: 'progress-pending' };
+      } else if (timeLeftInMinutes > 0) {
+        return { text: `${timeLeftInMinutes} min(s) remaining`, cssClass: 'progress-pending' };
+      } else {
+        return { text: 'Due now', cssClass: 'progress-pending' };
+      }
+    }
+    return { text: 'No ETA', cssClass: 'progress-pending' };
   };
 
   const getUrgencyColor = (urgency: string) => {
@@ -159,28 +178,26 @@ const TrackerTable: React.FC<TrackerTableProps> = ({ data, onLabNumberDoubleClic
               <td>{row.unit}</td>
               <td>{row.labSection}</td>
               <td>{row.testName}</td>
-              <td>{row.timeIn}</td>
+              <td>{formatTimeWithAMPM(row.timeIn)}</td>
               <td>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getUrgencyColor(row.urgency)}`}>
                   {row.urgency.charAt(0).toUpperCase() + row.urgency.slice(1)}
                 </span>
               </td>
-              <td>{row.timeReceived || '-'}</td>
+              <td>{row.timeReceived ? formatTimeWithAMPM(row.timeReceived) : '-'}</td>
               <td>
                 <span className={`px-2 py-1 rounded-full ${row.tat > 120 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
                   {row.tat} min
                 </span>
               </td>
-              <td>{row.timeExpected}</td>
-              <td>
-                <div className="flex items-center space-x-2">
-                  <i className={getProgressIcon(row.progress)}></i>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getProgressColor(row.progress)}`}>
-                    {row.progress.charAt(0).toUpperCase() + row.progress.slice(1)}
-                  </span>
-                </div>
+              <td>{row.timeExpected ? formatTimeWithAMPM(row.timeExpected) : '-'}</td>
+              <td className={(() => {
+                const p = calculateProgress(row.timeExpectedRaw || row.timeExpected || '', row.timeOutRaw || row.timeOut);
+                return p.cssClass;
+              })()}>
+                {calculateProgress(row.timeExpectedRaw || row.timeExpected || '', row.timeOutRaw || row.timeOut).text}
               </td>
-              <td>{row.timeOut || '-'}</td>
+              <td>{row.timeOut ? formatTimeWithAMPM(row.timeOut) : '-'}</td>
             </tr>
           ))}
         </tbody>

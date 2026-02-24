@@ -22,7 +22,8 @@ export const extractTimeFromLabNo = (labNo: string): Date | null => {
   }
 };
 
-export const determineShift = (timeIn: Date): string => {
+export const determineShift = (timeIn: Date | null): string => {
+  if (!timeIn) return 'day shift';
   const hour = timeIn.getHours();
   // Day shift: 8 AM - 5 PM, Night shift: 5 PM - 8 AM
   return hour >= 8 && hour < 17 ? 'day shift' : 'night shift';

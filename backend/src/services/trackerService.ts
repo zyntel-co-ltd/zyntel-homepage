@@ -10,9 +10,13 @@ export const getTrackerData = async (filters: FilterParams, search?: string) => 
     const dates = getPeriodDates(filters.period);
     startDate = dates.startDate;
     endDate = dates.endDate;
+  } else if (filters.startDate && filters.endDate) {
+    startDate = new Date(filters.startDate);
+    endDate = new Date(filters.endDate);
   } else {
-    startDate = filters.startDate ? new Date(filters.startDate) : new Date();
-    endDate = filters.endDate ? new Date(filters.endDate) : new Date();
+    const dates = getPeriodDates('thisMonth');
+    startDate = dates.startDate;
+    endDate = dates.endDate;
   }
 
   // Always filter by encounter date range and exclude cancelled tests
@@ -78,10 +82,12 @@ export const getTrackerData = async (filters: FilterParams, search?: string) => 
       tr.lab_section_at_test,
       tr.is_urgent,
       tr.is_received,
+      tr.time_in as tr_time_in,
+      tr.time_received,
       tr.time_out,
       tr.actual_tat,
       tr.tat_at_test,
-      (e.time_in + (tr.tat_at_test || ' minutes')::INTERVAL) as time_expected
+      (COALESCE(tr.time_received, tr.time_in, e.time_in) + (COALESCE(tr.tat_at_test, 60)::text || ' minutes')::INTERVAL) as time_expected
      ${baseQuery}
      ${orderBy}
      LIMIT $${params.length - 1} OFFSET $${params.length}`,
@@ -105,10 +111,12 @@ export const getTrackerData = async (filters: FilterParams, search?: string) => 
       tr.lab_section_at_test,
       tr.is_urgent,
       tr.is_received,
+      tr.time_in as tr_time_in,
+      tr.time_received,
       tr.time_out,
       tr.actual_tat,
       tr.tat_at_test,
-      (e.time_in + (tr.tat_at_test || ' minutes')::INTERVAL) as time_expected
+      (COALESCE(tr.time_received, tr.time_in, e.time_in) + (COALESCE(tr.tat_at_test, 60)::text || ' minutes')::INTERVAL) as time_expected
      ${baseQuery}
      ${orderBy}`,
     params
@@ -120,6 +128,7 @@ export const getTrackerData = async (filters: FilterParams, search?: string) => 
       : new Date(row.encounter_date);
 
     const timeInDate = row.time_in ? new Date(row.time_in) : null;
+    const timeReceivedDate = row.time_received ? new Date(row.time_received) : null;
     const timeOutDate = row.time_out ? new Date(row.time_out) : null;
     const timeExpectedDate = row.time_expected ? new Date(row.time_expected) : null;
 
@@ -150,11 +159,13 @@ export const getTrackerData = async (filters: FilterParams, search?: string) => 
       testName: row.test_name,
       timeIn: formatTime(timeInDate),
       urgency: row.is_urgent ? 'urgent' as const : 'routine' as const,
-      timeReceived: formatTime(timeInDate), // No separate received timestamp yet; use time_in
+      timeReceived: formatTime(timeReceivedDate),
       tat,
       timeExpected: formatTime(timeExpectedDate),
       progress,
       timeOut: formatTime(timeOutDate),
+      timeOutRaw: row.time_out,
+      timeExpectedRaw: row.time_expected,
     };
   }
 

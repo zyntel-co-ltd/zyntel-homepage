@@ -160,6 +160,10 @@ env/
 venv/
 .venv
 
+# Runtime state
+.last_run
+.last_comprehensive_run
+
 # Data files (generated)
 frontend/public/data.json
 frontend/public/TimeOut.csv

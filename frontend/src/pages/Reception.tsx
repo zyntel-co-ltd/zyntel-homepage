@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog } from '@/components/shared';
+import { formatTimeWithAMPM } from '@/constants/metaOptions';
 import { ReceptionTable, type ReceptionRecord } from '@/components/tables';
 
 const Reception: React.FC = () => {
@@ -9,7 +10,7 @@ const Reception: React.FC = () => {
   const [filters, setFilters] = useState({
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
-    period: 'custom',
+    period: 'thisMonth',
     labSection: 'all',
     shift: 'all',
     laboratory: 'all',
@@ -96,7 +97,7 @@ const Reception: React.FC = () => {
         urgency: item.is_urgent === true ? 'urgent' : 'routine',
         received: item.is_received || false,
         result: item.is_resulted || false,
-        timeIn: item.time_in ? new Date(item.time_in).toLocaleTimeString() : ''
+        timeIn: item.time_in ? formatTimeWithAMPM(item.time_in) : ''
       }));
       setData(transformedData);
       if (result?.totalRecords != null) {

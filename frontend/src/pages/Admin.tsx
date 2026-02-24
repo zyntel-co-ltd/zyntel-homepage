@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal } from '@/components/shared';
+import { Modal, Toast, ConfirmDialog } from '@/components/shared';
+import { LAB_SECTIONS, TAT_OPTIONS } from '@/constants/metaOptions';
 
 interface User {
   id: number;
@@ -61,9 +62,48 @@ const Admin: React.FC = () => {
     target: 15000,
   });
 
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
+  const [resetPasswordModal, setResetPasswordModal] = useState<{ userId: number; username: string } | null>(null);
+  const [resetPasswordValue, setResetPasswordValue] = useState('');
+  const [unmatchedEdits, setUnmatchedEdits] = useState<Record<number, { labSection: string; tat: number; price: number }>>({});
+  const [unmatchedSaving, setUnmatchedSaving] = useState<number | 'all' | null>(null);
+
   useEffect(() => {
     fetchData();
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'settings') {
+      fetchTargets();
+    }
+  }, [activeTab]);
+
+  const fetchTargets = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+      const [revRes, testsRes, numbersRes] = await Promise.all([
+        fetch(`/api/settings/monthly-target?month=${monthlyTarget.month}&year=${monthlyTarget.year}`, { headers }),
+        fetch(`/api/settings/tests-target?month=${testsTarget.month}&year=${testsTarget.year}`, { headers }),
+        fetch(`/api/settings/numbers-target?month=${numbersTarget.month}&year=${numbersTarget.year}`, { headers }),
+      ]);
+      if (revRes.ok) {
+        const d = await revRes.json();
+        if (d?.target != null) setMonthlyTarget(prev => ({ ...prev, target: d.target }));
+      }
+      if (testsRes.ok) {
+        const d = await testsRes.json();
+        if (d?.target != null) setTestsTarget(prev => ({ ...prev, target: d.target }));
+      }
+      if (numbersRes.ok) {
+        const d = await numbersRes.json();
+        if (d?.target != null) setNumbersTarget(prev => ({ ...prev, target: d.target }));
+      }
+    } catch (e) {
+      console.error('Error fetching targets:', e);
+    }
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -142,41 +182,61 @@ const Admin: React.FC = () => {
       };
 
       if (editingUser) {
+        const payload = { email: userFormData.email, role: userFormData.role };
         const response = await fetch(`/api/admin/users/${editingUser.id}`, {
           method: 'PUT',
           headers,
-          body: JSON.stringify(userFormData)
+          body: JSON.stringify(payload)
         });
 
+        const data = await response.json().catch(() => ({}));
         if (response.ok) {
-          alert(`Updated user: ${userFormData.username}`);
+          setToast({ message: `Updated user: ${userFormData.username}`, type: 'success' });
+          setUserModalOpen(false);
+          fetchData();
         } else {
-          alert('Failed to update user');
+          setToast({ message: data?.error || 'Failed to update user', type: 'error' });
         }
       } else {
+        const payload = {
+          username: userFormData.username.trim(),
+          email: userFormData.email?.trim() || '',
+          password: userFormData.password,
+          role: userFormData.role
+        };
         const response = await fetch('/api/admin/users', {
           method: 'POST',
           headers,
-          body: JSON.stringify(userFormData)
+          body: JSON.stringify(payload)
         });
 
+        const data = await response.json().catch(() => ({}));
         if (response.ok) {
-          alert(`Created user: ${userFormData.username}`);
+          setToast({ message: `Created user: ${userFormData.username}`, type: 'success' });
+          setUserModalOpen(false);
+          fetchData();
         } else {
-          alert('Failed to create user');
+          setToast({ message: data?.error || 'Failed to create user', type: 'error' });
         }
       }
-      setUserModalOpen(false);
-      fetchData();
     } catch (error) {
       console.error('Error saving user:', error);
-      alert('Error saving user');
+      setToast({ message: 'Error saving user', type: 'error' });
     }
   };
 
-  const handleDeleteUser = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+  const handleDeleteUser = (id: number) => {
+    setConfirmDialog({
+      title: 'Delete User',
+      message: 'Are you sure you want to delete this user?',
+      onConfirm: () => {
+        setConfirmDialog(null);
+        doDeleteUser(id);
+      },
+    });
+  };
 
+  const doDeleteUser = async (id: number) => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`/api/admin/users/${id}`, {
@@ -187,40 +247,44 @@ const Admin: React.FC = () => {
       });
 
       if (response.ok) {
-        alert(`User deleted successfully`);
+        setToast({ message: 'User deleted successfully', type: 'success' });
         fetchData();
       } else {
-        alert('Failed to delete user');
+        setToast({ message: 'Failed to delete user', type: 'error' });
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Error deleting user');
+      setToast({ message: 'Error deleting user', type: 'error' });
     }
   };
 
-  const handleResetPassword = async (id: number) => {
-    const newPassword = prompt('Enter new password:');
-    if (!newPassword) return;
+  const handleResetPassword = (user: User) => {
+    setResetPasswordModal({ userId: user.id, username: user.username });
+    setResetPasswordValue('');
+  };
 
+  const doResetPassword = async () => {
+    if (!resetPasswordModal || !resetPasswordValue.trim()) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/admin/users/${id}/reset-password`, {
+      const response = await fetch(`/api/admin/users/${resetPasswordModal.userId}/reset-password`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ password: newPassword })
+        body: JSON.stringify({ password: resetPasswordValue })
       });
-
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
-        alert('Password reset successfully');
+        setToast({ message: 'Password reset successfully', type: 'success' });
+        setResetPasswordModal(null);
       } else {
-        alert('Failed to reset password');
+        setToast({ message: data?.error || 'Failed to reset password', type: 'error' });
       }
     } catch (error) {
       console.error('Error resetting password:', error);
-      alert('Error resetting password');
+      setToast({ message: 'Error resetting password', type: 'error' });
     }
   };
 
@@ -237,14 +301,102 @@ const Admin: React.FC = () => {
       });
 
       if (response.ok) {
-        alert(`User ${isActive ? 'deactivated' : 'activated'} successfully`);
+        setToast({ message: `User ${isActive ? 'deactivated' : 'activated'} successfully`, type: 'success' });
         fetchData();
       } else {
-        alert('Failed to toggle user status');
+        setToast({ message: 'Failed to toggle user status', type: 'error' });
       }
     } catch (error) {
       console.error('Error toggling user active status:', error);
-      alert('Error toggling user status');
+      setToast({ message: 'Error toggling user status', type: 'error' });
+    }
+  };
+
+  const getUnmatchedEdit = (test: UnmatchedTest) => {
+    return unmatchedEdits[test.id] ?? {
+      labSection: 'CHEMISTRY',
+      tat: 60,
+      price: 0,
+    };
+  };
+
+  const setUnmatchedEdit = (id: number, field: string, value: string | number) => {
+    setUnmatchedEdits(prev => ({
+      ...prev,
+      [id]: {
+        ...(prev[id] ?? { labSection: 'CHEMISTRY', tat: 60, price: 0 }),
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleAddUnmatchedToMeta = async (id: number) => {
+    const edit = unmatchedEdits[id] ?? { labSection: 'CHEMISTRY', tat: 60, price: 0 };
+    if (edit.price <= 0) {
+      setToast({ message: 'Price must be greater than 0', type: 'error' });
+      return;
+    }
+    setUnmatchedSaving(id);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/admin/unmatched-tests/${id}/add-to-meta`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(edit),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        setToast({ message: `Added ${data.testName} to Meta table`, type: 'success' });
+        setUnmatchedEdits(prev => { const n = { ...prev }; delete n[id]; return n; });
+        fetchData();
+      } else {
+        setToast({ message: data?.error || 'Failed to add to Meta', type: 'error' });
+      }
+    } catch (error) {
+      setToast({ message: 'Error adding to Meta', type: 'error' });
+    } finally {
+      setUnmatchedSaving(null);
+    }
+  };
+
+  const handleAddAllUnmatchedToMeta = async () => {
+    const items = unmatchedTests
+      .map(t => ({
+        id: t.id,
+        ...getUnmatchedEdit(t),
+      }))
+      .filter(i => i.price > 0);
+    if (items.length === 0) {
+      setToast({ message: 'Add section, TAT, and price for at least one test. Price must be > 0.', type: 'error' });
+      return;
+    }
+    setUnmatchedSaving('all');
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/unmatched-tests/add-multiple-to-meta', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ items }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        const succeeded = (data.results || []).filter((r: any) => r.success).length;
+        setToast({ message: `Added ${succeeded} test(s) to Meta table`, type: 'success' });
+        setUnmatchedEdits({});
+        fetchData();
+      } else {
+        setToast({ message: data?.error || 'Failed to add to Meta', type: 'error' });
+      }
+    } catch (error) {
+      setToast({ message: 'Error adding to Meta', type: 'error' });
+    } finally {
+      setUnmatchedSaving(null);
     }
   };
 
@@ -259,14 +411,14 @@ const Admin: React.FC = () => {
       });
 
       if (response.ok) {
-        alert('Unmatched test marked as resolved');
+        setToast({ message: 'Unmatched test marked as resolved', type: 'success' });
         fetchData();
       } else {
-        alert('Failed to resolve unmatched test');
+        setToast({ message: 'Failed to resolve unmatched test', type: 'error' });
       }
     } catch (error) {
       console.error('Error resolving unmatched test:', error);
-      alert('Error resolving unmatched test');
+      setToast({ message: 'Error resolving unmatched test', type: 'error' });
     }
   };
 
@@ -283,13 +435,13 @@ const Admin: React.FC = () => {
       });
 
       if (response.ok) {
-        alert(`Revenue target saved: UGX ${monthlyTarget.target.toLocaleString()} for ${new Date(2000, monthlyTarget.month - 1).toLocaleString('default', { month: 'long' })} ${monthlyTarget.year}`);
+        setToast({ message: `Revenue target saved: UGX ${monthlyTarget.target.toLocaleString()} for ${new Date(2000, monthlyTarget.month - 1).toLocaleString('default', { month: 'long' })} ${monthlyTarget.year}`, type: 'success' });
       } else {
-        alert('Failed to save revenue target');
+        setToast({ message: 'Failed to save revenue target', type: 'error' });
       }
     } catch (error) {
       console.error('Error saving monthly target:', error);
-      alert('Error saving monthly target');
+      setToast({ message: 'Error saving monthly target', type: 'error' });
     }
   };
 
@@ -306,13 +458,13 @@ const Admin: React.FC = () => {
       });
 
       if (response.ok) {
-        alert(`Tests target saved: ${testsTarget.target} tests for ${new Date(2000, testsTarget.month - 1).toLocaleString('default', { month: 'long' })} ${testsTarget.year}`);
+        setToast({ message: `Tests target saved: ${testsTarget.target} tests for ${new Date(2000, testsTarget.month - 1).toLocaleString('default', { month: 'long' })} ${testsTarget.year}`, type: 'success' });
       } else {
-        alert('Failed to save tests target');
+        setToast({ message: 'Failed to save tests target', type: 'error' });
       }
     } catch (error) {
       console.error('Error saving tests target:', error);
-      alert('Error saving tests target');
+      setToast({ message: 'Error saving tests target', type: 'error' });
     }
   };
 
@@ -329,13 +481,13 @@ const Admin: React.FC = () => {
       });
 
       if (response.ok) {
-        alert(`Numbers target saved: ${numbersTarget.target} requests for ${new Date(2000, numbersTarget.month - 1).toLocaleString('default', { month: 'long' })} ${numbersTarget.year}`);
+        setToast({ message: `Numbers target saved: ${numbersTarget.target} requests for ${new Date(2000, numbersTarget.month - 1).toLocaleString('default', { month: 'long' })} ${numbersTarget.year}`, type: 'success' });
       } else {
-        alert('Failed to save numbers target');
+        setToast({ message: 'Failed to save numbers target', type: 'error' });
       }
     } catch (error) {
       console.error('Error saving numbers target:', error);
-      alert('Error saving numbers target');
+      setToast({ message: 'Error saving numbers target', type: 'error' });
     }
   };
 
@@ -697,7 +849,7 @@ const Admin: React.FC = () => {
                                 Edit
                               </button>
                               <button
-                                onClick={() => handleResetPassword(user.id)}
+                                onClick={() => handleResetPassword(user)}
                                 style={{
                                   backgroundColor: '#f59e0b',
                                   color: 'white',
@@ -794,7 +946,18 @@ const Admin: React.FC = () => {
                       fontSize: '0.9rem'
                     }}>
                       <i className="fas fa-exclamation-circle mr-2"></i>
-                      <strong>Important:</strong> Copy test names exactly as shown below when adding to the Meta Table. This ensures proper matching with LabGuru data.
+                      <strong>Important:</strong> Add section, TAT, and price for each test below, then save to add them to the Meta table. Test names cannot be edited (they must match LabGuru data exactly).
+                    </div>
+
+                    <div style={{ marginBottom: '16px' }}>
+                      <button
+                        onClick={handleAddAllUnmatchedToMeta}
+                        disabled={unmatchedSaving === 'all'}
+                        className="meta-actions-button"
+                      >
+                        <i className="fas fa-save mr-2"></i>
+                        Save All to Meta
+                      </button>
                     </div>
 
                     <div className="table-container">
@@ -803,61 +966,88 @@ const Admin: React.FC = () => {
                           <tr>
                             <th>Test Name</th>
                             <th>Source</th>
-                            <th>First Seen</th>
                             <th>Occurrences</th>
+                            <th>Section</th>
+                            <th>TAT (min)</th>
+                            <th>Price (UGX)</th>
                             <th style={{ textAlign: 'center' }}>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {unmatchedTests.map((test) => (
-                            <tr key={test.id}>
-                              <td style={{
-                                fontFamily: 'monospace',
-                                fontWeight: '700',
-                                color: 'var(--main-color)',
-                                fontSize: '0.9rem'
-                              }}>
-                                {test.test_name}
-                              </td>
-                              <td>{test.source}</td>
-                              <td>
-                                {new Date(test.first_seen).toLocaleDateString()}
-                              </td>
-                              <td>
-                                <span style={{
-                                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                  color: '#ef4444',
-                                  padding: '5px 12px',
-                                  borderRadius: '20px',
-                                  fontSize: '0.8rem',
-                                  fontWeight: '600'
+                          {unmatchedTests.map((test) => {
+                            const edit = getUnmatchedEdit(test);
+                            return (
+                              <tr key={test.id}>
+                                <td style={{
+                                  fontFamily: 'monospace',
+                                  fontWeight: '700',
+                                  color: 'var(--main-color)',
+                                  fontSize: '0.9rem'
                                 }}>
-                                  {test.occurrence_count} times
-                                </span>
-                              </td>
-                              <td style={{ textAlign: 'center' }}>
-                                <button
-                                  onClick={() => handleResolveUnmatched(test.id)}
-                                  style={{
-                                    backgroundColor: '#22c55e',
-                                    color: 'white',
-                                    padding: '6px 15px',
-                                    borderRadius: '6px',
-                                    border: 'none',
-                                    cursor: 'pointer',
+                                  {test.test_name}
+                                </td>
+                                <td>{test.source}</td>
+                                <td>
+                                  <span style={{
+                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                    color: '#ef4444',
+                                    padding: '5px 12px',
+                                    borderRadius: '20px',
                                     fontSize: '0.8rem',
-                                    fontWeight: '500',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    margin: '0 auto'
-                                  }}
-                                >
-                                  <i className="fas fa-check mr-1"></i>
-                                  Mark as Resolved
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
+                                    fontWeight: '600'
+                                  }}>
+                                    {test.occurrence_count} times
+                                  </span>
+                                </td>
+                                <td>
+                                  <select
+                                    className="form-select"
+                                    value={edit.labSection}
+                                    onChange={(e) => setUnmatchedEdit(test.id, 'labSection', e.target.value)}
+                                    style={{ minWidth: '140px' }}
+                                  >
+                                    {LAB_SECTIONS.map((s) => (
+                                      <option key={s} value={s}>{s}</option>
+                                    ))}
+                                  </select>
+                                </td>
+                                <td>
+                                  <select
+                                    className="form-select"
+                                    value={edit.tat}
+                                    onChange={(e) => setUnmatchedEdit(test.id, 'tat', parseInt(e.target.value))}
+                                    style={{ minWidth: '100px' }}
+                                  >
+                                    {TAT_OPTIONS.map((t) => (
+                                      <option key={t} value={t}>{t}</option>
+                                    ))}
+                                  </select>
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    className="form-input"
+                                    value={edit.price || ''}
+                                    onChange={(e) => setUnmatchedEdit(test.id, 'price', parseFloat(e.target.value) || 0)}
+                                    placeholder="0"
+                                    min="0"
+                                    style={{ width: '120px' }}
+                                  />
+                                </td>
+                                <td style={{ textAlign: 'center' }}>
+                                  <button
+                                    onClick={() => handleAddUnmatchedToMeta(test.id)}
+                                    disabled={unmatchedSaving !== null || edit.price <= 0}
+                                    className="action-button edit-button"
+                                    style={{ margin: '0 auto' }}
+                                  >
+                                    <i className="fas fa-plus mr-1"></i>
+                                    {unmatchedSaving === test.id ? 'Saving...' : 'Add to Meta'}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -910,11 +1100,11 @@ const Admin: React.FC = () => {
                         </label>
                         <select
                           value={monthlyTarget.month}
-                          onChange={(e) =>
-                            setMonthlyTarget((prev) => ({
-                              ...prev,
-                              month: parseInt(e.target.value),
-                            }))
+onChange={(e) =>
+                          setMonthlyTarget((prev) => ({
+                            ...prev,
+                            month: parseInt(e.target.value),
+                          }))
                           }
                           style={{
                             width: '100%',
@@ -1379,6 +1569,53 @@ const Admin: React.FC = () => {
           </button>
         </div>
       </Modal>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+      {confirmDialog && (
+        <ConfirmDialog
+          isOpen={true}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmLabel="Delete"
+          variant="danger"
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog(null)}
+        />
+      )}
+      {resetPasswordModal && (
+        <Modal
+          isOpen={true}
+          onClose={() => setResetPasswordModal(null)}
+          title={`Reset Password: ${resetPasswordModal.username}`}
+        >
+          <div className="form-field">
+            <label className="form-label">New Password</label>
+            <input
+              type="password"
+              className="form-input"
+              value={resetPasswordValue}
+              onChange={(e) => setResetPasswordValue(e.target.value)}
+              placeholder="Enter new password"
+            />
+          </div>
+          <div className="form-actions">
+            <button className="btn btn--secondary" onClick={() => setResetPasswordModal(null)}>Cancel</button>
+            <button
+              className="btn btn--primary"
+              onClick={doResetPassword}
+              disabled={!resetPasswordValue.trim()}
+            >
+              Reset Password
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {/* Footer */}
       <footer>

@@ -81,33 +81,9 @@ async function ingestData() {
 
     console.log(`✅ Phase 1 complete: ${encountersInserted} encounters inserted, ${encountersUpdated} updated`);
 
-    // PHASE 2: Ensure test metadata exists
-    console.log('📝 Phase 2: Ensuring test metadata exists...');
-
-    // Extract unique test names
-    const uniqueTestNames = [...new Set(dataJson.map(record => record.TestName))];
-    console.log(`🧪 Found ${uniqueTestNames.length} unique test names`);
-
-    // Ensure all tests exist in metadata (with defaults)
-    // IMPORTANT: Mark as is_default = true for now
-    // After import-meta.ts runs, these will be updated to is_default = false
-    for (const testName of uniqueTestNames) {
-      try {
-        await query(
-          `INSERT INTO test_metadata (test_name, current_price, current_tat, current_lab_section, is_default) 
-           VALUES ($1, 0, 1440, 'PENDING', true)
-           ON CONFLICT (test_name) DO NOTHING`,
-          [testName]
-        );
-      } catch (error) {
-        console.error(`Error inserting metadata for ${testName}:`, error);
-      }
-    }
-
-    console.log('✅ Phase 2 complete: Metadata ensured for all test names');
-
-    // PHASE 3: Insert test records linked to encounters
-    console.log('📝 Phase 3: Processing test records...');
+    // PHASE 2: Insert test records (only for tests that exist in test_metadata)
+    // Tests not in test_metadata are logged to unmatched_tests for admins to add via Meta table
+    console.log('📝 Phase 2: Processing test records...');
 
     // Track unmatched tests
     const unmatchedTests: string[] = [];
@@ -119,7 +95,7 @@ async function ingestData() {
 
     for (const record of dataJson) {
       try {
-        // Get metadata - this will get the test whether it's default or not
+        // Get metadata - only tests in test_metadata (from meta.csv or Meta table) are processed
         const metadataResult = await query(
           'SELECT * FROM test_metadata WHERE test_name = $1',
           [record.TestName]
@@ -170,6 +146,7 @@ async function ingestData() {
         }
 
         // Insert or update test record with encounter_id FK
+        const timeIn = extractTimeFromLabNo(record.LabNo);
         const result = await query(
           `INSERT INTO test_records
            (encounter_id, test_name, test_metadata_id,
@@ -195,8 +172,8 @@ async function ingestData() {
             record.InvoiceNo,
             record.LabNo,
             record.Src,
-            extractTimeFromLabNo(record.LabNo),
-            determineShift(extractTimeFromLabNo(record.LabNo)!),
+            timeIn,
+            determineShift(timeIn),
             determineLaboratory(record.Src),
           ]
         );
@@ -212,20 +189,29 @@ async function ingestData() {
       }
     }
 
-    // Log unmatched tests
+    // Log unmatched tests (tests with no matching metadata - add via Admin > Unmatched tab or Meta table)
+    const sourceMap = new Map<string, string>();
+    for (const record of dataJson) {
+      if (unmatchedTests.includes(record.TestName)) {
+        const src = (record.Src || 'labguru').toLowerCase();
+        sourceMap.set(record.TestName, src);
+      }
+    }
     for (const testName of [...new Set(unmatchedTests)]) {
+      const source = (sourceMap.get(testName) || 'labguru').substring(0, 50);
+      const safeTestName = testName.substring(0, 255);
       await query(
         `INSERT INTO unmatched_tests (test_name, source, occurrence_count) 
-         VALUES ($1, 'labguru', 1)
+         VALUES ($1, $2, 1)
          ON CONFLICT (test_name, source) 
          DO UPDATE SET 
            occurrence_count = unmatched_tests.occurrence_count + 1,
            last_seen = CURRENT_TIMESTAMP`,
-        [testName]
+        [safeTestName, source]
       );
     }
 
-    console.log(`✅ Phase 3 complete: Test records processed`);
+    console.log(`✅ Phase 2 complete: Test records processed`);
     console.log(`
 📊 Data Ingestion Summary:
    Encounters:

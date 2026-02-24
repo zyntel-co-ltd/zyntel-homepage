@@ -1,5 +1,6 @@
 // frontend/src/components/tables/ProgressTable.tsx
 import React from 'react';
+import { formatDateTimeWithAMPM } from '@/constants/metaOptions';
 
 export interface ProgressRecord {
   date?: string;
@@ -161,9 +162,9 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }
                 <td>{row.shift || 'N/A'}</td>
                 <td className="lab-number-cell">{row.lab_number || 'N/A'}</td>
                 <td>{row.Hospital_Unit || 'N/A'}</td>
-                <td>{row.time_in ? new Date(row.time_in).toLocaleString() : 'N/A'}</td>
+                <td>{row.time_in ? formatDateTimeWithAMPM(row.time_in) : 'N/A'}</td>
                 <td>{row.daily_tat || 'N/A'}</td>
-                <td>{row.request_time_expected ? new Date(row.request_time_expected).toLocaleString() : 'N/A'}</td>
+                <td>{row.request_time_expected ? formatDateTimeWithAMPM(row.request_time_expected) : 'N/A'}</td>
                 <td className={progress.cssClass}>{progress.text}</td>
               </tr>
             );

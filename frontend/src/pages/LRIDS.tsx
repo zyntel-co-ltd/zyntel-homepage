@@ -1,5 +1,6 @@
 // frontend/src/pages/LRIDS.tsx
 import React, { useState, useEffect } from 'react';
+import { formatDateTimeWithAMPM, formatTimeWithAMPM } from '@/constants/metaOptions';
 
 interface LRIDSData {
   lab_number?: string;
@@ -34,7 +35,7 @@ const LRIDS: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch('/api/progress?limit=100', {
+      const response = await fetch('/api/progress?period=thisMonth&limit=100', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -123,7 +124,7 @@ const LRIDS: React.FC = () => {
                 })}
               </span>
               <span id="currentTime" style={{ color: 'white', fontWeight: 'bold', marginLeft: '20px' }}>
-                {currentTime.toLocaleTimeString('en-US')}
+                {formatTimeWithAMPM(currentTime)}
               </span>
             </div>
           </div>
@@ -161,7 +162,7 @@ const LRIDS: React.FC = () => {
                     return (
                       <tr key={index}>
                         <td className="lab-number-cell">{labNumber || 'N/A'}</td>
-                        <td>{timeIn ? new Date(timeIn).toLocaleString() : 'N/A'}</td>
+                        <td>{timeIn ? formatDateTimeWithAMPM(timeIn) : 'N/A'}</td>
                         <td className={progress.cssClass}>{progress.text}</td>
                       </tr>
                     );

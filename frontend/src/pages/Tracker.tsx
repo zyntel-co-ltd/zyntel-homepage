@@ -7,7 +7,7 @@ const Tracker: React.FC = () => {
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
-    period: 'custom',
+    period: 'thisMonth',
     labSection: 'all',
     shift: 'all',
     hospitalUnit: 'all',

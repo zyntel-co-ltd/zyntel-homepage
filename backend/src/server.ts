@@ -49,6 +49,7 @@ app.use('/api/lrids', lridsRoutes);
 
 // Protected routes (REQUIRE AUTH)
 app.use('/api/metadata', authenticate, metadataRoutes);
+app.use('/api/meta', authenticate, metadataRoutes); // alias for meta table
 app.use('/api/revenue', authenticate, revenueRoutes);
 app.use('/api/reception', authenticate, receptionRoutes);
 app.use('/api/settings', authenticate, settingsRoutes);

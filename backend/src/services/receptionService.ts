@@ -11,9 +11,13 @@ export const getReceptionData = async (filters: FilterParams, search?: string) =
     const dates = getPeriodDates(filters.period);
     startDate = dates.startDate;
     endDate = dates.endDate;
+  } else if (filters.startDate && filters.endDate) {
+    startDate = new Date(filters.startDate);
+    endDate = new Date(filters.endDate);
   } else {
-    startDate = filters.startDate ? new Date(filters.startDate) : new Date();
-    endDate = filters.endDate ? new Date(filters.endDate) : new Date();
+    const dates = getPeriodDates('thisMonth');
+    startDate = dates.startDate;
+    endDate = dates.endDate;
   }
 
   const conditions = ['encounter_date BETWEEN $1 AND $2'];
@@ -130,11 +134,17 @@ export const updateTestStatus = async (
   if (updates.isReceived !== undefined) {
     fields.push(`is_received = $${paramCount++}`);
     values.push(updates.isReceived);
+    if (updates.isReceived) {
+      fields.push(`time_received = CURRENT_TIMESTAMP`);
+    }
   }
 
   if (updates.isResulted !== undefined) {
     fields.push(`is_resulted = $${paramCount++}`);
     values.push(updates.isResulted);
+    if (updates.isResulted) {
+      fields.push(`time_out = CURRENT_TIMESTAMP`);
+    }
   }
 
   fields.push(`updated_at = CURRENT_TIMESTAMP`);
