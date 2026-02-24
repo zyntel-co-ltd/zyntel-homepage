@@ -1,31 +1,38 @@
 import cron from 'node-cron';
+import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { emitToAll } from '../config/socket';
 import { exportMetadataToCSV } from './metadataService';
 
 const execAsync = promisify(exec);
+const BACKEND_DIR = path.resolve(__dirname, '../..');
+
+const runInBackend = (cmd: string) =>
+  execAsync(cmd, { cwd: BACKEND_DIR });
 
 export const initializeScheduler = () => {
   console.log('📅 Initializing task scheduler...');
 
-  // Every 5 minutes: Update timeout records and ingest data
-  cron.schedule('*/5 * * * *', async () => {
-    console.log('Running data ingestion...');
+  // Every 2 minutes: Full pipeline from fetch (LIMS) to database
+  cron.schedule('*/2 * * * *', async () => {
+    console.log('Running full data pipeline (fetch → timeout → transform → ingest)...');
     try {
-      // Run Python timeout script
-      await execAsync('python scripts/data-processing/timeout.py');
-      
-      // Run TypeScript ingest and transform
-      await execAsync('npm run ingest');
-      await execAsync('npm run transform');
+      // 1. Fetch from LIMS (data.json)
+      await runInBackend('npm run fetch-data');
+      // 2. Timeout (Z: drive / TimeOut.csv)
+      await runInBackend('npm run timeout');
+      // 3. Transform (patients_dataset.json) - must run before ingest-patients
+      await runInBackend('npm run transform:full');
+      // 4. Ingest encounters + test_records (Tests, Revenue, Tracker)
+      await runInBackend('npm run ingest-old');
+      // 5. Ingest patients (Numbers, TAT, Performance, Progress)
+      await runInBackend('npm run ingest');
 
-      // Notify connected clients
       emitToAll('data-updated', { timestamp: new Date() });
-      
-      console.log('✅ Data ingestion completed');
+      console.log('✅ Full data pipeline completed');
     } catch (error) {
-      console.error('❌ Data ingestion failed:', error);
+      console.error('❌ Data pipeline failed:', error);
     }
   });
 

@@ -1,5 +1,6 @@
 import express, { Application } from 'express';
 import http from 'http';
+import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { initializeSocket } from './config/socket';
@@ -62,17 +63,35 @@ app.use('/api/progress', authenticate, progressRoutes);
 app.use('/api/performance', authenticate, performanceRoutes);
 app.use('/api/encounters', encountersRoutes);
 
+// Production: serve built frontend (before error handler)
+const isProduction = process.env.NODE_ENV === 'production';
+if (isProduction) {
+  const frontendDist = path.join(__dirname, '../../frontend/dist');
+  app.use(express.static(frontendDist));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
+
 // Error handler (must be last)
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST; // optional: bind to specific IP (e.g. 192.168.10.198 for hospital LAN only)
 
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+const listenCallback = () => {
+  const bind = HOST ? `${HOST}:${PORT}` : `port ${PORT}`;
+  console.log(`🚀 Server running on ${bind}`);
   console.log(`📡 Socket.io initialized`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔐 JWT Secret: ${process.env.JWT_SECRET ? 'Set' : 'Using default'}`);
-});
+};
+
+if (HOST) {
+  server.listen(PORT, HOST, listenCallback);
+} else {
+  server.listen(PORT, listenCallback);
+}
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
