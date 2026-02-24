@@ -739,7 +739,7 @@ export function transformInMemory(
         Tats: [],
         InvoiceNos: new Set(),
         Details: {
-          LabNo,
+          LabNo: labNo,
           Client: CLIENT_IDENTIFIER,
           Date: record.EncounterDate || DEFAULT_DATE_STR,
           Time_In: formatDateTime(timeInDt),

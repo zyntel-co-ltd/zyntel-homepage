@@ -43,6 +43,13 @@ function computeActualTatMinutes(timeIn: Date, timeOut: Date): number | null {
   return Math.round(diff / 60000);
 }
 
+/** Truncate string to max length to fit VARCHAR columns. Prevents "value too long" errors. */
+function truncate(s: string | null | undefined, maxLen: number): string | null {
+  if (s == null) return null;
+  const str = String(s);
+  return str.length <= maxLen ? str : str.slice(0, maxLen);
+}
+
 export interface TestJsonRecordExport {
   ID?: string;
   Lab_Number: string;
@@ -81,7 +88,10 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
     const batch = data.slice(i, i + batchSize);
     for (const row of batch) {
       try {
-        const labNo = row.Lab_Number;
+        const labNo = String(row.Lab_Number ?? '').slice(0, 50);
+        const testName = String(row.Test_Name ?? '').slice(0, 255);
+        const labSection = truncate(row.Lab_Section, 100);
+
         const encounterResult = await query(
           'SELECT lab_no, encounter_date, invoice_no, source, time_in, shift, laboratory FROM encounters WHERE lab_no = $1',
           [labNo]
@@ -100,20 +110,31 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
           laboratory: string;
         };
 
+        const encSource = truncate(enc.source, 100);
+        const encShift = truncate(enc.shift, 20);
+        const encLab = truncate(enc.laboratory, 50);
+        const encInvoiceNo = truncate(enc.invoice_no, 50);
+        const encLabNo = truncate(enc.lab_no, 50);
+
+        if (!testName) {
+          skippedNoMetadata++;
+          continue;
+        }
+
         let metadataResult = await query(
           'SELECT id FROM test_metadata WHERE test_name = $1',
-          [row.Test_Name]
+          [testName]
         );
         if (metadataResult.rows.length === 0) {
           await query(
             `INSERT INTO test_metadata (test_name, current_price, current_tat, current_lab_section, is_default)
              VALUES ($1, $2, $3, $4, true)
              ON CONFLICT (test_name) DO NOTHING`,
-            [row.Test_Name, row.Price ?? 0, row.TAT ?? 1440, row.Lab_Section ?? 'PENDING']
+            [testName, row.Price ?? 0, row.TAT ?? 1440, (labSection != null ? labSection : 'PENDING').slice(0, 100)]
           );
           metadataResult = await query(
             'SELECT id FROM test_metadata WHERE test_name = $1',
-            [row.Test_Name]
+            [testName]
           );
         }
         if (metadataResult.rows.length === 0) {
@@ -147,22 +168,22 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
            RETURNING (xmax = 0) AS inserted`,
           [
             labNo,
-            row.Test_Name,
+            testName,
             testMetadataId,
             row.Price ?? null,
             row.TAT ?? null,
-            row.Lab_Section || null,
+            labSection,
             isUrgent,
             !!timeOut,
             timeIn,
             timeOut,
             actualTat,
             enc.encounter_date,
-            enc.invoice_no,
-            enc.lab_no,
-            enc.source,
-            enc.shift,
-            enc.laboratory,
+            encInvoiceNo,
+            encLabNo,
+            encSource,
+            encShift,
+            encLab,
           ]
         );
 
