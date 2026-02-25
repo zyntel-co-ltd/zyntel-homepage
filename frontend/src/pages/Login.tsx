@@ -69,7 +69,7 @@ const Login: React.FC = () => {
 
       <div className="login-column">
         <div className="login-box">
-          <h1>Zyntel</h1>
+          <img src="/images/zyntel_full_cyan.png" alt="Zyntel" className="login-logo" />
           <p>Data Analysis Experts</p>
 
           <form onSubmit={handleSubmit}>
@@ -104,7 +104,7 @@ const Login: React.FC = () => {
             )}
 
             <div className="info-line">
-              <span>Measured</span> | <span>Managed</span>
+              <span className="info-highlight">Measured</span> | <span className="info-highlight">Managed</span>
             </div>
 
             <button type="submit" className="login-button" disabled={isLoading}>

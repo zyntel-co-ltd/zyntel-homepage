@@ -92,19 +92,20 @@ body.lrids {
   padding: 30px;
   text-align: center;
   width: 80%;
-  max-width: 300px;
-  box-shadow: 0 0 20px var(--glow-color, #00f0ffb3);
-  border: 1px solid #00eeff20;
+  max-width: 320px;
+  box-shadow: 0 0 20px rgba(37, 239, 44, 0.2);
+  border: 1px solid rgba(37, 239, 44, 0.25);
 }
 
-.login-page .login-box h1 {
-  color: #00f0ff;
-  margin-bottom: 10px;
-  font-weight: 500;
+.login-page .login-logo {
+  max-width: 180px;
+  height: auto;
+  margin-bottom: 15px;
+  display: block;
 }
 
 .login-page .login-box p {
-  color: #ccc;
+  color: #e0e0e0;
   margin-bottom: 20px;
 }
 
@@ -117,13 +118,14 @@ body.lrids {
 .login-page .login-box input[type="email"] {
   box-sizing: border-box;
   width: 100%;
-  padding: 10px;
-  border: 1px solid #4caf4f4d;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  padding: 12px 14px;
+  border: 1px solid rgba(37, 239, 44, 0.4);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
   font-size: 16px;
   outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .login-page .login-box input[type="text"]:hover,
@@ -133,12 +135,13 @@ body.lrids {
 .login-page .login-box input[type="password"]:focus,
 .login-page .login-box input[type="email"]:focus {
   border-color: rgb(37, 239, 44);
+  box-shadow: 0 0 8px rgba(37, 239, 44, 0.2);
 }
 
 .login-page input[type="text"]::placeholder,
 .login-page input[type="password"]::placeholder,
 .login-page input[type="email"]::placeholder {
-  color: #bbb;
+  color: rgba(224, 224, 224, 0.9);
 }
 
 .login-page .password-group {
@@ -152,13 +155,18 @@ body.lrids {
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
-  color: #888;
+  color: rgb(37, 239, 44);
 }
 
 .login-page .info-line {
   font-size: 14px;
-  color: #aaa;
+  color: #e0e0e0;
   margin-bottom: 20px;
+}
+
+.login-page .info-line .info-highlight {
+  color: rgb(37, 239, 44);
+  font-weight: 600;
 }
 
 .login-page .login-button {
@@ -192,7 +200,7 @@ body.lrids {
 }
 
 .login-page .forgot-password a {
-  color: #00f0ff;
+  color: rgb(37, 239, 44);
   text-decoration: none;
   font-size: 14px;
 }
@@ -223,8 +231,8 @@ body.lrids {
   width: 90%;
   max-width: 400px;
   box-shadow: 0 0 20px var(--glow-color, #00f0ffb3);
-  border: 1px solid #00eeff20;
-  color: white;
+  border: 1px solid rgba(37, 239, 44, 0.3);
+  color: #e8e8e8;
 }
 
 .login-page .modal-header {
@@ -232,19 +240,20 @@ body.lrids {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  border-bottom: 1px solid #00eeff20;
+  border-bottom: 1px solid rgba(37, 239, 44, 0.3);
   padding-bottom: 10px;
 }
 
 .login-page .modal-header h3 {
   margin: 0;
-  color: #00f0ff;
+  color: rgb(37, 239, 44);
+  font-weight: 600;
 }
 
 .login-page .modal .modal-close {
   background: none;
   border: none;
-  color: #ccc;
+  color: #e0e0e0;
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -256,7 +265,30 @@ body.lrids {
 }
 
 .login-page .modal .modal-close:hover {
-  color: #00f0ff;
+  color: rgb(37, 239, 44);
+}
+
+.login-page .modal .input-group input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(37, 239, 44, 0.4);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-page .modal .input-group input:hover,
+.login-page .modal .input-group input:focus {
+  border-color: rgb(37, 239, 44);
+  box-shadow: 0 0 8px rgba(37, 239, 44, 0.2);
+}
+
+.login-page .modal .input-group input::placeholder {
+  color: rgba(224, 224, 224, 0.85);
 }
 
 .login-page .modal .form-actions {
@@ -267,13 +299,14 @@ body.lrids {
 }
 
 .login-page .modal .btn-secondary {
-  background: none;
-  border: 1px solid #036e06;
-  color: white;
+  background: transparent;
+  border: 1px solid rgba(37, 239, 44, 0.6);
+  color: rgb(37, 239, 44);
   padding: 10px 20px;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .login-page .modal .btn-secondary:hover {
@@ -281,13 +314,15 @@ body.lrids {
 }
 
 .login-page .modal .btn-primary {
-  background-color: #4CAF50;
-  color: white;
+  background-color: rgb(37, 239, 44);
+  color: #0a0a0a;
   padding: 10px 20px;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 .login-page .modal .btn-primary:hover {
@@ -303,15 +338,15 @@ body.lrids {
 }
 
 .login-page .message-box.success {
-  background-color: rgba(76, 175, 80, 0.2);
-  color: #4CAF50;
-  border: 1px solid #4CAF50;
+  background-color: rgba(37, 239, 44, 0.15);
+  color: rgb(37, 239, 44);
+  border: 1px solid rgba(37, 239, 44, 0.6);
 }
 
 .login-page .message-box.error {
-  background-color: rgba(244, 67, 54, 0.2);
-  color: #f44336;
-  border: 1px solid #f44336;
+  background-color: rgba(244, 67, 54, 0.15);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.6);
 }
 
 /* Responsive - match Flask */

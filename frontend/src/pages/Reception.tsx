@@ -42,6 +42,11 @@ const Reception: React.FC = () => {
     fetchData();
   }, [filters, currentPage]);
 
+  useEffect(() => {
+    const id = setInterval(fetchData, 30000);
+    return () => clearInterval(id);
+  }, [filters, currentPage]);
+
   const fetchData = async () => {
     setIsLoading(true);
     setError(null);
@@ -420,7 +425,7 @@ const Reception: React.FC = () => {
             <input
               type="text"
               className="search-input"
-              placeholder="Search test / lab number..."
+              placeholder="Search lab number, test name, section, unit..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
             />

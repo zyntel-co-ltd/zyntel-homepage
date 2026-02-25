@@ -29,6 +29,11 @@ const Tracker: React.FC = () => {
     fetchData();
   }, [filters, currentPage]);
 
+  useEffect(() => {
+    const id = setInterval(fetchData, 30000);
+    return () => clearInterval(id);
+  }, [filters, currentPage]);
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -174,7 +179,7 @@ const Tracker: React.FC = () => {
             <input
               type="text"
               className="search-input"
-              placeholder="Search test / lab number..."
+              placeholder="Search lab number, test name, invoice..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
             />

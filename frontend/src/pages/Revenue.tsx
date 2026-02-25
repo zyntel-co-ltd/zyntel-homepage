@@ -38,6 +38,11 @@ const Revenue: React.FC = () => {
     fetchData();
   }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
 
+  useEffect(() => {
+    const id = setInterval(fetchData, 30000);
+    return () => clearInterval(id);
+  }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
