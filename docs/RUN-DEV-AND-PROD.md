@@ -100,7 +100,7 @@ FRONTEND_URL=http://192.168.10.198:5000
 ### What happens when the VM restarts?
 
 - **If you do nothing:** The app does not start automatically. You must run `scripts\start-production.bat` (or start your service) again after the VM is back up.
-- **To auto-start after reboot:** Use **Task Scheduler** (or a Windows service like NSSM):
+- **To auto-start after reboot (data pipeline runs every 5 minutes):** Use **Task Scheduler** (or a Windows service like NSSM):
   1. Open Task Scheduler → Create Task.
   2. General: “Run whether user is logged on or not” (or “Run when user is logged on” if you prefer).
   3. Triggers: “At startup” (or “At log on”).

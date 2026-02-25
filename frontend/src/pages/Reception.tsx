@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog } from '@/components/shared';
 import { formatTimeWithAMPM } from '@/constants/metaOptions';
 import { ReceptionTable, type ReceptionRecord } from '@/components/tables';
+import { downloadCSV } from '@/utils/exportUtils';
 
 const Reception: React.FC = () => {
   const navigate = useNavigate();
@@ -143,6 +144,12 @@ const Reception: React.FC = () => {
       laboratory: 'all',
       search: ''
     });
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['Date', 'Lab Number', 'Shift', 'Unit', 'Lab Section', 'Test Name', 'Urgency', 'Received', 'Result', 'Time In'];
+    const rows = data.map((r) => [r.date, r.labNumber, r.shift, r.unit, r.labSection, r.testName, r.urgency, r.received ? 'Yes' : 'No', r.result ? 'Yes' : 'No', r.timeIn ?? '']);
+    downloadCSV([headers, ...rows], `Reception-${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
   const handleSelectRow = (id: number) => {
@@ -339,6 +346,15 @@ const Reception: React.FC = () => {
             onLogout={handleLogout}
             onResetFilters={handleResetFilters}
             showResetFilters={true}
+            menuItems={[
+              { label: 'Export CSV', href: '#', icon: 'fas fa-file-csv', onClick: handleExportCSV },
+              { label: 'Reception', href: '/reception', icon: 'fas fa-table' },
+              { label: 'Progress', href: '/progress', icon: 'fas fa-chart-bar' },
+              { label: 'Performance', href: '/performance', icon: 'fas fa-chart-line' },
+              { label: 'Meta', href: '/meta', icon: 'fas fa-database' },
+              { label: 'Tracker', href: '/tracker', icon: 'fas fa-list' },
+              { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
+            ]}
           />
           <Navbar type="table" />
         </div>

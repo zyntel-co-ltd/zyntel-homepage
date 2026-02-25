@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { canAccessAdmin, canExport } from '@/utils/permissions';
 
 interface HeaderProps {
   title: string;
@@ -22,6 +24,8 @@ const Header: React.FC<HeaderProps> = ({
   showResetFilters = false,
   menuItems = []
 }) => {
+  const { user } = useAuth();
+  const role = user?.role as 'admin' | 'manager' | 'technician' | 'viewer' | undefined;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLSpanElement>(null);
 
@@ -37,11 +41,15 @@ const Header: React.FC<HeaderProps> = ({
   }, [menuOpen]);
 
   const defaultMenuItems: HeaderProps['menuItems'] = [
-    { label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' },
+    ...(canAccessAdmin(role) ? [{ label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' }] : []),
     { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
   ];
 
-  const allMenuItems = [...defaultMenuItems, ...menuItems];
+  const filteredPageItems = menuItems.filter((m) => {
+    const isExport = m.label.toLowerCase().includes('export');
+    return !isExport || canExport(role);
+  });
+  const allMenuItems = [...defaultMenuItems, ...filteredPageItems];
 
   return (
     <header>

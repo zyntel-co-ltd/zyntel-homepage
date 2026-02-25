@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog } from '@/components/shared';
 import { fetchWithAuth } from '@/services/api';
 import { PerformanceTable, type PerformanceRecord } from '@/components/tables';
+import { downloadCSV } from '@/utils/exportUtils';
 
 const Performance: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -98,8 +99,20 @@ const Performance: React.FC = () => {
   };
 
   const handleExportCSV = () => {
-    console.log('Exporting CSV...');
-    // CSV export logic here
+    const headers = ['Date', 'Shift', 'Lab Number', 'Unit', 'Time In', 'Daily TAT', 'Time Expected', 'Time Out', 'Delay Status', 'Time Range'];
+    const rows = data.map((r) => [
+      r.date,
+      r.Shift,
+      r.lab_number,
+      r.Hospital_Unit,
+      r.time_in,
+      r.daily_tat,
+      r.request_time_expected,
+      r.request_time_out,
+      r.request_delay_status,
+      r.request_time_range,
+    ]);
+    downloadCSV([headers, ...rows], `Performance-${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
   return (

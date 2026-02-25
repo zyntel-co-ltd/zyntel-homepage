@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Toast, ConfirmDialog, Pagination } from '@/components/shared';
 import { LAB_SECTIONS, TAT_OPTIONS } from '@/constants/metaOptions';
+import { useAuth } from '@/contexts/AuthContext';
+import { canDeleteUser, canResetPassword, canDeactivateUser } from '@/utils/permissions';
 
 const UNMATCHED_PAGE_SIZE = 15;
 
@@ -29,6 +31,8 @@ interface DashboardStats {
 }
 
 const Admin: React.FC = () => {
+  const { user } = useAuth();
+  const role = user?.role as 'admin' | 'manager' | 'technician' | 'viewer' | undefined;
   const [activeTab, setActiveTab] = useState<'users' | 'unmatched' | 'settings'>('users');
   const [users, setUsers] = useState<User[]>([]);
   const [unmatchedTests, setUnmatchedTests] = useState<UnmatchedTest[]>([]);
@@ -863,60 +867,66 @@ const Admin: React.FC = () => {
                                 <i className="fas fa-edit mr-1"></i>
                                 Edit
                               </button>
-                              <button
-                                onClick={() => handleResetPassword(user)}
-                                style={{
-                                  backgroundColor: '#f59e0b',
-                                  color: 'white',
-                                  padding: '5px 12px',
-                                  borderRadius: '6px',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  fontSize: '0.8rem',
-                                  fontWeight: '500',
-                                  display: 'flex',
-                                  alignItems: 'center'
-                                }}
-                              >
-                                <i className="fas fa-key mr-1"></i>
-                                Reset
-                              </button>
-                              <button
-                                onClick={() => handleToggleActive(user.id, user.is_active)}
-                                style={{
-                                  backgroundColor: user.is_active ? '#9ca3af' : '#22c55e',
-                                  color: 'white',
-                                  padding: '5px 12px',
-                                  borderRadius: '6px',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  fontSize: '0.8rem',
-                                  fontWeight: '500',
-                                  display: 'flex',
-                                  alignItems: 'center'
-                                }}
-                              >
-                                <i className={`fas mr-1 ${user.is_active ? 'fa-ban' : 'fa-check'}`}></i>
-                                {user.is_active ? 'Deactivate' : 'Activate'}
-                              </button>
-                              <button
-                                onClick={() => handleDeleteUser(user.id)}
-                                style={{
-                                  backgroundColor: '#ef4444',
-                                  color: 'white',
-                                  padding: '5px 12px',
-                                  borderRadius: '6px',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  fontSize: '0.8rem',
-                                  fontWeight: '500',
-                                  display: 'flex',
-                                  alignItems: 'center'
-                                }}
-                              >
-                                <i className="fas fa-trash mr-1"></i>
-                                Delete
-                              </button>
+                              {canResetPassword(role) && (
+                                <button
+                                  onClick={() => handleResetPassword(user)}
+                                  style={{
+                                    backgroundColor: '#f59e0b',
+                                    color: 'white',
+                                    padding: '5px 12px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '0.8rem',
+                                    fontWeight: '500',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                  }}
+                                >
+                                  <i className="fas fa-key mr-1"></i>
+                                  Reset
+                                </button>
+                              )}
+                              {canDeactivateUser(role) && (
+                                <button
+                                  onClick={() => handleToggleActive(user.id, user.is_active)}
+                                  style={{
+                                    backgroundColor: user.is_active ? '#9ca3af' : '#22c55e',
+                                    color: 'white',
+                                    padding: '5px 12px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '0.8rem',
+                                    fontWeight: '500',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                  }}
+                                >
+                                  <i className={`fas mr-1 ${user.is_active ? 'fa-ban' : 'fa-check'}`}></i>
+                                  {user.is_active ? 'Deactivate' : 'Activate'}
+                                </button>
+                              )}
+                              {canDeleteUser(role) && (
+                                <button
+                                  onClick={() => handleDeleteUser(user.id)}
+                                  style={{
+                                    backgroundColor: '#ef4444',
+                                    color: 'white',
+                                    padding: '5px 12px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '0.8rem',
+                                    fontWeight: '500',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                  }}
+                                >
+                                  <i className="fas fa-trash mr-1"></i>
+                                  Delete
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

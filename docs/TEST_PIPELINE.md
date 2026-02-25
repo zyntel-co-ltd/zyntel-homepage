@@ -92,9 +92,9 @@ npm run pipeline
 
 ---
 
-## 5. Scheduler (2‑minute cron)
+## 5. Scheduler (5‑minute cron)
 
-When the backend server is running, the scheduler runs the same pipeline every 2 minutes:
+When the backend server is running, the scheduler runs the same pipeline every 5 minutes:
 
 - No need to run `npm run pipeline` by hand for ongoing sync.
 - To test the scheduler: start backend (`npm run dev` from repo root or `npm run dev` in backend), wait a few minutes, and check logs for “Running in-memory data pipeline” and “In-memory pipeline completed.”

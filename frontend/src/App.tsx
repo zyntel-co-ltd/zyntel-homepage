@@ -1,8 +1,9 @@
 // frontend/src/App.tsx
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SocketProvider } from './contexts/SocketContext';
+import { isViewer, isTechnician } from './utils/permissions';
 
 // Pages
 import Login from './pages/Login';
@@ -18,6 +19,35 @@ import Numbers from './pages/Numbers';
 import Tracker from './pages/Tracker';
 import Progress from './pages/Progress';
 import Performance from './pages/Performance';
+
+// Viewer: redirect to LRIDS (only page they can see)
+const ViewerGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, user, isLoading } = useAuth();
+  const location = useLocation();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="loader"><div className="one"></div><div className="two"></div><div className="three"></div><div className="four"></div></div>
+      </div>
+    );
+  }
+  if (isAuthenticated && user && isViewer(user.role as any) && location.pathname !== '/lrids') {
+    return <Navigate to="/lrids" replace />;
+  }
+  return <>{children}</>;
+};
+
+// Technician: cannot access charts, admin, or LRIDS
+const TECHNICIAN_BLOCKED = ['/revenue', '/tests', '/numbers', '/tat', '/admin', '/lrids'];
+const TechnicianGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, user, isLoading } = useAuth();
+  const location = useLocation();
+  if (isLoading) return null;
+  if (isAuthenticated && user && isTechnician(user.role as any) && TECHNICIAN_BLOCKED.includes(location.pathname)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <>{children}</>;
+};
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ 
@@ -48,6 +78,10 @@ const ProtectedRoute: React.FC<{
     return <Navigate to="/" replace />;
   }
 
+  if (isAuthenticated && user && isViewer(user.role as any)) {
+    return <Navigate to="/lrids" replace />;
+  }
+
   if (isAuthenticated && user && !allowedRoles.includes(user.role)) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -55,16 +89,24 @@ const ProtectedRoute: React.FC<{
   return <>{children}</>;
 };
 
-// Role-specific protected routes
-const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+// Charts: admin, manager only
+const ChartRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <ProtectedRoute allowedRoles={['admin', 'manager']}>
-    {children}
+    <TechnicianGuard>{children}</TechnicianGuard>
   </ProtectedRoute>
 );
 
-const ManagerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+// Tables: admin, manager, technician
+const TableRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <ProtectedRoute allowedRoles={['admin', 'manager', 'technician']}>
-    {children}
+    <TechnicianGuard>{children}</TechnicianGuard>
+  </ProtectedRoute>
+);
+
+// Admin panel: admin, manager
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ProtectedRoute allowedRoles={['admin', 'manager']}>
+    <TechnicianGuard>{children}</TechnicianGuard>
   </ProtectedRoute>
 );
 
@@ -73,8 +115,8 @@ const AppRoutes: React.FC = () => {
     <Routes>
       <Route path="/" element={<Login />} />
       
-      {/* Public routes */}
-      <Route path="/lrids" element={<LRIDS />} />
+      {/* LRIDS: public for display screens; viewer sees this in kiosk mode after login */}
+      <Route path="/lrids" element={<ViewerGuard><LRIDS /></ViewerGuard>} />
       
       {/* Protected routes */}
       <Route
@@ -89,81 +131,81 @@ const AppRoutes: React.FC = () => {
       <Route
         path="/revenue"
         element={
-          <ManagerRoute>
+          <ChartRoute>
             <Revenue />
-          </ManagerRoute>
+          </ChartRoute>
         }
       />
       
       <Route
         path="/tests"
         element={
-          <ManagerRoute>
+          <ChartRoute>
             <Tests />
-          </ManagerRoute>
+          </ChartRoute>
         }
       />
       
       <Route
         path="/numbers"
         element={
-          <ManagerRoute>
+          <ChartRoute>
             <Numbers />
-          </ManagerRoute>
+          </ChartRoute>
         }
       />
       
       <Route
         path="/tat"
         element={
-          <ManagerRoute>
+          <ChartRoute>
             <TAT />
-          </ManagerRoute>
+          </ChartRoute>
         }
       />
       
       <Route
         path="/reception"
         element={
-          <ProtectedRoute>
+          <TableRoute>
             <Reception />
-          </ProtectedRoute>
+          </TableRoute>
         }
       />
       
       <Route
         path="/performance"
         element={
-          <ProtectedRoute>
+          <TableRoute>
             <Performance />
-          </ProtectedRoute>
+          </TableRoute>
         }
       />
       
       <Route
         path="/meta"
         element={
-          <ProtectedRoute>
+          <TableRoute>
             <Meta />
-          </ProtectedRoute>
+          </TableRoute>
         }
       />
       
       <Route
         path="/progress"
         element={
-          <ProtectedRoute>
+          <TableRoute>
             <Progress />
-          </ProtectedRoute>
+          </TableRoute>
         }
       />
       
       <Route
         path="/tracker"
         element={
-          <ProtectedRoute>
+          <TableRoute>
             <Tracker />
-          </ProtectedRoute>
+          </TableRoute>
         }
       />
       

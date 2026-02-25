@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Header, Navbar, Filters, Loader, Modal, Pagination, Toast } from '@/components/shared';
 import { MetaTable, type MetaRecord } from '@/components/tables';
+import { downloadCSV } from '@/utils/exportUtils';
 import { LAB_SECTIONS, TAT_OPTIONS } from '@/constants/metaOptions';
 
 const Meta: React.FC = () => {
@@ -164,8 +165,9 @@ const Meta: React.FC = () => {
   };
 
   const handleExportCSV = () => {
-    console.log('Exporting CSV...');
-    // CSV export logic here
+    const headers = ['Test Name', 'Section', 'Price (UGX)', 'Expected TAT'];
+    const rows = data.map((r) => [r.testName, r.section, r.price, r.expectedTAT]);
+    downloadCSV([headers, ...rows], `Meta-${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
   return (

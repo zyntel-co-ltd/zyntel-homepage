@@ -1,5 +1,5 @@
 // frontend/src/pages/TAT.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header, Navbar, Filters, Loader, KPICard } from '@/components/shared';
 import { 
   TATPieChart, 
@@ -7,6 +7,7 @@ import {
   TATHourlyChart,
   TATProgressChart 
 } from '@/components/charts';
+import { exportElementToPdf } from '@/utils/exportPdf';
 
 interface TATData {
   pieData: {
@@ -40,6 +41,7 @@ interface TATData {
 }
 
 const TAT: React.FC = () => {
+  const chartsRef = useRef<HTMLDivElement>(null);
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
@@ -105,6 +107,12 @@ const TAT: React.FC = () => {
     });
   };
 
+  const handleExportPdf = async () => {
+    if (chartsRef.current) {
+      await exportElementToPdf(chartsRef.current, `TAT-${new Date().toISOString().slice(0, 10)}.pdf`, { title: 'TAT Report' });
+    }
+  };
+
   if (isLoading) {
     return <Loader isLoading={true} />;
   }
@@ -119,7 +127,7 @@ const TAT: React.FC = () => {
         onResetFilters={handleResetFilters}
         showResetFilters={true}
         menuItems={[
-          { label: 'Export PDF', href: '#', icon: 'fas fa-file-pdf' },
+          { label: 'Export PDF', href: '#', icon: 'fas fa-file-pdf', onClick: handleExportPdf },
           { label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' },
           { label: 'Performance Table', href: '/performance', icon: 'fas fa-table' },
           { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' }
@@ -140,7 +148,7 @@ const TAT: React.FC = () => {
       </div>
       </div>
 
-      <main className="dashboard-layout chart-page-main">
+      <main className="dashboard-layout chart-page-main" ref={chartsRef}>
         <aside className="revenue-progress-card">
           {data && (
             <>

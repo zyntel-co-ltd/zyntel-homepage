@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header, Navbar, Filters } from '@/components/shared';
+import { exportElementToPdf } from '@/utils/exportPdf';
 import {
   DailyRevenueChart,
   SectionRevenueChart,
@@ -21,6 +22,7 @@ interface RevenueData {
 }
 
 const Revenue: React.FC = () => {
+  const chartsRef = useRef<HTMLDivElement>(null);
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
@@ -86,6 +88,14 @@ const Revenue: React.FC = () => {
     window.location.href = '/login';
   };
 
+  const handleExportPdf = async () => {
+    if (chartsRef.current) {
+      await exportElementToPdf(chartsRef.current, `Revenue-${new Date().toISOString().slice(0, 10)}.pdf`, {
+        title: 'Revenue Report',
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background-color">
       <div className="chart-page-top">
@@ -96,8 +106,7 @@ const Revenue: React.FC = () => {
           onResetFilters={resetFilters}
           showResetFilters={true}
           menuItems={[
-            { label: 'Export PDF', href: '#', icon: 'fas fa-file-pdf' },
-            { label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' },
+            { label: 'Export PDF', href: '#', icon: 'fas fa-file-pdf', onClick: handleExportPdf },
             { label: 'Meta table', href: '/meta', icon: 'fas fa-database' },
             { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
           ]}
@@ -110,7 +119,7 @@ const Revenue: React.FC = () => {
 
       {isLoading && <div className="loader"><div className="one"></div><div className="two"></div><div className="three"></div><div className="four"></div></div>}
 
-      <main className="dashboard-layout chart-page-main">
+      <main className="dashboard-layout chart-page-main" ref={chartsRef}>
         <aside className="revenue-progress-card">
           {data ? (
             <TargetProgressChart

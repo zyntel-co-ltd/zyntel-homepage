@@ -1,5 +1,7 @@
 // frontend/src/pages/LRIDS.tsx
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { isViewer } from '@/utils/permissions';
 import { formatDateTimeWithAMPM, formatTimeWithAMPM } from '@/constants/metaOptions';
 
 interface LRIDSData {
@@ -12,6 +14,8 @@ interface LRIDSData {
 }
 
 const LRIDS: React.FC = () => {
+  const { user } = useAuth();
+  const kioskMode = user && isViewer(user.role as any);
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<LRIDSData[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -99,7 +103,7 @@ const LRIDS: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background-color lrids">
+    <div className={`min-h-screen bg-background-color lrids${kioskMode ? ' lrids-kiosk' : ''}`} style={kioskMode ? { pointerEvents: 'none', userSelect: 'none' } : undefined}>
       <header>
         <div className="header-container header-container--lrids">
           <div className="header-left">

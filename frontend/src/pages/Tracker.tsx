@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog } from '@/components/shared';
 import { TrackerTable, type TrackerRecord } from '@/components/tables';
+import { downloadCSV } from '@/utils/exportUtils';
 
 const Tracker: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -107,8 +108,23 @@ const Tracker: React.FC = () => {
   };
 
   const handleExportCSV = () => {
-    console.log('Exporting CSV...');
-    // CSV export logic here
+    const headers = ['Date', 'Shift', 'Lab Number', 'Unit', 'Lab Section', 'Test Name', 'Time In', 'Urgency', 'Time Received', 'TAT (min)', 'Time Expected', 'Progress', 'Time Out'];
+    const rows = data.map((r) => [
+      r.date,
+      r.shift,
+      r.labNumber,
+      r.unit,
+      r.labSection,
+      r.testName,
+      r.timeIn,
+      r.urgency,
+      r.timeReceived,
+      r.tat,
+      r.timeExpected,
+      r.progress,
+      r.timeOut,
+    ]);
+    downloadCSV([headers, ...rows], `Tracker-${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
   return (

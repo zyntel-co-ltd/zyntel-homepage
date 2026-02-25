@@ -14,8 +14,8 @@ const runInBackend = (cmd: string) =>
 export const initializeScheduler = () => {
   console.log('📅 Initializing task scheduler...');
 
-  // Every 2 minutes: In-memory pipeline (no data.json / patients_dataset / tests_dataset left on disk)
-  cron.schedule('*/2 * * * *', async () => {
+  // Every 5 minutes: In-memory pipeline (no data.json / patients_dataset / tests_dataset left on disk)
+  cron.schedule('*/5 * * * *', async () => {
     console.log('Running in-memory data pipeline (fetch → timeout → transform → ingest)...');
     try {
       await runInBackend('npm run pipeline');

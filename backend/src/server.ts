@@ -4,6 +4,7 @@ import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { initializeSocket } from './config/socket';
+import { initializeScheduler } from './services/scheduler';
 import { errorHandler } from './middleware/errorHandler';
 import { authenticate } from './middleware/auth'; // Changed from authenticateToken
 
@@ -84,6 +85,7 @@ const listenCallback = () => {
   const bind = HOST ? `${HOST}:${PORT}` : `port ${PORT}`;
   console.log(`🚀 Server running on ${bind}`);
   console.log(`📡 Socket.io initialized`);
+  initializeScheduler(); // Data pipeline (fetch → ingest) runs every 5 minutes
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔐 JWT Secret: ${process.env.JWT_SECRET ? 'Set' : 'Using default'}`);
 };

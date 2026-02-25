@@ -1,5 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { canAccessCharts, canAccessLRIDS } from '@/utils/permissions';
 
 interface NavbarProps {
   type?: 'table' | 'chart';
@@ -7,26 +9,29 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ type = 'table' }) => {
   const location = useLocation();
-  
+  const { user } = useAuth();
+  const role = user?.role as 'admin' | 'manager' | 'technician' | 'viewer' | undefined;
+
   const tableLinks = [
-    { path: '/dashboard', label: 'Home' },
-    { path: '/reception', label: 'Reception' },
-    { path: '/meta', label: 'Meta' },
-    { path: '/progress', label: 'Progress' },
-    { path: '/performance', label: 'Performance' },
-    { path: '/tracker', label: 'Tracker' },
-    { path: '/lrids', label: 'LRIDS' },
+    { path: '/dashboard', label: 'Home', show: true },
+    { path: '/reception', label: 'Reception', show: true },
+    { path: '/meta', label: 'Meta', show: true },
+    { path: '/progress', label: 'Progress', show: true },
+    { path: '/performance', label: 'Performance', show: true },
+    { path: '/tracker', label: 'Tracker', show: true },
+    { path: '/lrids', label: 'LRIDS', show: canAccessLRIDS(role) },
   ];
 
   const chartLinks = [
-    { path: '/dashboard', label: 'Home' },
-    { path: '/revenue', label: 'Revenue' },
-    { path: '/tests', label: 'Tests' },
-    { path: '/numbers', label: 'Numbers' },
-    { path: '/tat', label: 'TAT' },
+    { path: '/dashboard', label: 'Home', show: true },
+    { path: '/revenue', label: 'Revenue', show: canAccessCharts(role) },
+    { path: '/tests', label: 'Tests', show: canAccessCharts(role) },
+    { path: '/numbers', label: 'Numbers', show: canAccessCharts(role) },
+    { path: '/tat', label: 'TAT', show: canAccessCharts(role) },
   ];
 
-  const links = type === 'chart' ? chartLinks : tableLinks;
+  const rawLinks = type === 'chart' ? chartLinks : tableLinks;
+  const links = rawLinks.filter((l) => l.show);
   const navbarClass = type === 'chart' ? 'navbar chart-navbar' : 'navbar';
 
   return (

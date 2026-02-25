@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { isViewer } from '@/utils/permissions';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -27,8 +28,8 @@ const Login: React.FC = () => {
         return;
       }
 
-      await login(username, password);
-      navigate('/dashboard');
+      const user = await login(username, password);
+      navigate(isViewer(user.role as any) ? '/lrids' : '/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {

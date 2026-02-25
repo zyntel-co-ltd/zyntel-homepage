@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header, Navbar, Filters } from '@/components/shared';
 import {
   TopTestsByUnitChart,
   TestVolumeChart,
   TargetProgressChart
 } from '@/components/charts';
+import { exportElementToPdf } from '@/utils/exportPdf';
 
 interface TestsData {
   totalTestsPerformed: number;
@@ -17,6 +18,7 @@ interface TestsData {
 }
 
 const Tests: React.FC = () => {
+  const chartsRef = useRef<HTMLDivElement>(null);
   const [selectedUnit, setSelectedUnit] = useState<string>('all');
   const [filters, setFilters] = useState({
     startDate: '',
@@ -150,6 +152,12 @@ const Tests: React.FC = () => {
     window.location.href = '/login';
   };
 
+  const handleExportPdf = async () => {
+    if (chartsRef.current) {
+      await exportElementToPdf(chartsRef.current, `Tests-${new Date().toISOString().slice(0, 10)}.pdf`, { title: 'Tests Report' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background-color">
       <div className="chart-page-top">
@@ -160,7 +168,7 @@ const Tests: React.FC = () => {
           onResetFilters={resetFilters}
           showResetFilters={true}
           menuItems={[
-            { label: 'Export PDF', href: '#', icon: 'fas fa-file-pdf' },
+            { label: 'Export PDF', href: '#', icon: 'fas fa-file-pdf', onClick: handleExportPdf },
             { label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' },
             { label: 'Meta table', href: '/meta', icon: 'fas fa-database' },
             { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
@@ -189,7 +197,7 @@ const Tests: React.FC = () => {
       )}
 
       {!isLoading && (
-        <main className="dashboard-layout chart-page-main">
+        <main className="dashboard-layout chart-page-main" ref={chartsRef}>
           <aside className="revenue-progress-card">
             {data && (
               <TargetProgressChart

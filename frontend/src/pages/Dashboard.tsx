@@ -1,8 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { canAccessCharts, canAccessAdmin, canAccessLRIDS } from '@/utils/permissions';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const role = user?.role as 'admin' | 'manager' | 'technician' | 'viewer' | undefined;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLSpanElement>(null);
 
@@ -39,10 +43,10 @@ const Dashboard: React.FC = () => {
             <span className={`three-dots-menu-container${menuOpen ? ' menu-open' : ''}`} ref={menuRef}>
               <button type="button" className="three-dots-button" onClick={() => setMenuOpen((o) => !o)} aria-expanded={menuOpen} aria-haspopup="true">&#x22EE;</button>
               <ul className="dropdown-menu">
-                <li><a href="/admin">Admin Panel</a></li>
+                {canAccessAdmin(role) && <li><a href="/admin">Admin Panel</a></li>}
                 <li><a href="/reception">Reception</a></li>
-                <li><a href="/revenue">Revenue</a></li>
-                <li><a href="/tests">Tests</a></li>
+                {canAccessCharts(role) && <li><a href="/revenue">Revenue</a></li>}
+                {canAccessCharts(role) && <li><a href="/tests">Tests</a></li>}
               </ul>
             </span>
           </div>
@@ -51,30 +55,36 @@ const Dashboard: React.FC = () => {
 
       <div className="main-container" style={{ padding: '5rem 1rem', flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <div className="dice-grid">
-          {/* Dashboard Chart Dice */}
-          <a href="/revenue" className="dice-tile" data-type="chart">
-            <span className="dice-label">Revenue</span>
-          </a>
-          <a href="/tests" className="dice-tile" data-type="chart">
-            <span className="dice-label">Tests</span>
-          </a>
-          <a href="/numbers" className="dice-tile" data-type="chart">
-            <span className="dice-label">Numbers</span>
-          </a>
-          <a href="/tat" className="dice-tile" data-type="chart">
-            <span className="dice-label">TAT</span>
-          </a>
+          {/* Chart Dice - admin, manager only (technician cannot see) */}
+          {canAccessCharts(role) && (
+            <>
+              <a href="/revenue" className="dice-tile" data-type="chart">
+                <span className="dice-label">Revenue</span>
+              </a>
+              <a href="/tests" className="dice-tile" data-type="chart">
+                <span className="dice-label">Tests</span>
+              </a>
+              <a href="/numbers" className="dice-tile" data-type="chart">
+                <span className="dice-label">Numbers</span>
+              </a>
+              <a href="/tat" className="dice-tile" data-type="chart">
+                <span className="dice-label">TAT</span>
+              </a>
+            </>
+          )}
 
-          {/* Tables Dice */}
+          {/* Table Dice - all authenticated (technician sees only these) */}
           <a href="/reception" className="dice-tile" data-type="table">
             <span className="dice-label">Reception</span>
           </a>
           <a href="/progress" className="dice-tile" data-type="table">
             <span className="dice-label">Progress</span>
           </a>
-          <a href="/lrids" className="dice-tile" data-type="display">
-            <span className="dice-label">LRIDS</span>
-          </a>
+          {canAccessLRIDS(role) && (
+            <a href="/lrids" className="dice-tile" data-type="display">
+              <span className="dice-label">LRIDS</span>
+            </a>
+          )}
           <a href="/performance" className="dice-tile" data-type="table">
             <span className="dice-label">Performance</span>
           </a>

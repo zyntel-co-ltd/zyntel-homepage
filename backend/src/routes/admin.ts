@@ -30,8 +30,8 @@ router.use(requireRole('admin', 'manager'));
 router.get('/users', getUsersController);
 router.post('/users', createUserController);
 router.put('/users/:id', updateUserController);
-router.delete('/users/:id', deleteUserController);
-router.post('/users/:id/reset-password', resetPasswordController);
+router.delete('/users/:id', requireRole('admin'), deleteUserController);
+router.post('/users/:id/reset-password', requireRole('admin'), resetPasswordController);
 router.post('/users/:id/toggle-active', (req, res) => {
   req.body = { is_active: req.body?.is_active };
   updateUserController(req as any, res);
