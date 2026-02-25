@@ -1,6 +1,6 @@
 // frontend/src/pages/Meta.tsx
 import React, { useState, useEffect } from 'react';
-import { Header, Navbar, Filters, Loader, Modal, Pagination, Toast } from '@/components/shared';
+import { Header, Navbar, Filters, Loader, Modal, Pagination, Toast, Footer } from '@/components/shared';
 import { MetaTable, type MetaRecord } from '@/components/tables';
 import { downloadCSV } from '@/utils/exportUtils';
 import { LAB_SECTIONS, TAT_OPTIONS } from '@/constants/metaOptions';
@@ -396,12 +396,7 @@ const Meta: React.FC = () => {
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
 
-      <footer>
-        <p>&copy;2025 Zyntel</p>
-        <div className="zyntel">
-          <img src="/images/zyntel_no_background.png" alt="logo" />
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { isViewer } from '@/utils/permissions';
 import { formatDateTimeWithAMPM, formatTimeWithAMPM } from '@/constants/metaOptions';
+import { Footer } from '@/components/shared';
 
 interface LRIDSData {
   lab_number?: string;
@@ -178,12 +179,7 @@ const LRIDS: React.FC = () => {
         </section>
       </main>
 
-      <footer>
-        <p>&copy;2025 Zyntel</p>
-        <div className="zyntel">
-          <img src="/images/zyntel_no_background.png" alt="logo" />
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

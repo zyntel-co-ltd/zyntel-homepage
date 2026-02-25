@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Modal, Toast, ConfirmDialog, Pagination } from '@/components/shared';
+import { Modal, Toast, ConfirmDialog, Pagination, Footer } from '@/components/shared';
 import { LAB_SECTIONS, TAT_OPTIONS } from '@/constants/metaOptions';
 import { useAuth } from '@/contexts/AuthContext';
 import { canDeleteUser, canResetPassword, canDeactivateUser } from '@/utils/permissions';
@@ -1660,13 +1660,7 @@ onChange={(e) =>
         </Modal>
       )}
 
-      {/* Footer */}
-      <footer>
-        <p>&copy;2025 Zyntel</p>
-        <div className="zyntel">
-          <img src="/images/zyntel_no_background.png" alt="logo" />
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

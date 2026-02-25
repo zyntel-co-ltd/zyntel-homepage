@@ -1,4 +1,5 @@
 import React from 'react';
+import { Footer } from '@/components/shared';
 
 interface PlaceholderProps {
   title: string;
@@ -54,12 +55,7 @@ const Placeholder: React.FC<PlaceholderProps> = ({ title }) => {
       </main>
 
       {/* Footer */}
-      <footer>
-        <p>&copy;2025 Zyntel</p>
-        <div className="zyntel">
-          <img src="/images/zyntel_no_background.png" alt="logo" />
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

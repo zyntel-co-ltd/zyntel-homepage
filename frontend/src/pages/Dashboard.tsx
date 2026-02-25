@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { canAccessCharts, canAccessAdmin, canAccessLRIDS } from '@/utils/permissions';
+import { Footer } from '@/components/shared';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -97,9 +98,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <footer style={{ position: 'fixed', right: '1rem', bottom: '1rem', background: 'transparent', padding: '1rem', zIndex: 99, marginTop: 'auto' }}>
-        <img src="/images/zyntel_no_background.png" alt="Zyntel Icon" className="footer-logo" style={{ height: '200px' }} />
-      </footer>
+      <Footer variant="dashboard" />
     </div>
   );
 };

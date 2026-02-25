@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Header, Navbar, Filters } from '@/components/shared';
+import { Header, Navbar, Filters, Footer } from '@/components/shared';
 import {
   DailyNumbersChart,
   HourlyNumbersChart,
   TargetProgressChart
 } from '@/components/charts';
-import { exportElementToPdf } from '@/utils/exportPdf';
+import { exportElementToPdf, buildExportFilename } from '@/utils/exportPdf';
 
 interface NumbersData {
   totalRequests: number;
@@ -29,6 +29,7 @@ const Numbers: React.FC = () => {
   });
   const [data, setData] = useState<NumbersData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -89,13 +90,22 @@ const Numbers: React.FC = () => {
 
   const handleExportPdf = async () => {
     if (chartsRef.current) {
-      await exportElementToPdf(chartsRef.current, `Numbers-${new Date().toISOString().slice(0, 10)}.pdf`, { title: 'Numbers Report' });
+      const headerParts: string[] = [];
+      if (filters.period && filters.period !== 'custom') headerParts.push(`Period: ${filters.period}`);
+      if (filters.startDate && filters.endDate) headerParts.push(`${filters.startDate} to ${filters.endDate}`);
+      if (filters.shift && filters.shift !== 'all') headerParts.push(`Shift: ${filters.shift}`);
+      if (filters.hospitalUnit && filters.hospitalUnit !== 'all') headerParts.push(`Unit: ${filters.hospitalUnit}`);
+      const filename = buildExportFilename('Numbers', [filters.period, filters.shift, filters.hospitalUnit].filter((x) => x && x !== 'all'));
+      await exportElementToPdf(chartsRef.current, filename, {
+        title: 'Numbers Report',
+        headerLines: headerParts,
+      });
     }
   };
 
   return (
     <div className="min-h-screen bg-background-color">
-      <div className="chart-page-top">
+      <div className={`chart-page-top ${!filtersOpen ? 'collapsed' : ''}`}>
         <Header
           title="NHL Laboratory Dashboard"
           pageTitle="Numbers"
@@ -108,6 +118,10 @@ const Numbers: React.FC = () => {
             { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
           ]}
         />
+        <button type="button" className="chart-page-toggle" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
+          <i className={`fas fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden />
+          {filtersOpen ? 'Hide menu' : 'Filters & Menu'}
+        </button>
         <Navbar type="chart" />
         <div className="chart-filters-section">
           <Filters filters={filters} onFilterChange={updateFilter} showLabSectionFilter={false} showShiftFilter={true} showLaboratoryFilter={true} />
@@ -116,7 +130,7 @@ const Numbers: React.FC = () => {
 
       {isLoading && <div className="loader"><div className="one"></div><div className="two"></div><div className="three"></div><div className="four"></div></div>}
 
-      <main className="dashboard-layout chart-page-main" ref={chartsRef}>
+      <main className={`dashboard-layout chart-page-main ${filtersOpen ? 'filters-expanded' : ''}`} ref={chartsRef}>
         <aside className="numbers-summary-card">
           {data && (
             <TargetProgressChart
@@ -174,12 +188,7 @@ const Numbers: React.FC = () => {
         </div>
       </main>
 
-      <footer>
-        <p>&copy;2025 Zyntel</p>
-        <div className="zyntel">
-          <img src="/images/zyntel_no_background.png" alt="logo" />
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

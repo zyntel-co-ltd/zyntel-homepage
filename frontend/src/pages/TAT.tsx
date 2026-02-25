@@ -1,13 +1,13 @@
 // frontend/src/pages/TAT.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Header, Navbar, Filters, Loader, KPICard } from '@/components/shared';
+import { Header, Navbar, Filters, Loader, KPICard, Footer } from '@/components/shared';
 import { 
   TATPieChart, 
   TATLineChart, 
   TATHourlyChart,
   TATProgressChart 
 } from '@/components/charts';
-import { exportElementToPdf } from '@/utils/exportPdf';
+import { exportElementToPdf, buildExportFilename } from '@/utils/exportPdf';
 
 interface TATData {
   pieData: {
@@ -52,6 +52,7 @@ const TAT: React.FC = () => {
   
   const [data, setData] = useState<TATData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -114,7 +115,16 @@ const TAT: React.FC = () => {
 
   const handleExportPdf = async () => {
     if (chartsRef.current) {
-      await exportElementToPdf(chartsRef.current, `TAT-${new Date().toISOString().slice(0, 10)}.pdf`, { title: 'TAT Report' });
+      const headerParts: string[] = [];
+      if (filters.period && filters.period !== 'custom') headerParts.push(`Period: ${filters.period}`);
+      if (filters.startDate && filters.endDate) headerParts.push(`${filters.startDate} to ${filters.endDate}`);
+      if (filters.shift && filters.shift !== 'all') headerParts.push(`Shift: ${filters.shift}`);
+      if (filters.hospitalUnit && filters.hospitalUnit !== 'all') headerParts.push(`Unit: ${filters.hospitalUnit}`);
+      const filename = buildExportFilename('TAT', [filters.period, filters.shift, filters.hospitalUnit].filter((x) => x && x !== 'all'));
+      await exportElementToPdf(chartsRef.current, filename, {
+        title: 'TAT Report',
+        headerLines: headerParts,
+      });
     }
   };
 
@@ -124,7 +134,7 @@ const TAT: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-color">
-      <div className="chart-page-top">
+      <div className={`chart-page-top ${!filtersOpen ? 'collapsed' : ''}`}>
       <Header
         title="NHL Laboratory Dashboard"
         pageTitle="TAT"
@@ -139,6 +149,10 @@ const TAT: React.FC = () => {
         ]}
       />
 
+      <button type="button" className="chart-page-toggle" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
+        <i className={`fas fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden />
+        {filtersOpen ? 'Hide menu' : 'Filters & Menu'}
+      </button>
       <Navbar type="chart" />
 
       <div className="chart-filters-section">
@@ -153,7 +167,7 @@ const TAT: React.FC = () => {
       </div>
       </div>
 
-      <main className="dashboard-layout chart-page-main" ref={chartsRef}>
+      <main className={`dashboard-layout chart-page-main ${filtersOpen ? 'filters-expanded' : ''}`} ref={chartsRef}>
         <aside className="revenue-progress-card">
           {data && (
             <>
@@ -250,12 +264,7 @@ const TAT: React.FC = () => {
         </div>
       </main>
 
-      <footer>
-        <p>&copy;2025 Zyntel</p>
-        <div className="zyntel">
-          <img src="/images/zyntel_no_background.png" alt="logo" />
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

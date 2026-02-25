@@ -1,7 +1,7 @@
 // frontend/src/pages/Reception.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog } from '@/components/shared';
+import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog, Footer } from '@/components/shared';
 import { formatTimeWithAMPM } from '@/constants/metaOptions';
 import { ReceptionTable, type ReceptionRecord } from '@/components/tables';
 import { downloadCSV } from '@/utils/exportUtils';
@@ -512,12 +512,7 @@ const Reception: React.FC = () => {
         open={testsDialogLabNo !== null}
         onClose={() => setTestsDialogLabNo(null)}
       />
-      <footer>
-        <p>&copy;2025 Zyntel</p>
-        <div className="zyntel">
-          <img src="/images/zyntel_no_background.png" alt="logo" />
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

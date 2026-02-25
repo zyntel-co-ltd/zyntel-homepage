@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Header, Navbar, Filters } from '@/components/shared';
-import { exportElementToPdf } from '@/utils/exportPdf';
+import { Header, Navbar, Filters, Footer } from '@/components/shared';
+import { exportElementToPdf, buildExportFilename } from '@/utils/exportPdf';
 import {
   DailyRevenueChart,
   SectionRevenueChart,
@@ -33,6 +33,7 @@ const Revenue: React.FC = () => {
   });
   const [data, setData] = useState<RevenueData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -95,15 +96,23 @@ const Revenue: React.FC = () => {
 
   const handleExportPdf = async () => {
     if (chartsRef.current) {
-      await exportElementToPdf(chartsRef.current, `Revenue-${new Date().toISOString().slice(0, 10)}.pdf`, {
+      const headerParts: string[] = [];
+      if (filters.period && filters.period !== 'custom') headerParts.push(`Period: ${filters.period}`);
+      if (filters.startDate && filters.endDate) headerParts.push(`${filters.startDate} to ${filters.endDate}`);
+      if (filters.labSection && filters.labSection !== 'all') headerParts.push(`Section: ${filters.labSection}`);
+      if (filters.shift && filters.shift !== 'all') headerParts.push(`Shift: ${filters.shift}`);
+      if (filters.hospitalUnit && filters.hospitalUnit !== 'all') headerParts.push(`Unit: ${filters.hospitalUnit}`);
+      const filename = buildExportFilename('Revenue', [filters.period, filters.labSection, filters.shift, filters.hospitalUnit].filter((x) => x && x !== 'all'));
+      await exportElementToPdf(chartsRef.current, filename, {
         title: 'Revenue Report',
+        headerLines: headerParts,
       });
     }
   };
 
   return (
     <div className="min-h-screen bg-background-color">
-      <div className="chart-page-top">
+      <div className={`chart-page-top ${!filtersOpen ? 'collapsed' : ''}`}>
         <Header
           title="NHL Laboratory Dashboard"
           pageTitle="Revenue"
@@ -116,6 +125,10 @@ const Revenue: React.FC = () => {
             { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
           ]}
         />
+        <button type="button" className="chart-page-toggle" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
+          <i className={`fas fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden />
+          {filtersOpen ? 'Hide menu' : 'Filters & Menu'}
+        </button>
         <Navbar type="chart" />
         <div className="chart-filters-section">
           <Filters filters={filters} onFilterChange={updateFilter} showLabSectionFilter={true} showShiftFilter={true} showLaboratoryFilter={true} />
@@ -124,7 +137,7 @@ const Revenue: React.FC = () => {
 
       {isLoading && <div className="loader"><div className="one"></div><div className="two"></div><div className="three"></div><div className="four"></div></div>}
 
-      <main className="dashboard-layout chart-page-main" ref={chartsRef}>
+      <main className={`dashboard-layout chart-page-main ${filtersOpen ? 'filters-expanded' : ''}`} ref={chartsRef}>
         <aside className="revenue-progress-card">
           {data ? (
             <TargetProgressChart
@@ -190,11 +203,16 @@ const Revenue: React.FC = () => {
             <div className="hospital-unit">
               <div className="chart-title">Revenue by Hospital Unit</div>
               <div className="chart-container">
-                {data?.hospitalUnitRevenue ? (
-                  <HospitalUnitRevenueChart data={data.hospitalUnitRevenue} />
-                ) : (
+                {(() => {
+                  const hospitalData = (data?.hospitalUnitRevenue || []).filter(
+                    (d) => d.unit !== 'Main Laboratory' && d.unit !== 'mainLab'
+                  );
+                  return hospitalData.length ? (
+                    <HospitalUnitRevenueChart data={hospitalData} />
+                  ) : (
                   <p style={{ textAlign: 'center', color: '#999' }}>No data available</p>
-                )}
+                  );
+                })()}
               </div>
             </div>
 
@@ -213,12 +231,7 @@ const Revenue: React.FC = () => {
         </div>
       </main>
 
-      <footer>
-        <p>&copy;2025 Zyntel</p>
-        <div className="zyntel">
-          <img src="/images/zyntel_no_background.png" alt="logo" />
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

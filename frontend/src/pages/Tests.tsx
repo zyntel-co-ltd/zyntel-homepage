@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Header, Navbar, Filters } from '@/components/shared';
+import { Header, Navbar, Filters, Footer } from '@/components/shared';
 import {
   TopTestsByUnitChart,
   TestVolumeChart,
   TargetProgressChart
 } from '@/components/charts';
-import { exportElementToPdf } from '@/utils/exportPdf';
+import { exportElementToPdf, buildExportFilename } from '@/utils/exportPdf';
 
 interface TestsData {
   totalTestsPerformed: number;
@@ -31,6 +31,7 @@ const Tests: React.FC = () => {
   const [data, setData] = useState<TestsData | null>(null);
   const [rawData, setRawData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   const handleUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedUnit(e.target.value);
@@ -159,13 +160,23 @@ const Tests: React.FC = () => {
 
   const handleExportPdf = async () => {
     if (chartsRef.current) {
-      await exportElementToPdf(chartsRef.current, `Tests-${new Date().toISOString().slice(0, 10)}.pdf`, { title: 'Tests Report' });
+      const headerParts: string[] = [];
+      if (filters.period && filters.period !== 'custom') headerParts.push(`Period: ${filters.period}`);
+      if (filters.startDate && filters.endDate) headerParts.push(`${filters.startDate} to ${filters.endDate}`);
+      if (filters.labSection && filters.labSection !== 'all') headerParts.push(`Section: ${filters.labSection}`);
+      if (filters.shift && filters.shift !== 'all') headerParts.push(`Shift: ${filters.shift}`);
+      if (filters.hospitalUnit && filters.hospitalUnit !== 'all') headerParts.push(`Unit: ${filters.hospitalUnit}`);
+      const filename = buildExportFilename('Tests', [filters.period, filters.labSection, filters.shift, filters.hospitalUnit].filter((x) => x && x !== 'all'));
+      await exportElementToPdf(chartsRef.current, filename, {
+        title: 'Tests Report',
+        headerLines: headerParts,
+      });
     }
   };
 
   return (
     <div className="min-h-screen bg-background-color">
-      <div className="chart-page-top">
+      <div className={`chart-page-top ${!filtersOpen ? 'collapsed' : ''}`}>
         <Header
           title="NHL Laboratory Dashboard"
           pageTitle="Tests"
@@ -179,6 +190,10 @@ const Tests: React.FC = () => {
             { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
           ]}
         />
+        <button type="button" className="chart-page-toggle" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
+          <i className={`fas fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden />
+          {filtersOpen ? 'Hide menu' : 'Filters & Menu'}
+        </button>
         <Navbar type="chart" />
         <div className="chart-filters-section">
           <Filters
@@ -202,7 +217,7 @@ const Tests: React.FC = () => {
       )}
 
       {!isLoading && (
-        <main className="dashboard-layout chart-page-main" ref={chartsRef}>
+        <main className={`dashboard-layout chart-page-main ${filtersOpen ? 'filters-expanded' : ''}`} ref={chartsRef}>
           <aside className="revenue-progress-card">
             {data && (
               <TargetProgressChart
@@ -293,12 +308,7 @@ const Tests: React.FC = () => {
         </main>
       )}
 
-      <footer>
-        <p>&copy;2025 Zyntel</p>
-        <div className="zyntel">
-          <img src="/images/zyntel_no_background.png" alt="logo" />
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
