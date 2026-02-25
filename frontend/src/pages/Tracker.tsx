@@ -17,7 +17,7 @@ const Tracker: React.FC = () => {
   
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<TrackerRecord[]>([]);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, _setFiltersOpen] = useState(true);
   const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
   const [testsDialogLabNo, setTestsDialogLabNo] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);

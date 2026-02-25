@@ -25,7 +25,7 @@ const Meta: React.FC = () => {
   const [data, setData] = useState<MetaRecord[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<MetaRecord | null>(null);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, _setFiltersOpen] = useState(true);
   const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);

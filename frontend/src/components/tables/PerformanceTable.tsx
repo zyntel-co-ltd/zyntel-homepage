@@ -147,7 +147,7 @@ const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDo
                 <td>{row.request_time_expected ? formatDateTimeWithAMPM(row.request_time_expected) : 'N/A'}</td>
                 <td>{row.request_time_out ? formatDateTimeWithAMPM(row.request_time_out) : 'N/A'}</td>
                 <td className={getDelayStatusClass(row.request_delay_status || '')}>{formatDelayStatus(row.request_delay_status || '')}</td>
-                <td>{formatDuration(row.request_time_range as number)}</td>
+                <td>{formatDuration(row.request_time_range)}</td>
               </tr>
             );
           })}

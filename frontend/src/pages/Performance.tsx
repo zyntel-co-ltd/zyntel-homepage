@@ -21,7 +21,7 @@ const Performance: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const rowsPerPage = 50;
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, _setFiltersOpen] = useState(true);
   const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
   const [testsDialogLabNo, setTestsDialogLabNo] = useState<string | null>(null);
 
