@@ -31,7 +31,7 @@ const Tests: React.FC = () => {
   const [data, setData] = useState<TestsData | null>(null);
   const [rawData, setRawData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedUnit(e.target.value);
@@ -176,7 +176,7 @@ const Tests: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-color">
-      <div className={`chart-page-top ${!filtersOpen ? 'collapsed' : ''}`}>
+      <div className="chart-page-top">
         <Header
           title="NHL Laboratory Dashboard"
           pageTitle="Tests"
@@ -190,9 +190,9 @@ const Tests: React.FC = () => {
             { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
           ]}
         />
-        <button type="button" className="chart-page-toggle" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
-          <i className={`fas fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden />
-          {filtersOpen ? 'Hide menu' : 'Filters & Menu'}
+        <button type="button" className="chart-page-toggle" onClick={() => setSidebarOpen((o) => !o)} aria-expanded={sidebarOpen}>
+          <i className={`fas fa-chevron-${sidebarOpen ? 'up' : 'down'}`} aria-hidden />
+          {sidebarOpen ? 'Close' : 'Menu'}
         </button>
         <Navbar type="chart" />
         <div className="chart-filters-section">
@@ -216,8 +216,20 @@ const Tests: React.FC = () => {
         </div>
       )}
 
+      <div className={`filters-panel-overlay ${sidebarOpen ? 'visible' : ''}`} onClick={() => setSidebarOpen(false)} aria-hidden />
+      <div className={`menu-sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="filters-panel-header">
+          <h3>Menu & Filters</h3>
+          <button type="button" className="filters-panel-close" onClick={() => setSidebarOpen(false)} aria-label="Close">&times;</button>
+        </div>
+        <div className="menu-sidebar-nav">
+          <Navbar type="chart" />
+        </div>
+        <Filters filters={filters} onFilterChange={updateFilter} showLabSectionFilter={true} showShiftFilter={true} showLaboratoryFilter={true} showPeriodFilter={true} showDateFilter={true} />
+      </div>
+
       {!isLoading && (
-        <main className={`dashboard-layout chart-page-main ${filtersOpen ? 'filters-expanded' : ''}`} ref={chartsRef}>
+        <main className="dashboard-layout chart-page-main" ref={chartsRef}>
           <aside className="revenue-progress-card">
             {data && (
               <TargetProgressChart

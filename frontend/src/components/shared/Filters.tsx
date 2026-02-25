@@ -1,4 +1,5 @@
 import React from 'react';
+import { getPeriodDates } from '@/utils/dateUtils';
 
 interface FiltersProps {
   filters: {
@@ -66,7 +67,15 @@ const Filters: React.FC<FiltersProps> = ({
           <select
             id="periodSelect"
             value={filters.period || 'thisMonth'}
-            onChange={(e) => onFilterChange('period', e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              onFilterChange('period', value);
+              if (value && value !== 'custom') {
+                const { startDate, endDate } = getPeriodDates(value);
+                onFilterChange('startDate', startDate);
+                onFilterChange('endDate', endDate);
+              }
+            }}
           >
             <option value="custom">Custom</option>
             <option value="yesterday">Yesterday</option>

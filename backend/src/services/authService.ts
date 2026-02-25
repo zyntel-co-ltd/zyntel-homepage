@@ -55,12 +55,13 @@ export const createUser = async (
   createdBy: number
 ) => {
   const hashedPassword = await bcrypt.hash(password, 10);
+  const emailValue = (email?.trim?.() || '') ? email.trim() : null;
 
   const result = await query(
     `INSERT INTO users (username, email, password_hash, role) 
      VALUES ($1, $2, $3, $4) 
      RETURNING id, username, email, role, is_active, created_at`,
-    [username, email, hashedPassword, role]
+    [username, emailValue, hashedPassword, role]
   );
 
   // Log audit
@@ -91,7 +92,7 @@ export const updateUser = async (
 
   if (updates.email !== undefined) {
     fields.push(`email = $${paramCount++}`);
-    values.push(updates.email);
+    values.push((updates.email?.trim?.() || '') ? updates.email.trim() : null);
   }
   if (updates.role !== undefined) {
     fields.push(`role = $${paramCount++}`);

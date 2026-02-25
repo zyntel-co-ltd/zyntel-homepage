@@ -4,8 +4,14 @@ import { Header, Navbar, Filters, Loader, Modal, Pagination, Toast, Footer } fro
 import { MetaTable, type MetaRecord } from '@/components/tables';
 import { downloadCSV } from '@/utils/exportUtils';
 import { LAB_SECTIONS, TAT_OPTIONS } from '@/constants/metaOptions';
+import { useAuth } from '@/contexts/AuthContext';
+import { canEditMeta } from '@/utils/permissions';
 
 const Meta: React.FC = () => {
+  const { user } = useAuth();
+  const role = user?.role as 'admin' | 'manager' | 'technician' | 'viewer' | undefined;
+  const canEdit = canEditMeta(role);
+
   const [filters, setFilters] = useState({
     labSection: 'all',
     search: ''
@@ -185,6 +191,7 @@ const Meta: React.FC = () => {
             onLogout={handleLogout}
             onResetFilters={handleResetFilters}
             showResetFilters={true}
+            hideThreeDotMenu={!canEdit}
             menuItems={[
               { label: 'Export CSV', href: '#', icon: 'fas fa-file-csv', onClick: handleExportCSV },
               { label: 'Admin Panel', href: '/admin', icon: 'fas fa-cog' },
@@ -197,9 +204,9 @@ const Meta: React.FC = () => {
           />
           <Navbar type="table" />
         </div>
-        <button type="button" className="table-page-toggle" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
-          <i className={`fas fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden />
-          {filtersOpen ? 'Hide menu' : 'Menu'}
+        <button type="button" className="table-page-toggle" onClick={() => setFiltersPanelOpen((o) => !o)} aria-expanded={filtersPanelOpen}>
+          <i className={`fas fa-chevron-${filtersPanelOpen ? 'up' : 'down'}`} aria-hidden />
+          {filtersPanelOpen ? 'Close' : 'Menu'}
         </button>
         <div className="filters-row">
           <button type="button" className="filters-panel-trigger" onClick={() => setFiltersPanelOpen(true)} aria-label="Open filters">
@@ -234,8 +241,23 @@ const Meta: React.FC = () => {
       <div className={`filters-panel-overlay ${filtersPanelOpen ? 'visible' : ''}`} onClick={() => setFiltersPanelOpen(false)} aria-hidden />
       <div className={`filters-panel ${filtersPanelOpen ? 'open' : ''}`}>
         <div className="filters-panel-header">
-          <h3>Filters</h3>
-          <button type="button" className="filters-panel-close" onClick={() => setFiltersPanelOpen(false)} aria-label="Close filters">&times;</button>
+          <h3>Menu & Filters</h3>
+          <button type="button" className="filters-panel-close" onClick={() => setFiltersPanelOpen(false)} aria-label="Close">&times;</button>
+        </div>
+        <div className="menu-sidebar-nav">
+          <Navbar type="table" />
+        </div>
+        <div className="menu-sidebar-search">
+          <div className="search-container">
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search test name, section..."
+              value={filters.search || ''}
+              onChange={(e) => handleFilterChange('search', e.target.value)}
+            />
+            <i className="fas fa-search search-icon"></i>
+          </div>
         </div>
         <Filters
           filters={filters}
@@ -259,6 +281,7 @@ const Meta: React.FC = () => {
                 onEdit={handleEdit}
                 onAdd={handleAdd}
                 isLoading={isLoading}
+                canEdit={canEdit}
               />
             </section>
             <Pagination

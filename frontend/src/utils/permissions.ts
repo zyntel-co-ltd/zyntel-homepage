@@ -31,6 +31,12 @@ export function canExport(role?: Role): boolean {
   return role === 'admin' || role === 'manager';
 }
 
+/** Edit meta table (tests): admin, manager only. Technicians cannot edit. */
+export function canEditMeta(role?: Role): boolean {
+  if (!role) return false;
+  return role === 'admin' || role === 'manager';
+}
+
 /** Delete user: admin only */
 export function canDeleteUser(role?: Role): boolean {
   if (!role) return false;

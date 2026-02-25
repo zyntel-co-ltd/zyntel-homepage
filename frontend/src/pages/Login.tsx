@@ -10,8 +10,6 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
-  const [resetUsername, setResetUsername] = useState('');
-  const [resetMessage, setResetMessage] = useState('');
 
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -37,29 +35,6 @@ const Login: React.FC = () => {
     }
   };
 
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resetUsername?.trim()) {
-      setResetMessage('Please enter your username');
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/auth/request-password-reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: resetUsername.trim() }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (response.ok) {
-        setResetMessage(data.message || 'Contact your administrator to reset your password in Admin > Users.');
-      } else {
-        setResetMessage(data.error || 'Request failed. Please try again.');
-      }
-    } catch (err) {
-      setResetMessage('Network error. Please try again.');
-    }
-  };
 
   return (
     <div className="login-page">
@@ -70,7 +45,7 @@ const Login: React.FC = () => {
       <div className="login-column">
         <div className="login-box">
           <img src="/images/zyntel_full_cyan.png" alt="Zyntel" className="login-logo" />
-          <p>Data Analysis Experts</p>
+          <p>Operational Intelligence Platform</p>
 
           <form onSubmit={handleSubmit}>
             <div className="input-group">
@@ -91,10 +66,12 @@ const Login: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <i
-                className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}
-                onClick={() => setShowPassword(!showPassword)}
-              ></i>
+                <i
+                  className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ cursor: 'pointer' }}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                />
             </div>
 
             {error && (
@@ -120,58 +97,22 @@ const Login: React.FC = () => {
         </div>
       </div>
 
-      {/* Password Reset Modal */}
+      {/* Forgot Password Modal - simple contact admin message */}
       {showResetModal && (
         <div className="modal">
           <div className="modal-content">
             <div className="modal-header">
-              <h3>Reset Password</h3>
-              <button
-                className="modal-close"
-                onClick={() => {
-                  setShowResetModal(false);
-                  setResetMessage('');
-                  setResetUsername('');
-                }}
-              >
-                &times;
+              <h3>Forgot Password</h3>
+              <button className="modal-close" onClick={() => setShowResetModal(false)}>&times;</button>
+            </div>
+            <p className="forgot-password-message">
+              Please contact your administrator to reset your password. Administrators can reset passwords in Admin Panel &gt; Users.
+            </p>
+            <div className="form-actions" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
+              <button type="button" className="btn-primary" onClick={() => setShowResetModal(false)}>
+                OK
               </button>
             </div>
-
-            <form onSubmit={handlePasswordReset}>
-              <div className="input-group">
-                <input
-                  type="text"
-                  placeholder="Enter your username"
-                  value={resetUsername}
-                  onChange={(e) => setResetUsername(e.target.value)}
-                  required
-                />
-              </div>
-
-              {resetMessage && (
-                <div className={`message-box ${resetMessage.includes('sent') ? 'success' : 'error'}`}>
-                  {resetMessage}
-                </div>
-              )}
-
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    setShowResetModal(false);
-                    setResetMessage('');
-                    setResetUsername('');
-                  }}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary">
-                  Send Reset Link
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}

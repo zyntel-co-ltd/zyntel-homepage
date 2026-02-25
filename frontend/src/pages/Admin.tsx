@@ -77,6 +77,8 @@ const Admin: React.FC = () => {
   const [unmatchedPage, setUnmatchedPage] = useState(1);
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const adminMenuRef = useRef<HTMLSpanElement>(null);
+  const [showPasswordUserForm, setShowPasswordUserForm] = useState(false);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -512,8 +514,9 @@ const Admin: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-color">
-      {/* Header */}
-      <header>
+      {/* Fixed header - same as other pages */}
+      <div className="admin-page-top">
+        <header>
         <div className="header-container">
           <div className="header-left">
             <div className="logo">
@@ -524,10 +527,10 @@ const Admin: React.FC = () => {
             </div>
           </div>
           <div className="page">
-                <a href="/dashboard"  className="logout-button">
+                <a href="/dashboard" className="logout-button">
                   ← Back to Dashboard
                 </a>
-            <a href="#" className="logout-button" id="logout-button">Logout</a>
+            <a href="#" className="logout-button" id="logout-button" onClick={(e) => { e.preventDefault(); localStorage.removeItem('token'); window.location.href = '/'; }}>Logout</a>
             <span className={`three-dots-menu-container${adminMenuOpen ? ' menu-open' : ''}`} ref={adminMenuRef}>
               <button type="button" className="three-dots-button" onClick={() => setAdminMenuOpen((o) => !o)} aria-expanded={adminMenuOpen} aria-haspopup="true">&#x22EE;</button>
               <ul className="dropdown-menu">
@@ -539,11 +542,14 @@ const Admin: React.FC = () => {
           </div>
         </div>
       </header>
+      </div>
 
       {/* Admin Panel Title */}
-      <div style={{
-        marginTop: '90px',
-        padding: '0 30px'
+      <div className="admin-page-content" style={{
+        paddingTop: 'var(--app-header-height)',
+        paddingLeft: '30px',
+        paddingRight: '30px',
+        paddingBottom: 0
       }}>
         <div style={{
           display: 'flex',
@@ -1552,40 +1558,51 @@ onChange={(e) =>
       >
         <div className="form-grid">
           <div className="form-field span-2">
-            <label className="form-label">Username</label>
+            <label className="form-label">Username <span style={{ color: '#ef4444' }}>*</span></label>
             <input
               type="text"
               className="form-input"
               value={userFormData.username}
               onChange={(e) => setUserFormData({ ...userFormData, username: e.target.value })}
+              placeholder="Required"
               disabled={!!editingUser}
             />
           </div>
 
           <div className="form-field span-2">
             <label className="form-label">Email</label>
+            <p className="form-hint" style={{ marginBottom: 6 }}>Optional. Unique per user. Used for login recovery.</p>
             <input
               type="email"
               className="form-input"
               value={userFormData.email}
               onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
+              placeholder="user@example.com (optional)"
             />
           </div>
 
           {!editingUser && (
             <div className="form-field span-2">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-input"
-                value={userFormData.password}
-                onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
-              />
+              <label className="form-label">Password <span style={{ color: '#ef4444' }}>*</span></label>
+              <div className="password-group">
+                <input
+                  type={showPasswordUserForm ? 'text' : 'password'}
+                  className="form-input"
+                  value={userFormData.password}
+                  onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+                  placeholder="Required"
+                />
+                <i
+                  className={`fa ${showPasswordUserForm ? 'fa-eye-slash' : 'fa-eye'} password-toggle-icon`}
+                  onClick={() => setShowPasswordUserForm((v) => !v)}
+                  aria-label={showPasswordUserForm ? 'Hide password' : 'Show password'}
+                />
+              </div>
             </div>
           )}
 
           <div className="form-field span-2">
-            <label className="form-label">Role</label>
+            <label className="form-label">Role <span style={{ color: '#ef4444' }}>*</span></label>
             <select
               className="form-select"
               value={userFormData.role}
@@ -1634,18 +1651,25 @@ onChange={(e) =>
       {resetPasswordModal && (
         <Modal
           isOpen={true}
-          onClose={() => setResetPasswordModal(null)}
+          onClose={() => { setResetPasswordModal(null); setShowPasswordReset(false); }}
           title={`Reset Password: ${resetPasswordModal.username}`}
         >
           <div className="form-field">
             <label className="form-label">New Password</label>
-            <input
-              type="password"
-              className="form-input"
-              value={resetPasswordValue}
-              onChange={(e) => setResetPasswordValue(e.target.value)}
-              placeholder="Enter new password"
-            />
+            <div className="password-group">
+              <input
+                type={showPasswordReset ? 'text' : 'password'}
+                className="form-input"
+                value={resetPasswordValue}
+                onChange={(e) => setResetPasswordValue(e.target.value)}
+                placeholder="Enter new password"
+              />
+              <i
+                className={`fa ${showPasswordReset ? 'fa-eye-slash' : 'fa-eye'} password-toggle-icon`}
+                onClick={() => setShowPasswordReset((v) => !v)}
+                aria-label={showPasswordReset ? 'Hide password' : 'Show password'}
+              />
+            </div>
           </div>
           <div className="form-actions">
             <button className="btn btn--secondary" onClick={() => setResetPasswordModal(null)}>Cancel</button>

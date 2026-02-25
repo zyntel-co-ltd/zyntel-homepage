@@ -18,6 +18,18 @@ export const getPeriodDates = (period: string): { startDate: string; endDate: st
   let endDate: moment.Moment;
 
   switch (period) {
+    case 'yesterday':
+      startDate = now.clone().subtract(1, 'day').startOf('day');
+      endDate = now.clone().subtract(1, 'day').endOf('day');
+      break;
+    case 'thisWeek':
+      startDate = now.clone().startOf('week');
+      endDate = now.clone().endOf('week');
+      break;
+    case 'lastWeek':
+      startDate = now.clone().subtract(1, 'week').startOf('week');
+      endDate = now.clone().subtract(1, 'week').endOf('week');
+      break;
     case 'thisMonth':
       startDate = now.clone().startOf('month');
       endDate = now.clone().endOf('month');
@@ -51,53 +63,31 @@ export const getPeriodDates = (period: string): { startDate: string; endDate: st
       endDate = moment(`${now.year()}-12-31`);
       break;
     case 'january':
-      startDate = moment(`${now.year()}-01-01`);
-      endDate = moment(`${now.year()}-01-31`);
-      break;
     case 'february':
-      startDate = moment(`${now.year()}-02-01`);
-      endDate = moment(`${now.year()}-02-28`);
-      break;
     case 'march':
-      startDate = moment(`${now.year()}-03-01`);
-      endDate = moment(`${now.year()}-03-31`);
-      break;
     case 'april':
-      startDate = moment(`${now.year()}-04-01`);
-      endDate = moment(`${now.year()}-04-30`);
-      break;
     case 'may':
-      startDate = moment(`${now.year()}-05-01`);
-      endDate = moment(`${now.year()}-05-31`);
-      break;
     case 'june':
-      startDate = moment(`${now.year()}-06-01`);
-      endDate = moment(`${now.year()}-06-30`);
-      break;
     case 'july':
-      startDate = moment(`${now.year()}-07-01`);
-      endDate = moment(`${now.year()}-07-31`);
-      break;
     case 'august':
-      startDate = moment(`${now.year()}-08-01`);
-      endDate = moment(`${now.year()}-08-31`);
-      break;
     case 'september':
-      startDate = moment(`${now.year()}-09-01`);
-      endDate = moment(`${now.year()}-09-30`);
-      break;
     case 'october':
-      startDate = moment(`${now.year()}-10-01`);
-      endDate = moment(`${now.year()}-10-31`);
-      break;
     case 'november':
-      startDate = moment(`${now.year()}-11-01`);
-      endDate = moment(`${now.year()}-11-30`);
+    case 'december': {
+      const monthMap: Record<string, number> = {
+        january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+        july: 6, august: 7, september: 8, october: 9, november: 10, december: 11
+      };
+      const m = monthMap[period] ?? 0;
+      startDate = now.clone().month(m).startOf('month');
+      endDate = now.clone().month(m).endOf('month');
+      // If month hasn't occurred yet this year, use last year
+      if (endDate.isAfter(now)) {
+        startDate = startDate.subtract(1, 'year');
+        endDate = endDate.subtract(1, 'year');
+      }
       break;
-    case 'december':
-      startDate = moment(`${now.year()}-12-01`);
-      endDate = moment(`${now.year()}-12-31`);
-      break;
+    }
     default:
       startDate = now.clone().startOf('month');
       endDate = now.clone().endOf('month');

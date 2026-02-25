@@ -30,6 +30,10 @@
   color: var(--main-color);
 }
 
+/* Icon spacing utilities - gap between icons and adjacent text */
+.mr-1 { margin-right: 8px; }
+.mr-2 { margin-right: 12px; }
+
 /* ===========================
    LOGIN PAGE STYLES
    =========================== */
@@ -100,7 +104,7 @@ body.lrids {
 .login-page .login-logo {
   max-width: 180px;
   height: auto;
-  margin-bottom: 15px;
+  margin: 0 auto 15px;
   display: block;
 }
 
@@ -155,17 +159,17 @@ body.lrids {
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
-  color: rgb(37, 239, 44);
+  color: #4CAF50; /* Simple green - hot green on hover in parent if needed */
 }
 
 .login-page .info-line {
   font-size: 14px;
-  color: #e0e0e0;
+  color: #4CAF50; /* Simple green for whole line: Measured | Managed */
   margin-bottom: 20px;
 }
 
 .login-page .info-line .info-highlight {
-  color: rgb(37, 239, 44);
+  color: #4CAF50;
   font-weight: 600;
 }
 
@@ -184,9 +188,9 @@ body.lrids {
 
 .login-page .login-button:hover:not(:disabled) {
   background: none;
-  border: 1px solid rgb(37, 239, 44);
+  border: 1px solid rgb(37, 239, 44); /* Hot green only on hover */
   border-radius: 5px;
-  color: white;
+  color: rgb(37, 239, 44);
 }
 
 .login-page .login-button:active {
@@ -200,12 +204,13 @@ body.lrids {
 }
 
 .login-page .forgot-password a {
-  color: rgb(37, 239, 44);
+  color: #4CAF50; /* Simple green - hot green only on hover */
   text-decoration: none;
   font-size: 14px;
 }
 
 .login-page .forgot-password a:hover {
+  color: rgb(37, 239, 44);
   text-decoration: underline;
 }
 
@@ -246,7 +251,7 @@ body.lrids {
 
 .login-page .modal-header h3 {
   margin: 0;
-  color: rgb(37, 239, 44);
+  color: #4CAF50; /* Simple green */
   font-weight: 600;
 }
 
@@ -265,7 +270,7 @@ body.lrids {
 }
 
 .login-page .modal .modal-close:hover {
-  color: rgb(37, 239, 44);
+  color: rgb(37, 239, 44); /* Hot green on hover only */
 }
 
 .login-page .modal .input-group input {
@@ -314,8 +319,8 @@ body.lrids {
 }
 
 .login-page .modal .btn-primary {
-  background-color: rgb(37, 239, 44);
-  color: #0a0a0a;
+  background-color: #4CAF50; /* Simple green - hot green only on hover */
+  color: #fff;
   padding: 10px 20px;
   border: none;
   border-radius: 8px;
@@ -328,6 +333,7 @@ body.lrids {
 .login-page .modal .btn-primary:hover {
   background: none;
   border: 1px solid rgb(37, 239, 44);
+  color: rgb(37, 239, 44);
 }
 
 .login-page .message-box {
@@ -347,6 +353,13 @@ body.lrids {
   background-color: rgba(244, 67, 54, 0.15);
   color: #ff6b6b;
   border: 1px solid rgba(255, 107, 107, 0.6);
+}
+
+.login-page .forgot-password-message {
+  margin: 0;
+  color: #e0e0e0;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /* Responsive - match Flask */
@@ -644,6 +657,27 @@ body.lrids {
   box-shadow: 0 0 0 3px rgba(33, 51, 106, 0.12);
 }
 
+/* Password field with show/hide toggle (Admin, modals, etc.) */
+.password-group {
+  position: relative;
+  width: 100%;
+}
+.password-group .form-input {
+  padding-right: 40px;
+}
+.password-group .password-toggle-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--border-color);
+  font-size: 0.9rem;
+}
+.password-group .password-toggle-icon:hover {
+  color: var(--main-color);
+}
+
 /* Ensure inputs in modals are visible and editable (override global * color) */
 .modal .form-input,
 .modal .form-select {
@@ -814,6 +848,7 @@ body.lrids {
   --app-filters-height: 48px;
   --app-search-bar-height: 48px;
   --app-top-total: calc(var(--app-header-height) + var(--app-navbar-height) + var(--app-filters-height) + var(--app-search-bar-height));
+  --app-chart-top: calc(var(--app-header-height) + var(--app-navbar-height) + var(--app-filters-height) + 24px);
 }
 
 .table-page-top {
@@ -831,30 +866,34 @@ body.lrids {
 .table-page-main {
   padding-top: var(--app-top-total);
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
-/* Toggle button for filters/search on small screens */
+/* Toggle button for filters/search on small screens - small, on the side */
 .table-page-toggle {
   display: none;
+  position: absolute;
+  top: 8px;
+  right: 12px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  margin: 0 20px 10px;
+  gap: 4px;
+  padding: 6px 10px;
   background: linear-gradient(135deg, #21336a 0%, #3b5998 100%);
   color: #fff;
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(33, 51, 106, 0.3);
   transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 10;
 }
 
 .table-page-toggle:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(33, 51, 106, 0.4);
+  transform: scale(1.02);
+  box-shadow: 0 2px 10px rgba(33, 51, 106, 0.4);
 }
 
 .table-page-toggle i {
@@ -865,22 +904,69 @@ body.lrids {
   transform: rotate(-90deg);
 }
 
-/* Responsive: toggle navbar + filters + search bar on small screens */
-@media (max-width: 768px) {
-  .table-page-toggle {
-    display: flex;
-  }
-  .table-page-main {
-    padding-top: calc(var(--app-header-height) + 52px); /* header + toggle when collapsed */
-  }
-  .table-page-main.filters-expanded {
-    padding-top: var(--app-top-total);
-  }
-  .table-page-top.collapsed .navbar,
-  .table-page-top.collapsed .filters-row,
-  .table-page-top.collapsed .table-search-bar {
+/* Responsive: sidebar approach - hide inline navbar/filters on tablet/mobile */
+@media (max-width: 1024px) {
+  .table-page-top .navbar,
+  .table-page-top .filters-row,
+  .table-page-top .table-search-bar {
     display: none !important;
   }
+  .table-page-main,
+  .table-page-main.filters-expanded {
+    padding-top: var(--app-header-height);
+  }
+}
+
+@media (max-width: 1024px) {
+  .chart-page-top .navbar,
+  .chart-page-top .chart-filters-section {
+    display: none !important;
+  }
+  .chart-page-main,
+  .chart-page-main.filters-expanded {
+    padding-top: var(--app-header-height);
+  }
+}
+
+@media (max-width: 1024px) {
+  .table-page-toggle {
+    display: flex !important;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1100;
+    visibility: visible;
+    opacity: 1;
+  }
+  .table-page-top .header-container {
+    padding-right: 90px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .chart-page-toggle {
+    display: flex !important;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1100;
+    visibility: visible;
+    opacity: 1;
+  }
+  .chart-page-top .header-container {
+    padding-right: 90px;
+  }
+}
+
+/* Admin page - fixed header like other pages */
+.admin-page-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: var(--background-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* ===========================
@@ -904,14 +990,17 @@ header {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  overflow: hidden;
 }
 
 .header-container {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   padding: 15px 20px 10px 20px;
   height: auto;
+  min-width: 0;
+  width: 100%;
 }
 
 .header-left {
@@ -936,11 +1025,15 @@ header h1 {
 .page {
   display: flex;
   align-items: center;
-  gap: 30px;
+  flex-wrap: wrap;
+  gap: 12px 30px;
   font-size: 0.95rem;
   font-weight: 500;
   border-left: 2px solid var(--hover-color);
-  padding: 0 25px;
+  padding: 0 20px;
+  flex-shrink: 1;
+  min-width: 0;
+  justify-content: flex-end;
 }
 
 .page span {
@@ -1123,10 +1216,11 @@ header h1 {
   flex: 1;
 }
 
-.filters-panel {
+.filters-panel,
+.menu-sidebar {
   display: none;
   position: fixed;
-  top: 0;
+  top: var(--app-header-height);
   right: 0;
   bottom: 0;
   width: 280px;
@@ -1140,8 +1234,42 @@ header h1 {
   overflow-y: auto;
 }
 
-.filters-panel.open {
+.filters-panel.open,
+.menu-sidebar.open {
   transform: translateX(0);
+}
+
+.menu-sidebar-nav {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.menu-sidebar-nav .navbar {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.menu-sidebar-nav .navbar a {
+  padding: 10px 12px;
+  color: var(--main-color);
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.menu-sidebar-nav .navbar a:hover,
+.menu-sidebar-nav .navbar a.active {
+  background: rgba(33, 51, 106, 0.08);
+  color: var(--main-color);
+}
+.menu-sidebar-search {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.menu-sidebar-search .search-container {
+  max-width: none;
+}
+.menu-sidebar-search .search-input {
+  width: 100%;
 }
 
 .filters-panel-header {
@@ -1205,6 +1333,31 @@ header h1 {
   width: 100%;
 }
 
+.menu-sidebar .dashboard-filters {
+  position: static;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 16px;
+  gap: 14px;
+  box-shadow: none;
+  width: auto;
+}
+.menu-sidebar .filter-group {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.menu-sidebar .filter-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+.menu-sidebar .filter-group input,
+.menu-sidebar .filter-group select {
+  min-width: 0;
+  width: 100%;
+}
+
 .filters-panel-overlay {
   display: none;
   position: fixed;
@@ -1221,15 +1374,16 @@ header h1 {
   pointer-events: auto;
 }
 
-/* Small screens: show Filters button, hide inline filters; panel slides in */
-@media (max-width: 992px) {
+/* Small screens: toggle opens sidebar with menu + filters; panel slides in from right */
+@media (max-width: 1024px) {
   .filters-panel-trigger {
     display: flex;
   }
   .filters-inline {
     display: none !important;
   }
-  .filters-panel {
+  .filters-panel,
+  .menu-sidebar {
     display: flex;
   }
   .filters-panel-overlay {
@@ -1322,7 +1476,17 @@ header h1 {
 }
 
 .table-search-bar .search-icon {
-  color: #21336a;
+  color: #374151;
+}
+
+/* Icons on blue/dark backgrounds - ensure light color for contrast */
+.navbar i,
+.navbar a i,
+.table-page-toggle i,
+.chart-page-toggle i,
+.filters-panel-trigger i,
+.logout-button i {
+  color: inherit;
 }
 
 /* ===========================
@@ -1366,28 +1530,31 @@ header h1 {
   flex-shrink: 0;
 }
 
-/* Chart page toggle - same style as table toggle, shown only on small screens */
+/* Chart page toggle - small, on the side, shown only on small screens */
 .chart-page-toggle {
   display: none;
+  position: absolute;
+  top: 8px;
+  right: 12px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  margin: 0 20px 10px;
+  gap: 4px;
+  padding: 6px 10px;
   background: linear-gradient(135deg, #21336a 0%, #3b5998 100%);
   color: #fff;
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(33, 51, 106, 0.3);
   transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 10;
 }
 
 .chart-page-toggle:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(33, 51, 106, 0.4);
+  transform: scale(1.02);
+  box-shadow: 0 2px 10px rgba(33, 51, 106, 0.4);
 }
 
 .chart-page-toggle i {
@@ -1399,8 +1566,9 @@ header h1 {
 }
 
 .chart-page-main {
-  padding-top: calc(var(--app-header-height) + var(--app-navbar-height) + var(--app-filters-height) + 24px);
+  padding-top: var(--app-chart-top);
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .search-actions-row {
@@ -1807,7 +1975,7 @@ main.dashboard-layout {
 .revenue-progress-card,
 .numbers-summary-card {
   position: sticky;
-  top: 130px;
+  top: calc(var(--app-chart-top) - 1rem);
   background: white;
   margin-bottom: 1.5rem;
   border-radius: 12px;
@@ -2108,9 +2276,10 @@ main.dashboard-layout {
    TABLE STYLES
    =========================== */
 main {
-  padding: 140px 20px 50px;
+  padding: var(--app-top-total) 20px 50px;
   background-color: var(--pure-white);
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .card {
@@ -2694,14 +2863,21 @@ footer.footer-dashboard .footer-zyntel img.footer-logo {
 
   .header-container {
     flex-direction: column;
+    align-items: stretch;
     gap: 10px;
+    padding-left: 15px;
+    padding-right: 15px;
   }
 
   .page {
     font-size: 0.85rem;
-    margin-top: 15px;
-    padding: 1px 10px;
+    margin-top: 0;
+    padding: 10px 12px;
     justify-content: space-between;
+    border-left: none;
+    border-top: 2px solid var(--hover-color);
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .navbar {
@@ -2748,10 +2924,6 @@ footer.footer-dashboard .footer-zyntel img.footer-logo {
     gap: 1rem;
   }
 
-  main {
-    padding: 150px 16px 40px;
-  }
-
   .chart-container {
     margin-bottom: 1rem;
     min-height: 220px;
@@ -2759,15 +2931,14 @@ footer.footer-dashboard .footer-zyntel img.footer-logo {
     padding: 10px;
   }
 
-  /* Chart page: show toggle, collapse navbar + filters when collapsed */
-  .chart-page-toggle {
-    display: flex;
+  /* Chart page: header container padding for toggle */
+  .chart-page-top .header-container,
+  .table-page-top .header-container {
+    padding-right: 90px;
   }
-  .chart-page-main {
-    padding-top: calc(var(--app-header-height) + 52px);
-  }
+  .chart-page-main,
   .chart-page-main.filters-expanded {
-    padding-top: calc(var(--app-header-height) + var(--app-navbar-height) + var(--app-filters-height) + 24px);
+    padding-top: var(--app-header-height);
   }
   .chart-page-top.collapsed .navbar,
   .chart-page-top.collapsed .chart-filters-section {

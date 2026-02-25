@@ -8,6 +8,8 @@ interface HeaderProps {
   onLogout?: () => void;
   onResetFilters?: () => void;
   showResetFilters?: boolean;
+  /** When true, the 3-dot menu is hidden (e.g. technicians on Meta) */
+  hideThreeDotMenu?: boolean;
   menuItems?: Array<{
     label: string;
     href: string;
@@ -22,6 +24,7 @@ const Header: React.FC<HeaderProps> = ({
   onLogout,
   onResetFilters,
   showResetFilters = false,
+  hideThreeDotMenu = false,
   menuItems = []
 }) => {
   const { user } = useAuth();
@@ -45,11 +48,19 @@ const Header: React.FC<HeaderProps> = ({
     { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
   ];
 
-  const filteredPageItems = menuItems.filter((m) => {
+  const exportOnly = menuItems.filter((m) => {
     const isExport = m.label.toLowerCase().includes('export');
-    return !isExport || canExport(role);
+    return isExport && canExport(role);
   });
-  const allMenuItems = [...defaultMenuItems, ...filteredPageItems];
+
+  const seenKeys = new Set<string>();
+  const merged = [...exportOnly, ...defaultMenuItems];
+  const allMenuItems = merged.filter((m) => {
+    const key = (m.href === '#' ? m.label : (m.href || '')).toLowerCase();
+    if (seenKeys.has(key)) return false;
+    seenKeys.add(key);
+    return true;
+  });
 
   return (
     <header>
@@ -86,6 +97,7 @@ const Header: React.FC<HeaderProps> = ({
               Reset Filters
             </a>
           )}
+          {!hideThreeDotMenu && (
           <span className={`three-dots-menu-container${menuOpen ? ' menu-open' : ''}`} ref={menuRef}>
             <button
               type="button"
@@ -115,6 +127,7 @@ const Header: React.FC<HeaderProps> = ({
               ))}
             </ul>
           </span>
+          )}
         </div>
       </div>
     </header>

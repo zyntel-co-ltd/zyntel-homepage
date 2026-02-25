@@ -90,6 +90,11 @@ export const getPeriodDates = (period: string): { startDate: Date; endDate: Date
       const m = monthMap[period] ?? 0;
       startDate = now.clone().month(m).startOf('month');
       endDate = now.clone().month(m).endOf('month');
+      // If month hasn't occurred yet this year, use last year
+      if (endDate.isAfter(now)) {
+        startDate = startDate.subtract(1, 'year');
+        endDate = endDate.subtract(1, 'year');
+      }
       break;
     }
     default:

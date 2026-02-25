@@ -14,22 +14,27 @@ interface MetaTableProps {
   onEdit: (id: number) => void;
   onAdd: () => void;
   isLoading?: boolean;
+  /** When false, edit button and Add New Test are hidden (technicians) */
+  canEdit?: boolean;
 }
 
 const MetaTable: React.FC<MetaTableProps> = ({
   data,
   onEdit,
   onAdd,
-  isLoading = false
+  isLoading = false,
+  canEdit = true
 }) => {
   if (isLoading) {
     return (
       <div className="table-container">
         <div className="table-toolbar">
           <h2 className="table-title">Meta Data</h2>
+          {canEdit && (
           <button className="meta-actions-button" onClick={onAdd}>
             <i className="fas fa-plus"></i> Add New Test
           </button>
+          )}
         </div>
         <table className="neon-table">
           <thead>
@@ -38,12 +43,12 @@ const MetaTable: React.FC<MetaTableProps> = ({
               <th>Section</th>
               <th>Price (UGX)</th>
               <th>Expected TAT</th>
-              <th className="text-center">Actions</th>
+              {canEdit && <th className="text-center">Actions</th>}
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td colSpan={5} className="text-center">
+              <td colSpan={canEdit ? 5 : 4} className="text-center">
                 <div className="loader-inline">
                   <div className="one"></div>
                   <div className="two"></div>
@@ -62,9 +67,11 @@ const MetaTable: React.FC<MetaTableProps> = ({
     <div className="table-container">
       <div className="table-toolbar">
         <h2 className="table-title">Meta Data</h2>
+        {canEdit && (
         <button className="meta-actions-button" onClick={onAdd}>
           <i className="fas fa-plus"></i> Add New Test
         </button>
+        )}
       </div>
 
       {data.length === 0 ? (
@@ -79,7 +86,7 @@ const MetaTable: React.FC<MetaTableProps> = ({
               <th>Section</th>
               <th>Price (UGX)</th>
               <th>Expected TAT</th>
-              <th className="text-center">Actions</th>
+              {canEdit && <th className="text-center">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -89,6 +96,7 @@ const MetaTable: React.FC<MetaTableProps> = ({
                 <td>{row.section}</td>
                 <td>{row.price.toLocaleString()}</td>
                 <td>{row.expectedTAT} min</td>
+                {canEdit && (
                 <td className="text-center">
                   <button
                     type="button"
@@ -99,6 +107,7 @@ const MetaTable: React.FC<MetaTableProps> = ({
                     <i className="fas fa-edit"></i> Edit
                   </button>
                 </td>
+                )}
               </tr>
             ))}
           </tbody>

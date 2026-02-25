@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Header, Navbar, Filters, Footer } from '@/components/shared';
+import { Header, Navbar, Filters, Footer, KPICard } from '@/components/shared';
 import { exportElementToPdf, buildExportFilename } from '@/utils/exportPdf';
 import {
   DailyRevenueChart,
@@ -33,7 +33,7 @@ const Revenue: React.FC = () => {
   });
   const [data, setData] = useState<RevenueData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -112,7 +112,7 @@ const Revenue: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-color">
-      <div className={`chart-page-top ${!filtersOpen ? 'collapsed' : ''}`}>
+      <div className="chart-page-top">
         <Header
           title="NHL Laboratory Dashboard"
           pageTitle="Revenue"
@@ -125,9 +125,9 @@ const Revenue: React.FC = () => {
             { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
           ]}
         />
-        <button type="button" className="chart-page-toggle" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
-          <i className={`fas fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden />
-          {filtersOpen ? 'Hide menu' : 'Filters & Menu'}
+        <button type="button" className="chart-page-toggle" onClick={() => setSidebarOpen((o) => !o)} aria-expanded={sidebarOpen}>
+          <i className={`fas fa-chevron-${sidebarOpen ? 'up' : 'down'}`} aria-hidden />
+          {sidebarOpen ? 'Close' : 'Menu'}
         </button>
         <Navbar type="chart" />
         <div className="chart-filters-section">
@@ -137,7 +137,19 @@ const Revenue: React.FC = () => {
 
       {isLoading && <div className="loader"><div className="one"></div><div className="two"></div><div className="three"></div><div className="four"></div></div>}
 
-      <main className={`dashboard-layout chart-page-main ${filtersOpen ? 'filters-expanded' : ''}`} ref={chartsRef}>
+      <div className={`filters-panel-overlay ${sidebarOpen ? 'visible' : ''}`} onClick={() => setSidebarOpen(false)} aria-hidden />
+      <div className={`menu-sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="filters-panel-header">
+          <h3>Menu & Filters</h3>
+          <button type="button" className="filters-panel-close" onClick={() => setSidebarOpen(false)} aria-label="Close">&times;</button>
+        </div>
+        <div className="menu-sidebar-nav">
+          <Navbar type="chart" />
+        </div>
+        <Filters filters={filters} onFilterChange={updateFilter} showLabSectionFilter={true} showShiftFilter={true} showLaboratoryFilter={true} showPeriodFilter={true} showDateFilter={true} />
+      </div>
+
+      <main className="dashboard-layout chart-page-main" ref={chartsRef}>
         <aside className="revenue-progress-card">
           {data ? (
             <TargetProgressChart
@@ -162,14 +174,21 @@ const Revenue: React.FC = () => {
           )}
 
           <div className="kpi-grid">
-            <div className="kpi-card">
-              <div className="kpi-label">Avg. Daily Revenue</div>
-              <div className="kpi-value">UGX {data?.avgDailyRevenue?.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) || '0.0'}</div>
-            </div>
-            <div className="kpi-card">
-              <div className="kpi-label">Revenue Growth Rate</div>
-              <div className="kpi-value">{(data?.revenueGrowthRate ?? 0).toFixed(1)}%</div>
-            </div>
+            <KPICard
+              title="Avg. Daily Revenue"
+              value={data?.avgDailyRevenue ?? 0}
+              prefix="UGX "
+              suffix=""
+            />
+            <KPICard
+              title="Revenue Growth Rate"
+              value={(data?.revenueGrowthRate ?? 0).toFixed(1)}
+              suffix="%"
+              trend={data?.revenueGrowthRate != null ? {
+                value: data.revenueGrowthRate,
+                direction: data.revenueGrowthRate > 0 ? 'up' : data.revenueGrowthRate < 0 ? 'down' : 'neutral'
+              } : undefined}
+            />
           </div>
         </aside>
 

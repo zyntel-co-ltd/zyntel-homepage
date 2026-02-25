@@ -52,7 +52,7 @@ const TAT: React.FC = () => {
   
   const [data, setData] = useState<TATData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -134,7 +134,7 @@ const TAT: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-color">
-      <div className={`chart-page-top ${!filtersOpen ? 'collapsed' : ''}`}>
+      <div className="chart-page-top">
       <Header
         title="NHL Laboratory Dashboard"
         pageTitle="TAT"
@@ -149,9 +149,9 @@ const TAT: React.FC = () => {
         ]}
       />
 
-      <button type="button" className="chart-page-toggle" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
-        <i className={`fas fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden />
-        {filtersOpen ? 'Hide menu' : 'Filters & Menu'}
+      <button type="button" className="chart-page-toggle" onClick={() => setSidebarOpen((o) => !o)} aria-expanded={sidebarOpen}>
+        <i className={`fas fa-chevron-${sidebarOpen ? 'up' : 'down'}`} aria-hidden />
+        {sidebarOpen ? 'Close' : 'Menu'}
       </button>
       <Navbar type="chart" />
 
@@ -167,7 +167,19 @@ const TAT: React.FC = () => {
       </div>
       </div>
 
-      <main className={`dashboard-layout chart-page-main ${filtersOpen ? 'filters-expanded' : ''}`} ref={chartsRef}>
+      <div className={`filters-panel-overlay ${sidebarOpen ? 'visible' : ''}`} onClick={() => setSidebarOpen(false)} aria-hidden />
+      <div className={`menu-sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="filters-panel-header">
+          <h3>Menu & Filters</h3>
+          <button type="button" className="filters-panel-close" onClick={() => setSidebarOpen(false)} aria-label="Close">&times;</button>
+        </div>
+        <div className="menu-sidebar-nav">
+          <Navbar type="chart" />
+        </div>
+        <Filters filters={filters} onFilterChange={handleFilterChange} showLabSectionFilter={false} showShiftFilter={true} showLaboratoryFilter={true} showPeriodFilter={true} showDateFilter={true} />
+      </div>
+
+      <main className="dashboard-layout chart-page-main" ref={chartsRef}>
         <aside className="revenue-progress-card">
           {data && (
             <>

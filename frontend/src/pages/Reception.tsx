@@ -366,11 +366,11 @@ const Reception: React.FC = () => {
         <button
           type="button"
           className="table-page-toggle"
-          onClick={() => setFiltersOpen((o) => !o)}
-          aria-expanded={filtersOpen}
+          onClick={() => setFiltersPanelOpen((o) => !o)}
+          aria-expanded={filtersPanelOpen}
         >
-          <i className={`fas fa-chevron-${filtersOpen ? 'up' : 'down'}`} aria-hidden />
-          {filtersOpen ? 'Hide menu' : 'Menu'}
+          <i className={`fas fa-chevron-${filtersPanelOpen ? 'up' : 'down'}`} aria-hidden />
+          {filtersPanelOpen ? 'Close' : 'Menu'}
         </button>
         <div className="filters-row">
           <button type="button" className="filters-panel-trigger" onClick={() => setFiltersPanelOpen(true)} aria-label="Open filters">
@@ -438,8 +438,23 @@ const Reception: React.FC = () => {
       <div className={`filters-panel-overlay ${filtersPanelOpen ? 'visible' : ''}`} onClick={() => setFiltersPanelOpen(false)} aria-hidden />
       <div className={`filters-panel ${filtersPanelOpen ? 'open' : ''}`}>
         <div className="filters-panel-header">
-          <h3>Filters</h3>
-          <button type="button" className="filters-panel-close" onClick={() => setFiltersPanelOpen(false)} aria-label="Close filters">&times;</button>
+          <h3>Menu & Filters</h3>
+          <button type="button" className="filters-panel-close" onClick={() => setFiltersPanelOpen(false)} aria-label="Close">&times;</button>
+        </div>
+        <div className="menu-sidebar-nav">
+          <Navbar type="table" />
+        </div>
+        <div className="menu-sidebar-search">
+          <div className="search-container">
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search lab number, test name, section, unit..."
+              value={filters.search}
+              onChange={(e) => handleFilterChange('search', e.target.value)}
+            />
+            <i className="fas fa-search search-icon"></i>
+          </div>
         </div>
         <Filters
           filters={filters}
