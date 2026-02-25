@@ -1,6 +1,7 @@
 // frontend/src/components/tables/PerformanceTable.tsx
 import React from 'react';
 import { formatDateTimeWithAMPM } from '@/constants/metaOptions';
+import { formatDuration } from '@/utils/formatDuration';
 
 export interface PerformanceRecord {
   date?: string;
@@ -23,14 +24,22 @@ interface PerformanceTableProps {
 
 const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDoubleClick, isLoading = false }) => {
   const getDelayStatusClass = (status: string) => {
-    if (status === 'On Time' || status === 'Swift') {
-      return 'status-on-time';
-    } else if (status === 'Delayed for less than 15 minutes' || status === '<15min') {
-      return 'status-delayed-less-15';
-    } else if (status === 'Over Delayed') {
-      return 'status-over-delayed';
-    }
+    const s = (status || '').toLowerCase();
+    if (s.includes('on time') || s.includes('ontime') || s.includes('swift')) return 'status-on-time';
+    if (s.includes('less than 15') || s.includes('<15') || s.includes('delayed for less')) return 'status-delayed-less-15';
+    if (s.includes('delayed') || s.includes('over delayed')) return 'status-delayed';
     return 'status-not-uploaded';
+  };
+
+  const formatDelayStatus = (status: string) => {
+    const s = (status || '').trim();
+    if (!s) return 'N/A';
+    const lower = s.toLowerCase();
+    if (lower.includes('on time') || lower === 'ontime') return 'On Time';
+    if (lower.includes('swift')) return 'Swift';
+    if (lower.includes('less than 15') || lower.includes('<15') || lower.includes('delayed for less')) return 'Delayed for less than 15 minutes';
+    if (lower.includes('delayed')) return 'Delayed';
+    return s;
   };
 
   if (isLoading) {
@@ -45,7 +54,7 @@ const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDo
               <th className="lab-number-cell">Lab Number</th>
               <th>Unit</th>
               <th>Time In</th>
-              <th>Daily TAT <span className="subtext">(minutes)</span></th>
+              <th>Daily TAT</th>
               <th>Time Expected</th>
               <th>Time Out</th>
               <th>Delay Status</th>
@@ -81,7 +90,7 @@ const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDo
               <th className="lab-number-cell">Lab Number</th>
               <th>Unit</th>
               <th>Time In</th>
-              <th>Daily TAT <span className="subtext">(minutes)</span></th>
+              <th>Daily TAT</th>
               <th>Time Expected</th>
               <th>Time Out</th>
               <th>Delay Status</th>
@@ -111,7 +120,7 @@ const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDo
             <th className="lab-number-cell">Lab Number</th>
             <th>Unit</th>
             <th>Time In</th>
-            <th>Daily TAT <span className="subtext">(minutes)</span></th>
+            <th>Daily TAT</th>
             <th>Time Expected</th>
             <th>Time Out</th>
             <th>Delay Status</th>
@@ -134,11 +143,11 @@ const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDo
               </td>
                 <td>{row.Hospital_Unit || 'N/A'}</td>
                 <td>{row.time_in ? formatDateTimeWithAMPM(row.time_in) : 'N/A'}</td>
-                <td>{row.daily_tat || 'N/A'}</td>
+                <td>{formatDuration(row.daily_tat)}</td>
                 <td>{row.request_time_expected ? formatDateTimeWithAMPM(row.request_time_expected) : 'N/A'}</td>
                 <td>{row.request_time_out ? formatDateTimeWithAMPM(row.request_time_out) : 'N/A'}</td>
-                <td className={getDelayStatusClass(row.request_delay_status || '')}>{row.request_delay_status || 'N/A'}</td>
-                <td className={getDelayStatusClass(row.request_time_range || '')}>{row.request_time_range || 'N/A'}</td>
+                <td className={getDelayStatusClass(row.request_delay_status || '')}>{formatDelayStatus(row.request_delay_status || '')}</td>
+                <td>{formatDuration(row.request_time_range as number)}</td>
               </tr>
             );
           })}

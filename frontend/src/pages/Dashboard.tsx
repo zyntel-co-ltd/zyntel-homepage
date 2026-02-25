@@ -42,12 +42,12 @@ const Dashboard: React.FC = () => {
               Logout
             </a>
             <span className={`three-dots-menu-container${menuOpen ? ' menu-open' : ''}`} ref={menuRef}>
-              <button type="button" className="three-dots-button" onClick={() => setMenuOpen((o) => !o)} aria-expanded={menuOpen} aria-haspopup="true">&#x22EE;</button>
+              <button type="button" className="three-dots-button" onClick={() => setMenuOpen((o) => !o)} aria-expanded={menuOpen} aria-haspopup="true" aria-label="Menu"><i className="fas fa-ellipsis-v" aria-hidden /></button>
               <ul className="dropdown-menu">
-                {canAccessAdmin(role) && <li><a href="/admin">Admin Panel</a></li>}
-                <li><a href="/reception">Reception</a></li>
-                {canAccessCharts(role) && <li><a href="/revenue">Revenue</a></li>}
-                {canAccessCharts(role) && <li><a href="/tests">Tests</a></li>}
+                {canAccessAdmin(role) && <li><a href="/admin"><i className="fas fa-cog mr-2"></i> Admin Panel</a></li>}
+                <li><a href="/reception"><i className="fas fa-table mr-2"></i> Reception</a></li>
+                {canAccessCharts(role) && <li><a href="/revenue"><i className="fas fa-chart-line mr-2"></i> Revenue</a></li>}
+                {canAccessCharts(role) && <li><a href="/tests"><i className="fas fa-vials mr-2"></i> Tests</a></li>}
               </ul>
             </span>
           </div>

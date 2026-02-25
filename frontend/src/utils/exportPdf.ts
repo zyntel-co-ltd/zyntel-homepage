@@ -1,7 +1,7 @@
 /**
- * Load image as base64 data URL for PDF
+ * Load image as base64 data URL and return dimensions for PDF
  */
-async function loadImageAsDataUrl(src: string): Promise<string> {
+async function loadImageForPdf(src: string): Promise<{ dataUrl: string; width: number; height: number }> {
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.src = src.startsWith('/') ? window.location.origin + src : src;
@@ -14,7 +14,11 @@ async function loadImageAsDataUrl(src: string): Promise<string> {
   canvas.height = img.naturalHeight;
   const ctx = canvas.getContext('2d');
   if (ctx) ctx.drawImage(img, 0, 0);
-  return canvas.toDataURL('image/png');
+  return {
+    dataUrl: canvas.toDataURL('image/png'),
+    width: img.naturalWidth,
+    height: img.naturalHeight,
+  };
 }
 
 export interface ExportPdfOptions {
@@ -83,10 +87,11 @@ export async function exportElementToPdf(
 
   if (addFooter) {
     try {
-      const logoData = await loadImageAsDataUrl('/images/zyntel_no_background.png');
-      const logoH = 10;
-      const logoW = 40;
-      pdf.addImage(logoData, 'PNG', margin, pageH - margin - logoH, logoW, logoH);
+      const { dataUrl, width: imgW, height: imgH } = await loadImageForPdf('/images/zyntel_no_background.png');
+      const targetH = 20;
+      const logoW = (imgW / imgH) * targetH;
+      const logoH = targetH;
+      pdf.addImage(dataUrl, 'PNG', margin, pageH - margin - logoH, logoW, logoH);
     } catch {
       // ignore if image load fails
     }

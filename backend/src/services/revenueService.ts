@@ -1,6 +1,7 @@
 import { query } from '../config/database';
 import { FilterParams } from '../types';
 import { getPeriodDates } from '../utils/dateUtils';
+import { getRevenueTargetForPeriod } from './settingsService';
 import moment from 'moment';
 
 export const getRevenueData = async (filters: FilterParams) => {
@@ -55,20 +56,8 @@ export const getRevenueData = async (filters: FilterParams) => {
 
   const totalRevenue = parseFloat(totalResult.rows[0].total_revenue);
 
-  // Get monthly target
-  const currentMonth = moment(endDate).month() + 1;
-  const currentYear = moment(endDate).year();
-  
-  const targetResult = await query(
-    `SELECT value FROM settings 
-     WHERE key = 'monthly_revenue_target' 
-     AND month = $1 AND year = $2`,
-    [currentMonth, currentYear]
-  );
-
-  const targetRevenue = targetResult.rows.length > 0 
-    ? parseFloat(targetResult.rows[0].value) 
-    : 1500000000; // Default 1.5B
+  // Get target prorated for the filtered date range
+  const targetRevenue = await getRevenueTargetForPeriod(startDate, endDate);
 
   // Calculate percentage
   const percentage = (totalRevenue / targetRevenue) * 100;

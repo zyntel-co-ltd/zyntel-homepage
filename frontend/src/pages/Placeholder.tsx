@@ -21,7 +21,7 @@ const Placeholder: React.FC<PlaceholderProps> = ({ title }) => {
             <span>Home</span>
             <a href="#" className="logout-button" id="logout-button">Logout</a>
             <span className="three-dots-menu-container">
-              <button className="three-dots-button">&#x22EE;</button>
+              <button className="three-dots-button" aria-label="Menu"><i className="fas fa-ellipsis-v" aria-hidden /></button>
               <ul className="dropdown-menu">
                 <li><a href="/dashboard">Dashboard</a></li>
                 <li><a href="/revenue">Revenue</a></li>

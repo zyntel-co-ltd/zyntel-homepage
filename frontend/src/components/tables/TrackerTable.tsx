@@ -1,6 +1,7 @@
 // frontend/src/components/tables/TrackerTable.tsx
 import React from 'react';
 import { formatTimeWithAMPM } from '@/constants/metaOptions';
+import { formatDuration } from '@/utils/formatDuration';
 
 export interface TrackerRecord {
   id: number;
@@ -187,7 +188,7 @@ const TrackerTable: React.FC<TrackerTableProps> = ({ data, onLabNumberDoubleClic
               <td>{row.timeReceived ? formatTimeWithAMPM(row.timeReceived) : '-'}</td>
               <td>
                 <span className={`px-2 py-1 rounded-full ${row.tat > 120 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                  {row.tat} min
+                  {formatDuration(row.tat)}
                 </span>
               </td>
               <td>{row.timeExpected ? formatTimeWithAMPM(row.timeExpected) : '-'}</td>

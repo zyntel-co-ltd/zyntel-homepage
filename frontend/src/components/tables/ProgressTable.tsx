@@ -1,6 +1,7 @@
 // frontend/src/components/tables/ProgressTable.tsx
 import React from 'react';
 import { formatDateTimeWithAMPM } from '@/constants/metaOptions';
+import { formatDuration } from '@/utils/formatDuration';
 
 export interface ProgressRecord {
   date?: string;
@@ -78,7 +79,7 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }
               <th className="lab-number-cell">Lab Number</th>
               <th>Unit</th>
               <th>Time In</th>
-              <th>Daily TAT <span className="subtext">(minutes)</span></th>
+              <th>Daily TAT</th>
               <th>Time Expected</th>
               <th>Progress</th>
             </tr>
@@ -111,7 +112,7 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }
               <th className="lab-number-cell">Lab Number</th>
               <th>Unit</th>
               <th>Time In</th>
-              <th>Daily TAT <span className="subtext">(minutes)</span></th>
+              <th>Daily TAT</th>
               <th>Time Expected</th>
               <th>Progress</th>
             </tr>
@@ -138,7 +139,7 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }
             <th className="lab-number-cell">Lab Number</th>
             <th>Unit</th>
             <th>Time In</th>
-            <th>Daily TAT <span className="subtext">(minutes)</span></th>
+            <th>Daily TAT</th>
             <th>Time Expected</th>
             <th>Progress</th>
           </tr>
@@ -163,7 +164,7 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }
                 <td className="lab-number-cell">{row.lab_number || 'N/A'}</td>
                 <td>{row.Hospital_Unit || 'N/A'}</td>
                 <td>{row.time_in ? formatDateTimeWithAMPM(row.time_in) : 'N/A'}</td>
-                <td>{row.daily_tat || 'N/A'}</td>
+                <td>{formatDuration(row.daily_tat)}</td>
                 <td>{row.request_time_expected ? formatDateTimeWithAMPM(row.request_time_expected) : 'N/A'}</td>
                 <td className={progress.cssClass}>{progress.text}</td>
               </tr>

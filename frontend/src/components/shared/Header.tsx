@@ -105,8 +105,9 @@ const Header: React.FC<HeaderProps> = ({
               onClick={() => setMenuOpen((o) => !o)}
               aria-expanded={menuOpen}
               aria-haspopup="true"
+              aria-label="Menu"
             >
-              &#x22EE;
+              <i className="fas fa-ellipsis-v" aria-hidden />
             </button>
             <ul className="dropdown-menu">
               {allMenuItems.map((item, index) => (

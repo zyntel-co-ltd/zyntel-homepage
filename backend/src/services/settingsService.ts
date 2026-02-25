@@ -1,4 +1,5 @@
 import { query } from '../config/database';
+import moment from 'moment';
 
 export const getMonthlyTarget = async (month: number, year: number) => {
   const result = await query(
@@ -37,6 +38,26 @@ export const setMonthlyTarget = async (
   );
 
   return { month, year, target };
+};
+
+/** Get revenue target prorated for a date range (matches numbers/tests behavior) */
+export const getRevenueTargetForPeriod = async (startDate: Date, endDate: Date): Promise<number> => {
+  const startMoment = moment(startDate);
+  const endMoment = moment(endDate);
+  let totalTarget = 0;
+  let current = startMoment.clone().startOf('month');
+
+  while (current.isSameOrBefore(endMoment, 'month')) {
+    const monthTarget = await getMonthlyTarget(current.month() + 1, current.year());
+    const monthStart = moment.max(current.clone().startOf('month'), startMoment);
+    const monthEnd = moment.min(current.clone().endOf('month'), endMoment);
+    const daysInRange = monthEnd.diff(monthStart, 'days') + 1;
+    const daysInMonth = current.daysInMonth();
+    totalTarget += (monthTarget * daysInRange) / daysInMonth;
+    current.add(1, 'month');
+  }
+
+  return Math.round(totalTarget);
 };
 
 export const getAllSettings = async () => {

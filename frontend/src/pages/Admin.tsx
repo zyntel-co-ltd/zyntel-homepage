@@ -532,11 +532,9 @@ const Admin: React.FC = () => {
                 </a>
             <a href="#" className="logout-button" id="logout-button" onClick={(e) => { e.preventDefault(); localStorage.removeItem('token'); window.location.href = '/'; }}>Logout</a>
             <span className={`three-dots-menu-container${adminMenuOpen ? ' menu-open' : ''}`} ref={adminMenuRef}>
-              <button type="button" className="three-dots-button" onClick={() => setAdminMenuOpen((o) => !o)} aria-expanded={adminMenuOpen} aria-haspopup="true">&#x22EE;</button>
+              <button type="button" className="three-dots-button" onClick={() => setAdminMenuOpen((o) => !o)} aria-expanded={adminMenuOpen} aria-haspopup="true" aria-label="Menu"><i className="fas fa-ellipsis-v" aria-hidden /></button>
               <ul className="dropdown-menu">
                 <li><a href="/dashboard"><i className="fas fa-home mr-2"></i> Dashboard</a></li>
-                <li><a href="/reception"><i className="fas fa-table mr-2"></i> Reception</a></li>
-                <li><a href="/admin"><i className="fas fa-cog mr-2"></i> Admin Panel</a></li>
               </ul>
             </span>
           </div>
@@ -546,7 +544,7 @@ const Admin: React.FC = () => {
 
       {/* Admin Panel Title */}
       <div className="admin-page-content" style={{
-        paddingTop: 'var(--app-header-height)',
+        paddingTop: 'calc(var(--app-header-height) + 16px)',
         paddingLeft: '30px',
         paddingRight: '30px',
         paddingBottom: 0

@@ -115,12 +115,14 @@ const TAT: React.FC = () => {
 
   const handleExportPdf = async () => {
     if (chartsRef.current) {
-      const headerParts: string[] = [];
-      if (filters.period && filters.period !== 'custom') headerParts.push(`Period: ${filters.period}`);
-      if (filters.startDate && filters.endDate) headerParts.push(`${filters.startDate} to ${filters.endDate}`);
+      const { getPeriodDates } = await import('@/utils/dateUtils');
+      const dates = filters.startDate && filters.endDate
+        ? { startDate: filters.startDate, endDate: filters.endDate }
+        : getPeriodDates(filters.period || 'thisMonth');
+      const headerParts: string[] = [`Dates: ${dates.startDate} to ${dates.endDate}`];
       if (filters.shift && filters.shift !== 'all') headerParts.push(`Shift: ${filters.shift}`);
       if (filters.hospitalUnit && filters.hospitalUnit !== 'all') headerParts.push(`Unit: ${filters.hospitalUnit}`);
-      const filename = buildExportFilename('TAT', [filters.period, filters.shift, filters.hospitalUnit].filter((x) => x && x !== 'all'));
+      const filename = buildExportFilename('TAT', [dates.startDate, dates.endDate, filters.shift, filters.hospitalUnit].filter((x) => x && x !== 'all'));
       await exportElementToPdf(chartsRef.current, filename, {
         title: 'TAT Report',
         headerLines: headerParts,
