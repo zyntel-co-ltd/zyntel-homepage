@@ -1596,7 +1596,7 @@ header h1 {
 }
 
 .chart-page-main {
-  padding-top: var(--app-chart-top);
+  /* padding-top: var(--app-chart-top); */
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -1985,7 +1985,6 @@ main.dashboard-layout {
   margin: 1.5rem;
   max-width: 100%;
   justify-content: space-between;
-  padding: 0;
 }
 
 @media (min-width: 1200px) {
