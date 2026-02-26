@@ -19,9 +19,9 @@
 
 **Dev changes do NOT affect production until you:**
 1. Build (frontend + backend)
-2. Restart the production process (or let Task Scheduler run `start-production.bat` after a fresh pull)
+2. Reload the production process (`scripts\deploy.bat` or `pm2 reload`)
 
-Production only runs the **built** output (`frontend/dist`, `backend/dist`). Until you run `scripts\start-production.bat` (or equivalent) again, production keeps serving the old build.
+Production only runs the **built** output (`frontend/dist`, `backend/dist`). Until you deploy again, production keeps serving the old build.
 
 ---
 
@@ -65,9 +65,19 @@ Single process: backend serves the built frontend and API.
 
 ```powershell
 cd C:\Users\TempAdmin\zyntel\zyntel-dashboard
+scripts\start-production-pm2.bat
+```
+(One-time setup: `npm install -g pm2`)
+
+**Deploy without stopping:** Run `scripts\deploy.bat` – does `git pull`, build, `pm2 reload`. Zero downtime.
+
+---
+
+### Option B: Original (no PM2 – must stop server first)
+
+```powershell
 scripts\start-production.bat
 ```
-
 Or manually:
 
 ```powershell
@@ -104,7 +114,7 @@ FRONTEND_URL=http://192.168.10.198:5000
   1. Open Task Scheduler → Create Task.
   2. General: “Run whether user is logged on or not” (or “Run when user is logged on” if you prefer).
   3. Triggers: “At startup” (or “At log on”).
-  4. Actions: Start a program → Program: `cmd.exe`; Arguments: `/c "cd /d C:\Users\TempAdmin\zyntel\zyntel-dashboard && scripts\start-production.bat"` (adjust the path if needed).
+  4. Actions: Start a program → Program: `C:\Users\TempAdmin\zyntel\zyntel-dashboard\scripts\start-production-pm2.bat`; Arguments: (leave blank). Start in: `C:\Users\TempAdmin\zyntel\zyntel-dashboard`.
   5. Start in: `C:\Users\TempAdmin\zyntel\zyntel-dashboard`.
 
   Then after every VM restart, the task will run the script (build + start). For a service (NSSM), set it to run `node backend\dist\src\server.js` and set “Startup type” to Automatic; you still need to build before restarting the service when you deploy new code.
@@ -133,15 +143,16 @@ proxy: {
    git push origin main
    ```
 
-2. **On the VM**, pull and rebuild:
+2. **On the VM**, deploy (no server stop – zero downtime):
    ```powershell
    cd C:\Users\TempAdmin\zyntel\zyntel-dashboard
+   scripts\deploy.bat
+   ```
+   This does: `git pull` → build frontend → build backend → `pm2 reload`. The app stays online.
+
+3. **If not using PM2** yet, use the original flow:
+   ```powershell
    git pull origin main
    scripts\start-production.bat
    ```
-
-3. **If using Task Scheduler** to auto-start: the task runs `start-production.bat`, which builds and starts. To deploy new code, either:
-   - Run `scripts\start-production.bat` manually after `git pull`, or
-   - Create a separate "deploy" task that does `git pull` then `start-production.bat`.
-
-4. **If using NSSM** (or similar): NSSM only runs `node dist/src/server.js`. You must run `start-production.bat` (or at least `npm run build` in frontend and backend) before restarting the service, so the new build is used.
+   (Stop the server first, then run the script.)
