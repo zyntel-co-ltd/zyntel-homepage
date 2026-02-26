@@ -6,6 +6,12 @@ import logging
 import time
 from datetime import datetime, timedelta
 import requests
+
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+except ImportError:
+    psycopg2 = None
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from pathlib import Path
@@ -106,6 +112,31 @@ def lims_login(session: requests.Session) -> bool:
         return False
 
 
+# --- Database (for start date fallback) ---
+def get_latest_encounter_date_from_db():
+    """Query DB for max(encounter_date) from encounters. Returns None if unavailable."""
+    if not psycopg2:
+        return None
+    db_url = os.getenv('DATABASE_URL')
+    if not db_url:
+        logger.warning("DATABASE_URL not set. Cannot query DB for latest encounter date.")
+        return None
+    try:
+        conn = psycopg2.connect(db_url)
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT MAX(encounter_date)::date AS max_date FROM encounters")
+            row = cur.fetchone()
+            cur.close()
+            if row and row['max_date']:
+                return row['max_date']
+        finally:
+            conn.close()
+    except Exception as e:
+        logger.warning(f"Could not get latest encounter date from DB: {e}")
+    return None
+
+
 # --- Start Date Logic ---
 def get_start_date() -> datetime.date:
     logger.info("Determining start date for data fetch...")
@@ -123,7 +154,7 @@ def get_start_date() -> datetime.date:
             logger.info(f"Incremental run: fetching from last run date {last_run_date}")
             return last_run_date
         except Exception as e:
-            logger.warning(f"Failed reading {LAST_RUN_FILE}: {e}. Falling back to 1 day ago.")
+            logger.warning(f"Failed reading {LAST_RUN_FILE}: {e}. Falling back to next source.")
 
     if os.path.exists(DATA_FILE):
         try:
@@ -142,10 +173,15 @@ def get_start_date() -> datetime.date:
                     logger.info(f"Latest date in existing records: {latest_date}. Fetching from {latest_date}.")
                     return latest_date
         except Exception as e:
-            logger.warning(f"Failed reading {DATA_FILE}: {e}. Falling back to default start date.")
+            logger.warning(f"Failed reading {DATA_FILE}: {e}. Falling back to next source.")
 
-    default_start = datetime(2025, 4, 1).date()
-    logger.info(f"Using fallback start date: {default_start}")
+    db_date = get_latest_encounter_date_from_db()
+    if db_date:
+        logger.info(f"Latest encounter date from DB: {db_date}. Fetching from {db_date}.")
+        return db_date
+
+    default_start = (datetime.now().date() - timedelta(days=1))
+    logger.info(f"No .last_run, data.json, or DB data. Using fallback start date: {default_start} (yesterday)")
     return default_start
 
 
@@ -475,6 +511,13 @@ def run():
                 save_data(new_records)
             else:
                 logger.info("No new records found.")
+                # Ensure data.json exists for pipeline even when lab has no patients.
+                # Pipeline expects data.json; if missing it exits early. Write [] so it can
+                # read, see 0 records, and exit gracefully (DB stays as-is).
+                if not os.path.exists(DATA_FILE):
+                    with open(DATA_FILE, 'w', encoding='utf-8') as f:
+                        json.dump([], f, indent=2, ensure_ascii=False)
+                    logger.info("Wrote empty data.json so pipeline can complete (no intermediate file gap).")
 
             if is_comprehensive:
                 save_comprehensive_run_timestamp()

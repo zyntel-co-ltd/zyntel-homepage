@@ -211,9 +211,10 @@ const Progress: React.FC = () => {
             menuItems={[
               { label: 'Export CSV', href: '#', icon: 'fas fa-file-csv', onClick: handleExportCSV },
               { label: 'Reception', href: '/reception', icon: 'fas fa-table' },
-              { label: 'Performance', href: '/performance', icon: 'fas fa-chart-line' },
-              { label: 'Meta', href: '/meta', icon: 'fas fa-database' },
               { label: 'Tracker', href: '/tracker', icon: 'fas fa-list' },
+              { label: 'Performance', href: '/performance', icon: 'fas fa-chart-line' },
+              { label: 'LRIDS', href: '/lrids', icon: 'fas fa-search' },
+              { label: 'Meta', href: '/meta', icon: 'fas fa-database' },
               { label: 'Dashboard', href: '/dashboard', icon: 'fas fa-home' },
             ]}
           />

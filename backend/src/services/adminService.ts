@@ -1,4 +1,5 @@
 import { query } from '../config/database';
+import { exportMetadataToCSV } from './metadataService';
 
 export const getUnmatchedTests = async () => {
   const result = await query(
@@ -28,7 +29,8 @@ export const addUnmatchedToMeta = async (
   labSection: string,
   tat: number,
   price: number,
-  userId: number
+  userId: number,
+  opts?: { skipExport?: boolean }
 ) => {
   const testResult = await query(
     'SELECT test_name FROM unmatched_tests WHERE id = $1 AND is_resolved = false',
@@ -58,6 +60,9 @@ export const addUnmatchedToMeta = async (
     [userId, id]
   );
 
+  if (!opts?.skipExport) {
+    await exportMetadataToCSV();
+  }
   return { message: 'Added to Meta table', testName: test_name };
 };
 
@@ -66,13 +71,18 @@ export const addMultipleUnmatchedToMeta = async (
   userId: number
 ) => {
   const results = [];
+  let anySuccess = false;
   for (const item of items) {
     try {
-      const r = await addUnmatchedToMeta(item.id, item.labSection, item.tat, item.price, userId);
+      const r = await addUnmatchedToMeta(item.id, item.labSection, item.tat, item.price, userId, { skipExport: true });
       results.push({ id: item.id, success: true, ...r });
+      anySuccess = true;
     } catch (err: any) {
       results.push({ id: item.id, success: false, error: err.message });
     }
+  }
+  if (anySuccess) {
+    await exportMetadataToCSV();
   }
   return results;
 };

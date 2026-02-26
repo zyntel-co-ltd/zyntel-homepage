@@ -74,9 +74,15 @@ const Dashboard: React.FC = () => {
             </>
           )}
 
-          {/* Table Dice - all authenticated (technician sees only these) */}
+          {/* Table Dice - all authenticated (technician sees only these). Order: Reception, Tracker, Performance, Progress, LRIDS, Meta */}
           <a href="/reception" className="dice-tile" data-type="table">
             <span className="dice-label">Reception</span>
+          </a>
+          <a href="/tracker" className="dice-tile" data-type="table">
+            <span className="dice-label">Tracker</span>
+          </a>
+          <a href="/performance" className="dice-tile" data-type="table">
+            <span className="dice-label">Performance</span>
           </a>
           <a href="/progress" className="dice-tile" data-type="table">
             <span className="dice-label">Progress</span>
@@ -86,12 +92,6 @@ const Dashboard: React.FC = () => {
               <span className="dice-label">LRIDS</span>
             </a>
           )}
-          <a href="/performance" className="dice-tile" data-type="table">
-            <span className="dice-label">Performance</span>
-          </a>
-          <a href="/tracker" className="dice-tile" data-type="table">
-            <span className="dice-label">Tracker</span>
-          </a>
           <a href="/meta" className="dice-tile" data-type="table">
             <span className="dice-label">Meta</span>
           </a>

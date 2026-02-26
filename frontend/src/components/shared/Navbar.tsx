@@ -15,11 +15,11 @@ const Navbar: React.FC<NavbarProps> = ({ type = 'table' }) => {
   const tableLinks = [
     { path: '/dashboard', label: 'Home', show: true },
     { path: '/reception', label: 'Reception', show: true },
-    { path: '/meta', label: 'Meta', show: true },
-    { path: '/progress', label: 'Progress', show: true },
-    { path: '/performance', label: 'Performance', show: true },
     { path: '/tracker', label: 'Tracker', show: true },
+    { path: '/performance', label: 'Performance', show: true },
+    { path: '/progress', label: 'Progress', show: true },
     { path: '/lrids', label: 'LRIDS', show: canAccessLRIDS(role) },
+    { path: '/meta', label: 'Meta', show: true },
   ];
 
   const chartLinks = [

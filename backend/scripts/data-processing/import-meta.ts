@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { query } from '../../src/config/database';
+import { exportMetadataToCSV } from '../../src/services/metadataService';
 import csv from 'csv-parse/sync';
 
 const PUBLIC_DIR = path.join(__dirname, '../../../frontend/public');
@@ -106,6 +107,11 @@ async function importMetaCSV() {
     `);
 
     console.log(`✅ Updated ${updateResult.rowCount} test records with proper metadata`);
+
+    if (createdCount > 0 || updatedCount > 0) {
+      await exportMetadataToCSV();
+      console.log('   meta.csv exported (metadata changed)');
+    }
 
   } catch (error: any) {
     console.error('❌ Meta.csv import failed:', error.message);

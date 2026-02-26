@@ -7,6 +7,7 @@
  */
 
 import { query } from '../../src/config/database';
+import { exportMetadataToCSV } from '../../src/services/metadataService';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -82,6 +83,7 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
   let skippedNoEncounter = 0;
   let skippedNoMetadata = 0;
   let errors = 0;
+  let metadataChanged = false;
 
   const batchSize = 500;
   for (let i = 0; i < data.length; i += batchSize) {
@@ -132,6 +134,7 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
              ON CONFLICT (test_name) DO NOTHING`,
             [testName, row.Price ?? 0, row.TAT ?? 1440, (labSection != null ? labSection : 'PENDING').slice(0, 100)]
           );
+          metadataChanged = true;
           metadataResult = await query(
             'SELECT id FROM test_metadata WHERE test_name = $1',
             [testName]
@@ -197,6 +200,11 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
     if ((i + batchSize) % 5000 === 0 || i + batchSize >= data.length) {
       console.log(`   Processed ${Math.min(i + batchSize, data.length)} / ${data.length}`);
     }
+  }
+
+  if (metadataChanged) {
+    await exportMetadataToCSV();
+    console.log('   meta.csv exported (metadata changed)');
   }
 
   console.log(`

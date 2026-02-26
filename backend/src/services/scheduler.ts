@@ -3,13 +3,12 @@ import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { emitToAll } from '../config/socket';
-import { exportMetadataToCSV } from './metadataService';
 
 const execAsync = promisify(exec);
 const BACKEND_DIR = path.resolve(__dirname, '../..');
 
 const runInBackend = (cmd: string) =>
-  execAsync(cmd, { cwd: BACKEND_DIR });
+  execAsync(cmd, { cwd: BACKEND_DIR, windowsHide: true });
 
 export const initializeScheduler = () => {
   console.log('📅 Initializing task scheduler...');
@@ -27,16 +26,7 @@ export const initializeScheduler = () => {
     }
   });
 
-  // Every hour: Export meta.csv backup
-  cron.schedule('0 * * * *', async () => {
-    console.log('Exporting meta.csv backup...');
-    try {
-      await exportMetadataToCSV();
-      console.log('✅ Meta.csv exported');
-    } catch (error) {
-      console.error('❌ Meta.csv export failed:', error);
-    }
-  });
+  // meta.csv export: only on metadata changes (see MetadataController, adminService, ingest-test-records)
 
   // Every day at midnight: Cleanup old audit logs (keep last 90 days)
   cron.schedule('0 0 * * *', async () => {
