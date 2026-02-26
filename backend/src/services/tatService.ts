@@ -58,7 +58,7 @@ export const getTATData = async (filters: FilterParams) => {
   const delayedLess15Result = await query(
     `SELECT COUNT(*) as cnt FROM patients
      WHERE ${whereClause}
-       AND request_delay_status IN ('Delayed', 'Delayed for less than 15 minutes', '<15min')
+       AND request_delay_status IN ('Delayed', 'Delayed for <15 minutes', 'Delayed for less than 15 minutes')
        AND request_time_out IS NOT NULL`,
     params
   );
@@ -67,7 +67,7 @@ export const getTATData = async (filters: FilterParams) => {
   const overDelayedResult = await query(
     `SELECT COUNT(*) as cnt FROM patients
      WHERE ${whereClause}
-       AND request_delay_status IN ('Over-Delayed', 'Over Delayed')
+       AND request_delay_status IN ('Over Delayed')
        AND request_time_out IS NOT NULL`,
     params
   );
@@ -76,7 +76,7 @@ export const getTATData = async (filters: FilterParams) => {
   const onTimeResult = await query(
     `SELECT COUNT(*) as ontime FROM patients
      WHERE ${whereClause}
-       AND request_delay_status = 'On-Time'
+       AND request_delay_status IN ('On Time', 'Swift')
        AND request_time_out IS NOT NULL`,
     params
   );
@@ -96,9 +96,9 @@ export const getTATData = async (filters: FilterParams) => {
   const dailyTrendResult = await query(
     `SELECT
        date::date as date,
-       COUNT(CASE WHEN request_delay_status IN ('Delayed', 'Delayed for less than 15 minutes', '<15min') AND request_time_out IS NOT NULL THEN 1 END) as delayed_less15,
-       COUNT(CASE WHEN request_delay_status IN ('Over-Delayed', 'Over Delayed') AND request_time_out IS NOT NULL THEN 1 END) as over_delayed,
-       COUNT(CASE WHEN request_delay_status = 'On-Time' AND request_time_out IS NOT NULL THEN 1 END) as on_time,
+       COUNT(CASE WHEN request_delay_status IN ('Delayed', 'Delayed for <15 minutes', 'Delayed for less than 15 minutes') AND request_time_out IS NOT NULL THEN 1 END) as delayed_less15,
+       COUNT(CASE WHEN request_delay_status = 'Over Delayed' AND request_time_out IS NOT NULL THEN 1 END) as over_delayed,
+       COUNT(CASE WHEN request_delay_status IN ('On Time', 'Swift') AND request_time_out IS NOT NULL THEN 1 END) as on_time,
        COUNT(CASE WHEN request_time_out IS NULL THEN 1 END) as not_uploaded
      FROM patients
      WHERE ${whereClause}
@@ -110,9 +110,9 @@ export const getTATData = async (filters: FilterParams) => {
   const hourlyTrendResult = await query(
     `SELECT
        EXTRACT(HOUR FROM time_in)::integer as hour,
-       COUNT(CASE WHEN request_delay_status IN ('Delayed', 'Delayed for less than 15 minutes', '<15min') AND request_time_out IS NOT NULL THEN 1 END) as delayed_less15,
-       COUNT(CASE WHEN request_delay_status IN ('Over-Delayed', 'Over Delayed') AND request_time_out IS NOT NULL THEN 1 END) as over_delayed,
-       COUNT(CASE WHEN request_delay_status = 'On-Time' AND request_time_out IS NOT NULL THEN 1 END) as ontime,
+       COUNT(CASE WHEN request_delay_status IN ('Delayed', 'Delayed for <15 minutes', 'Delayed for less than 15 minutes') AND request_time_out IS NOT NULL THEN 1 END) as delayed_less15,
+       COUNT(CASE WHEN request_delay_status = 'Over Delayed' AND request_time_out IS NOT NULL THEN 1 END) as over_delayed,
+       COUNT(CASE WHEN request_delay_status IN ('On Time', 'Swift') AND request_time_out IS NOT NULL THEN 1 END) as ontime,
        COUNT(CASE WHEN request_time_out IS NULL THEN 1 END) as not_uploaded
      FROM patients
      WHERE ${whereClause} AND time_in IS NOT NULL

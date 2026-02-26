@@ -67,7 +67,9 @@ export const getProgressData = async (filters: FilterParams) => {
         time_in,
         daily_tat,
         request_time_expected,
-        request_time_out
+        request_time_out,
+        request_delay_status,
+        request_time_range
        FROM patients 
        WHERE ${whereClause}
        ORDER BY date DESC, time_in DESC
@@ -90,7 +92,9 @@ export const getProgressData = async (filters: FilterParams) => {
       time_in,
       daily_tat,
       request_time_expected,
-      request_time_out
+      request_time_out,
+      request_delay_status,
+      request_time_range
      FROM patients 
      WHERE ${whereClause}
      ORDER BY date DESC, time_in DESC${limitClause}`,

@@ -12,7 +12,37 @@ export interface ProgressRecord {
   daily_tat?: number;
   request_time_expected?: string;
   request_time_out?: string;
+  request_delay_status?: string;
+  request_time_range?: string;
 }
+
+/** Match Flask TAT categorizations - same as PerformanceTable */
+const getDelayStatusClass = (status: string) => {
+  const s = (status || '').toLowerCase();
+  if (s.includes('on time') || s.includes('ontime') || s.includes('swift')) return 'status-on-time';
+  if (s.includes('<15') || s.includes('less than 15') || s.includes('delayed for less')) return 'status-delayed-less-15';
+  if (s.includes('over delayed')) return 'status-over-delayed';
+  if (s.includes('delayed')) return 'status-delayed';
+  return 'status-not-uploaded';
+};
+
+const formatDelayStatus = (status: string) => {
+  const s = (status || '').trim();
+  if (!s) return 'Not Uploaded';
+  const lower = s.toLowerCase();
+  if (lower.includes('on time') || lower === 'ontime') return 'On Time';
+  if (lower.includes('swift')) return 'Swift';
+  if (lower.includes('<15') || lower.includes('less than 15') || lower.includes('delayed for less')) return 'Delayed for <15 minutes';
+  if (lower.includes('over delayed')) return 'Over Delayed';
+  if (lower.includes('delayed')) return 'Delayed';
+  return s;
+};
+
+const formatTimeRange = (val: string | number | null | undefined) => {
+  if (val == null || val === '') return 'Not Uploaded';
+  if (typeof val === 'number' && isNaN(val)) return 'Not Uploaded';
+  return String(val);
+};
 
 interface ProgressTableProps {
   data: ProgressRecord[];
@@ -81,12 +111,15 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }
               <th>Time In</th>
               <th>Daily TAT</th>
               <th>Time Expected</th>
+              <th>Time Out</th>
               <th>Progress</th>
+              <th>Delay Status</th>
+              <th>Time Range</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td colSpan={8} className="text-center">
+              <td colSpan={11} className="text-center">
                 <div className="loader-inline">
                   <div className="one"></div>
                   <div className="two"></div>
@@ -114,12 +147,15 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }
               <th>Time In</th>
               <th>Daily TAT</th>
               <th>Time Expected</th>
+              <th>Time Out</th>
               <th>Progress</th>
+              <th>Delay Status</th>
+              <th>Time Range</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td colSpan={8} className="text-center">
+              <td colSpan={11} className="text-center">
                 No data available
               </td>
             </tr>
@@ -132,18 +168,21 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }
   return (
     <div className="table-container">
       <table className="neon-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Shift</th>
-            <th className="lab-number-cell">Lab Number</th>
-            <th>Unit</th>
-            <th>Time In</th>
-            <th>Daily TAT</th>
-            <th>Time Expected</th>
-            <th>Progress</th>
-          </tr>
-        </thead>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Shift</th>
+              <th className="lab-number-cell">Lab Number</th>
+              <th>Unit</th>
+              <th>Time In</th>
+              <th>Daily TAT</th>
+              <th>Time Expected</th>
+              <th>Time Out</th>
+              <th>Progress</th>
+              <th>Delay Status</th>
+              <th>Time Range</th>
+            </tr>
+          </thead>
         <tbody>
           {data.map((row, index) => {
             const dateIn = row.date ? new Date(row.date) : new Date();
@@ -166,7 +205,10 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }
                 <td>{row.time_in ? formatDateTimeWithAMPM(row.time_in) : 'N/A'}</td>
                 <td>{formatDuration(row.daily_tat)}</td>
                 <td>{row.request_time_expected ? formatDateTimeWithAMPM(row.request_time_expected) : 'N/A'}</td>
+                <td>{row.request_time_out ? formatDateTimeWithAMPM(row.request_time_out) : 'N/A'}</td>
                 <td className={progress.cssClass}>{progress.text}</td>
+                <td className={getDelayStatusClass(row.request_delay_status || '')}>{formatDelayStatus(row.request_delay_status || '')}</td>
+                <td>{formatTimeRange(row.request_time_range)}</td>
               </tr>
             );
           })}

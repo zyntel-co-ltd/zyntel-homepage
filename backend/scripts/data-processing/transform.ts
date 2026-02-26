@@ -156,7 +156,8 @@ function getShift(timeInDt: Date): string {
 }
 
 /**
- * Calculates daily TAT from a list of TATs (returns max or 0)
+ * Calculates Daily_TAT based on tiered logic from Flask transform.py.
+ * TAT tiers: <720min (12h), <1440 (24h), <4320 (3d), <7200 (5d), <14400 (10d), else max.
  */
 function calculateDailyTAT(tatsList: number[]): number {
   if (!tatsList || tatsList.length === 0) {
@@ -168,11 +169,25 @@ function calculateDailyTAT(tatsList: number[]): number {
     return DEFAULT_NUMERIC;
   }
 
-  return Math.max(...validTats);
+  const maxTat = Math.max(...validTats);
+  const shortTats = validTats.filter(t => t < 720);
+  if (shortTats.length > 0) return Math.max(...shortTats);
+  const mediumTats = validTats.filter(t => t < 1440);
+  if (mediumTats.length > 0) return Math.max(...mediumTats);
+  const threeDayTats = validTats.filter(t => t < 4320);
+  if (threeDayTats.length > 0) return Math.max(...threeDayTats);
+  const fiveDayTats = validTats.filter(t => t < 7200);
+  if (fiveDayTats.length > 0) return Math.max(...fiveDayTats);
+  const tenDayTats = validTats.filter(t => t < 14400);
+  if (tenDayTats.length > 0) return Math.max(...tenDayTats);
+  return maxTat;
 }
 
 /**
- * Calculates delay status and time range based on times
+ * Calculates delay status and time range.
+ * Delay status: Over Delayed (>=15min), Delayed for <15 minutes (0-15),
+ *   On Time (-30 to 0), Swift (<-30).
+ * Time range: below 1hr show "X mins"; else "X hrs Y mins" (skip 0hrs/0mins when redundant).
  */
 function calculateDelayStatusAndRange(
   timeIn: Date,
@@ -187,39 +202,33 @@ function calculateDelayStatusAndRange(
     };
   }
 
-  const actualTatMinutes = (timeOut.getTime() - timeIn.getTime()) / (1000 * 60);
-  const expectedTatMinutes = (timeExpected.getTime() - timeIn.getTime()) / (1000 * 60);
+  const delayDeltaMs = timeOut.getTime() - timeExpected.getTime();
+  const delayMinutes = delayDeltaMs / (1000 * 60);
 
-  // Calculate delay
-  const delay = actualTatMinutes - expectedTatMinutes;
+  const delayHours = Math.floor(Math.abs(delayMinutes) / 60);
+  const delayMinRemainder = Math.floor(Math.abs(delayMinutes) % 60);
 
-  // Determine delay status
+  let timeRangeStr: string;
+  if (delayHours === 0) {
+    timeRangeStr = `${delayMinRemainder} mins`;
+  } else if (delayMinRemainder === 0) {
+    timeRangeStr = `${delayHours} hrs`;
+  } else {
+    timeRangeStr = `${delayHours} hrs ${delayMinRemainder} mins`;
+  }
+
   let delayStatus: string;
-  if (delay <= 0) {
-    delayStatus = 'On-Time';
-  } else if (delay < 15) {
-    delayStatus = 'Delayed';
+  if (delayMinutes >= 15) {
+    delayStatus = 'Over Delayed';
+  } else if (delayMinutes > 0 && delayMinutes < 15) {
+    delayStatus = 'Delayed for <15 minutes';
+  } else if (delayMinutes >= -30 && delayMinutes <= 0) {
+    delayStatus = 'On Time';
   } else {
-    delayStatus = 'Over-Delayed';
+    delayStatus = 'Swift';
   }
 
-  // Determine time range
-  let timeRange: string;
-  if (delay <= 0) {
-    timeRange = 'Swift';
-  } else if (delay < 15) {
-    timeRange = '<15min';
-  } else if (delay >= 15 && delay < 60) {
-    timeRange = '15-60min';
-  } else if (delay >= 60 && delay < 180) {
-    timeRange = '1-3hrs';
-  } else if (delay >= 180 && delay < 1440) {
-    timeRange = '3-24hrs';
-  } else {
-    timeRange = '>24hrs';
-  }
-
-  return { delayStatus, timeRange };
+  return { delayStatus, timeRange: timeRangeStr };
 }
 
 /**

@@ -23,23 +23,33 @@ interface PerformanceTableProps {
 }
 
 const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDoubleClick, isLoading = false }) => {
+  /** Match Flask TAT categorizations: On Time, Swift, Delayed for <15 minutes, Over Delayed, Not Uploaded */
   const getDelayStatusClass = (status: string) => {
     const s = (status || '').toLowerCase();
     if (s.includes('on time') || s.includes('ontime') || s.includes('swift')) return 'status-on-time';
-    if (s.includes('less than 15') || s.includes('<15') || s.includes('delayed for less')) return 'status-delayed-less-15';
-    if (s.includes('delayed') || s.includes('over delayed')) return 'status-delayed';
+    if (s.includes('<15') || s.includes('less than 15') || s.includes('delayed for less')) return 'status-delayed-less-15';
+    if (s.includes('over delayed')) return 'status-over-delayed';
+    if (s.includes('delayed')) return 'status-delayed';
     return 'status-not-uploaded';
   };
 
   const formatDelayStatus = (status: string) => {
     const s = (status || '').trim();
-    if (!s) return 'N/A';
+    if (!s) return 'Not Uploaded';
     const lower = s.toLowerCase();
     if (lower.includes('on time') || lower === 'ontime') return 'On Time';
     if (lower.includes('swift')) return 'Swift';
-    if (lower.includes('less than 15') || lower.includes('<15') || lower.includes('delayed for less')) return 'Delayed for less than 15 minutes';
+    if (lower.includes('<15') || lower.includes('less than 15') || lower.includes('delayed for less')) return 'Delayed for <15 minutes';
+    if (lower.includes('over delayed')) return 'Over Delayed';
     if (lower.includes('delayed')) return 'Delayed';
     return s;
+  };
+
+  /** Time range from Flask: "X hrs Y mins" or "Not Uploaded" - display as-is */
+  const formatTimeRange = (val: string | number | null | undefined) => {
+    if (val == null || val === '') return 'Not Uploaded';
+    if (typeof val === 'number' && isNaN(val)) return 'Not Uploaded';
+    return String(val);
   };
 
   if (isLoading) {
@@ -147,7 +157,7 @@ const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDo
                 <td>{row.request_time_expected ? formatDateTimeWithAMPM(row.request_time_expected) : 'N/A'}</td>
                 <td>{row.request_time_out ? formatDateTimeWithAMPM(row.request_time_out) : 'N/A'}</td>
                 <td className={getDelayStatusClass(row.request_delay_status || '')}>{formatDelayStatus(row.request_delay_status || '')}</td>
-                <td>{formatDuration(row.request_time_range)}</td>
+                <td>{formatTimeRange(row.request_time_range)}</td>
               </tr>
             );
           })}

@@ -1,6 +1,6 @@
 {
   "name": "zyntel-backend",
-  "version": "2.0.3",
+  "version": "2.0.3.1",
   "description": "Zyntel Dashboard Backend",
   "main": "dist/src/server.js",
   "scripts": {
