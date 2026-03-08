@@ -16,5 +16,9 @@ beautifulsoup4>=4.12.0
 # timeout.py does not use DB or boto3/R2 (single hospital, local logging only).
 psycopg2-binary>=2.9.9
 
+# SQL Server driver for direct LIMS DB access (fetch_lims_data.py)
+# Use: db (direct DB), scrape (web scraping), or auto (try DB, fallback to scrape)
+pyodbc>=5.0.0
+
 # Environment variable loading (both scripts)
 python-dotenv>=1.0.0

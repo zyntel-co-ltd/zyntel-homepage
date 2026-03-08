@@ -2138,6 +2138,14 @@ main.dashboard-layout {
   font-weight: 500;
 }
 
+.kpi-tooltip,
+.target-progress-chart__tooltip {
+  margin-left: 6px;
+  opacity: 0.6;
+  cursor: help;
+  font-size: 0.85rem;
+}
+
 .kpi-value {
   font-size: 1.6rem;
   font-weight: 700;

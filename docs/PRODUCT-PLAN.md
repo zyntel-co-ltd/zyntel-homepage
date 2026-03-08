@@ -27,13 +27,13 @@
 
 ### 3.1 Direct LIMS Access (Read-Only)
 
-- Add a **direct read-only LIMS connection** in addition to (or replacing) the current Python fetch agent
+- Add a **direct read-only LIMS connection** in addition to the current Python fetch agent
 - Use read-only credentials for safety
 - Reduce dependency on the Python agent pipeline
 
-### 3.2 Barcode Scanning & Patient Results Progress
+### 3.2 Qrcode Scanning & Patient Results Progress
 
-- **Barcode scanning** entry point
+- **qrcode scanning** entry point
 - Patient-facing page: enter **lab number** and view **results progress** (status, stage in workflow)
 - Page must be **internet-accessible** (separate route/host)
 - Rest of the app stays **hospital-local only**
@@ -54,37 +54,29 @@
 ### 3.5 Test-Level Analytics
 
 - Search/filter **by test** (e.g. “HB”, “Urea”)
-- View for that test: numbers, performance, revenue, TAT across lab sections
-- Single test-centric analytics view
+- View for that test: numbers, performance, revenue, TAT across lab sections (keeping in mind that test timein and timeout are same as receive time and result time respectively which are got from user interaction buttons, receive and result respectively on the reception table page)
+- Single test-centric analytics view where we can use all filters and kpis but for one test (i.e, total number of cbc, revenue, best day, filter by date, laboratory, shift, then also delayed, ontime and other metrics as they are at patient level.)
 
-### 3.6 Staff Performance Measurement
+### 3.6 Test Cancellation with Reasons
 
-- Track and report **staff performance** (tests completed, TAT, cancellations, etc.)
-- Support for reviews and workload balancing
-
-### 3.7 Test Cancellation with Reasons
-
+- Implement and add a button among the buttons on reception table page for cancelling tests with reasons
+- track those reasons and quantify them in admin panel where we shall have staff performances analytics, tests cancellations analytics.
 - Allow cancellation of tests with a **reason** (e.g. duplicate, wrong sample, patient request)
 - Store reason for audit and analytics
 - Surface in dashboards and reports
+
+### 3.7 Staff Performance Measurement
+
+- We first log all user interactions, then know who received what and who resulted what, compare that to the total workload
+- Track and report **staff performance** (tests completed, TAT, cancellations, etc.)
+- Support for reviews and filtering by lab section
 
 ### 3.8 User Password Resetting
 
 - **User-initiated** password reset flow
 - Admin-assisted reset (already present in Admin > Users)
 - Secure token/email-based reset if possible in the hospital environment
+- password visibility toggle everywhere a password appears including admin panel
 
 ---
 
-## 4. Summary Roadmap
-
-| Priority | Initiative | Notes |
-|----------|------------|-------|
-| Near-term | Direct LIMS (read-only) | Reduce agent dependency |
-| Near-term | Invoice numbers: match-only, no storage | Storage and privacy cleanup |
-| Medium | Barcode + patient results page (internet) | New public-facing feature |
-| Medium | Metrics tables + purging (3-month window) | Data lifecycle, scalability |
-| Medium | Test-level analytics | Deeper analytical capability |
-| Medium | Test cancellation with reasons | Workflow and audit |
-| Medium | User password resetting | Self-service and security |
-| Medium | Staff performance measurement | HR and operations insights |

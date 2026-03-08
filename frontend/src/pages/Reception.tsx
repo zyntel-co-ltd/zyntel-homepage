@@ -1,5 +1,6 @@
 // frontend/src/pages/Reception.tsx
 import React, { useState, useEffect } from 'react';
+import { TABLE_REFRESH_MS } from '@/constants/refreshIntervals';
 import { useNavigate } from 'react-router-dom';
 import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog, Footer } from '@/components/shared';
 import { formatTimeWithAMPM } from '@/constants/metaOptions';
@@ -43,7 +44,7 @@ const Reception: React.FC = () => {
   }, [filters, currentPage]);
 
   useEffect(() => {
-    const id = setInterval(fetchData, 30000);
+    const id = setInterval(fetchData, TABLE_REFRESH_MS);
     return () => clearInterval(id);
   }, [filters, currentPage]);
 

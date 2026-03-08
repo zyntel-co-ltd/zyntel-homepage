@@ -12,6 +12,10 @@ try:
     from psycopg2.extras import RealDictCursor
 except ImportError:
     psycopg2 = None
+try:
+    import pyodbc
+except ImportError:
+    pyodbc = None
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from pathlib import Path
@@ -44,6 +48,14 @@ SEARCH_URL = f"{LIMS_URL}/search.php"
 
 LIMS_USER = os.getenv('LIMS_USERNAME')
 LIMS_PASSWORD = os.getenv('LIMS_PASSWORD')
+
+# Direct LIMS DB (LabGuru SQL Server)
+LIMS_FETCH_MODE = os.getenv('LIMS_FETCH_MODE', 'auto').lower()  # db | scrape | auto
+LIMS_DB_SERVER = os.getenv('LIMS_DB_SERVER', '192.168.10.84\\MSSQL')
+LIMS_DB_USER = os.getenv('LIMS_DB_USER', 'Analytics')
+LIMS_DB_PASSWORD = os.getenv('LIMS_DB_PASSWORD', '')
+LIMS_DB_KRANIUM = os.getenv('LIMS_DB_KRANIUM', 'Kranium')
+LIMS_DB_LABGURU = os.getenv('LIMS_DB_LABGURU', 'LabGuruV3')
 
 # File Paths
 DATA_FILE = str(DATA_JSON_PATH)
@@ -425,7 +437,83 @@ def save_data(new_records):
     logger.info(f"Saved {added} new records. Total: {len(existing_data)}")
 
 
-# --- Optimized Fetch ---
+# --- Direct DB Fetch (LabGuru SQL Server) ---
+def fetch_from_lims_db(start_date, end_date):
+    """
+    Fetch lab records directly from LabGuru SQL Server.
+    Kranium.Labrequest = lab tests; LabGuruV3.Labno = Labnos, request dates.
+    Returns list of dicts with EncounterDate, InvoiceNo, LabNo, Src, TestName.
+    """
+    if not pyodbc:
+        logger.warning("pyodbc not installed. Run: pip install pyodbc")
+        return None
+    if not LIMS_DB_SERVER or not LIMS_DB_USER or not LIMS_DB_PASSWORD:
+        logger.warning("LIMS_DB_SERVER, LIMS_DB_USER, LIMS_DB_PASSWORD required for DB fetch.")
+        return None
+    try:
+        driver = os.getenv('LIMS_DB_DRIVER', 'ODBC Driver 17 for SQL Server')
+        conn_str = (
+            f"DRIVER={{{driver}}};"
+            f"SERVER={LIMS_DB_SERVER};"
+            f"UID={LIMS_DB_USER};"
+            f"PWD={LIMS_DB_PASSWORD};"
+            f"TrustServerCertificate=yes;"
+        )
+        conn = pyodbc.connect(conn_str)
+        cur = conn.cursor()
+        # Join Labno (LabNo, dates) with Labrequest (tests). Column names may vary.
+        # Set LIMS_DB_QUERY in .env for custom SQL; use ? for start_date, ? for end_date.
+        custom_query = os.getenv('LIMS_DB_QUERY')
+        if custom_query:
+            cur.execute(custom_query, (start_date, end_date))
+        else:
+            # Default: try common LabGuru column names (RequestDate, LabNo, InvoiceNo, Src, TestName)
+            date_col = os.getenv('LIMS_DB_DATE_COL', 'RequestDate')
+            sql = f"""
+            SELECT
+                CONVERT(varchar(10), l.[{date_col}], 120) AS EncounterDate,
+                ISNULL(CAST(l.InvoiceNo AS varchar(50)), '') AS InvoiceNo,
+                ISNULL(CAST(l.LabNo AS varchar(50)), '') AS LabNo,
+                ISNULL(l.Src, 'N/A') AS Src,
+                ISNULL(r.TestName, '') AS TestName
+            FROM [{LIMS_DB_LABGURU}].dbo.Labno l
+            INNER JOIN [{LIMS_DB_KRANIUM}].dbo.Labrequest r ON r.LabNo = l.LabNo
+            WHERE l.[{date_col}] >= ? AND l.[{date_col}] <= ?
+            """
+            cur.execute(sql, (start_date, end_date))
+        rows = cur.fetchall()
+        columns = [c[0] for c in cur.description] if cur.description else []
+        records = []
+        for row in rows:
+            d = dict(zip(columns, row))
+            enc = d.get('EncounterDate') or d.get('RequestDate') or d.get('encounter_date')
+            inv = d.get('InvoiceNo') or d.get('invoice_no') or ''
+            lab = d.get('LabNo') or d.get('lab_no') or ''
+            src = d.get('Src') or d.get('src') or 'N/A'
+            test = d.get('TestName') or d.get('test_name') or ''
+            if enc and lab and test:
+                if hasattr(enc, 'strftime'):
+                    enc = enc.strftime('%Y-%m-%d')
+                records.append({
+                    "EncounterDate": str(enc),
+                    "InvoiceNo": str(inv),
+                    "LabNo": str(lab),
+                    "Src": str(src),
+                    "TestName": str(test),
+                })
+        cur.close()
+        conn.close()
+        logger.info(f"DB fetch: {len(records)} records from {start_date} to {end_date}")
+        return records
+    except pyodbc.Error as e:
+        logger.warning(f"LIMS DB fetch failed: {e}")
+        return None
+    except Exception as e:
+        logger.warning(f"LIMS DB fetch error: {e}")
+        return None
+
+
+# --- Optimized Fetch (Scraping) ---
 def fetch_lims_data_optimized(session, start_date, is_comprehensive=False):
     end_date = datetime.now().date()
     all_patients = {}
@@ -482,30 +570,35 @@ def run():
 
     try:
         logger.info("Starting LIMS data fetch...")
-
-        s = requests.Session()
-
-        if not lims_login(s):
-            logger.error("Failed to login to LIMS. Exiting.")
-            return
-
         current_run_timestamp = datetime.now()
-
+        start_date_for_fetch = get_start_date()
+        end_date = datetime.now().date()
         need_comprehensive = should_run_comprehensive()
         is_first_run = not os.path.exists(LAST_RUN_FILE) and not os.path.exists(DATA_FILE)
         is_comprehensive = need_comprehensive or is_first_run
 
-        if is_comprehensive:
-            start_date_for_fetch = get_start_date()
-            days_to_fetch = (datetime.now().date() - start_date_for_fetch).days
-            estimated_minutes = days_to_fetch * 0.1
-            logger.warning(f"COMPREHENSIVE RUN: Fetching {days_to_fetch} days of data.")
-            logger.warning(f"Estimated time: {estimated_minutes:.1f} minutes. This is normal for daily comprehensive runs.")
+        new_records = None
 
-        start_date_for_fetch = get_start_date()
+        # Try direct DB first when mode is 'db' or 'auto'
+        if LIMS_FETCH_MODE in ('db', 'auto'):
+            logger.info(f"LIMS fetch mode: {LIMS_FETCH_MODE} (trying direct DB)")
+            new_records = fetch_from_lims_db(start_date_for_fetch, end_date)
+            if new_records is not None:
+                logger.info("Using data from direct LIMS DB.")
+            elif LIMS_FETCH_MODE == 'db':
+                logger.error("DB fetch failed and mode=db. Exiting.")
+                return
+
+        # Fallback to scraping when mode is 'scrape' or when DB failed in 'auto'
+        if new_records is None:
+            logger.info("Using web scraping (LIMS_FETCH_MODE=scrape or DB fallback)")
+            s = requests.Session()
+            if not lims_login(s):
+                logger.error("Failed to login to LIMS. Exiting.")
+                return
+            new_records = fetch_lims_data_optimized(s, start_date_for_fetch, is_comprehensive)
 
         try:
-            new_records = fetch_lims_data_optimized(s, start_date_for_fetch, is_comprehensive)
 
             if new_records:
                 save_data(new_records)

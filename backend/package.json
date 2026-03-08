@@ -14,6 +14,7 @@
     "populate-patients": "ts-node scripts/data-processing/populate-patients.ts",
     "fetch-data": "py -3.11 scripts/data-fetching/fetch_lims_data.py",
     "fetch-lims": "npm run fetch-data",
+    "fetch-discover": "py -3.11 scripts/data-fetching/discover_lims_schema.py",
     "transform": "ts-node scripts/data-processing/transform.ts",
     "transform:full": "ts-node scripts/data-processing/transform.ts -- --full",
     "ingest": "ts-node scripts/data-processing/ingest-patients.ts",

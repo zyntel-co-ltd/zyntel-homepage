@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { CHART_REFRESH_MS } from '@/constants/refreshIntervals';
 import { Header, Navbar, Filters, Footer, KPICard } from '@/components/shared';
 import { exportElementToPdf, buildExportFilename } from '@/utils/exportPdf';
 import {
@@ -40,7 +41,7 @@ const Revenue: React.FC = () => {
   }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
 
   useEffect(() => {
-    const id = setInterval(fetchData, 30000);
+    const id = setInterval(fetchData, CHART_REFRESH_MS);
     return () => clearInterval(id);
   }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
 
@@ -162,6 +163,7 @@ const Revenue: React.FC = () => {
               gapColor="#e0e0e0"
               valuePrefix="UGX "
               targetLabel={`of UGX ${(data.targetRevenue || 1_500_000_000).toLocaleString()}`}
+              tooltip="Target is prorated for the selected date range (monthly target × days in range ÷ days in month)"
               height={28}
             />
           ) : (
@@ -181,11 +183,13 @@ const Revenue: React.FC = () => {
               value={data?.avgDailyRevenue ?? 0}
               prefix="UGX "
               suffix=""
+              tooltip="For the selected date range"
             />
             <KPICard
               title="Revenue Growth Rate"
               value={(data?.revenueGrowthRate ?? 0).toFixed(1)}
               suffix="%"
+              tooltip="For the selected date range"
               trend={data?.revenueGrowthRate != null ? {
                 value: data.revenueGrowthRate,
                 direction: data.revenueGrowthRate > 0 ? 'up' : data.revenueGrowthRate < 0 ? 'down' : 'neutral'

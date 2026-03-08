@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Header, Navbar, Filters, Footer } from '@/components/shared';
+import { CHART_REFRESH_MS } from '@/constants/refreshIntervals';
+import { Header, Navbar, Filters, Footer, KPICard } from '@/components/shared';
 import {
   TopTestsByUnitChart,
   TestVolumeChart,
@@ -42,7 +43,7 @@ const Tests: React.FC = () => {
   }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
 
   useEffect(() => {
-    const id = setInterval(fetchData, 30000);
+    const id = setInterval(fetchData, CHART_REFRESH_MS);
     return () => clearInterval(id);
   }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
 
@@ -241,16 +242,11 @@ const Tests: React.FC = () => {
                 achievedColor="#4caf50"
                 gapColor="#e0e0e0"
                 targetLabel={`of ${data.targetTestsPerformed.toLocaleString()} target`}
+                tooltip="Target is prorated for the selected date range"
                 height={28}
               />
             )}
-            <div className="kpi-card kpi-card-full-width">
-              <div className="kpi-label">
-                <i className="fas fa-chart-line mr-2"></i>
-                Avg. Daily Tests
-              </div>
-              <div className="kpi-value">{data?.avgDailyTests?.toFixed(1) || '0'}</div>
-            </div>
+            <KPICard title="Avg. Daily Tests" value={data?.avgDailyTests?.toFixed(1) || '0'} icon="fas fa-chart-line" fullWidth tooltip="For the selected date range" />
           </aside>
 
           <div className="charts-area">

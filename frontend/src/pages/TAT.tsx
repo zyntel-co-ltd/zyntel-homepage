@@ -1,5 +1,6 @@
 // frontend/src/pages/TAT.tsx
 import React, { useState, useEffect, useRef } from 'react';
+import { CHART_REFRESH_MS } from '@/constants/refreshIntervals';
 import { Header, Navbar, Filters, Loader, KPICard, Footer } from '@/components/shared';
 import { 
   TATPieChart, 
@@ -59,7 +60,7 @@ const TAT: React.FC = () => {
   }, [filters.endDate, filters.period, filters.shift, filters.hospitalUnit]);
 
   useEffect(() => {
-    const id = setInterval(fetchData, 30000);
+    const id = setInterval(fetchData, CHART_REFRESH_MS);
     return () => clearInterval(id);
   }, [filters.endDate, filters.period, filters.shift, filters.hospitalUnit]);
 
@@ -212,6 +213,7 @@ const TAT: React.FC = () => {
                   trend={{ value: -3.2, direction: 'down' }}
                   icon="fas fa-check-circle"
                   suffix=""
+                  tooltip="For the selected date range"
                 />
                 <KPICard
                   title="Average Daily Delays"
@@ -219,6 +221,7 @@ const TAT: React.FC = () => {
                   trend={{ value: 5.7, direction: 'up' }}
                   icon="fas fa-clock"
                   suffix=""
+                  tooltip="For the selected date range"
                 />
                 <KPICard
                   title="Average Daily Not Uploaded"
@@ -226,17 +229,20 @@ const TAT: React.FC = () => {
                   trend={{ value: -1.5, direction: 'down' }}
                   icon="fas fa-upload"
                   suffix=""
+                  tooltip="For the selected date range"
                 />
                 <KPICard
                   title="Most Delayed Hour"
                   value={data.kpis.mostDelayedHour}
                   icon="fas fa-hourglass-half"
+                  tooltip="For the selected date range"
                 />
                 <KPICard
                   title="Most Delayed Day"
                   value={data.kpis.mostDelayedDay}
                   fullWidth={true}
                   icon="fas fa-calendar-times"
+                  tooltip="For the selected date range"
                 />
               </>
             )}

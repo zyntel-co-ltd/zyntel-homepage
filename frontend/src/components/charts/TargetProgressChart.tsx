@@ -11,6 +11,7 @@ export interface TargetProgressChartProps {
   valuePrefix?: string;
   valueSuffix?: string;
   targetLabel?: string;
+  tooltip?: string;
   height?: number;
 }
 
@@ -23,6 +24,7 @@ const TargetProgressChart: React.FC<TargetProgressChartProps> = ({
   valuePrefix = '',
   valueSuffix = '',
   targetLabel,
+  tooltip,
   height = 28,
 }) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
@@ -99,8 +101,11 @@ const TargetProgressChart: React.FC<TargetProgressChartProps> = ({
       : `of ${valuePrefix}${targetValue.toLocaleString()}${valueSuffix}`;
 
   return (
-    <div className="target-progress-chart">
-      <div className="target-progress-chart__label">{title}</div>
+    <div className="target-progress-chart" title={tooltip}>
+      <div className="target-progress-chart__label">
+        {title}
+        {tooltip && <span className="target-progress-chart__tooltip" title={tooltip}><i className="fas fa-info-circle" aria-hidden /></span>}
+      </div>
       <div className={`target-progress-chart__percentage ${isAtOrAboveTarget ? 'target-progress-chart__percentage--achieved' : ''} ${isOverTarget ? 'target-progress-chart__percentage--perfect' : ''}`}>
         {percentage.toFixed(1)}%
         {isOverTarget && <span className="target-progress-chart__badge">✓ Target met</span>}

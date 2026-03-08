@@ -13,6 +13,7 @@ interface KPICardProps {
   suffix?: string;
   fullWidth?: boolean;
   className?: string;
+  tooltip?: string;
 }
 
 const KPICard: React.FC<KPICardProps> = ({
@@ -23,7 +24,8 @@ const KPICard: React.FC<KPICardProps> = ({
   prefix = '',
   suffix = '',
   fullWidth = false,
-  className = ''
+  className = '',
+  tooltip
 }) => {
   const getTrendIcon = () => {
     if (!trend || trend.direction === 'neutral') return null;
@@ -52,10 +54,11 @@ const KPICard: React.FC<KPICardProps> = ({
   const showTrend = trend && trend.direction !== 'neutral';
 
   return (
-    <div className={`kpi-card ${fullWidth ? 'kpi-card-full-width' : ''} ${className}`}>
+    <div className={`kpi-card ${fullWidth ? 'kpi-card-full-width' : ''} ${className}`} title={tooltip}>
       <div className="kpi-label">
         {icon && <i className={`${icon} mr-2`}></i>}
         {title}
+        {tooltip && <span className="kpi-tooltip" title={tooltip}><i className="fas fa-info-circle" aria-hidden /></span>}
       </div>
       <div className="kpi-value">
         {prefix}

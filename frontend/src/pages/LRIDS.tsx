@@ -1,5 +1,6 @@
 // frontend/src/pages/LRIDS.tsx
 import React, { useState, useEffect } from 'react';
+import { TABLE_REFRESH_MS } from '@/constants/refreshIntervals';
 import { useAuth } from '@/contexts/AuthContext';
 import { isViewer } from '@/utils/permissions';
 import { formatDateTimeWithAMPM, formatTimeWithAMPM } from '@/constants/metaOptions';
@@ -29,8 +30,8 @@ const LRIDS: React.FC = () => {
       setCurrentTime(new Date());
     }, 1000);
 
-    // Refresh data every 30 seconds
-    const dataInterval = setInterval(fetchData, 30000);
+    // Refresh data every 30 seconds (tables need more frequent refresh)
+    const dataInterval = setInterval(fetchData, TABLE_REFRESH_MS);
     
     return () => {
       clearInterval(timeInterval);

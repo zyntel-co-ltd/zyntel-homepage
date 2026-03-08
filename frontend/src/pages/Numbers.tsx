@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Header, Navbar, Filters, Footer } from '@/components/shared';
+import { CHART_REFRESH_MS } from '@/constants/refreshIntervals';
+import { Header, Navbar, Filters, Footer, KPICard } from '@/components/shared';
 import {
   DailyNumbersChart,
   HourlyNumbersChart,
@@ -36,7 +37,7 @@ const Numbers: React.FC = () => {
   }, [filters.endDate, filters.period, filters.shift, filters.hospitalUnit]);
 
   useEffect(() => {
-    const id = setInterval(fetchData, 30000);
+    const id = setInterval(fetchData, CHART_REFRESH_MS);
     return () => clearInterval(id);
   }, [filters.endDate, filters.period, filters.shift, filters.hospitalUnit]);
 
@@ -154,22 +155,14 @@ const Numbers: React.FC = () => {
               achievedColor="#4caf50"
               gapColor="#e0e0e0"
               targetLabel={`of ${data.targetRequests.toLocaleString()} target`}
+              tooltip="Target is prorated for the selected date range"
               height={28}
             />
           )}
           <div className="kpi-grid">
-            <div className="kpi-card">
-              <div className="kpi-label">Average Daily Requests</div>
-              <div className="kpi-value">{data?.avgDailyRequests?.toFixed(1) || '0'}</div>
-            </div>
-            <div className="kpi-card">
-              <div className="kpi-label">Busiest Hour</div>
-              <div className="kpi-value">{data?.busiestHour || 'N/A'}</div>
-            </div>
-            <div className="kpi-card kpi-card-full-width">
-              <div className="kpi-label">Busiest Day</div>
-              <div className="kpi-value">{data?.busiestDay || 'N/A'}</div>
-            </div>
+            <KPICard title="Average Daily Requests" value={data?.avgDailyRequests?.toFixed(1) || '0'} tooltip="For the selected date range" />
+            <KPICard title="Busiest Hour" value={data?.busiestHour || 'N/A'} tooltip="For the selected date range" />
+            <KPICard title="Busiest Day" value={data?.busiestDay || 'N/A'} fullWidth tooltip="For the selected date range" />
           </div>
         </aside>
 
