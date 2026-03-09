@@ -230,6 +230,7 @@ const Tracker: React.FC = () => {
             <TrackerTable
               data={data}
               onLabNumberDoubleClick={(labNumber) => setTestsDialogLabNo(labNumber)}
+              hasSearch={!!filters.search}
               isLoading={isLoading}
             />
             <Pagination

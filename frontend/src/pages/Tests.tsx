@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CHART_REFRESH_MS } from '@/constants/refreshIntervals';
+import { Link } from 'react-router-dom';
 import { Header, Navbar, Filters, Footer, KPICard } from '@/components/shared';
 import {
   TopTestsByUnitChart,
@@ -18,16 +18,29 @@ interface TestsData {
   units: string[];
 }
 
+interface LabGuruInsights {
+  labguruCount: number;
+  ourCount: number;
+  target: number;
+  gap: number;
+  startDate: string;
+  endDate: string;
+}
+
 const Tests: React.FC = () => {
   const chartsRef = useRef<HTMLDivElement>(null);
   const [selectedUnit, setSelectedUnit] = useState<string>('all');
+  const [insightsOpen, setInsightsOpen] = useState(false);
+  const [insights, setInsights] = useState<LabGuruInsights | null>(null);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
     period: 'thisMonth',
     labSection: 'all',
     shift: 'all',
-    hospitalUnit: 'all'
+    hospitalUnit: 'all',
+    testName: ''
   });
   const [data, setData] = useState<TestsData | null>(null);
   const [rawData, setRawData] = useState<any>(null);
@@ -40,12 +53,35 @@ const Tests: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
+  }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit, filters.testName]);
 
+  const fetchInsights = async () => {
+    setInsightsError(null);
+    try {
+      const params = new URLSearchParams();
+      if (filters.period) params.append('period', filters.period);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      const res = await fetch(`/api/labguru-insights?${params}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      const json = await res.json();
+      if (json.error) {
+        setInsightsError(json.error);
+        setInsights(null);
+      } else {
+        setInsights(json);
+      }
+    } catch (e) {
+      setInsightsError('Failed to load');
+      setInsights(null);
+    }
+  };
+
+  // Fetch LabGuru insights on load and when period changes (so LabGuru count is visible in header)
   useEffect(() => {
-    const id = setInterval(fetchData, CHART_REFRESH_MS);
-    return () => clearInterval(id);
-  }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
+    fetchInsights();
+  }, [filters.period, filters.startDate, filters.endDate]);
 
   // Re-process data when selected unit changes
   useEffect(() => {
@@ -105,6 +141,7 @@ const Tests: React.FC = () => {
       if (filters.labSection && filters.labSection !== 'all') params.append('labSection', filters.labSection);
       if (filters.shift && filters.shift !== 'all') params.append('shift', filters.shift);
       if (filters.hospitalUnit && filters.hospitalUnit !== 'all') params.append('laboratory', filters.hospitalUnit);
+      if (filters.testName) params.append('testName', filters.testName);
 
       const response = await fetch(`/api/tests?${params.toString()}`, {
         headers: {
@@ -149,7 +186,8 @@ const Tests: React.FC = () => {
       period: 'thisMonth',
       labSection: 'all',
       shift: 'all',
-      hospitalUnit: 'all'
+      hospitalUnit: 'all',
+      testName: ''
     });
     setSelectedUnit('all');
   };
@@ -206,6 +244,7 @@ const Tests: React.FC = () => {
             showShiftFilter={true}
             showLaboratoryFilter={true}
             showPeriodFilter={true}
+            showTestNameFilter={true}
           />
         </div>
       </div>
@@ -228,7 +267,7 @@ const Tests: React.FC = () => {
         <div className="menu-sidebar-nav">
           <Navbar type="chart" />
         </div>
-        <Filters filters={filters} onFilterChange={updateFilter} showLabSectionFilter={true} showShiftFilter={true} showLaboratoryFilter={true} showPeriodFilter={true} showDateFilter={true} />
+        <Filters filters={filters} onFilterChange={updateFilter} showLabSectionFilter={true} showShiftFilter={true} showLaboratoryFilter={true} showPeriodFilter={true} showDateFilter={true} showTestNameFilter={true} />
       </div>
 
       {!isLoading && (
@@ -250,6 +289,62 @@ const Tests: React.FC = () => {
           </aside>
 
           <div className="charts-area">
+            {/* Targets Comparison - LabGuru vs Our count (expandable) */}
+            <div className="labguru-insights-card" style={{ marginBottom: '20px', border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
+              <button
+                type="button"
+                onClick={() => setInsightsOpen((o) => !o)}
+                style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'var(--card-bg)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--main-color)' }}
+              >
+                <span>
+                  <i className="fas fa-balance-scale mr-2"></i>
+                  Targets Comparison (LabGuru vs Dashboard)
+                  {insights && (
+                    <span style={{ marginLeft: '12px', fontWeight: 600, color: 'var(--primary-color)' }}>
+                      — LabGuru: {insights.labguruCount.toLocaleString()}
+                    </span>
+                  )}
+                  {insightsError && !insights && (
+                    <span style={{ marginLeft: '12px', fontSize: '0.85rem', color: '#c00' }}>— Unable to load</span>
+                  )}
+                </span>
+                <i className={`fas fa-chevron-${insightsOpen ? 'up' : 'down'}`}></i>
+              </button>
+              {insightsOpen && (
+                <div style={{ padding: '16px', background: 'var(--background-color)', borderTop: '1px solid var(--border-color)' }}>
+                  {insightsError ? (
+                    <p style={{ color: '#c00' }}>{insightsError}</p>
+                  ) : insights ? (
+                    <>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+                        <div style={{ padding: '12px', background: 'var(--card-bg)', borderRadius: '6px' }}>
+                          <div style={{ fontSize: '0.85rem', color: '#666' }}>LabGuru</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{insights.labguruCount.toLocaleString()}</div>
+                        </div>
+                        <div style={{ padding: '12px', background: 'var(--card-bg)', borderRadius: '6px' }}>
+                          <div style={{ fontSize: '0.85rem', color: '#666' }}>Dashboard</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{insights.ourCount.toLocaleString()}</div>
+                        </div>
+                        <div style={{ padding: '12px', background: 'var(--card-bg)', borderRadius: '6px' }}>
+                          <div style={{ fontSize: '0.85rem', color: '#666' }}>Target</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{insights.target.toLocaleString()}</div>
+                        </div>
+                        <div style={{ padding: '12px', background: 'var(--card-bg)', borderRadius: '6px' }}>
+                          <div style={{ fontSize: '0.85rem', color: '#666' }}>Gap</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: insights.gap !== 0 ? '#666' : 'inherit' }}>{insights.gap >= 0 ? '+' : ''}{insights.gap.toLocaleString()}</div>
+                        </div>
+                      </div>
+                      <Link to="/labguru-insights" style={{ display: 'inline-block', marginTop: '12px', color: 'var(--main-color)', fontSize: '0.9rem' }}>
+                        View full test-by-test analysis →
+                      </Link>
+                    </>
+                  ) : (
+                    <p style={{ color: '#666' }}>Loading...</p>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="dashboard-charts">
               {/* Daily Test Volume Trend - first */}
               <div className="test-count">
@@ -271,11 +366,27 @@ const Tests: React.FC = () => {
 
               {/* Top Tests by Volume - LAST (50 tests, tall canvas) */}
               <div className="top-tests-container">
-                <div className="chart-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <div className="chart-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
                   <h3 className="chart-title" style={{ margin: 0 }}>
                     <i className="fas fa-chart-bar mr-2"></i>
                     Top Tests by Volume
                   </h3>
+                  {filters.testName && (
+                    <Link
+                      to={`/test-analytics/${encodeURIComponent(filters.testName)}`}
+                      style={{
+                        fontSize: '0.9rem',
+                        color: 'var(--main-color)',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <i className="fas fa-chart-line"></i>
+                      View analytics for &quot;{filters.testName}&quot;
+                    </Link>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center' }}>
                     <label htmlFor="unitSelect" style={{ marginRight: '10px', fontSize: '0.9rem', color: 'var(--border-color)' }}>
                       Filter by Unit:
@@ -302,7 +413,7 @@ const Tests: React.FC = () => {
                     </select>
                   </div>
                 </div>
-                <div className="chart-container chart-container--50items">
+                <div className={`chart-container chart-container--50items ${(data?.topTestsByUnit?.length ?? 0) <= 1 ? 'chart-container--few-items' : ''}`}>
                   {data?.topTestsByUnit && data.topTestsByUnit.length > 0 ? (
                     <TopTestsByUnitChart data={data.topTestsByUnit} />
                   ) : (

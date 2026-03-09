@@ -1,5 +1,6 @@
 // frontend/src/components/tables/PerformanceTable.tsx
 import React from 'react';
+import { EmptyTableMessage } from '@/components/shared';
 import { formatDateTimeWithAMPM } from '@/constants/metaOptions';
 import { formatDuration } from '@/utils/formatDuration';
 
@@ -19,10 +20,11 @@ export interface PerformanceRecord {
 interface PerformanceTableProps {
   data: PerformanceRecord[];
   onLabNumberDoubleClick?: (labNumber: string) => void;
+  hasSearch?: boolean;
   isLoading?: boolean;
 }
 
-const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDoubleClick, isLoading = false }) => {
+const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDoubleClick, hasSearch = false, isLoading = false }) => {
   /** Match Flask TAT categorizations: On Time, Swift, Delayed for <15 minutes, Over Delayed, Not Uploaded */
   const getDelayStatusClass = (status: string) => {
     const s = (status || '').toLowerCase();
@@ -109,8 +111,8 @@ const PerformanceTable: React.FC<PerformanceTableProps> = ({ data, onLabNumberDo
           </thead>
           <tbody>
             <tr>
-              <td colSpan={11} className="text-center">
-                No data available
+              <td colSpan={11} className="text-center" style={{ padding: 0, border: 'none', verticalAlign: 'middle' }}>
+                <EmptyTableMessage hasSearch={hasSearch} />
               </td>
             </tr>
           </tbody>

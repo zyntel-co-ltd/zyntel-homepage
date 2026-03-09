@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { isViewer } from '@/utils/permissions';
 
@@ -45,7 +45,8 @@ const Login: React.FC = () => {
       <div className="login-column">
         <div className="login-box">
           <img src="/images/zyntel_full_cyan.png" alt="Zyntel" className="login-logo" />
-          <p>Operational Intelligence Platform</p>
+          <p className="login-subtitle">Operational Intelligence Platform</p>
+          <p className="login-note">Staff login required to access the dashboard.</p>
 
           <form onSubmit={handleSubmit}>
             <div className="input-group">
@@ -92,6 +93,12 @@ const Login: React.FC = () => {
               <a href="#" onClick={(e) => { e.preventDefault(); setShowResetModal(true); }}>
                 Forgot Password?
               </a>
+            </div>
+
+            <div className="view-results-cta">
+              <Link to="/results" className="view-results-button">
+                View Results Progress — No login required
+              </Link>
             </div>
           </form>
         </div>

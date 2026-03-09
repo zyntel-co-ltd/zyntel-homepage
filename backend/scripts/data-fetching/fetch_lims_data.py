@@ -451,36 +451,57 @@ def fetch_from_lims_db(start_date, end_date):
         logger.warning("LIMS_DB_SERVER, LIMS_DB_USER, LIMS_DB_PASSWORD required for DB fetch.")
         return None
     try:
-        driver = os.getenv('LIMS_DB_DRIVER', 'ODBC Driver 17 for SQL Server')
-        conn_str = (
-            f"DRIVER={{{driver}}};"
-            f"SERVER={LIMS_DB_SERVER};"
-            f"UID={LIMS_DB_USER};"
-            f"PWD={LIMS_DB_PASSWORD};"
-            f"TrustServerCertificate=yes;"
-        )
-        conn = pyodbc.connect(conn_str)
+        # Try drivers in order (ODBC 17/18 may need separate install)
+        custom_driver = os.getenv('LIMS_DB_DRIVER')
+        drivers = [custom_driver] if custom_driver else [
+            'ODBC Driver 17 for SQL Server',
+            'ODBC Driver 18 for SQL Server',
+            'ODBC Driver 11 for SQL Server',
+            'SQL Server',
+        ]
+        conn = None
+        for driver in drivers:
+            driver = driver.strip()
+            if not driver:
+                continue
+            try:
+                conn_str = (
+                    f"DRIVER={{{driver}}};"
+                    f"SERVER={LIMS_DB_SERVER};"
+                    f"UID={LIMS_DB_USER};"
+                    f"PWD={LIMS_DB_PASSWORD};"
+                    f"TrustServerCertificate=yes;"
+                )
+                conn = pyodbc.connect(conn_str)
+                break
+            except pyodbc.Error as e:
+                if "Data source name not found" in str(e) or "IM002" in str(e):
+                    continue
+                raise
+        if conn is None:
+            logger.warning("No SQL Server ODBC driver found. Install from Microsoft.")
+            return None
         cur = conn.cursor()
-        # Join Labno (LabNo, dates) with Labrequest (tests). Column names may vary.
-        # Set LIMS_DB_QUERY in .env for custom SQL; use ? for start_date, ? for end_date.
+        # Schema from discover: Labno has LabNo, Datein, InvoiceNo, Source; Labrequest has encounterno, testname
         custom_query = os.getenv('LIMS_DB_QUERY')
         if custom_query:
             cur.execute(custom_query, (start_date, end_date))
         else:
-            # Default: try common LabGuru column names (RequestDate, LabNo, InvoiceNo, Src, TestName)
-            date_col = os.getenv('LIMS_DB_DATE_COL', 'RequestDate')
+            date_col = os.getenv('LIMS_DB_DATE_COL', 'request_date')
+            start_str = start_date.strftime('%Y-%m-%d') if hasattr(start_date, 'strftime') else str(start_date)
+            end_str = end_date.strftime('%Y-%m-%d') if hasattr(end_date, 'strftime') else str(end_date)
             sql = f"""
             SELECT
-                CONVERT(varchar(10), l.[{date_col}], 120) AS EncounterDate,
+                CONVERT(varchar(10), r.[{date_col}], 120) AS EncounterDate,
                 ISNULL(CAST(l.InvoiceNo AS varchar(50)), '') AS InvoiceNo,
                 ISNULL(CAST(l.LabNo AS varchar(50)), '') AS LabNo,
-                ISNULL(l.Src, 'N/A') AS Src,
-                ISNULL(r.TestName, '') AS TestName
+                ISNULL(l.Source, 'N/A') AS Src,
+                ISNULL(r.testname, '') AS TestName
             FROM [{LIMS_DB_LABGURU}].dbo.Labno l
-            INNER JOIN [{LIMS_DB_KRANIUM}].dbo.Labrequest r ON r.LabNo = l.LabNo
-            WHERE l.[{date_col}] >= ? AND l.[{date_col}] <= ?
+            INNER JOIN [{LIMS_DB_KRANIUM}].dbo.Labrequest r ON CAST(r.invoiceno AS varchar(50)) = CAST(l.InvoiceNo AS varchar(50))
+            WHERE CAST(r.[{date_col}] AS date) >= '{start_str}' AND CAST(r.[{date_col}] AS date) <= '{end_str}'
             """
-            cur.execute(sql, (start_date, end_date))
+            cur.execute(sql)
         rows = cur.fetchall()
         columns = [c[0] for c in cur.description] if cur.description else []
         records = []
@@ -495,11 +516,11 @@ def fetch_from_lims_db(start_date, end_date):
                 if hasattr(enc, 'strftime'):
                     enc = enc.strftime('%Y-%m-%d')
                 records.append({
-                    "EncounterDate": str(enc),
-                    "InvoiceNo": str(inv),
-                    "LabNo": str(lab),
-                    "Src": str(src),
-                    "TestName": str(test),
+                    "EncounterDate": str(enc).strip(),
+                    "InvoiceNo": str(inv).strip(),
+                    "LabNo": str(lab).strip(),
+                    "Src": str(src).strip(),
+                    "TestName": str(test).strip(),
                 })
         cur.close()
         conn.close()

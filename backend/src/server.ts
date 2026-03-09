@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import http from 'http';
 import path from 'path';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { initializeSocket } from './config/socket';
 import { initializeScheduler } from './services/scheduler';
@@ -23,6 +24,8 @@ import trackerRoutes from './routes/tracker';
 import progressRoutes from './routes/progress';
 import performanceRoutes from './routes/performance';
 import encountersRoutes from './routes/encounters';
+import labguruInsightsRoutes from './routes/labguruInsights';
+import resultsRoutes from './routes/results';
 
 dotenv.config();
 
@@ -49,6 +52,16 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/lrids', lridsRoutes);
 
+// Patient results: rate limit for high traffic (100/min per IP), no auth
+const resultsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests. Please try again in a minute.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/results', resultsLimiter, resultsRoutes);
+
 // Protected routes (REQUIRE AUTH)
 app.use('/api/metadata', authenticate, metadataRoutes);
 app.use('/api/meta', authenticate, metadataRoutes); // alias for meta table
@@ -63,6 +76,7 @@ app.use('/api/tracker', authenticate, trackerRoutes);
 app.use('/api/progress', authenticate, progressRoutes);
 app.use('/api/performance', authenticate, performanceRoutes);
 app.use('/api/encounters', encountersRoutes);
+app.use('/api/labguru-insights', authenticate, labguruInsightsRoutes);
 
 // Production: serve built frontend (before error handler)
 const isProduction = process.env.NODE_ENV === 'production';

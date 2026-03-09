@@ -12,9 +12,8 @@ async function syncEncounters() {
   console.log('🔄 Syncing encounters from patients table...');
 
   const result = await query(
-    `INSERT INTO encounters (lab_no, invoice_no, encounter_date, source, time_in, shift, laboratory)
+    `INSERT INTO encounters (lab_no, encounter_date, source, time_in, shift, laboratory)
      SELECT
-       lab_number,
        lab_number,
        date,
        COALESCE(client, ''),
@@ -24,7 +23,6 @@ async function syncEncounters() {
      FROM patients
      ON CONFLICT (lab_no)
      DO UPDATE SET
-       invoice_no = EXCLUDED.invoice_no,
        encounter_date = EXCLUDED.encounter_date,
        source = EXCLUDED.source,
        time_in = EXCLUDED.time_in,

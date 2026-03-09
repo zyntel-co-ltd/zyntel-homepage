@@ -44,6 +44,11 @@ export const getRevenueData = async (filters: FilterParams) => {
     }
   }
 
+  if (filters.testName && filters.testName.trim() !== '') {
+    conditions.push(`LOWER(test_name) LIKE LOWER($${paramCount++})`);
+    params.push(`%${filters.testName.trim()}%`);
+  }
+
   const whereClause = conditions.join(' AND ');
 
   // Get total revenue
@@ -56,8 +61,8 @@ export const getRevenueData = async (filters: FilterParams) => {
 
   const totalRevenue = parseFloat(totalResult.rows[0].total_revenue);
 
-  // Get target prorated for the filtered date range
-  const targetRevenue = await getRevenueTargetForPeriod(startDate, endDate);
+  // Get target for the filtered date range (prorated or full for short ranges)
+  const { target: targetRevenue, targetTooltip } = await getRevenueTargetForPeriod(startDate, endDate);
 
   // Calculate percentage
   const percentage = (totalRevenue / targetRevenue) * 100;
@@ -203,6 +208,7 @@ export const getRevenueData = async (filters: FilterParams) => {
   return {
     totalRevenue,
     targetRevenue,
+    targetTooltip,
     percentage,
     avgDailyRevenue,
     revenueGrowthRate,

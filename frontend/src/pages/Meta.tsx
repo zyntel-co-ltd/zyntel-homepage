@@ -284,6 +284,7 @@ const Meta: React.FC = () => {
                 onAdd={handleAdd}
                 isLoading={isLoading}
                 canEdit={canEdit}
+                hasSearch={!!filters.search}
               />
             </section>
             <Pagination

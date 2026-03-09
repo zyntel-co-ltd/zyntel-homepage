@@ -11,6 +11,7 @@ export { TestVolumeChart } from './TestVolumeChart';
 
 // Default exports
 export { default as TATPieChart } from './TATPieChart';
+export { default as CancellationReasonsChart } from './CancellationReasonsChart';
 export { default as TATLineChart } from './TATLineChart';
 export { default as TATHourlyChart } from './TATHourlyChart';
 export { default as RevenueProgressChart } from './RevenueProgressChart';

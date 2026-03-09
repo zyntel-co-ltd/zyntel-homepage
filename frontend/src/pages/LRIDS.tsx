@@ -4,7 +4,7 @@ import { TABLE_REFRESH_MS } from '@/constants/refreshIntervals';
 import { useAuth } from '@/contexts/AuthContext';
 import { isViewer } from '@/utils/permissions';
 import { formatDateTimeWithAMPM, formatTimeWithAMPM } from '@/constants/metaOptions';
-import { Footer } from '@/components/shared';
+import { Footer, EmptyTableMessage } from '@/components/shared';
 
 interface LRIDSData {
   lab_number?: string;
@@ -74,13 +74,17 @@ const LRIDS: React.FC = () => {
     const timeExpectedDate = hasTimeExpected ? new Date(timeExpected) : null;
     const isTimeExpectedValid = timeExpectedDate && !isNaN(timeExpectedDate.getTime());
     const isTimeExpectedInPast = isTimeExpectedValid && timeExpectedDate! <= now;
+    const minutesPastExpected = isTimeExpectedInPast ? Math.floor((now.getTime() - timeExpectedDate!.getTime()) / (1000 * 60)) : 0;
 
     if (isTimeOutValid && isTimeOutInPast) {
-      return { text: 'Completed', cssClass: 'progress-complete-actual' };
+      return { text: 'Completed. Please contact Nakasero Lab at +256706346242 if you need assistance.', cssClass: 'progress-complete-actual' };
     }
     
     if (isTimeExpectedValid && isTimeExpectedInPast && !isTimeOutValid) {
-      return { text: 'Delayed', cssClass: 'progress-overdue' };
+      if (minutesPastExpected >= 60) {
+        return { text: 'We apologize for the delay. Please contact Nakasero Lab at +256706346242 for assistance.', cssClass: 'progress-overdue' };
+      }
+      return { text: 'Should be ready but delayed. We apologize for the inconvenience.', cssClass: 'progress-overdue' };
     }
     
     if (isTimeExpectedValid && !isTimeExpectedInPast) {
@@ -90,13 +94,13 @@ const LRIDS: React.FC = () => {
       const timeLeftInDays = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
       
       if (timeLeftInMinutes <= 10 && timeLeftInMinutes > 0) {
-        return { text: `${timeLeftInMinutes} min(s) remaining`, cssClass: 'progress-urgent' };
+        return { text: `We are winding up. ${timeLeftInMinutes} min(s) to go.`, cssClass: 'progress-urgent' };
       } else if (timeLeftInDays > 0) {
-        return { text: `${timeLeftInDays} day(s) remaining`, cssClass: 'progress-pending' };
+        return { text: `Rest assured you will get results on time. ${timeLeftInDays} day(s) remaining.`, cssClass: 'progress-pending' };
       } else if (timeLeftInHours > 0) {
-        return { text: `${timeLeftInHours} hr(s) remaining`, cssClass: 'progress-pending' };
+        return { text: `Rest assured you will get results on time. ${timeLeftInHours} hr(s) remaining.`, cssClass: 'progress-pending' };
       } else if (timeLeftInMinutes > 0) {
-        return { text: `${timeLeftInMinutes} min(s) remaining`, cssClass: 'progress-pending' };
+        return { text: `Rest assured you will get results on time. ${timeLeftInMinutes} min(s) to go.`, cssClass: 'progress-pending' };
       }
       return { text: 'Due now', cssClass: 'progress-pending' };
     }
@@ -155,7 +159,9 @@ const LRIDS: React.FC = () => {
                   </tr>
                 ) : data.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="text-center py-4 text-gray-500">No data available</td>
+                    <td colSpan={3} style={{ padding: 0, border: 'none', verticalAlign: 'middle' }}>
+                      <EmptyTableMessage />
+                    </td>
                   </tr>
                 ) : (
                   data.map((row, index) => {

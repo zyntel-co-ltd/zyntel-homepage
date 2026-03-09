@@ -21,6 +21,8 @@ export const TestVolumeChart: React.FC<TestVolumeChartProps> = ({ data }) => {
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
 
+    const isFewItems = data.length <= 5;
+
     chartRef.current = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -31,6 +33,7 @@ export const TestVolumeChart: React.FC<TestVolumeChartProps> = ({ data }) => {
             data: data.map(d => d.count),
             backgroundColor: '#21336a',
             borderRadius: 0,
+            ...(isFewItems && { maxBarThickness: 48 }),
           }
         ]
       },

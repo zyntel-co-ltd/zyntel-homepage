@@ -2,13 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { TABLE_REFRESH_MS } from '@/constants/refreshIntervals';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog, Footer } from '@/components/shared';
+import { isAdmin } from '@/utils/permissions';
 import { formatTimeWithAMPM } from '@/constants/metaOptions';
 import { ReceptionTable, type ReceptionRecord } from '@/components/tables';
 import { downloadCSV } from '@/utils/exportUtils';
 
 const Reception: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const userIsAdmin = isAdmin(user?.role as any);
   const [filters, setFilters] = useState({
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
@@ -30,6 +34,9 @@ const Reception: React.FC = () => {
   const [filtersOpen, _setFiltersOpen] = useState(true);
   const [filtersPanelOpen, setFiltersPanelOpen] = useState(false);
   const [testsDialogLabNo, setTestsDialogLabNo] = useState<string | null>(null);
+  const [cancelModalTestId, setCancelModalTestId] = useState<number | null>(null);
+  const [cancelModalBulk, setCancelModalBulk] = useState(false);
+  const [cancelReason, setCancelReason] = useState<string>('duplicate');
 
   // Check auth on mount
   useEffect(() => {
@@ -98,12 +105,13 @@ const Reception: React.FC = () => {
         date: item.encounter_date,
         labNumber: item.lab_no,
         shift: item.shift,
-        unit: item.laboratory,
+        unit: item.laboratory || '',
         labSection: item.lab_section_at_test,
         testName: item.test_name,
         urgency: item.is_urgent === true ? 'urgent' : 'routine',
         received: item.is_received || false,
         result: item.is_resulted || false,
+        cancelled: item.is_cancelled || false,
         timeIn: item.time_in ? formatTimeWithAMPM(item.time_in) : ''
       }));
       setData(transformedData);
@@ -313,6 +321,103 @@ const Reception: React.FC = () => {
     }
   };
 
+  const handleCancelClick = (id: number) => {
+    setCancelModalTestId(id);
+    setCancelReason('duplicate');
+  };
+
+  const handleUncancelClick = async (id: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/reception/${id}/uncancel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.status === 401) {
+        navigate('/');
+        return;
+      }
+      if (response.ok) {
+        fetchData();
+      } else {
+        const err = await response.json().catch(() => ({}));
+        alert(err?.error || 'Failed to uncancel test');
+      }
+    } catch (error) {
+      console.error('Error uncancelling test:', error);
+      alert('Failed to uncancel test');
+    }
+  };
+
+  const handleCancelConfirm = async () => {
+    if (cancelModalBulk && selectedTests.length > 0) {
+      const toCancel = selectedTests.filter(id => !data.find(r => r.id === id && r.cancelled));
+      if (toCancel.length === 0) {
+        setCancelModalBulk(false);
+        setSelectedTests([]);
+        return;
+      }
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/reception/bulk-update', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ testIds: toCancel, action: 'cancel', reason: cancelReason })
+        });
+        if (response.status === 401) {
+          navigate('/');
+          return;
+        }
+        if (response.ok) {
+          setCancelModalBulk(false);
+          setSelectedTests([]);
+          fetchData();
+        } else {
+          const err = await response.json().catch(() => ({}));
+          alert(err?.error || 'Failed to cancel tests');
+        }
+      } catch (error) {
+        console.error('Error bulk cancelling:', error);
+        alert('Failed to cancel tests');
+      }
+      return;
+    }
+    if (!cancelModalTestId) return;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/reception/${cancelModalTestId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason: cancelReason })
+      });
+
+      if (response.status === 401) {
+        navigate('/');
+        return;
+      }
+
+      if (response.ok) {
+        setCancelModalTestId(null);
+        fetchData();
+      } else {
+        const err = await response.json().catch(() => ({}));
+        alert(err?.error || 'Failed to cancel test');
+      }
+    } catch (error) {
+      console.error('Error cancelling test:', error);
+      alert('Failed to cancel test');
+    }
+  };
+
   const handleMultiResult = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -392,6 +497,16 @@ const Reception: React.FC = () => {
         <div className="table-search-bar">
           <div className="search-actions-row">
             <div className="multi-select-container">
+            <button 
+              className="cancel-btn"
+              id="multi-cancel-btn"
+              onClick={() => setCancelModalBulk(true)}
+              disabled={selectedTests.length === 0}
+              title={selectedTests.length === 0 ? 'Select rows first' : ''}
+            >
+              <i className="fas fa-ban mr-2"></i>
+              Cancel Selected
+            </button>
             <button 
               className="urgent-btn"
               id="multi-urgent-btn"
@@ -510,7 +625,11 @@ const Reception: React.FC = () => {
                 onUrgentClick={handleUrgentClick}
                 onReceiveClick={handleReceiveClick}
                 onResultClick={handleResultClick}
+                onCancelClick={handleCancelClick}
+                onUncancelClick={handleUncancelClick}
                 onLabNumberDoubleClick={(labNumber) => setTestsDialogLabNo(labNumber)}
+                isAdmin={userIsAdmin}
+                hasSearch={!!filters.search}
                 isLoading={isLoading}
               />
             </section>
@@ -529,6 +648,37 @@ const Reception: React.FC = () => {
         open={testsDialogLabNo !== null}
         onClose={() => setTestsDialogLabNo(null)}
       />
+
+      {(cancelModalTestId !== null || cancelModalBulk) && (
+        <div className="modal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="modal-content" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>{cancelModalBulk ? `Cancel ${selectedTests.length} Test(s)` : 'Cancel Test'}</h3>
+              <button className="modal-close" onClick={() => { setCancelModalTestId(null); setCancelModalBulk(false); }}>&times;</button>
+            </div>
+            <p style={{ marginBottom: '16px' }}>Select cancellation reason:</p>
+            <select
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              style={{ width: '100%', padding: '8px 12px', marginBottom: '16px', fontSize: '1rem' }}
+            >
+              <option value="duplicate">Duplicate</option>
+              <option value="wrong_sample">Wrong sample</option>
+              <option value="patient_request">Patient request</option>
+              <option value="other">Other</option>
+            </select>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn-secondary" onClick={() => { setCancelModalTestId(null); setCancelModalBulk(false); }}>
+                Cancel
+              </button>
+              <button type="button" className="btn-primary" onClick={handleCancelConfirm}>
+                Confirm Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );

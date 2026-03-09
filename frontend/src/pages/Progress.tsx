@@ -1,7 +1,7 @@
 // frontend/src/pages/Progress.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog, Footer } from '@/components/shared';
+import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog, Footer, EmptyTableMessage } from '@/components/shared';
 import { formatDateTimeWithAMPM } from '@/constants/metaOptions';
 import { downloadCSV } from '@/utils/exportUtils';
 
@@ -303,9 +303,7 @@ const Progress: React.FC = () => {
         ) : (
           <section className="card">
             {data.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-                <p>No progress data available</p>
-              </div>
+              <EmptyTableMessage hasSearch={!!filters.search} />
             ) : (
               <div className="table-container">
                 <table className="neon-table">
@@ -338,29 +336,33 @@ const Progress: React.FC = () => {
                         const timeExpectedDate = hasTimeExpected ? new Date(timeExpected) : null;
                         const isTimeExpectedValid = timeExpectedDate && !isNaN(timeExpectedDate.getTime());
                         const isTimeExpectedInPast = isTimeExpectedValid && timeExpectedDate <= now;
+                        const minutesPastExpected = isTimeExpectedInPast ? Math.floor((now.getTime() - timeExpectedDate!.getTime()) / (1000 * 60)) : 0;
 
                         if (isTimeOutValid && isTimeOutInPast) {
                           return { text: 'Completed', cssClass: 'progress-complete-actual' };
                         }
                         
                         if (isTimeExpectedValid && isTimeExpectedInPast && !isTimeOutValid) {
-                          return { text: 'Delayed', cssClass: 'progress-overdue' };
+                          if (minutesPastExpected >= 60) {
+                            return { text: 'Delayed 1hr+ — Contact Nakasero Lab +256706346242', cssClass: 'progress-overdue' };
+                          }
+                          return { text: 'Delayed — Should be ready soon', cssClass: 'progress-overdue' };
                         }
                         
                         if (isTimeExpectedValid && !isTimeExpectedInPast) {
-                          const timeLeft = timeExpectedDate.getTime() - now.getTime();
+                          const timeLeft = timeExpectedDate!.getTime() - now.getTime();
                           const timeLeftInMinutes = Math.floor(timeLeft / (1000 * 60));
                           const timeLeftInHours = Math.floor(timeLeft / (1000 * 60 * 60));
                           const timeLeftInDays = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
                           
                           if (timeLeftInMinutes <= 10 && timeLeftInMinutes > 0) {
-                            return { text: `${timeLeftInMinutes} min(s) remaining`, cssClass: 'progress-urgent' };
+                            return { text: `Winding up — ${timeLeftInMinutes} min(s) to go`, cssClass: 'progress-urgent' };
                           } else if (timeLeftInDays > 0) {
                             return { text: `${timeLeftInDays} day(s) remaining`, cssClass: 'progress-pending' };
                           } else if (timeLeftInHours > 0) {
                             return { text: `${timeLeftInHours} hr(s) remaining`, cssClass: 'progress-pending' };
                           } else if (timeLeftInMinutes > 0) {
-                            return { text: `${timeLeftInMinutes} min(s) remaining`, cssClass: 'progress-pending' };
+                            return { text: `${timeLeftInMinutes} min(s) to go`, cssClass: 'progress-pending' };
                           }
                           return { text: 'Due now', cssClass: 'progress-pending' };
                         }

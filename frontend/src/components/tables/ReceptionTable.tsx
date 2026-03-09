@@ -1,6 +1,6 @@
 // frontend/src/components/tables/ReceptionTable.tsx
 import React from 'react';
-import { UrgentButton, ReceiveButton, ResultButton } from '@/components/shared';
+import { UrgentButton, ReceiveButton, ResultButton, CancelButton, EmptyTableMessage } from '@/components/shared';
 
 export interface ReceptionRecord {
   id: number;
@@ -13,6 +13,7 @@ export interface ReceptionRecord {
   urgency: 'routine' | 'urgent';
   received: boolean;
   result: boolean;
+  cancelled?: boolean;
   timeIn?: string;
 }
 
@@ -24,7 +25,11 @@ interface ReceptionTableProps {
   onUrgentClick: (id: number, currentUrgency: 'routine' | 'urgent') => void;
   onReceiveClick: (id: number) => void;
   onResultClick: (id: number) => void;
+  onCancelClick?: (id: number) => void;
+  onUncancelClick?: (id: number) => void;
   onLabNumberDoubleClick?: (labNumber: string) => void;
+  isAdmin?: boolean;
+  hasSearch?: boolean;
   isLoading?: boolean;
 }
 
@@ -36,7 +41,11 @@ const ReceptionTable: React.FC<ReceptionTableProps> = ({
   onUrgentClick,
   onReceiveClick,
   onResultClick,
+  onCancelClick,
+  onUncancelClick,
   onLabNumberDoubleClick,
+  isAdmin = false,
+  hasSearch = false,
   isLoading = false
 }) => {
   const allSelected = data.length > 0 && selectedIds.length === data.length;
@@ -54,14 +63,15 @@ const ReceptionTable: React.FC<ReceptionTableProps> = ({
               <th>Unit</th>
               <th>Lab Section</th>
               <th>Test Name</th>
-              <th className="text-center">Urgency</th>
-              <th className="text-center">Receive</th>
-              <th className="text-center">Result</th>
+            <th className="text-center">Cancel</th>
+            <th className="text-center">Urgency</th>
+            <th className="text-center">Receive</th>
+            <th className="text-center">Result</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td colSpan={10} className="text-center">
+              <td colSpan={11} className="text-center">
                 <div className="loader-inline">
                   <div className="one"></div>
                   <div className="two"></div>
@@ -89,15 +99,16 @@ const ReceptionTable: React.FC<ReceptionTableProps> = ({
               <th>Unit</th>
               <th>Lab Section</th>
               <th>Test Name</th>
-              <th className="text-center">Urgency</th>
-              <th className="text-center">Receive</th>
-              <th className="text-center">Result</th>
-            </tr>
-          </thead>
+            <th className="text-center">Cancel</th>
+            <th className="text-center">Urgency</th>
+            <th className="text-center">Receive</th>
+            <th className="text-center">Result</th>
+          </tr>
+        </thead>
           <tbody>
             <tr>
-              <td colSpan={10} className="text-center">
-                No data available
+              <td colSpan={11} className="text-center" style={{ padding: 0, border: 'none', verticalAlign: 'middle' }}>
+                <EmptyTableMessage hasSearch={hasSearch} />
               </td>
             </tr>
           </tbody>
@@ -126,6 +137,7 @@ const ReceptionTable: React.FC<ReceptionTableProps> = ({
             <th>Unit</th>
             <th>Lab Section</th>
             <th>Test Name</th>
+            <th className="text-center">Cancel</th>
             <th className="text-center">Urgency</th>
             <th className="text-center">Receive</th>
             <th className="text-center">Result</th>
@@ -133,13 +145,14 @@ const ReceptionTable: React.FC<ReceptionTableProps> = ({
         </thead>
         <tbody>
           {data.map((row) => (
-            <tr key={row.id} className={selectedIds.includes(row.id) ? 'selected-row' : ''}>
+            <tr key={row.id} className={`${selectedIds.includes(row.id) ? 'selected-row' : ''} ${row.cancelled ? 'reception-row-cancelled' : ''}`}>
               <td>
                 <input
                   type="checkbox"
                   className="form-checkbox h-4 w-4 text-blue-600"
                   checked={selectedIds.includes(row.id)}
                   onChange={() => onSelectRow(row.id)}
+                  disabled={row.cancelled}
                 />
               </td>
               <td>{new Date(row.date).toLocaleDateString()}</td>
@@ -155,23 +168,33 @@ const ReceptionTable: React.FC<ReceptionTableProps> = ({
               <td>{row.labSection}</td>
               <td>{row.testName}</td>
               <td className="text-center">
+                <CancelButton
+                  isCancelled={row.cancelled ?? false}
+                  onClick={() => onCancelClick?.(row.id)}
+                  disabled={row.cancelled}
+                  onUncancelClick={row.cancelled && isAdmin ? () => onUncancelClick?.(row.id) : undefined}
+                  showUncancel={row.cancelled && isAdmin}
+                />
+              </td>
+              <td className="text-center">
                 <UrgentButton
                   isUrgent={row.urgency === 'urgent'}
                   onClick={() => onUrgentClick(row.id, row.urgency)}
+                  disabled={row.cancelled}
                 />
               </td>
               <td className="text-center">
                 <ReceiveButton
                   isReceived={row.received}
                   onClick={() => onReceiveClick(row.id)}
-                  disabled={row.urgency === 'urgent' && !row.received}
+                  disabled={(row.urgency === 'urgent' && !row.received) || row.cancelled}
                 />
               </td>
               <td className="text-center">
                 <ResultButton
                   hasResult={row.result}
                   onClick={() => onResultClick(row.id)}
-                  disabled={!row.received}
+                  disabled={!row.received || row.cancelled}
                 />
               </td>
             </tr>

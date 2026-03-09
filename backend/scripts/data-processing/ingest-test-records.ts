@@ -95,7 +95,7 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
         const labSection = truncate(row.Lab_Section, 100);
 
         const encounterResult = await query(
-          'SELECT lab_no, encounter_date, invoice_no, source, time_in, shift, laboratory FROM encounters WHERE lab_no = $1',
+          'SELECT lab_no, encounter_date, source, time_in, shift, laboratory FROM encounters WHERE lab_no = $1',
           [labNo]
         );
         if (encounterResult.rows.length === 0) {
@@ -105,7 +105,6 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
         const enc = encounterResult.rows[0] as {
           lab_no: string;
           encounter_date: Date;
-          invoice_no: string;
           source: string;
           time_in: Date | null;
           shift: string;
@@ -115,7 +114,6 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
         const encSource = truncate(enc.source, 100);
         const encShift = truncate(enc.shift, 20);
         const encLab = truncate(enc.laboratory, 50);
-        const encInvoiceNo = truncate(enc.invoice_no, 50);
         const encLabNo = truncate(enc.lab_no, 50);
 
         if (!testName) {
@@ -149,16 +147,20 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
         const timeIn = parseDateTimeField(row.Time_Received) ?? enc.time_in;
         const timeOut = parseDateTimeField(row.Test_Time_Out);
         const actualTat = timeIn && timeOut ? computeActualTatMinutes(timeIn, timeOut) : null;
-        const isUrgent = (row.Urgency || '').toLowerCase().includes('urgent');
+        // Urgent only when explicitly "urgent" (not "Not Urgent" which contains the substring)
+        const u = (row.Urgency || '').toLowerCase().trim();
+        const isUrgent = u === 'urgent' || (u.startsWith('urgent') && !u.includes('not'));
 
+        // is_received and is_resulted come from user interaction (Reception buttons), NOT from LIMS.
+        // New records start as pending; ON CONFLICT preserves existing user-set values.
         const result = await query(
           `INSERT INTO test_records
            (encounter_id, test_name, test_metadata_id,
             price_at_test, tat_at_test, lab_section_at_test,
             is_urgent, is_received, is_resulted, is_cancelled,
             time_in, time_out, actual_tat,
-            encounter_date, invoice_no, lab_no, source, shift, laboratory)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, false, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            encounter_date, lab_no, source, shift, laboratory)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, false, false, false, $8, $9, $10, $11, $12, $13, $14, $15)
            ON CONFLICT (encounter_id, test_name)
            DO UPDATE SET
              price_at_test = EXCLUDED.price_at_test,
@@ -177,12 +179,10 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
             row.TAT ?? null,
             labSection,
             isUrgent,
-            !!timeOut,
             timeIn,
             timeOut,
             actualTat,
             enc.encounter_date,
-            encInvoiceNo,
             encLabNo,
             encSource,
             encShift,

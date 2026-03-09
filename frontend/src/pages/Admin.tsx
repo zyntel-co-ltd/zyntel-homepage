@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { Modal, Toast, ConfirmDialog, Pagination, Footer } from '@/components/shared';
 import { LAB_SECTIONS, TAT_OPTIONS } from '@/constants/metaOptions';
 import { useAuth } from '@/contexts/AuthContext';
 import { canDeleteUser, canResetPassword, canDeactivateUser } from '@/utils/permissions';
+import { CancellationReasonsChart } from '@/components/charts';
 
 const UNMATCHED_PAGE_SIZE = 15;
 
@@ -33,7 +35,7 @@ interface DashboardStats {
 const Admin: React.FC = () => {
   const { user } = useAuth();
   const role = user?.role as 'admin' | 'manager' | 'technician' | 'viewer' | undefined;
-  const [activeTab, setActiveTab] = useState<'users' | 'unmatched' | 'settings'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'unmatched' | 'cancellations' | 'settings'>('users');
   const [users, setUsers] = useState<User[]>([]);
   const [unmatchedTests, setUnmatchedTests] = useState<UnmatchedTest[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -79,10 +81,17 @@ const Admin: React.FC = () => {
   const adminMenuRef = useRef<HTMLSpanElement>(null);
   const [showPasswordUserForm, setShowPasswordUserForm] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [cancellationAnalytics, setCancellationAnalytics] = useState<Array<{ reason: string; count: number }>>([]);
+  const [cancellationFilters, setCancellationFilters] = useState({ period: 'thisMonth', labSection: 'all' });
+  const qrRef = useRef<HTMLDivElement>(null);
+
+  const resultsPageUrl = typeof window !== 'undefined'
+    ? (import.meta.env.VITE_PUBLIC_RESULTS_URL || window.location.origin) + '/results'
+    : '/results';
 
   useEffect(() => {
     fetchData();
-  }, [activeTab]);
+  }, [activeTab, cancellationFilters.period, cancellationFilters.labSection]);
 
   useEffect(() => {
     if (!adminMenuOpen) return;
@@ -162,12 +171,24 @@ const Admin: React.FC = () => {
         } else {
           setUnmatchedTests([]);
         }
+      } else if (activeTab === 'cancellations') {
+        const cancelParams = new URLSearchParams();
+        if (cancellationFilters.period) cancelParams.append('period', cancellationFilters.period);
+        if (cancellationFilters.labSection && cancellationFilters.labSection !== 'all') cancelParams.append('labSection', cancellationFilters.labSection);
+        const cancelRes = await fetch(`/api/admin/cancellation-analytics?${cancelParams.toString()}`, { headers });
+        if (cancelRes.ok) {
+          const data = await cancelRes.json();
+          setCancellationAnalytics(data);
+        } else {
+          setCancellationAnalytics([]);
+        }
       }
     } catch (error) {
       console.error('Error fetching admin data:', error);
       // Set empty data on error
       if (activeTab === 'users') setUsers([]);
       if (activeTab === 'unmatched') setUnmatchedTests([]);
+      if (activeTab === 'cancellations') setCancellationAnalytics([]);
     } finally {
       setIsLoading(false);
     }
@@ -633,7 +654,25 @@ const Admin: React.FC = () => {
             <i className="fas fa-exclamation-triangle mr-2"></i>
             Unmatched Tests
           </button>
-          
+
+          <button
+            onClick={() => setActiveTab('cancellations')}
+            style={{
+              padding: '15px 30px',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: activeTab === 'cancellations' ? 'var(--hover-color)' : 'var(--main-color)',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderBottom: activeTab === 'cancellations' ? '3px solid var(--hover-color)' : '3px solid transparent',
+              cursor: 'pointer',
+              transition: 'all 0.3s'
+            }}
+          >
+            <i className="fas fa-ban mr-2"></i>
+            Cancellations
+          </button>
+
           <button
             onClick={() => setActiveTab('settings')}
             style={{
@@ -1103,6 +1142,86 @@ const Admin: React.FC = () => {
               </div>
             )}
 
+            {/* Cancellations Tab */}
+            {activeTab === 'cancellations' && (
+              <div className="card">
+                <h3 style={{
+                  fontSize: '1.3rem',
+                  fontWeight: '600',
+                  color: 'var(--main-color)',
+                  marginBottom: '25px'
+                }}>
+                  <i className="fas fa-ban mr-2"></i>
+                  Cancellation Analytics by Reason
+                </h3>
+                <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div>
+                    <label style={{ marginRight: '8px', fontSize: '0.9rem' }}>Period:</label>
+                    <select
+                      value={cancellationFilters.period}
+                      onChange={(e) => setCancellationFilters((f) => ({ ...f, period: e.target.value }))}
+                      style={{ padding: '6px 12px', borderRadius: '6px', fontSize: '0.9rem' }}
+                    >
+                      <option value="thisMonth">This Month</option>
+                      <option value="lastMonth">Last Month</option>
+                      <option value="thisQuarter">This Quarter</option>
+                      <option value="lastQuarter">Last Quarter</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ marginRight: '8px', fontSize: '0.9rem' }}>Lab Section:</label>
+                    <select
+                      value={cancellationFilters.labSection}
+                      onChange={(e) => setCancellationFilters((f) => ({ ...f, labSection: e.target.value }))}
+                      style={{ padding: '6px 12px', borderRadius: '6px', fontSize: '0.9rem' }}
+                    >
+                      <option value="all">All</option>
+                      <option value="CHEMISTRY">CHEMISTRY</option>
+                      <option value="HEAMATOLOGY">HEAMATOLOGY</option>
+                      <option value="MICROBIOLOGY">MICROBIOLOGY</option>
+                      <option value="SEROLOGY">SEROLOGY</option>
+                      <option value="REFERRAL">REFERRAL</option>
+                      <option value="N/A">N/A</option>
+                    </select>
+                  </div>
+                </div>
+                {cancellationAnalytics.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--border-color)' }}>
+                    <p>No cancellations recorded for this period.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1fr) minmax(200px, 1fr)', gap: '24px', marginBottom: '24px', alignItems: 'start' }} className="cancellation-analytics-grid">
+                      <div style={{ minHeight: '280px' }}>
+                        <h4 style={{ fontSize: '1rem', marginBottom: '12px', color: 'var(--main-color)' }}>By Reason (Chart)</h4>
+                        <CancellationReasonsChart data={cancellationAnalytics} />
+                      </div>
+                      <div className="table-container">
+                        <h4 style={{ fontSize: '1rem', marginBottom: '12px', color: 'var(--main-color)' }}>By Reason (Table)</h4>
+                        <table className="neon-table">
+                          <thead>
+                            <tr>
+                              <th>Reason</th>
+                              <th style={{ textAlign: 'right' }}>Count</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {cancellationAnalytics.map((row) => (
+                              <tr key={row.reason}>
+                                <td>{row.reason.replace(/_/g, ' ')}</td>
+                                <td style={{ textAlign: 'right', fontWeight: '600' }}>{row.count.toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Settings Tab */}
             {activeTab === 'settings' && (
               <div className="card">
@@ -1117,6 +1236,87 @@ const Admin: React.FC = () => {
                 </h3>
 
                 <div style={{ maxWidth: '800px' }}>
+                  {/* Patient Results Page QR Code */}
+                  <div style={{
+                    marginBottom: '40px',
+                    padding: '20px',
+                    backgroundColor: 'var(--light-grey-background)',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-bottom)'
+                  }}>
+                    <h4 style={{
+                      fontSize: '1.1rem',
+                      fontWeight: '600',
+                      color: 'var(--main-color)',
+                      marginBottom: '12px'
+                    }}>
+                      <i className="fas fa-qrcode mr-2"></i>
+                      Patient Results Page
+                    </h4>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--border-color)', marginBottom: '16px' }}>
+                      Patients can scan this QR code to open the results page (no login required). Reception can also enter lab numbers directly at this page.
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                      <div ref={qrRef} style={{ padding: '16px', backgroundColor: 'white', borderRadius: '8px', display: 'inline-block', textAlign: 'center' }}>
+                        <QRCodeCanvas
+                          value={resultsPageUrl}
+                          size={160}
+                          level="M"
+                          imageSettings={{
+                            src: '/images/logo-nakasero.png',
+                            height: 36,
+                            width: 36,
+                            excavate: true,
+                          }}
+                        />
+                        <p style={{ margin: '12px 0 0', fontSize: '11px', color: '#333', maxWidth: 160 }}>Hospital WiFi required to view results progress</p>
+                      </div>
+                      <div>
+                        <a href={resultsPageUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.9rem', color: 'var(--main-color)', wordBreak: 'break-all' }}>
+                          {resultsPageUrl}
+                        </a>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--border-color)', marginTop: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const el = qrRef.current;
+                              if (el) {
+                                try {
+                                  const html2canvas = (await import('html2canvas')).default;
+                                  const canvas = await html2canvas(el, { backgroundColor: '#ffffff', scale: 2 });
+                                  const a = document.createElement('a');
+                                  a.href = canvas.toDataURL('image/png');
+                                  a.download = 'patient-results-qr.png';
+                                  a.click();
+                                } catch (e) {
+                                  const qrCanvas = el?.querySelector('canvas');
+                                  if (qrCanvas) {
+                                    const a = document.createElement('a');
+                                    a.href = qrCanvas.toDataURL('image/png');
+                                    a.download = 'patient-results-qr.png';
+                                    a.click();
+                                  }
+                                }
+                              }
+                            }}
+                            style={{
+                              padding: '8px 16px',
+                              background: 'var(--main-color)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '0.9rem',
+                              fontWeight: '500'
+                            }}
+                          >
+                            <i className="fas fa-download mr-2"></i>Download QR for printing
+                          </button>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Monthly Revenue Target Section */}
                   <div style={{ marginBottom: '40px' }}>
                     <h4 style={{

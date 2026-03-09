@@ -20,6 +20,8 @@ export const DailyRevenueChart: React.FC<DailyRevenueChartProps> = ({ data }) =>
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
 
+    const isFewItems = data.length <= 5;
+
     chartRef.current = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -30,6 +32,7 @@ export const DailyRevenueChart: React.FC<DailyRevenueChartProps> = ({ data }) =>
             data: data.map(d => d.revenue),
             backgroundColor: '#21336a',
             borderRadius: 0,
+            ...(isFewItems && { maxBarThickness: 48 }),
           }
         ]
       },

@@ -1,6 +1,5 @@
 // frontend/src/pages/TAT.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { CHART_REFRESH_MS } from '@/constants/refreshIntervals';
 import { Header, Navbar, Filters, Loader, KPICard, Footer } from '@/components/shared';
 import { 
   TATPieChart, 
@@ -57,11 +56,6 @@ const TAT: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters.endDate, filters.period, filters.shift, filters.hospitalUnit]);
-
-  useEffect(() => {
-    const id = setInterval(fetchData, CHART_REFRESH_MS);
-    return () => clearInterval(id);
   }, [filters.endDate, filters.period, filters.shift, filters.hospitalUnit]);
 
   const fetchData = async () => {

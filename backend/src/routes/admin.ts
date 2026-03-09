@@ -7,6 +7,7 @@ import {
   getDashboardStatsController,
   addUnmatchedToMetaController,
   addMultipleUnmatchedToMetaController,
+  getCancellationAnalyticsController,
 } from '../controllers/adminController';
 import {
   getUsersController,
@@ -60,5 +61,6 @@ router.post('/unmatched-tests/:id/resolve', resolveUnmatchedTestController);
 router.post('/unmatched-tests/:id/add-to-meta', addUnmatchedToMetaController);
 router.post('/unmatched-tests/add-multiple-to-meta', addMultipleUnmatchedToMetaController);
 router.get('/stats', getDashboardStatsController);
+router.get('/cancellation-analytics', getCancellationAnalyticsController);
 
 export default router;

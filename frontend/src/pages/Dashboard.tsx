@@ -48,6 +48,7 @@ const Dashboard: React.FC = () => {
                 <li><a href="/reception"><i className="fas fa-table mr-2"></i> Reception</a></li>
                 {canAccessCharts(role) && <li><a href="/revenue"><i className="fas fa-chart-line mr-2"></i> Revenue</a></li>}
                 {canAccessCharts(role) && <li><a href="/tests"><i className="fas fa-vials mr-2"></i> Tests</a></li>}
+                {canAccessCharts(role) && <li><a href="/labguru-insights"><i className="fas fa-flask mr-2"></i> LabGuru</a></li>}
               </ul>
             </span>
           </div>
@@ -64,6 +65,9 @@ const Dashboard: React.FC = () => {
               </a>
               <a href="/tests" className="dice-tile" data-type="chart">
                 <span className="dice-label">Tests</span>
+              </a>
+              <a href="/labguru-insights" className="dice-tile" data-type="chart">
+                <span className="dice-label">LabGuru</span>
               </a>
               <a href="/numbers" className="dice-tile" data-type="chart">
                 <span className="dice-label">Numbers</span>

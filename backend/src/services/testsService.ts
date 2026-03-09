@@ -42,6 +42,11 @@ export const getTestsData = async (filters: FilterParams) => {
     }
   }
 
+  if (filters.testName && filters.testName.trim() !== '') {
+    conditions.push(`LOWER(test_name) LIKE LOWER($${paramCount++})`);
+    params.push(`%${filters.testName.trim()}%`);
+  }
+
   const whereClause = conditions.join(' AND ');
 
   // Get total tests performed

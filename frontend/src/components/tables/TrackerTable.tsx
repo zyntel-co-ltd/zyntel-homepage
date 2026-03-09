@@ -1,5 +1,6 @@
 // frontend/src/components/tables/TrackerTable.tsx
 import React from 'react';
+import { EmptyTableMessage } from '@/components/shared';
 import { formatTimeWithAMPM } from '@/constants/metaOptions';
 import { formatDuration } from '@/utils/formatDuration';
 
@@ -25,10 +26,11 @@ export interface TrackerRecord {
 interface TrackerTableProps {
   data: TrackerRecord[];
   onLabNumberDoubleClick?: (labNumber: string) => void;
+  hasSearch?: boolean;
   isLoading?: boolean;
 }
 
-const TrackerTable: React.FC<TrackerTableProps> = ({ data, onLabNumberDoubleClick, isLoading = false }) => {
+const TrackerTable: React.FC<TrackerTableProps> = ({ data, onLabNumberDoubleClick, hasSearch = false, isLoading = false }) => {
   const calculateProgress = (timeExpected: string, timeOut?: string) => {
     const now = new Date();
     const hasTimeOut = timeOut && timeOut !== 'N/A' && timeOut !== null && timeOut !== undefined;
@@ -134,8 +136,8 @@ const TrackerTable: React.FC<TrackerTableProps> = ({ data, onLabNumberDoubleClic
           </thead>
           <tbody>
             <tr>
-              <td colSpan={13} className="text-center">
-                No data available
+              <td colSpan={13} className="text-center" style={{ padding: 0, border: 'none', verticalAlign: 'middle' }}>
+                <EmptyTableMessage hasSearch={hasSearch} />
               </td>
             </tr>
           </tbody>

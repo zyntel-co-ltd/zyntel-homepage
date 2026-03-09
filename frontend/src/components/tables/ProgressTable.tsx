@@ -1,5 +1,6 @@
 // frontend/src/components/tables/ProgressTable.tsx
 import React from 'react';
+import { EmptyTableMessage } from '@/components/shared';
 import { formatDateTimeWithAMPM } from '@/constants/metaOptions';
 import { formatDuration } from '@/utils/formatDuration';
 
@@ -46,10 +47,11 @@ const formatTimeRange = (val: string | number | null | undefined) => {
 
 interface ProgressTableProps {
   data: ProgressRecord[];
+  hasSearch?: boolean;
   isLoading?: boolean;
 }
 
-const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }) => {
+const ProgressTable: React.FC<ProgressTableProps> = ({ data, hasSearch = false, isLoading = false }) => {
   const calculateProgress = (timeExpected: string, timeOut?: string) => {
     const now = new Date();
     
@@ -155,8 +157,8 @@ const ProgressTable: React.FC<ProgressTableProps> = ({ data, isLoading = false }
           </thead>
           <tbody>
             <tr>
-              <td colSpan={11} className="text-center">
-                No data available
+              <td colSpan={11} className="text-center" style={{ padding: 0, border: 'none', verticalAlign: 'middle' }}>
+                <EmptyTableMessage hasSearch={hasSearch} />
               </td>
             </tr>
           </tbody>

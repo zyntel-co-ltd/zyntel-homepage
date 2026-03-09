@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CHART_REFRESH_MS } from '@/constants/refreshIntervals';
 import { Header, Navbar, Filters, Footer, KPICard } from '@/components/shared';
 import { exportElementToPdf, buildExportFilename } from '@/utils/exportPdf';
 import {
@@ -13,6 +12,7 @@ import {
 interface RevenueData {
   totalRevenue: number;
   targetRevenue: number;
+  targetTooltip?: string;
   percentage: number;
   avgDailyRevenue: number;
   revenueGrowthRate: number;
@@ -30,7 +30,8 @@ const Revenue: React.FC = () => {
     period: 'thisMonth',
     labSection: 'all',
     shift: 'all',
-    hospitalUnit: 'all'
+    hospitalUnit: 'all',
+    testName: ''
   });
   const [data, setData] = useState<RevenueData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,12 +39,7 @@ const Revenue: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
-
-  useEffect(() => {
-    const id = setInterval(fetchData, CHART_REFRESH_MS);
-    return () => clearInterval(id);
-  }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit]);
+  }, [filters.endDate, filters.period, filters.labSection, filters.shift, filters.hospitalUnit, filters.testName]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -55,6 +51,7 @@ const Revenue: React.FC = () => {
       if (filters.labSection) params.append('labSection', filters.labSection);
       if (filters.shift) params.append('shift', filters.shift);
       if (filters.hospitalUnit) params.append('laboratory', filters.hospitalUnit);
+      if (filters.testName?.trim()) params.append('testName', filters.testName.trim());
 
       const response = await fetch(`/api/revenue?${params.toString()}`, {
         headers: {
@@ -86,7 +83,8 @@ const Revenue: React.FC = () => {
       period: 'thisMonth',
       labSection: 'all',
       shift: 'all',
-      hospitalUnit: 'all'
+      hospitalUnit: 'all',
+      testName: ''
     });
   };
 
@@ -105,6 +103,7 @@ const Revenue: React.FC = () => {
       if (filters.labSection && filters.labSection !== 'all') headerParts.push(`Section: ${filters.labSection}`);
       if (filters.shift && filters.shift !== 'all') headerParts.push(`Shift: ${filters.shift}`);
       if (filters.hospitalUnit && filters.hospitalUnit !== 'all') headerParts.push(`Unit: ${filters.hospitalUnit}`);
+      if (filters.testName?.trim()) headerParts.push(`Test: ${filters.testName.trim()}`);
       const filename = buildExportFilename('Revenue', [dates.startDate, dates.endDate, filters.labSection, filters.shift, filters.hospitalUnit].filter((x) => x && x !== 'all'));
       await exportElementToPdf(chartsRef.current, filename, {
         title: 'Revenue Report',
@@ -134,7 +133,7 @@ const Revenue: React.FC = () => {
         </button>
         <Navbar type="chart" />
         <div className="chart-filters-section">
-          <Filters filters={filters} onFilterChange={updateFilter} showLabSectionFilter={true} showShiftFilter={true} showLaboratoryFilter={true} />
+          <Filters filters={filters} onFilterChange={updateFilter} showLabSectionFilter={true} showShiftFilter={true} showLaboratoryFilter={true} showTestNameFilter={true} />
         </div>
       </div>
 
@@ -149,7 +148,7 @@ const Revenue: React.FC = () => {
         <div className="menu-sidebar-nav">
           <Navbar type="chart" />
         </div>
-        <Filters filters={filters} onFilterChange={updateFilter} showLabSectionFilter={true} showShiftFilter={true} showLaboratoryFilter={true} showPeriodFilter={true} showDateFilter={true} />
+        <Filters filters={filters} onFilterChange={updateFilter} showLabSectionFilter={true} showShiftFilter={true} showLaboratoryFilter={true} showPeriodFilter={true} showDateFilter={true} showTestNameFilter={true} />
       </div>
 
       <main className="dashboard-layout chart-page-main" ref={chartsRef}>
@@ -163,7 +162,7 @@ const Revenue: React.FC = () => {
               gapColor="#e0e0e0"
               valuePrefix="UGX "
               targetLabel={`of UGX ${(data.targetRevenue || 1_500_000_000).toLocaleString()}`}
-              tooltip="Target is prorated for the selected date range (monthly target × days in range ÷ days in month)"
+              tooltip={data.targetTooltip}
               height={28}
             />
           ) : (
@@ -227,7 +226,12 @@ const Revenue: React.FC = () => {
             {/* 3. Hospital Unit Revenue Chart - THIRD (Bar) */}
             <div className="hospital-unit">
               <div className="chart-title">Revenue by Hospital Unit</div>
-              <div className="chart-container">
+              <div className={`chart-container ${(() => {
+                const hospitalData = (data?.hospitalUnitRevenue || []).filter(
+                  (d) => d.unit !== 'Main Laboratory' && d.unit !== 'mainLab'
+                );
+                return hospitalData.length <= 1 ? 'chart-container--few-items' : '';
+              })()}`}>
                 {(() => {
                   const hospitalData = (data?.hospitalUnitRevenue || []).filter(
                     (d) => d.unit !== 'Main Laboratory' && d.unit !== 'mainLab'
@@ -244,7 +248,7 @@ const Revenue: React.FC = () => {
             {/* 4. Revenue by Test - LAST (50 tests, tall canvas) */}
             <div className="test-revenue">
               <div className="chart-title">Revenue by Test</div>
-              <div className="chart-container chart-container--50items">
+              <div className={`chart-container chart-container--50items ${(data?.testRevenue?.length ?? 0) <= 1 ? 'chart-container--few-items' : ''}`}>
                 {data?.testRevenue ? (
                   <TestRevenueChart data={data.testRevenue} />
                 ) : (

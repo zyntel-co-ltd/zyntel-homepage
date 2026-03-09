@@ -124,3 +124,52 @@ export const getDashboardStats = async () => {
     recentCancellations: parseInt(cancellationsResult.rows[0].count as string),
   };
 };
+
+export const getCancellationAnalytics = async (filters?: {
+  startDate?: string;
+  endDate?: string;
+  period?: string;
+  labSection?: string;
+}) => {
+  const { getPeriodDates } = await import('../utils/dateUtils');
+  let startDate: Date;
+  let endDate: Date;
+
+  if (filters?.period && filters.period !== 'custom') {
+    const dates = getPeriodDates(filters.period);
+    startDate = dates.startDate;
+    endDate = dates.endDate;
+  } else if (filters?.startDate && filters?.endDate) {
+    startDate = new Date(filters.startDate);
+    endDate = new Date(filters.endDate);
+  } else {
+    const dates = getPeriodDates('thisMonth');
+    startDate = dates.startDate;
+    endDate = dates.endDate;
+  }
+
+  const conditions = ['tc.cancelled_at::date >= $1::date', 'tc.cancelled_at::date <= $2::date'];
+  const params: any[] = [startDate, endDate];
+  let paramCount = 3;
+
+  if (filters?.labSection && filters.labSection !== 'all') {
+    conditions.push(`LOWER(tr.lab_section_at_test) = LOWER($${paramCount++})`);
+    params.push(filters.labSection);
+  }
+
+  const whereClause = conditions.join(' AND ');
+  const result = await query(
+    `SELECT tc.reason, COUNT(*) as count
+     FROM test_cancellations tc
+     JOIN test_records tr ON tr.id = tc.test_record_id
+     WHERE ${whereClause}
+     GROUP BY tc.reason
+     ORDER BY count DESC`,
+    params
+  );
+
+  return result.rows.map((row) => ({
+    reason: row.reason,
+    count: parseInt(row.count),
+  }));
+};

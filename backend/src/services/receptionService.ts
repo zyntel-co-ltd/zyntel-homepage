@@ -20,33 +20,34 @@ export const getReceptionData = async (filters: FilterParams, search?: string) =
     endDate = dates.endDate;
   }
 
-  const conditions = ['encounter_date BETWEEN $1 AND $2'];
+  const conditions = ['tr.encounter_date BETWEEN $1 AND $2'];
   const params: any[] = [startDate, endDate];
   let paramCount = 3;
 
   if (filters.labSection && filters.labSection !== 'all') {
-    conditions.push(`LOWER(lab_section_at_test) = LOWER($${paramCount++})`);
+    conditions.push(`LOWER(tr.lab_section_at_test) = LOWER($${paramCount++})`);
     params.push(filters.labSection);
   }
 
   if (filters.shift && filters.shift !== 'all') {
-    conditions.push(`LOWER(shift) = LOWER($${paramCount++})`);
+    conditions.push(`LOWER(COALESCE(tr.shift, e.shift, '')) = LOWER($${paramCount++})`);
     params.push(filters.shift);
   }
 
   if (filters.laboratory && filters.laboratory !== 'all') {
+    const labCol = 'COALESCE(tr.laboratory, e.laboratory)';
     if (filters.laboratory === 'Annex') {
-      conditions.push(`LOWER(TRIM(laboratory)) = 'annex'`);
+      conditions.push(`LOWER(TRIM(${labCol})) = 'annex'`);
     } else if (filters.laboratory === 'Main Laboratory') {
-      conditions.push(`(LOWER(TRIM(laboratory)) != 'annex' AND laboratory IS NOT NULL)`);
+      conditions.push(`(LOWER(TRIM(${labCol})) != 'annex' AND ${labCol} IS NOT NULL AND ${labCol} != '')`);
     } else {
-      conditions.push(`LOWER(TRIM(laboratory)) = LOWER(TRIM($${paramCount++}))`);
+      conditions.push(`LOWER(TRIM(${labCol})) = LOWER(TRIM($${paramCount++}))`);
       params.push(filters.laboratory);
     }
   }
 
   if (search) {
-    conditions.push(`(LOWER(test_name) LIKE LOWER($${paramCount}) OR LOWER(lab_no) LIKE LOWER($${paramCount}))`);
+    conditions.push(`(LOWER(tr.test_name) LIKE LOWER($${paramCount}) OR LOWER(tr.lab_no) LIKE LOWER($${paramCount}) OR LOWER(tr.encounter_id) LIKE LOWER($${paramCount}))`);
     params.push(`%${search}%`);
     paramCount++;
   }
@@ -55,12 +56,30 @@ export const getReceptionData = async (filters: FilterParams, search?: string) =
   const hasPage = (filters as any).page != null && (filters as any).page !== '';
   const limitNum = Math.min(parseInt(String((filters as any).limit), 10) || 50, 100);
 
+  const selectCols = `tr.id,
+      tr.encounter_date,
+      COALESCE(tr.lab_no, tr.encounter_id) AS lab_no,
+      COALESCE(tr.shift, e.shift) AS shift,
+      COALESCE(NULLIF(TRIM(tr.laboratory), ''), NULLIF(TRIM(e.laboratory), '')) AS laboratory,
+      tr.lab_section_at_test,
+      tr.test_name,
+      tr.is_urgent,
+      tr.is_received,
+      tr.is_resulted,
+      tr.is_cancelled,
+      tr.cancellation_reason,
+      tr.time_in,
+      tr.time_out,
+      tr.actual_tat`;
+
   if (hasPage) {
     const page = Math.max(1, parseInt(String((filters as any).page), 10) || 1);
     const offset = (page - 1) * limitNum;
 
     const countResult = await query(
-      `SELECT COUNT(*) AS total FROM test_records WHERE ${whereClause}`,
+      `SELECT COUNT(*) AS total FROM test_records tr
+       LEFT JOIN encounters e ON tr.encounter_id = e.lab_no
+       WHERE ${whereClause}`,
       params
     );
     const totalRecords = parseInt(countResult.rows[0].total as string, 10);
@@ -68,25 +87,11 @@ export const getReceptionData = async (filters: FilterParams, search?: string) =
 
     params.push(limitNum, offset);
     const result = await query(
-      `SELECT 
-      id,
-      encounter_date,
-      lab_no,
-      shift,
-      laboratory,
-      lab_section_at_test,
-      test_name,
-      is_urgent,
-      is_received,
-      is_resulted,
-      is_cancelled,
-      cancellation_reason,
-      time_in,
-      time_out,
-      actual_tat
-     FROM test_records 
+      `SELECT ${selectCols}
+     FROM test_records tr
+     LEFT JOIN encounters e ON tr.encounter_id = e.lab_no
      WHERE ${whereClause}
-     ORDER BY encounter_date DESC, time_in DESC
+     ORDER BY tr.encounter_date DESC, tr.time_in DESC
      LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
@@ -94,25 +99,11 @@ export const getReceptionData = async (filters: FilterParams, search?: string) =
   }
 
   const result = await query(
-    `SELECT 
-      id,
-      encounter_date,
-      lab_no,
-      shift,
-      laboratory,
-      lab_section_at_test,
-      test_name,
-      is_urgent,
-      is_received,
-      is_resulted,
-      is_cancelled,
-      cancellation_reason,
-      time_in,
-      time_out,
-      actual_tat
-     FROM test_records 
+    `SELECT ${selectCols}
+     FROM test_records tr
+     LEFT JOIN encounters e ON tr.encounter_id = e.lab_no
      WHERE ${whereClause}
-     ORDER BY encounter_date DESC, time_in DESC`,
+     ORDER BY tr.encounter_date DESC, tr.time_in DESC`,
     params
   );
 
@@ -142,6 +133,8 @@ export const updateTestStatus = async (
     values.push(updates.isReceived);
     if (updates.isReceived) {
       fields.push(`time_received = CURRENT_TIMESTAMP`);
+      fields.push(`received_by_id = $${paramCount++}`);
+      values.push(userId);
     }
   }
 
@@ -150,16 +143,19 @@ export const updateTestStatus = async (
     values.push(updates.isResulted);
     if (updates.isResulted) {
       fields.push(`time_out = CURRENT_TIMESTAMP`);
+      fields.push(`resulted_by_id = $${paramCount++}`);
+      values.push(userId);
     }
   }
 
   fields.push(`updated_at = CURRENT_TIMESTAMP`);
   values.push(testId);
+  const whereParam = paramCount + 1;
 
   const result = await query(
     `UPDATE test_records 
      SET ${fields.join(', ')} 
-     WHERE id = $${paramCount} 
+     WHERE id = $${whereParam} 
      RETURNING *`,
     values
   );
@@ -233,13 +229,45 @@ export const cancelTest = async (
   });
 };
 
+export const uncancelTest = async (testId: number, userId: number) => {
+  const result = await query(
+    `UPDATE test_records 
+     SET is_cancelled = false, 
+         cancellation_reason = NULL, 
+         cancelled_at = NULL, 
+         cancelled_by = NULL,
+         updated_at = CURRENT_TIMESTAMP
+     WHERE id = $1 AND is_cancelled = true
+     RETURNING *`,
+    [testId]
+  );
+  if (result.rows.length === 0) {
+    throw new Error('Test not found or not cancelled');
+  }
+  emitToReception('test-uncancelled', result.rows[0]);
+  return result.rows[0];
+};
+
 export const bulkUpdateTests = async (
   testIds: number[],
-  action: 'urgent' | 'receive' | 'result',
-  userId: number
+  action: 'urgent' | 'receive' | 'result' | 'cancel',
+  userId: number,
+  cancelReason?: string
 ) => {
-  const updates: any = {};
+  if (action === 'cancel') {
+    const results = [];
+    for (const id of testIds) {
+      try {
+        const r = await cancelTest(id, cancelReason || 'bulk_cancel', userId);
+        results.push(r);
+      } catch (e) {
+        console.error(`Bulk cancel test ${id} error:`, e);
+      }
+    }
+    return results;
+  }
 
+  const updates: any = {};
   switch (action) {
     case 'urgent':
       updates.isUrgent = true;
@@ -254,6 +282,5 @@ export const bulkUpdateTests = async (
 
   const promises = testIds.map(id => updateTestStatus(id, updates, userId));
   const results = await Promise.all(promises);
-
   return results;
 };

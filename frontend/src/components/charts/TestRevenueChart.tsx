@@ -23,6 +23,7 @@ export const TestRevenueChart: React.FC<TestRevenueChartProps> = ({ data }) => {
 
     // Get top tests (all data or top 50)
     const topTests = data.slice(0, 50);
+    const isFewItems = topTests.length <= 5;
 
     chartRef.current = new Chart(ctx, {
       type: 'bar',
@@ -34,6 +35,7 @@ export const TestRevenueChart: React.FC<TestRevenueChartProps> = ({ data }) => {
             data: topTests.map(d => d.revenue),
             backgroundColor: '#21336a',
             borderRadius: 0,
+            ...(isFewItems && { maxBarThickness: 48 }),
           }
         ]
       },

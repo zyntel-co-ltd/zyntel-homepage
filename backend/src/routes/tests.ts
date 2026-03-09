@@ -1,7 +1,11 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth';
 import { requireRole } from '../middleware/roleCheck';
-import { getTestsController } from '../controllers/testsController';
+import {
+  getTestsController,
+  getSingleTestAnalyticsController,
+  getTestNamesController,
+} from '../controllers/testsController';
 
 const router = express.Router();
 
@@ -9,6 +13,8 @@ const router = express.Router();
 router.use(authenticate);
 router.use(requireRole('admin', 'manager'));
 
+router.get('/names', getTestNamesController);
+router.get('/:testName/analytics', getSingleTestAnalyticsController);
 router.get('/', getTestsController);
 
 export default router;

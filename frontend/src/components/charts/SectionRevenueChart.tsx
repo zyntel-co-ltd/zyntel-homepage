@@ -36,19 +36,38 @@ export const SectionRevenueChart: React.FC<SectionRevenueChartProps> = ({ data }
     if (!ctx) return;
 
     const totalRevenue = data.reduce((sum, d) => sum + d.revenue, 0);
-    const backgroundColors = data.map((d, i) =>
-      d.section.toLowerCase() === 'other sections'
-        ? OTHER_SECTIONS_GRAY
-        : SECTION_COLORS[i % SECTION_COLORS.length]
-    );
+    const isSingleItem = data.length === 1;
+    // When single item (e.g. filtered to one test), add gray "Other" segment so chart doesn't show 100%
+    const chartData = isSingleItem
+      ? [...data.map(d => d.revenue), Math.max(1, totalRevenue * 0.02)]
+      : data.map(d => d.revenue);
+    const chartLabels = isSingleItem
+      ? [...data.map(d => d.section.toUpperCase()), 'Other']
+      : data.map(d => d.section.toUpperCase());
+    const backgroundColors = isSingleItem
+      ? [
+          ...data.map((d, i) =>
+            d.section.toLowerCase() === 'other sections'
+              ? OTHER_SECTIONS_GRAY
+              : SECTION_COLORS[i % SECTION_COLORS.length]
+          ),
+          OTHER_SECTIONS_GRAY,
+        ]
+      : data.map((d, i) =>
+          d.section.toLowerCase() === 'other sections'
+            ? OTHER_SECTIONS_GRAY
+            : SECTION_COLORS[i % SECTION_COLORS.length]
+        );
+
+    const displayTotal = isSingleItem ? totalRevenue + chartData[chartData.length - 1] : totalRevenue;
 
     chartRef.current = new Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: data.map(d => d.section.toUpperCase()),
+        labels: chartLabels,
         datasets: [
           {
-            data: data.map(d => d.revenue),
+            data: chartData,
             backgroundColor: backgroundColors,
             hoverOffset: 4,
           }
@@ -72,16 +91,21 @@ export const SectionRevenueChart: React.FC<SectionRevenueChartProps> = ({ data }
             callbacks: {
               label: function (context: any) {
                 const value = context.parsed;
-                const percentage = totalRevenue > 0
-                  ? (value / totalRevenue) * 100
-                  : 0;
+                const total = displayTotal;
+                const percentage = total > 0 ? (value / total) * 100 : 0;
+                if (isSingleItem && context.label === 'Other') {
+                  return 'Other (reference)';
+                }
                 return `${context.label}: UGX ${value.toLocaleString()} (${percentage.toFixed(1)}%)`;
               }
             }
           },
           datalabels: {
-            formatter: (value: number) => {
-              const pct = totalRevenue > 0 ? (value / totalRevenue) * 100 : 0;
+            formatter: (value: number, ctx: any) => {
+              const label = ctx?.chart?.data?.labels?.[ctx?.dataIndex];
+              if (isSingleItem && label === 'Other') return '';
+              const total = displayTotal;
+              const pct = total > 0 ? (value / total) * 100 : 0;
               return pct > 0 ? `${pct.toFixed(1)}%` : '';
             },
             color: '#fff',

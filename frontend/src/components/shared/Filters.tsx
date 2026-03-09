@@ -11,6 +11,7 @@ interface FiltersProps {
     hospitalUnit?: string;
     laboratory?: string;
     status?: string;
+    testName?: string;
   };
   onFilterChange: (key: string, value: string) => void;
   onReset?: () => void;
@@ -20,6 +21,7 @@ interface FiltersProps {
   showLaboratoryFilter?: boolean;
   showStatusFilter?: boolean;
   showDateFilter?: boolean;
+  showTestNameFilter?: boolean;
 }
 
 const Filters: React.FC<FiltersProps> = ({
@@ -31,6 +33,7 @@ const Filters: React.FC<FiltersProps> = ({
   showLaboratoryFilter = true,
   showStatusFilter = false,
   showDateFilter = true,
+  showTestNameFilter = false,
 }) => {
   return (
     <div className="dashboard-filters">
@@ -163,6 +166,30 @@ const Filters: React.FC<FiltersProps> = ({
             <option value="processing">Processing</option>
             <option value="completed">Completed</option>
           </select>
+        </div>
+      )}
+
+      {showTestNameFilter && (
+        <div className="filter-group filter-group--test">
+          <label htmlFor="testNameFilter">Test Name:</label>
+          <div className="filter-group-input-with-clear">
+            <input
+              id="testNameFilter"
+              type="text"
+              placeholder="e.g. CBC, Urea"
+              value={filters.testName || ''}
+              onChange={(e) => onFilterChange('testName', e.target.value)}
+            />
+            <button
+              type="button"
+              className="filter-clear-btn"
+              onClick={() => onFilterChange('testName', '')}
+              title="Clear"
+              aria-label="Clear test filter"
+            >
+              <i className="fas fa-times" aria-hidden />
+            </button>
+          </div>
         </div>
       )}
     </div>

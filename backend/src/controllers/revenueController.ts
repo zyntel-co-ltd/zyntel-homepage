@@ -11,6 +11,7 @@ export const getRevenueController = async (req: AuthRequest, res: Response) => {
       labSection: req.query.labSection as string,
       shift: req.query.shift as string,
       laboratory: req.query.laboratory as string,
+      testName: req.query.testName as string,
     };
 
     const data = await revenueService.getRevenueData(filters);

@@ -15,10 +15,13 @@ import LRIDS from './pages/LRIDS';
 import Admin from './pages/Admin';
 import TAT from './pages/TAT';
 import Tests from './pages/Tests';
+import TestAnalytics from './pages/TestAnalytics';
+import LabGuruInsights from './pages/LabGuruInsights';
 import Numbers from './pages/Numbers';
 import Tracker from './pages/Tracker';
 import Progress from './pages/Progress';
 import Performance from './pages/Performance';
+import Results from './pages/Results';
 
 // Viewer: redirect to LRIDS (only page they can see)
 const ViewerGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -38,12 +41,15 @@ const ViewerGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 // Technician: cannot access charts, admin, or LRIDS
-const TECHNICIAN_BLOCKED = ['/revenue', '/tests', '/numbers', '/tat', '/admin', '/lrids'];
+const TECHNICIAN_BLOCKED = ['/revenue', '/tests', '/numbers', '/tat', '/admin', '/lrids', '/test-analytics', '/labguru-insights'];
 const TechnicianGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
   if (isLoading) return null;
-  if (isAuthenticated && user && isTechnician(user.role as any) && TECHNICIAN_BLOCKED.includes(location.pathname)) {
+  const isBlocked = TECHNICIAN_BLOCKED.some(
+    (p) => location.pathname === p || location.pathname.startsWith(p + '/')
+  );
+  if (isAuthenticated && user && isTechnician(user.role as any) && isBlocked) {
     return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
@@ -115,6 +121,10 @@ const AppRoutes: React.FC = () => {
     <Routes>
       <Route path="/" element={<Login />} />
       
+      {/* Patient results: public, no auth - internet-accessible */}
+      <Route path="/results" element={<Results />} />
+      <Route path="/results/:labNo" element={<Results />} />
+      
       {/* LRIDS: public for display screens; viewer sees this in kiosk mode after login */}
       <Route path="/lrids" element={<ViewerGuard><LRIDS /></ViewerGuard>} />
       
@@ -142,6 +152,22 @@ const AppRoutes: React.FC = () => {
         element={
           <ChartRoute>
             <Tests />
+          </ChartRoute>
+        }
+      />
+      <Route
+        path="/test-analytics/:testName"
+        element={
+          <ChartRoute>
+            <TestAnalytics />
+          </ChartRoute>
+        }
+      />
+      <Route
+        path="/labguru-insights"
+        element={
+          <ChartRoute>
+            <LabGuruInsights />
           </ChartRoute>
         }
       />

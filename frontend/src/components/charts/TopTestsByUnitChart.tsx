@@ -22,6 +22,7 @@ export const TopTestsByUnitChart: React.FC<TopTestsByUnitChartProps> = ({ data }
     if (!ctx) return;
 
     const topTests = data.slice(0, 50);
+    const isFewItems = topTests.length <= 5;
 
     chartRef.current = new Chart(ctx, {
       type: 'bar',
@@ -33,6 +34,7 @@ export const TopTestsByUnitChart: React.FC<TopTestsByUnitChartProps> = ({ data }
             data: topTests.map(d => d.count),
             backgroundColor: '#21336a',
             borderRadius: 0,
+            ...(isFewItems && { maxBarThickness: 48 }),
           }
         ]
       },

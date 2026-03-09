@@ -26,6 +26,7 @@ const Navbar: React.FC<NavbarProps> = ({ type = 'table' }) => {
     { path: '/dashboard', label: 'Home', show: true },
     { path: '/revenue', label: 'Revenue', show: canAccessCharts(role) },
     { path: '/tests', label: 'Tests', show: canAccessCharts(role) },
+    { path: '/labguru-insights', label: 'LabGuru', show: canAccessCharts(role) },
     { path: '/numbers', label: 'Numbers', show: canAccessCharts(role) },
     { path: '/tat', label: 'TAT', show: canAccessCharts(role) },
   ];

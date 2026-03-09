@@ -73,6 +73,19 @@ export const cancelTestController = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const uncancelTestController = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.userId;
+
+    const result = await receptionService.uncancelTest(parseInt(id), userId);
+    res.json(result);
+  } catch (error) {
+    console.error('Uncancel test error:', error);
+    res.status(500).json({ error: 'Failed to uncancel test' });
+  }
+};
+
 export const bulkUpdateController = async (req: AuthRequest, res: Response) => {
   try {
     const { testIds, action } = req.body;
@@ -82,11 +95,12 @@ export const bulkUpdateController = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Test IDs are required' });
     }
 
-    if (!['urgent', 'receive', 'result'].includes(action)) {
+    if (!['urgent', 'receive', 'result', 'cancel'].includes(action)) {
       return res.status(400).json({ error: 'Invalid action' });
     }
 
-    const results = await receptionService.bulkUpdateTests(testIds, action, userId);
+    const cancelReason = (req.body.reason as string) || 'bulk_cancel';
+    const results = await receptionService.bulkUpdateTests(testIds, action, userId, cancelReason);
     res.json(results);
   } catch (error) {
     console.error('Bulk update error:', error);

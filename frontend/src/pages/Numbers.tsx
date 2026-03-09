@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CHART_REFRESH_MS } from '@/constants/refreshIntervals';
 import { Header, Navbar, Filters, Footer, KPICard } from '@/components/shared';
 import {
   DailyNumbersChart,
@@ -34,11 +33,6 @@ const Numbers: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [filters.endDate, filters.period, filters.shift, filters.hospitalUnit]);
-
-  useEffect(() => {
-    const id = setInterval(fetchData, CHART_REFRESH_MS);
-    return () => clearInterval(id);
   }, [filters.endDate, filters.period, filters.shift, filters.hospitalUnit]);
 
   const fetchData = async () => {

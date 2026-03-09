@@ -48,11 +48,10 @@ export async function ingestEncountersFromRawData(dataJson: DataJsonRecord[]): P
       const laboratory = determineLaboratory(record.Src);
 
       const result = await query(
-        `INSERT INTO encounters (lab_no, invoice_no, encounter_date, source, time_in, shift, laboratory)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO encounters (lab_no, encounter_date, source, time_in, shift, laboratory)
+         VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (lab_no)
          DO UPDATE SET
-           invoice_no = EXCLUDED.invoice_no,
            encounter_date = EXCLUDED.encounter_date,
            source = EXCLUDED.source,
            time_in = EXCLUDED.time_in,
@@ -60,7 +59,7 @@ export async function ingestEncountersFromRawData(dataJson: DataJsonRecord[]): P
            laboratory = EXCLUDED.laboratory,
            updated_at = CURRENT_TIMESTAMP
          RETURNING (xmax = 0) AS inserted`,
-        [labNo, record.InvoiceNo, encounterDate, record.Src, timeIn, shift, laboratory]
+        [labNo, encounterDate, record.Src, timeIn, shift, laboratory]
       );
       if (result.rows[0].inserted) encountersInserted++;
       else encountersUpdated++;
@@ -143,11 +142,10 @@ async function ingestData() {
         const laboratory = determineLaboratory(record.Src);
 
         const result = await query(
-          `INSERT INTO encounters (lab_no, invoice_no, encounter_date, source, time_in, shift, laboratory)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `INSERT INTO encounters (lab_no, encounter_date, source, time_in, shift, laboratory)
+           VALUES ($1, $2, $3, $4, $5, $6)
            ON CONFLICT (lab_no)
            DO UPDATE SET
-             invoice_no = EXCLUDED.invoice_no,
              encounter_date = EXCLUDED.encounter_date,
              source = EXCLUDED.source,
              time_in = EXCLUDED.time_in,
@@ -155,7 +153,7 @@ async function ingestData() {
              laboratory = EXCLUDED.laboratory,
              updated_at = CURRENT_TIMESTAMP
            RETURNING (xmax = 0) AS inserted`,
-          [labNo, record.InvoiceNo, encounterDate, record.Src, timeIn, shift, laboratory]
+          [labNo, encounterDate, record.Src, timeIn, shift, laboratory]
         );
 
         if (result.rows[0].inserted) {
@@ -246,8 +244,8 @@ async function ingestData() {
           `INSERT INTO test_records
            (encounter_id, test_name, test_metadata_id,
             price_at_test, tat_at_test, lab_section_at_test,
-            encounter_date, invoice_no, lab_no, source, time_in, shift, laboratory)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            encounter_date, lab_no, source, time_in, shift, laboratory)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
            ON CONFLICT (encounter_id, test_name)
            DO UPDATE SET
              price_at_test = EXCLUDED.price_at_test,
@@ -262,9 +260,7 @@ async function ingestData() {
             priceAtTest,
             tatAtTest,
             labSectionAtTest,
-            // Deprecated columns (kept for backward compatibility)
             moment(record.EncounterDate, 'YYYY-MM-DD').toDate(),
-            record.InvoiceNo,
             record.LabNo,
             record.Src,
             timeIn,

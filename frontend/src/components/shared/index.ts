@@ -11,8 +11,10 @@ export { default as TestsForLabDialog } from './TestsForLabDialog';
 export { default as DiceTile } from './DiceTile';
 export { default as KPICard } from './KPICard';
 export { Pagination } from './Pagination';
+export { default as EmptyTableMessage } from './EmptyTableMessage';
 
 // Buttons
 export { default as UrgentButton } from './buttons/UrgentButton';
 export { default as ReceiveButton } from './buttons/ReceiveButton';
 export { default as ResultButton } from './buttons/ResultButton';
+export { default as CancelButton } from './buttons/CancelButton';

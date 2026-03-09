@@ -40,24 +40,54 @@ export const setMonthlyTarget = async (
   return { month, year, target };
 };
 
-/** Get revenue target prorated for a date range (matches numbers/tests behavior) */
-export const getRevenueTargetForPeriod = async (startDate: Date, endDate: Date): Promise<number> => {
+const SHORT_RANGE_DAYS = 14;
+
+export interface RevenueTargetResult {
+  target: number;
+  targetMode: 'prorated' | 'full';
+  targetTooltip: string;
+}
+
+/** Get revenue target for a date range. Short ranges (≤14 days) use full monthly target with comment. */
+export const getRevenueTargetForPeriod = async (startDate: Date, endDate: Date): Promise<RevenueTargetResult> => {
   const startMoment = moment(startDate);
   const endMoment = moment(endDate);
+  const daysInRange = endMoment.diff(startMoment, 'days') + 1;
+
+  if (daysInRange <= SHORT_RANGE_DAYS) {
+    // Short range: show full monthly target for reference
+    let totalTarget = 0;
+    let current = startMoment.clone().startOf('month');
+    while (current.isSameOrBefore(endMoment, 'month')) {
+      const monthTarget = await getMonthlyTarget(current.month() + 1, current.year());
+      totalTarget += monthTarget;
+      current.add(1, 'month');
+    }
+    return {
+      target: Math.round(totalTarget),
+      targetMode: 'full',
+      targetTooltip: 'Target shown is for entire month(s) - use for reference',
+    };
+  }
+
+  // Longer range: prorate
   let totalTarget = 0;
   let current = startMoment.clone().startOf('month');
-
   while (current.isSameOrBefore(endMoment, 'month')) {
     const monthTarget = await getMonthlyTarget(current.month() + 1, current.year());
     const monthStart = moment.max(current.clone().startOf('month'), startMoment);
     const monthEnd = moment.min(current.clone().endOf('month'), endMoment);
-    const daysInRange = monthEnd.diff(monthStart, 'days') + 1;
+    const daysInRangeForMonth = monthEnd.diff(monthStart, 'days') + 1;
     const daysInMonth = current.daysInMonth();
-    totalTarget += (monthTarget * daysInRange) / daysInMonth;
+    totalTarget += (monthTarget * daysInRangeForMonth) / daysInMonth;
     current.add(1, 'month');
   }
 
-  return Math.round(totalTarget);
+  return {
+    target: Math.round(totalTarget),
+    targetMode: 'prorated',
+    targetTooltip: 'Target is prorated for the selected date range',
+  };
 };
 
 export const getAllSettings = async () => {

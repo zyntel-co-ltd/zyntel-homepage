@@ -99,11 +99,13 @@ export interface FilterParams {
   labSection?: string;
   shift?: string;
   laboratory?: string;
+  testName?: string;
 }
 
 export interface RevenueData {
   totalRevenue: number;
   targetRevenue: number;
+  targetTooltip?: string;
   percentage: number;
   avgDailyRevenue: number;
   revenueGrowthRate: number;

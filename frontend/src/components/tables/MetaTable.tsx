@@ -1,5 +1,6 @@
 // frontend/src/components/tables/MetaTable.tsx
 import React from 'react';
+import { EmptyTableMessage } from '@/components/shared';
 
 export interface MetaRecord {
   id: number;
@@ -16,6 +17,7 @@ interface MetaTableProps {
   isLoading?: boolean;
   /** When false, edit button and Add New Test are hidden (technicians) */
   canEdit?: boolean;
+  hasSearch?: boolean;
 }
 
 const MetaTable: React.FC<MetaTableProps> = ({
@@ -23,7 +25,8 @@ const MetaTable: React.FC<MetaTableProps> = ({
   onEdit,
   onAdd,
   isLoading = false,
-  canEdit = true
+  canEdit = true,
+  hasSearch = false
 }) => {
   if (isLoading) {
     return (
@@ -75,9 +78,7 @@ const MetaTable: React.FC<MetaTableProps> = ({
       </div>
 
       {data.length === 0 ? (
-        <div className="empty-state">
-          <p>No tests found.</p>
-        </div>
+        <EmptyTableMessage hasSearch={hasSearch} />
       ) : (
         <table className="neon-table">
           <thead>

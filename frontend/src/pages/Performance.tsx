@@ -217,6 +217,7 @@ const Performance: React.FC = () => {
               <PerformanceTable
                 data={data}
                 onLabNumberDoubleClick={(labNumber) => setTestsDialogLabNo(labNumber)}
+                hasSearch={!!filters.search}
                 isLoading={isLoading}
               />
             </section>
