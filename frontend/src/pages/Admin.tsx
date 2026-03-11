@@ -35,7 +35,7 @@ interface DashboardStats {
 const Admin: React.FC = () => {
   const { user } = useAuth();
   const role = user?.role as 'admin' | 'manager' | 'technician' | 'viewer' | undefined;
-  const [activeTab, setActiveTab] = useState<'users' | 'unmatched' | 'cancellations' | 'settings'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'unmatched' | 'cancellations' | 'settings' | 'audit'>('users');
   const [users, setUsers] = useState<User[]>([]);
   const [unmatchedTests, setUnmatchedTests] = useState<UnmatchedTest[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -85,13 +85,20 @@ const Admin: React.FC = () => {
   const [cancellationFilters, setCancellationFilters] = useState({ period: 'thisMonth', labSection: 'all' });
   const qrRef = useRef<HTMLDivElement>(null);
 
+  // Audit tab state (admin only)
+  const [auditSubTab, setAuditSubTab] = useState<'login' | 'operations'>('login');
+  const [loginLogs, setLoginLogs] = useState<Array<{ id: number; username: string; user_id: number | null; success: boolean; ip_address: string | null; user_agent: string | null; created_at: string }>>([]);
+  const [opLogs, setOpLogs] = useState<Array<{ id: number; user_id: number | null; username?: string; action: string; table_name: string | null; record_id: number | null; old_values: object | null; new_values: object | null; ip_address: string | null; created_at: string }>>([]);
+  const [auditTotals, setAuditTotals] = useState({ login: 0, op: 0 });
+  const [auditFilters, setAuditFilters] = useState({ startDate: '', endDate: '', username: '', success: '', action: '', limit: 50 });
+
   const resultsPageUrl = typeof window !== 'undefined'
     ? (import.meta.env.VITE_PUBLIC_RESULTS_URL || window.location.origin) + '/results'
     : '/results';
 
   useEffect(() => {
     fetchData();
-  }, [activeTab, cancellationFilters.period, cancellationFilters.labSection]);
+  }, [activeTab, cancellationFilters.period, cancellationFilters.labSection, auditSubTab, auditFilters]);
 
   useEffect(() => {
     if (!adminMenuOpen) return;
@@ -107,6 +114,49 @@ const Admin: React.FC = () => {
       fetchTargets();
     }
   }, [activeTab]);
+
+  const fetchAuditData = async () => {
+    const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
+    try {
+      if (auditSubTab === 'login') {
+        const params = new URLSearchParams();
+        if (auditFilters.startDate) params.append('startDate', auditFilters.startDate);
+        if (auditFilters.endDate) params.append('endDate', auditFilters.endDate);
+        if (auditFilters.username) params.append('username', auditFilters.username);
+        if (auditFilters.success) params.append('success', auditFilters.success);
+        params.append('limit', String(auditFilters.limit));
+        const res = await fetch(`/api/audit/login?${params}`, { headers });
+        let data = { rows: [] as typeof loginLogs, total: 0 };
+        if (res.ok) {
+          try {
+            data = await res.json();
+          } catch (_) {}
+        }
+        setLoginLogs(data.rows || []);
+        setAuditTotals((p) => ({ ...p, login: data.total || 0 }));
+      } else {
+        const params = new URLSearchParams();
+        if (auditFilters.startDate) params.append('startDate', auditFilters.startDate);
+        if (auditFilters.endDate) params.append('endDate', auditFilters.endDate);
+        if (auditFilters.action) params.append('action', auditFilters.action);
+        params.append('limit', String(auditFilters.limit));
+        const res = await fetch(`/api/audit/logs?${params}`, { headers });
+        let data = { rows: [] as typeof opLogs, total: 0 };
+        if (res.ok) {
+          try {
+            data = await res.json();
+          } catch (_) {}
+        }
+        setOpLogs(data.rows || []);
+        setAuditTotals((p) => ({ ...p, op: data.total || 0 }));
+      }
+    } catch (e) {
+      console.error('Audit fetch error:', e);
+      setLoginLogs([]);
+      setOpLogs([]);
+      setAuditTotals({ login: 0, op: 0 });
+    }
+  };
 
   const fetchTargets = async () => {
     try {
@@ -182,6 +232,8 @@ const Admin: React.FC = () => {
         } else {
           setCancellationAnalytics([]);
         }
+      } else if (activeTab === 'audit' && role === 'admin') {
+        fetchAuditData();
       }
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -672,6 +724,36 @@ const Admin: React.FC = () => {
             <i className="fas fa-ban mr-2"></i>
             Cancellations
           </button>
+
+          {role === 'admin' && (
+            <button
+              onClick={() => setActiveTab('audit')}
+              style={{
+                padding: '15px 30px',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                color: activeTab === 'audit' ? 'var(--hover-color)' : 'var(--main-color)',
+                backgroundColor: 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'audit' ? '3px solid var(--hover-color)' : '3px solid transparent',
+                cursor: 'pointer',
+                transition: 'all 0.3s'
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== 'audit') {
+                  e.currentTarget.style.color = 'var(--hover-color)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== 'audit') {
+                  e.currentTarget.style.color = 'var(--main-color)';
+                }
+              }}
+            >
+              <i className="fas fa-clipboard-list mr-2"></i>
+              Audit Trail
+            </button>
+          )}
 
           <button
             onClick={() => setActiveTab('settings')}
@@ -1166,6 +1248,8 @@ const Admin: React.FC = () => {
                       <option value="lastMonth">Last Month</option>
                       <option value="thisQuarter">This Quarter</option>
                       <option value="lastQuarter">Last Quarter</option>
+                      <option value="thisYear">This Year</option>
+                      <option value="lastYear">Last Year</option>
                       <option value="custom">Custom</option>
                     </select>
                   </div>
@@ -1218,6 +1302,158 @@ const Admin: React.FC = () => {
                       </div>
                     </div>
                   </>
+                )}
+              </div>
+            )}
+
+            {/* Audit Tab (admin only) */}
+            {activeTab === 'audit' && role === 'admin' && (
+              <div className="card">
+                <h3 style={{ fontSize: '1.3rem', fontWeight: '600', color: 'var(--main-color)', marginBottom: '24px' }}>
+                  <i className="fas fa-clipboard-list mr-2"></i>
+                  Audit Trail
+                </h3>
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                  <button
+                    type="button"
+                    className={`btn ${auditSubTab === 'login' ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => setAuditSubTab('login')}
+                  >
+                    Login Audit
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn ${auditSubTab === 'operations' ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => setAuditSubTab('operations')}
+                  >
+                    Operational Actions
+                  </button>
+                </div>
+                <div style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+                  <input
+                    type="date"
+                    value={auditFilters.startDate}
+                    onChange={(e) => setAuditFilters((p) => ({ ...p, startDate: e.target.value }))}
+                  />
+                  <input
+                    type="date"
+                    value={auditFilters.endDate}
+                    onChange={(e) => setAuditFilters((p) => ({ ...p, endDate: e.target.value }))}
+                  />
+                  {auditSubTab === 'login' && (
+                    <>
+                      <input
+                        type="text"
+                        value={auditFilters.username}
+                        onChange={(e) => setAuditFilters((p) => ({ ...p, username: e.target.value }))}
+                        placeholder="Username"
+                        style={{ minWidth: '120px' }}
+                      />
+                      <select
+                        value={auditFilters.success}
+                        onChange={(e) => setAuditFilters((p) => ({ ...p, success: e.target.value }))}
+                      >
+                        <option value="">All</option>
+                        <option value="true">Success</option>
+                        <option value="false">Failed</option>
+                      </select>
+                    </>
+                  )}
+                  {auditSubTab === 'operations' && (
+                    <input
+                      type="text"
+                      value={auditFilters.action}
+                      onChange={(e) => setAuditFilters((p) => ({ ...p, action: e.target.value }))}
+                      placeholder="Action (e.g. CREATE_USER)"
+                      style={{ minWidth: '160px' }}
+                    />
+                  )}
+                  <select
+                    value={auditFilters.limit}
+                    onChange={(e) => setAuditFilters((p) => ({ ...p, limit: parseInt(e.target.value) }))}
+                  >
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                    <option value={200}>200</option>
+                  </select>
+                  <button type="button" className="btn btn-primary" onClick={fetchAuditData}>
+                    Apply
+                  </button>
+                </div>
+                {auditSubTab === 'login' && (
+                  <div style={{ overflowX: 'auto' }}>
+                    <p style={{ marginBottom: '12px', color: '#666' }}>Showing {loginLogs.length} of {auditTotals.login} login events</p>
+                    <table className="neon-table" style={{ width: '100%' }}>
+                      <thead>
+                        <tr>
+                          <th>Time</th>
+                          <th>Username</th>
+                          <th>Status</th>
+                          <th>IP</th>
+                          <th>User Agent</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {loginLogs.map((r) => (
+                          <tr key={r.id}>
+                            <td>{new Date(r.created_at).toLocaleString()}</td>
+                            <td>{r.username}</td>
+                            <td>
+                              <span style={{ color: r.success ? '#4caf50' : '#f44336', fontWeight: 600 }}>
+                                {r.success ? 'Success' : 'Failed'}
+                              </span>
+                            </td>
+                            <td>{r.ip_address || '-'}</td>
+                            <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={r.user_agent || ''}>
+                              {r.user_agent || '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {loginLogs.length === 0 && <p style={{ textAlign: 'center', color: '#999', padding: '40px' }}>No login events found</p>}
+                  </div>
+                )}
+                {auditSubTab === 'operations' && (
+                  <div style={{ overflowX: 'auto' }}>
+                    <p style={{ marginBottom: '12px', color: '#666' }}>Showing {opLogs.length} of {auditTotals.op} operational actions</p>
+                    <table className="neon-table" style={{ width: '100%' }}>
+                      <thead>
+                        <tr>
+                          <th>Time</th>
+                          <th>User</th>
+                          <th>Action</th>
+                          <th>Table</th>
+                          <th>Record ID</th>
+                          <th>IP</th>
+                          <th>Details</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {opLogs.map((r) => (
+                          <tr key={r.id}>
+                            <td>{new Date(r.created_at).toLocaleString()}</td>
+                            <td>{r.username || (r.user_id ? `#${r.user_id}` : '-')}</td>
+                            <td><code>{r.action}</code></td>
+                            <td>{r.table_name || '-'}</td>
+                            <td>{r.record_id ?? '-'}</td>
+                            <td>{r.ip_address || '-'}</td>
+                            <td style={{ maxWidth: '200px', fontSize: '0.85em' }}>
+                              {r.new_values && (
+                                <span title={JSON.stringify(r.new_values)}>
+                                  {typeof r.new_values === 'object' ? JSON.stringify(r.new_values).slice(0, 80) + '...' : String(r.new_values)}
+                                </span>
+                              )}
+                              {!r.new_values && r.old_values && <span title={JSON.stringify(r.old_values)}>(old)</span>}
+                              {!r.new_values && !r.old_values && '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {opLogs.length === 0 && <p style={{ textAlign: 'center', color: '#999', padding: '40px' }}>No operational actions found</p>}
+                  </div>
                 )}
               </div>
             )}

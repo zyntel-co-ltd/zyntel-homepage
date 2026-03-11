@@ -1,6 +1,5 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth';
-import { requireRole } from '../middleware/roleCheck';
 import {
   getReceptionController,
   updateTestStatusController,
@@ -17,7 +16,7 @@ router.use(authenticate);
 router.get('/', getReceptionController);
 router.put('/:id/status', updateTestStatusController);
 router.post('/:id/cancel', cancelTestController);
-router.post('/:id/uncancel', requireRole('admin'), uncancelTestController);
+router.post('/:id/uncancel', uncancelTestController);
 router.post('/bulk-update', bulkUpdateController);
 router.post('/update-bulk', bulkUpdateController); // alias for frontend
 

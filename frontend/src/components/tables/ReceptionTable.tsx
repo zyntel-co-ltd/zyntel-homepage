@@ -172,8 +172,8 @@ const ReceptionTable: React.FC<ReceptionTableProps> = ({
                   isCancelled={row.cancelled ?? false}
                   onClick={() => onCancelClick?.(row.id)}
                   disabled={row.cancelled}
-                  onUncancelClick={row.cancelled && isAdmin ? () => onUncancelClick?.(row.id) : undefined}
-                  showUncancel={row.cancelled && isAdmin}
+                  onUncancelClick={row.cancelled ? () => onUncancelClick?.(row.id) : undefined}
+                  showUncancel={!!row.cancelled}
                 />
               </td>
               <td className="text-center">

@@ -145,11 +145,10 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
         const testMetadataId = (metadataResult.rows[0] as { id: number }).id;
 
         const timeIn = parseDateTimeField(row.Time_Received) ?? enc.time_in;
-        const timeOut = parseDateTimeField(row.Test_Time_Out);
-        const actualTat = timeIn && timeOut ? computeActualTatMinutes(timeIn, timeOut) : null;
-        // Urgent only when explicitly "urgent" (not "Not Urgent" which contains the substring)
-        const u = (row.Urgency || '').toLowerCase().trim();
-        const isUrgent = u === 'urgent' || (u.startsWith('urgent') && !u.includes('not'));
+        // time_out comes ONLY from Reception result button click, NOT from LIMS
+        const actualTat = null; // Will be set when user clicks result
+        // is_urgent comes ONLY from Reception urgent button click, NOT from LIMS
+        const isUrgent = false;
 
         // is_received and is_resulted come from user interaction (Reception buttons), NOT from LIMS.
         // New records start as pending; ON CONFLICT preserves existing user-set values.
@@ -160,15 +159,13 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
             is_urgent, is_received, is_resulted, is_cancelled,
             time_in, time_out, actual_tat,
             encounter_date, lab_no, source, shift, laboratory)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, false, false, false, $8, $9, $10, $11, $12, $13, $14, $15)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, false, false, false, $8, NULL, NULL, $9, $10, $11, $12, $13)
            ON CONFLICT (encounter_id, test_name)
            DO UPDATE SET
              price_at_test = EXCLUDED.price_at_test,
              tat_at_test = EXCLUDED.tat_at_test,
              lab_section_at_test = EXCLUDED.lab_section_at_test,
              time_in = EXCLUDED.time_in,
-             time_out = EXCLUDED.time_out,
-             actual_tat = EXCLUDED.actual_tat,
              updated_at = CURRENT_TIMESTAMP
            RETURNING (xmax = 0) AS inserted`,
           [
@@ -180,8 +177,6 @@ async function runIngestTestRecords(data: TestJsonRecordExport[]) {
             labSection,
             isUrgent,
             timeIn,
-            timeOut,
-            actualTat,
             enc.encounter_date,
             encLabNo,
             encSource,

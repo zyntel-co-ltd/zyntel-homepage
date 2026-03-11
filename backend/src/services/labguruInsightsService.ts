@@ -6,7 +6,7 @@
 import { execSync } from 'child_process';
 import path from 'path';
 import { query } from '../config/database';
-import { getPeriodDates } from '../utils/dateUtils';
+import { getPeriodDates, getChartGranularity } from '../utils/dateUtils';
 import { getTestsTargetForPeriod } from './testsTargetService';
 import moment from 'moment';
 
@@ -19,6 +19,7 @@ export interface LabGuruInsightsResult {
   startDate: string;
   endDate: string;
   gap: number; // labguruCount - ourCount
+  granularity?: 'daily' | 'monthly';
 }
 
 export const getLabGuruInsights = async (params: {
@@ -45,17 +46,27 @@ export const getLabGuruInsights = async (params: {
   const startStr = moment(startDate).format('YYYY-MM-DD');
   const endStr = moment(endDate).format('YYYY-MM-DD');
 
-  // 1. Our count (from test_records - unchanged logic)
-  const ourResult = await query(
-    `SELECT encounter_date::date as date, COUNT(*) as count
-     FROM test_records 
-     WHERE encounter_date BETWEEN $1 AND $2 AND is_cancelled = false
-     GROUP BY encounter_date::date 
-     ORDER BY encounter_date::date`,
-    [startDate, endDate]
-  );
+  const granularity = getChartGranularity(params.period);
+  // 1. Our count (from test_records) - monthly rollup when > 31 days
+  const ourResult = granularity === 'monthly'
+    ? await query(
+        `SELECT date_trunc('month', encounter_date)::date as date, COUNT(*) as count
+         FROM test_records 
+         WHERE encounter_date BETWEEN $1 AND $2 AND is_cancelled = false
+         GROUP BY date_trunc('month', encounter_date) 
+         ORDER BY date_trunc('month', encounter_date)`,
+        [startDate, endDate]
+      )
+    : await query(
+        `SELECT encounter_date::date as date, COUNT(*) as count
+         FROM test_records 
+         WHERE encounter_date BETWEEN $1 AND $2 AND is_cancelled = false
+         GROUP BY encounter_date::date 
+         ORDER BY encounter_date::date`,
+        [startDate, endDate]
+      );
   const ourDaily = ourResult.rows.map((r: any) => ({
-    date: moment(r.date).format('YYYY-MM-DD'),
+    date: moment(r.date).format(granularity === 'monthly' ? 'YYYY-MM' : 'YYYY-MM-DD'),
     count: parseInt(r.count),
   }));
   const ourCount = ourDaily.reduce((s, d) => s + d.count, 0);
@@ -82,7 +93,17 @@ export const getLabGuruInsights = async (params: {
       return { error: parsed.error };
     }
     labguruCount = parsed.labguruCount ?? 0;
-    labguruDaily = parsed.daily ?? [];
+    const rawDaily = parsed.daily ?? [];
+    if (granularity === 'monthly' && rawDaily.length > 0) {
+      const byMonth: Record<string, number> = {};
+      rawDaily.forEach((d: { date: string; count: number }) => {
+        const monthKey = moment(d.date).format('YYYY-MM');
+        byMonth[monthKey] = (byMonth[monthKey] || 0) + (d.count || 0);
+      });
+      labguruDaily = Object.entries(byMonth).sort(([a], [b]) => a.localeCompare(b)).map(([date, count]) => ({ date, count }));
+    } else {
+      labguruDaily = rawDaily;
+    }
   } catch (err: any) {
     const msg = err?.stderr || err?.message || String(err);
     return { error: `LabGuru query failed: ${msg}` };
@@ -94,6 +115,7 @@ export const getLabGuruInsights = async (params: {
     target,
     labguruDaily,
     ourDaily,
+    granularity,
     startDate: startStr,
     endDate: endStr,
     gap: labguruCount - ourCount,

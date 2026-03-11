@@ -5,7 +5,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const resultsApiUrl = (labNo: string) => {
+  const enc = encodeURIComponent(labNo);
+  return base ? (base.endsWith('/api') ? `${base}/results/${enc}` : `${base}/api/results/${enc}`) : `/api/results/${enc}`;
+};
 
 interface TestStatus {
   test_name: string;
@@ -78,7 +82,7 @@ const Results: React.FC = () => {
     setLoading(true);
     setData(null);
     try {
-      const res = await fetch(`${API_BASE}/api/results/${encodeURIComponent(trimmed)}`);
+      const res = await fetch(resultsApiUrl(trimmed));
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         const errMsg = (json as { error?: string }).error || 'Failed to fetch results';
@@ -124,7 +128,7 @@ const Results: React.FC = () => {
     setError(null);
     setLoading(true);
     setData(null);
-    fetch(`${API_BASE}/api/results/${encodeURIComponent(trimmed)}`)
+    fetch(resultsApiUrl(trimmed))
       .then((res) => (res.ok ? res.json() : res.json().then((j: any) => Promise.reject(new Error(j?.error || 'Failed to fetch')))))
       .then(setData)
       .catch((err) => setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.'))

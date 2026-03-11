@@ -37,6 +37,10 @@ export const initializeScheduler = () => {
         `DELETE FROM audit_log 
          WHERE created_at < NOW() - INTERVAL '90 days'`
       );
+      await query(
+        `DELETE FROM login_audit 
+         WHERE created_at < NOW() - INTERVAL '90 days'`
+      );
       console.log('✅ Audit logs cleaned');
     } catch (error) {
       console.error('❌ Audit cleanup failed:', error);

@@ -91,7 +91,7 @@ export const getReceptionData = async (filters: FilterParams, search?: string) =
      FROM test_records tr
      LEFT JOIN encounters e ON tr.encounter_id = e.lab_no
      WHERE ${whereClause}
-     ORDER BY tr.encounter_date DESC, tr.time_in DESC
+     ORDER BY COALESCE(tr.updated_at, tr.encounter_date) DESC, tr.time_in DESC NULLS LAST
      LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
@@ -103,7 +103,7 @@ export const getReceptionData = async (filters: FilterParams, search?: string) =
      FROM test_records tr
      LEFT JOIN encounters e ON tr.encounter_id = e.lab_no
      WHERE ${whereClause}
-     ORDER BY tr.encounter_date DESC, tr.time_in DESC`,
+     ORDER BY COALESCE(tr.updated_at, tr.encounter_date) DESC, tr.time_in DESC NULLS LAST`,
     params
   );
 

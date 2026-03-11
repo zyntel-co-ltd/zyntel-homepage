@@ -16,6 +16,7 @@ interface TestAnalyticsData {
   avgDailyTests: number;
   testVolumeTrend: Array<{ date: string; count: number }>;
   revenueTrend: Array<{ date: string; revenue: number }>;
+  granularity?: 'daily' | 'monthly';
 }
 
 const TestAnalytics: React.FC = () => {
@@ -188,11 +189,11 @@ const TestAnalytics: React.FC = () => {
             <div className="test-count">
               <h3 className="chart-title">
                 <i className="fas fa-chart-bar mr-2"></i>
-                Daily Volume
+                {data.granularity === 'monthly' ? 'Monthly' : 'Daily'} Volume
               </h3>
               <div className="chart-container">
                 {data.testVolumeTrend && data.testVolumeTrend.length > 0 ? (
-                  <TestVolumeChart data={data.testVolumeTrend} />
+                  <TestVolumeChart data={data.testVolumeTrend} granularity={data.granularity} />
                 ) : (
                   <div style={{ textAlign: 'center', padding: '60px 20px', color: '#999' }}>No data</div>
                 )}
@@ -201,11 +202,11 @@ const TestAnalytics: React.FC = () => {
             <div className="test-count">
               <h3 className="chart-title">
                 <i className="fas fa-money-bill mr-2"></i>
-                Daily Revenue
+                {data.granularity === 'monthly' ? 'Monthly' : 'Daily'} Revenue
               </h3>
               <div className="chart-container">
                 {data.revenueTrend && data.revenueTrend.length > 0 ? (
-                  <DailyRevenueChart data={data.revenueTrend} />
+                  <DailyRevenueChart data={data.revenueTrend} granularity={data.granularity} />
                 ) : (
                   <div style={{ textAlign: 'center', padding: '60px 20px', color: '#999' }}>No data</div>
                 )}

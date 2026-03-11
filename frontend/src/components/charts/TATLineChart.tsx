@@ -10,9 +10,18 @@ interface DailyDataPoint {
 
 interface TATLineChartProps {
   data: DailyDataPoint[];
+  granularity?: 'daily' | 'monthly';
 }
 
-const TATLineChart: React.FC<TATLineChartProps> = ({ data = [] }) => {
+const formatLabel = (date: string, granularity?: 'daily' | 'monthly') => {
+  if (granularity === 'monthly' || (date.length === 7 && date[4] === '-')) {
+    const [y, m] = date.split('-');
+    return new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }
+  return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+const TATLineChart: React.FC<TATLineChartProps> = ({ data = [], granularity }) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
 
@@ -26,10 +35,7 @@ const TATLineChart: React.FC<TATLineChartProps> = ({ data = [] }) => {
     const ctx = chartRef.current.getContext('2d');
     if (!ctx) return;
 
-    const labels = data.map(d => {
-      const date = new Date(d.date);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
+    const labels = data.map(d => formatLabel(d.date, granularity));
     const delayedData = data.map(d => d.delayed || 0);
     const onTimeData = data.map(d => d.onTime || 0);
     const notUploadedData = data.map(d => d.notUploaded || 0);
@@ -114,7 +120,7 @@ const TATLineChart: React.FC<TATLineChartProps> = ({ data = [] }) => {
         chartInstance.current.destroy();
       }
     };
-  }, [data]);
+  }, [data, granularity]);
 
   return (
     <div style={{ width: '100%', height: '100%', minHeight: '350px' }}>

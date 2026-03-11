@@ -15,6 +15,7 @@ interface NumbersData {
   busiestHour: string;
   busiestDay: string;
   dailyVolume: Array<{ date: string; count: number }>;
+  granularity?: 'daily' | 'monthly';
   hourlyVolume: Array<{ hour: number; count: number }>;
 }
 
@@ -162,12 +163,12 @@ const Numbers: React.FC = () => {
 
         <div className="charts-area">
           <div className="dashboard-charts">
-            {/* Daily Request Volume Chart */}
+            {/* Daily/Monthly Request Volume Chart */}
             <div className="daily-numbers-chart">
-              <div className="chart-title">Daily Request Volume</div>
+              <div className="chart-title">{data?.granularity === 'monthly' ? 'Monthly Request Volume' : 'Daily Request Volume'}</div>
               <div className="chart-container">
                 {data?.dailyVolume ? (
-                  <DailyNumbersChart data={data.dailyVolume} />
+                  <DailyNumbersChart data={data.dailyVolume} granularity={data.granularity} />
                 ) : (
                   <p style={{ textAlign: 'center', color: '#999' }}>No data available</p>
                 )}

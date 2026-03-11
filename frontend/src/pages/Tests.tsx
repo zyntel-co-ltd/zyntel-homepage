@@ -14,6 +14,7 @@ interface TestsData {
   percentage: number;
   avgDailyTests: number;
   dailyVolume: Array<{ date: string; count: number }>;
+  granularity?: 'daily' | 'monthly';
   topTestsByUnit: Array<{ test: string; count: number }>;
   units: string[];
 }
@@ -126,6 +127,7 @@ const Tests: React.FC = () => {
       percentage: result.percentage || 0,
       avgDailyTests: result.avgDailyTests || 0,
       dailyVolume: result.testVolumeTrend || [],
+      granularity: result.granularity,
       topTestsByUnit: topTests,
       units
     });
@@ -167,6 +169,7 @@ const Tests: React.FC = () => {
         percentage: 0,
         avgDailyTests: 0,
         dailyVolume: [],
+        granularity: undefined,
         topTestsByUnit: [],
         units: []
       });
@@ -346,15 +349,15 @@ const Tests: React.FC = () => {
             </div>
 
             <div className="dashboard-charts">
-              {/* Daily Test Volume Trend - first */}
+              {/* Daily/Monthly Test Volume Trend - first */}
               <div className="test-count">
                 <h3 className="chart-title">
                   <i className="fas fa-calendar-alt mr-2"></i>
-                  Daily Test Volume Trend
+                  {data?.granularity === 'monthly' ? 'Monthly' : 'Daily'} Test Volume Trend
                 </h3>
                 <div className="chart-container">
                   {data?.dailyVolume && data.dailyVolume.length > 0 ? (
-                    <TestVolumeChart data={data.dailyVolume} />
+                    <TestVolumeChart data={data.dailyVolume} granularity={data.granularity} />
                   ) : (
                     <div style={{ textAlign: 'center', padding: '60px 20px', color: '#999' }}>
                       <i className="fas fa-chart-line" style={{ fontSize: '3rem', marginBottom: '15px', opacity: 0.5 }}></i>

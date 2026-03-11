@@ -17,6 +17,7 @@ interface RevenueData {
   avgDailyRevenue: number;
   revenueGrowthRate: number;
   dailyRevenue: Array<{ date: string; revenue: number }>;
+  granularity?: 'daily' | 'monthly';
   sectionRevenue: Array<{ section: string; revenue: number }>;
   testRevenue: Array<{ test_name: string; revenue: number }>;
   hospitalUnitRevenue: Array<{ unit: string; revenue: number }>;
@@ -211,12 +212,12 @@ const Revenue: React.FC = () => {
               </div>
             </div>
 
-            {/* 2. Daily Revenue Chart - SECOND (Line) */}
+            {/* 2. Daily/Monthly Revenue Chart - SECOND (Line) */}
             <div className="revenue">
-              <div className="chart-title">Daily Revenue</div>
+              <div className="chart-title">{data?.granularity === 'monthly' ? 'Monthly Revenue' : 'Daily Revenue'}</div>
               <div className="chart-container">
                 {data?.dailyRevenue ? (
-                  <DailyRevenueChart data={data.dailyRevenue} />
+                  <DailyRevenueChart data={data.dailyRevenue} granularity={data.granularity} />
                 ) : (
                   <p style={{ textAlign: 'center', color: '#999' }}>No data available</p>
                 )}

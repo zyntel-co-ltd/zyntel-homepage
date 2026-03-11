@@ -4,7 +4,7 @@
  */
 import { query } from '../config/database';
 import { FilterParams } from '../types';
-import { getPeriodDates } from '../utils/dateUtils';
+import { getPeriodDates, getChartGranularity } from '../utils/dateUtils';
 import { getTestsTargetForPeriod } from './testsTargetService';
 import moment from 'moment';
 
@@ -87,25 +87,40 @@ export const getSingleTestAnalytics = async (
   const daysInPeriod = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
   const avgDailyTests = totalCount / daysInPeriod;
 
-  const volumeTrendResult = await query(
-    `SELECT encounter_date::date as date, COUNT(*) as count
-     FROM test_records WHERE ${whereClause}
-     GROUP BY encounter_date::date ORDER BY encounter_date::date`,
-    params
-  );
+  const granularity = getChartGranularity(filters.period);
+  const volumeTrendResult = granularity === 'monthly'
+    ? await query(
+        `SELECT date_trunc('month', encounter_date)::date as date, COUNT(*) as count
+         FROM test_records WHERE ${whereClause}
+         GROUP BY date_trunc('month', encounter_date) ORDER BY date_trunc('month', encounter_date)`,
+        params
+      )
+    : await query(
+        `SELECT encounter_date::date as date, COUNT(*) as count
+         FROM test_records WHERE ${whereClause}
+         GROUP BY encounter_date::date ORDER BY encounter_date::date`,
+        params
+      );
   const testVolumeTrend = volumeTrendResult.rows.map((row) => ({
-    date: moment(row.date).format('YYYY-MM-DD'),
+    date: moment(row.date).format(granularity === 'monthly' ? 'YYYY-MM' : 'YYYY-MM-DD'),
     count: parseInt(row.count),
   }));
 
-  const revenueTrendResult = await query(
-    `SELECT encounter_date::date as date, COALESCE(SUM(price_at_test), 0) as revenue
-     FROM test_records WHERE ${whereClause}
-     GROUP BY encounter_date::date ORDER BY encounter_date::date`,
-    params
-  );
+  const revenueTrendResult = granularity === 'monthly'
+    ? await query(
+        `SELECT date_trunc('month', encounter_date)::date as date, COALESCE(SUM(price_at_test), 0) as revenue
+         FROM test_records WHERE ${whereClause}
+         GROUP BY date_trunc('month', encounter_date) ORDER BY date_trunc('month', encounter_date)`,
+        params
+      )
+    : await query(
+        `SELECT encounter_date::date as date, COALESCE(SUM(price_at_test), 0) as revenue
+         FROM test_records WHERE ${whereClause}
+         GROUP BY encounter_date::date ORDER BY encounter_date::date`,
+        params
+      );
   const revenueTrend = revenueTrendResult.rows.map((row) => ({
-    date: moment(row.date).format('YYYY-MM-DD'),
+    date: moment(row.date).format(granularity === 'monthly' ? 'YYYY-MM' : 'YYYY-MM-DD'),
     revenue: parseFloat(row.revenue),
   }));
 
@@ -121,6 +136,7 @@ export const getSingleTestAnalytics = async (
     avgDailyTests,
     testVolumeTrend,
     revenueTrend,
+    granularity,
   };
 };
 

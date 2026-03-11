@@ -46,6 +46,14 @@ export const getPeriodDates = (period: string): { startDate: string; endDate: st
       startDate = now.clone().subtract(1, 'quarter').startOf('quarter');
       endDate = now.clone().subtract(1, 'quarter').endOf('quarter');
       break;
+    case 'thisYear':
+      startDate = now.clone().startOf('year');
+      endDate = now.clone().endOf('year');
+      break;
+    case 'lastYear':
+      startDate = now.clone().subtract(1, 'year').startOf('year');
+      endDate = now.clone().subtract(1, 'year').endOf('year');
+      break;
     case 'Q1':
       startDate = moment(`${now.year()}-01-01`);
       endDate = moment(`${now.year()}-03-31`);

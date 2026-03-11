@@ -1,6 +1,6 @@
 import { query } from '../config/database';
 import { FilterParams } from '../types';
-import { getPeriodDates } from '../utils/dateUtils';
+import { getPeriodDates, getChartGranularity } from '../utils/dateUtils';
 import { getRevenueTargetForPeriod } from './settingsService';
 import moment from 'moment';
 
@@ -67,19 +67,29 @@ export const getRevenueData = async (filters: FilterParams) => {
   // Calculate percentage
   const percentage = (totalRevenue / targetRevenue) * 100;
 
-  // Get daily revenue
-  const dailyResult = await query(
-    `SELECT encounter_date::date as date, 
-            COALESCE(SUM(price_at_test), 0) as revenue 
-     FROM test_records 
-     WHERE ${whereClause}
-     GROUP BY encounter_date::date 
-     ORDER BY encounter_date::date`,
-    params
-  );
+  const granularity = getChartGranularity(filters.period);
+  const dailyResult = granularity === 'monthly'
+    ? await query(
+        `SELECT date_trunc('month', encounter_date)::date as date, 
+                COALESCE(SUM(price_at_test), 0) as revenue 
+         FROM test_records 
+         WHERE ${whereClause}
+         GROUP BY date_trunc('month', encounter_date) 
+         ORDER BY date_trunc('month', encounter_date)`,
+        params
+      )
+    : await query(
+        `SELECT encounter_date::date as date, 
+                COALESCE(SUM(price_at_test), 0) as revenue 
+         FROM test_records 
+         WHERE ${whereClause}
+         GROUP BY encounter_date::date 
+         ORDER BY encounter_date::date`,
+        params
+      );
 
   const dailyRevenue = dailyResult.rows.map(row => ({
-    date: moment(row.date).format('YYYY-MM-DD'),
+    date: moment(row.date).format(granularity === 'monthly' ? 'YYYY-MM' : 'YYYY-MM-DD'),
     revenue: parseFloat(row.revenue),
   }));
 
@@ -213,6 +223,7 @@ export const getRevenueData = async (filters: FilterParams) => {
     avgDailyRevenue,
     revenueGrowthRate,
     dailyRevenue,
+    granularity,
     sectionRevenue,
     testRevenue,
     hospitalUnitRevenue,

@@ -5,9 +5,18 @@ import Chart from 'chart.js/auto';
 
 interface DailyNumbersChartProps {
   data: Array<{ date: string; count: number }>;
+  granularity?: 'daily' | 'monthly';
 }
 
-export const DailyNumbersChart: React.FC<DailyNumbersChartProps> = ({ data }) => {
+const formatLabel = (date: string, granularity?: 'daily' | 'monthly') => {
+  if (granularity === 'monthly' || (date.length === 7 && date[4] === '-')) {
+    const [y, m] = date.split('-');
+    return new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }
+  return date;
+};
+
+export const DailyNumbersChart: React.FC<DailyNumbersChartProps> = ({ data, granularity }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
@@ -24,7 +33,7 @@ export const DailyNumbersChart: React.FC<DailyNumbersChartProps> = ({ data }) =>
     chartRef.current = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: data.map(d => d.date),
+        labels: data.map(d => formatLabel(d.date, granularity)),
         datasets: [
           {
             label: 'Daily Request Volume',
@@ -77,7 +86,7 @@ export const DailyNumbersChart: React.FC<DailyNumbersChartProps> = ({ data }) =>
         chartRef.current.destroy();
       }
     };
-  }, [data]);
+  }, [data, granularity]);
 
   return <canvas ref={canvasRef}></canvas>;
 };

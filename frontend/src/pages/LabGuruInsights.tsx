@@ -248,6 +248,8 @@ const LabGuruInsights: React.FC = () => {
                 <option value="lastMonth">Last Month</option>
                 <option value="thisQuarter">This Quarter</option>
                 <option value="lastQuarter">Last Quarter</option>
+                <option value="thisYear">This Year</option>
+                <option value="lastYear">Last Year</option>
               </select>
             </div>
           </div>

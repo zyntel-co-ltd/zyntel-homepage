@@ -1,6 +1,6 @@
 import { query } from '../config/database';
 import { FilterParams } from '../types';
-import { getPeriodDates } from '../utils/dateUtils';
+import { getPeriodDates, getChartGranularity } from '../utils/dateUtils';
 import { getNumbersTargetForPeriod } from './numbersTargetService';
 import moment from 'moment';
 
@@ -59,17 +59,27 @@ export const getNumbersData = async (filters: FilterParams) => {
   const daysInPeriod = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
   const avgDailyRequests = totalRequests / daysInPeriod;
 
-  const dailyVolumeResult = await query(
-    `SELECT date::date as date, COUNT(*) as count
-     FROM patients
-     WHERE ${whereClause}
-     GROUP BY date::date
-     ORDER BY date::date`,
-    params
-  );
+  const granularity = getChartGranularity(filters.period);
+  const dailyVolumeResult = granularity === 'monthly'
+    ? await query(
+        `SELECT date_trunc('month', date)::date as date, COUNT(*) as count
+         FROM patients
+         WHERE ${whereClause}
+         GROUP BY date_trunc('month', date)
+         ORDER BY date_trunc('month', date)`,
+        params
+      )
+    : await query(
+        `SELECT date::date as date, COUNT(*) as count
+         FROM patients
+         WHERE ${whereClause}
+         GROUP BY date::date
+         ORDER BY date::date`,
+        params
+      );
 
   const dailyVolume = dailyVolumeResult.rows.map((row: any) => ({
-    date: moment(row.date).format('YYYY-MM-DD'),
+    date: moment(row.date).format(granularity === 'monthly' ? 'YYYY-MM' : 'YYYY-MM-DD'),
     count: parseInt(row.count),
   }));
 
@@ -114,6 +124,7 @@ export const getNumbersData = async (filters: FilterParams) => {
     busiestHour,
     busiestDay,
     dailyVolume,
+    granularity,
     hourlyVolume,
   };
 };

@@ -2862,10 +2862,11 @@ th .subtext {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
+  padding: 15px 20px 10px 20px;
 }
 
 .lrids header h1 {
-  font-size: 1.4rem;
+  font-size: 1.45rem;
   font-weight: 700;
 }
 
@@ -2874,10 +2875,11 @@ th .subtext {
   min-width: 0;
   max-width: 100%;
   align-items: center;
+  padding: 0 25px;
 }
 
 .lrids .page--lrids span {
-  font-size: 1.05rem;
+  font-size: 1rem;
   line-height: 1.4;
   white-space: normal;
   word-break: break-word;

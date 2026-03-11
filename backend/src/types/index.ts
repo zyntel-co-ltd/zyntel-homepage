@@ -110,6 +110,7 @@ export interface RevenueData {
   avgDailyRevenue: number;
   revenueGrowthRate: number;
   dailyRevenue: { date: string; revenue: number }[];
+  granularity?: 'daily' | 'monthly';
   sectionRevenue: { section: string; revenue: number }[];
   testRevenue: { test_name: string; revenue: number }[];
   hospitalUnitRevenue: { unit: string; revenue: number }[];

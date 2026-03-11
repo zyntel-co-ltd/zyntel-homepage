@@ -4,9 +4,18 @@ import Chart from 'chart.js/auto';
 
 interface DailyRevenueChartProps {
   data: Array<{ date: string; revenue: number }>;
+  granularity?: 'daily' | 'monthly';
 }
 
-export const DailyRevenueChart: React.FC<DailyRevenueChartProps> = ({ data }) => {
+const formatLabel = (date: string, granularity?: 'daily' | 'monthly') => {
+  if (granularity === 'monthly' || (date.length === 7 && date[4] === '-')) {
+    const [y, m] = date.split('-');
+    return new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }
+  return date;
+};
+
+export const DailyRevenueChart: React.FC<DailyRevenueChartProps> = ({ data, granularity }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
@@ -25,7 +34,7 @@ export const DailyRevenueChart: React.FC<DailyRevenueChartProps> = ({ data }) =>
     chartRef.current = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: data.map(d => d.date),
+        labels: data.map(d => formatLabel(d.date, granularity)),
         datasets: [
           {
             label: 'Revenue (UGX)',
@@ -80,7 +89,7 @@ export const DailyRevenueChart: React.FC<DailyRevenueChartProps> = ({ data }) =>
         chartRef.current.destroy();
       }
     };
-  }, [data]);
+  }, [data, granularity]);
 
   return <canvas ref={canvasRef}></canvas>;
 };

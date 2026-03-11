@@ -26,6 +26,7 @@ import performanceRoutes from './routes/performance';
 import encountersRoutes from './routes/encounters';
 import labguruInsightsRoutes from './routes/labguruInsights';
 import resultsRoutes from './routes/results';
+import auditRoutes from './routes/audit';
 
 dotenv.config();
 
@@ -77,6 +78,7 @@ app.use('/api/progress', authenticate, progressRoutes);
 app.use('/api/performance', authenticate, performanceRoutes);
 app.use('/api/encounters', encountersRoutes);
 app.use('/api/labguru-insights', authenticate, labguruInsightsRoutes);
+app.use('/api/audit', authenticate, auditRoutes);
 
 // Production: serve built frontend (before error handler)
 const isProduction = process.env.NODE_ENV === 'production';

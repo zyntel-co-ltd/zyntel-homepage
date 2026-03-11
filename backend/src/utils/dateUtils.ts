@@ -71,6 +71,14 @@ export const getPeriodDates = (period: string): { startDate: Date; endDate: Date
       startDate = now.clone().subtract(1, 'quarter').startOf('quarter');
       endDate = now.clone().subtract(1, 'quarter').endOf('quarter');
       break;
+    case 'thisYear':
+      startDate = now.clone().startOf('year');
+      endDate = now.clone().endOf('year');
+      break;
+    case 'lastYear':
+      startDate = now.clone().subtract(1, 'year').startOf('year');
+      endDate = now.clone().subtract(1, 'year').endOf('year');
+      break;
     case 'january':
     case 'february':
     case 'march':
@@ -119,4 +127,11 @@ export const formatCurrency = (amount: number): string => {
 export const calculateTAT = (timeIn: Date, timeOut: Date): number => {
   // Returns TAT in minutes
   return Math.floor((timeOut.getTime() - timeIn.getTime()) / (1000 * 60));
+};
+
+/** Monthly aggregation only for quarterly/yearly periods; all others stay daily */
+const MONTHLY_AGGREGATION_PERIODS = ['thisQuarter', 'lastQuarter', 'thisYear', 'lastYear'];
+
+export const getChartGranularity = (period: string | undefined): 'daily' | 'monthly' => {
+  return period && MONTHLY_AGGREGATION_PERIODS.includes(period) ? 'monthly' : 'daily';
 };

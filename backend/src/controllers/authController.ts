@@ -1,19 +1,32 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import * as authService from '../services/authService';
+import * as auditService from '../services/auditService';
 
 export const loginController = async (req: AuthRequest, res: Response) => {
-  try {
-    const { username, password } = req.body;
+  const identifier = (req.body.username ?? req.body.email)?.trim?.() ?? '';
+  const password = req.body.password;
 
-    const identifier = (username ?? req.body.email)?.trim?.() ?? '';
+  try {
     if (!identifier || !password) {
+      await auditService.logLogin({ username: identifier || '(empty)', success: false, req });
       return res.status(400).json({ error: 'Username/email and password are required' });
     }
 
     const result = await authService.login(identifier, password);
+    await auditService.logLogin({
+      username: identifier,
+      userId: result.user.id,
+      success: true,
+      req,
+    });
     res.json(result);
   } catch (error: any) {
+    await auditService.logLogin({
+      username: identifier || '(empty)',
+      success: false,
+      req,
+    }).catch((e) => console.error('Audit log failed:', e));
     console.error('Login error:', error);
     res.status(401).json({ error: error.message || 'Authentication failed' });
   }

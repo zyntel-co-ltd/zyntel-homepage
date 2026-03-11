@@ -1,6 +1,6 @@
 import { query } from '../config/database';
 import { FilterParams } from '../types';
-import { getPeriodDates } from '../utils/dateUtils';
+import { getPeriodDates, getChartGranularity } from '../utils/dateUtils';
 import moment from 'moment';
 
 /**
@@ -94,19 +94,34 @@ export const getTATData = async (filters: FilterParams) => {
   const avgDailyOnTime = onTimeTests / daysInPeriod;
   const avgDailyNotUploaded = notUploadedTests / daysInPeriod;
 
-  const dailyTrendResult = await query(
-    `SELECT
-       date::date as date,
-       COUNT(CASE WHEN request_delay_status IN ('Delayed', 'Delayed for <15 minutes', 'Delayed for less than 15 minutes') AND request_time_out IS NOT NULL THEN 1 END) as delayed_less15,
-       COUNT(CASE WHEN LOWER(request_delay_status) IN ('over delayed', 'over-delayed') AND request_time_out IS NOT NULL THEN 1 END) as over_delayed,
-       COUNT(CASE WHEN (LOWER(request_delay_status) IN ('on time', 'on-time') OR request_delay_status = 'Swift') AND request_time_out IS NOT NULL THEN 1 END) as on_time,
-       COUNT(CASE WHEN request_time_out IS NULL THEN 1 END) as not_uploaded
-     FROM patients
-     WHERE ${whereClause}
-     GROUP BY date::date
-     ORDER BY date::date`,
-    params
-  );
+  const granularity = getChartGranularity(filters.period);
+  const dailyTrendResult = granularity === 'monthly'
+    ? await query(
+        `SELECT
+           date_trunc('month', date)::date as date,
+           COUNT(CASE WHEN request_delay_status IN ('Delayed', 'Delayed for <15 minutes', 'Delayed for less than 15 minutes') AND request_time_out IS NOT NULL THEN 1 END) as delayed_less15,
+           COUNT(CASE WHEN LOWER(request_delay_status) IN ('over delayed', 'over-delayed') AND request_time_out IS NOT NULL THEN 1 END) as over_delayed,
+           COUNT(CASE WHEN (LOWER(request_delay_status) IN ('on time', 'on-time') OR request_delay_status = 'Swift') AND request_time_out IS NOT NULL THEN 1 END) as on_time,
+           COUNT(CASE WHEN request_time_out IS NULL THEN 1 END) as not_uploaded
+         FROM patients
+         WHERE ${whereClause}
+         GROUP BY date_trunc('month', date)
+         ORDER BY date_trunc('month', date)`,
+        params
+      )
+    : await query(
+        `SELECT
+           date::date as date,
+           COUNT(CASE WHEN request_delay_status IN ('Delayed', 'Delayed for <15 minutes', 'Delayed for less than 15 minutes') AND request_time_out IS NOT NULL THEN 1 END) as delayed_less15,
+           COUNT(CASE WHEN LOWER(request_delay_status) IN ('over delayed', 'over-delayed') AND request_time_out IS NOT NULL THEN 1 END) as over_delayed,
+           COUNT(CASE WHEN (LOWER(request_delay_status) IN ('on time', 'on-time') OR request_delay_status = 'Swift') AND request_time_out IS NOT NULL THEN 1 END) as on_time,
+           COUNT(CASE WHEN request_time_out IS NULL THEN 1 END) as not_uploaded
+         FROM patients
+         WHERE ${whereClause}
+         GROUP BY date::date
+         ORDER BY date::date`,
+        params
+      );
 
   const hourlyTrendResult = await query(
     `SELECT
@@ -146,8 +161,9 @@ export const getTATData = async (filters: FilterParams) => {
       overDelayed: overDelayedTests,
       notUploaded: notUploadedTests,
     },
+    granularity,
     dailyTrend: dailyTrendResult.rows.map((row: any) => ({
-      date: new Date(row.date).toISOString().split('T')[0],
+      date: granularity === 'monthly' ? moment(row.date).format('YYYY-MM') : new Date(row.date).toISOString().split('T')[0],
       delayed: parseInt(row.delayed_less15 || 0) + parseInt(row.over_delayed || 0),
       delayedLess15: parseInt(row.delayed_less15 || 0),
       overDelayed: parseInt(row.over_delayed || 0),

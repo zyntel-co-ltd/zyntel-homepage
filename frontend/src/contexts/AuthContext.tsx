@@ -39,9 +39,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsLoading(false);
           return;
         }
+        // 500 or other errors: backend may be down or DB issue; keep token so user can retry
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
       } catch {
+        // Network error: backend likely down; keep token so user can retry when backend is up
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
       }

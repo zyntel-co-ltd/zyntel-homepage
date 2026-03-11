@@ -64,47 +64,17 @@ const LRIDS: React.FC = () => {
 
   const calculateProgress = (timeExpected: string, timeOut?: string) => {
     const now = new Date();
-    
     const hasTimeOut = timeOut && timeOut !== 'N/A' && timeOut !== null;
     const timeOutDate = hasTimeOut ? new Date(timeOut) : null;
-    const isTimeOutValid = timeOutDate && !isNaN(timeOutDate.getTime());
-    const isTimeOutInPast = isTimeOutValid && timeOutDate! <= now;
-
+    const isTimeOutValid = timeOutDate && !isNaN(timeOutDate.getTime()) && timeOutDate <= now;
     const hasTimeExpected = timeExpected && timeExpected !== 'N/A' && timeExpected !== null;
     const timeExpectedDate = hasTimeExpected ? new Date(timeExpected) : null;
     const isTimeExpectedValid = timeExpectedDate && !isNaN(timeExpectedDate.getTime());
     const isTimeExpectedInPast = isTimeExpectedValid && timeExpectedDate! <= now;
-    const minutesPastExpected = isTimeExpectedInPast ? Math.floor((now.getTime() - timeExpectedDate!.getTime()) / (1000 * 60)) : 0;
 
-    if (isTimeOutValid && isTimeOutInPast) {
-      return { text: 'Completed. Please contact Nakasero Lab at +256706346242 if you need assistance.', cssClass: 'progress-complete-actual' };
-    }
-    
-    if (isTimeExpectedValid && isTimeExpectedInPast && !isTimeOutValid) {
-      if (minutesPastExpected >= 60) {
-        return { text: 'We apologize for the delay. Please contact Nakasero Lab at +256706346242 for assistance.', cssClass: 'progress-overdue' };
-      }
-      return { text: 'Should be ready but delayed. We apologize for the inconvenience.', cssClass: 'progress-overdue' };
-    }
-    
-    if (isTimeExpectedValid && !isTimeExpectedInPast) {
-      const timeLeft = timeExpectedDate!.getTime() - now.getTime();
-      const timeLeftInMinutes = Math.floor(timeLeft / (1000 * 60));
-      const timeLeftInHours = Math.floor(timeLeft / (1000 * 60 * 60));
-      const timeLeftInDays = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-      
-      if (timeLeftInMinutes <= 10 && timeLeftInMinutes > 0) {
-        return { text: `We are winding up. ${timeLeftInMinutes} min(s) to go.`, cssClass: 'progress-urgent' };
-      } else if (timeLeftInDays > 0) {
-        return { text: `Rest assured you will get results on time. ${timeLeftInDays} day(s) remaining.`, cssClass: 'progress-pending' };
-      } else if (timeLeftInHours > 0) {
-        return { text: `Rest assured you will get results on time. ${timeLeftInHours} hr(s) remaining.`, cssClass: 'progress-pending' };
-      } else if (timeLeftInMinutes > 0) {
-        return { text: `Rest assured you will get results on time. ${timeLeftInMinutes} min(s) to go.`, cssClass: 'progress-pending' };
-      }
-      return { text: 'Due now', cssClass: 'progress-pending' };
-    }
-    
+    if (isTimeOutValid) return { text: 'Completed', cssClass: 'progress-complete-actual' };
+    if (isTimeExpectedValid && isTimeExpectedInPast && !isTimeOutValid) return { text: 'Delayed', cssClass: 'progress-overdue' };
+    if (isTimeExpectedValid && !isTimeExpectedInPast) return { text: 'Pending', cssClass: 'progress-pending' };
     return { text: 'No ETA', cssClass: 'progress-pending' };
   };
 

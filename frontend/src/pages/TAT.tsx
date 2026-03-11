@@ -16,6 +16,7 @@ interface TATData {
     overDelayed: number;
     notUploaded: number;
   };
+  granularity?: 'daily' | 'monthly';
   dailyTrend: Array<{
     date: string;
     delayed: number;
@@ -258,10 +259,10 @@ const TAT: React.FC = () => {
             <div className="daily-performance-chart">
               <div className="chart-title">
                 <i className="fas fa-chart-line mr-2"></i>
-                Daily TAT Performance Trend
+                {data?.granularity === 'monthly' ? 'Monthly' : 'Daily'} TAT Performance Trend
               </div>
               <div className="chart-container">
-                {data && <TATLineChart data={data.dailyTrend} />}
+                {data && <TATLineChart data={data.dailyTrend} granularity={data.granularity} />}
               </div>
             </div>
             

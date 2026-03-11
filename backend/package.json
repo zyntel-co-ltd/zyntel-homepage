@@ -14,6 +14,7 @@
     "migrate:006": "ts-node migrations/run-migration-006.ts",
     "migrate:007": "ts-node migrations/run-migration-007.ts",
     "migrate:008": "ts-node migrations/run-migration-008.ts",
+    "migrate:009": "ts-node migrations/run-migration-009.ts",
     "populate-patients": "ts-node scripts/data-processing/populate-patients.ts",
     "fetch-data": "py -3.11 scripts/data-fetching/fetch_lims_data.py",
     "fetch-lims": "npm run fetch-data",

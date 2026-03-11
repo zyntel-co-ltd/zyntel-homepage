@@ -5,35 +5,6 @@ import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog, Footer,
 import { formatDateTimeWithAMPM } from '@/constants/metaOptions';
 import { downloadCSV } from '@/utils/exportUtils';
 
-/** Match Flask TAT categorizations - same as PerformanceTable */
-const getDelayStatusClass = (status: string) => {
-  const s = (status || '').toLowerCase();
-  if (s.includes('on time') || s.includes('ontime') || s.includes('swift')) return 'status-on-time';
-  if (s.includes('<15') || s.includes('less than 15') || s.includes('delayed for less')) return 'status-delayed-less-15';
-  if (s.includes('over delayed')) return 'status-over-delayed';
-  if (s.includes('delayed')) return 'status-delayed';
-  return 'status-not-uploaded';
-};
-
-const formatDelayStatus = (status: string) => {
-  const s = (status || '').trim();
-  if (!s) return 'Not Uploaded';
-  const lower = s.toLowerCase();
-  if (lower.includes('on time') || lower === 'ontime') return 'On Time';
-  if (lower.includes('swift')) return 'Swift';
-  if (lower.includes('<15') || lower.includes('less than 15') || lower.includes('delayed for less')) return 'Delayed for <15 minutes';
-  if (lower.includes('over delayed')) return 'Over Delayed';
-  if (lower.includes('delayed')) return 'Delayed';
-  return s;
-};
-
-/** Time range from Flask: "X hrs Y mins" or "Not Uploaded" */
-const formatTimeRange = (val: string | number | null | undefined) => {
-  if (val == null || val === '') return 'Not Uploaded';
-  if (typeof val === 'number' && isNaN(val)) return 'Not Uploaded';
-  return String(val);
-};
-
 const Progress: React.FC = () => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState({
@@ -152,7 +123,7 @@ const Progress: React.FC = () => {
   };
 
   const handleExportCSV = () => {
-    const headers = ['Date', 'Shift', 'Lab Number', 'Unit', 'Time In', 'Daily TAT', 'Time Expected', 'Time Out', 'Progress', 'Delay Status', 'Time Range'];
+    const headers = ['Date', 'Shift', 'Lab Number', 'Unit', 'Time In', 'Daily TAT', 'Time Expected', 'Time Out', 'Progress'];
     const rows = data.map((r: any) => {
       const progress = (() => {
         const now = new Date();
@@ -179,8 +150,6 @@ const Progress: React.FC = () => {
         r.request_time_expected,
         r.request_time_out ?? r.time_out,
         progress,
-        formatDelayStatus(r.request_delay_status || ''),
-        formatTimeRange(r.request_time_range),
       ];
     });
     downloadCSV([headers, ...rows], `Progress-${new Date().toISOString().slice(0, 10)}.csv`);
@@ -307,7 +276,7 @@ const Progress: React.FC = () => {
             ) : (
               <div className="table-container">
                 <table className="neon-table">
-                  <thead>
+                    <thead>
                     <tr>
                       <th>Date</th>
                       <th>Shift</th>
@@ -318,55 +287,22 @@ const Progress: React.FC = () => {
                       <th>Time Expected</th>
                       <th>Time Out</th>
                       <th>Progress</th>
-                      <th>Delay Status</th>
-                      <th>Time Range</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.map((row, index) => {
                       const calculateProgress = (timeExpected: string, timeOut?: string) => {
                         const now = new Date();
-                        
                         const hasTimeOut = timeOut && timeOut !== 'N/A' && timeOut !== null && timeOut !== undefined;
                         const timeOutDate = hasTimeOut ? new Date(timeOut) : null;
-                        const isTimeOutValid = timeOutDate && !isNaN(timeOutDate.getTime());
-                        const isTimeOutInPast = isTimeOutValid && timeOutDate <= now;
-
+                        const isTimeOutValid = timeOutDate && !isNaN(timeOutDate.getTime()) && timeOutDate <= now;
                         const hasTimeExpected = timeExpected && timeExpected !== 'N/A' && timeExpected !== null && timeExpected !== undefined;
                         const timeExpectedDate = hasTimeExpected ? new Date(timeExpected) : null;
                         const isTimeExpectedValid = timeExpectedDate && !isNaN(timeExpectedDate.getTime());
                         const isTimeExpectedInPast = isTimeExpectedValid && timeExpectedDate <= now;
-                        const minutesPastExpected = isTimeExpectedInPast ? Math.floor((now.getTime() - timeExpectedDate!.getTime()) / (1000 * 60)) : 0;
-
-                        if (isTimeOutValid && isTimeOutInPast) {
-                          return { text: 'Completed', cssClass: 'progress-complete-actual' };
-                        }
-                        
-                        if (isTimeExpectedValid && isTimeExpectedInPast && !isTimeOutValid) {
-                          if (minutesPastExpected >= 60) {
-                            return { text: 'Delayed 1hr+ — Contact Nakasero Lab +256706346242', cssClass: 'progress-overdue' };
-                          }
-                          return { text: 'Delayed — Should be ready soon', cssClass: 'progress-overdue' };
-                        }
-                        
-                        if (isTimeExpectedValid && !isTimeExpectedInPast) {
-                          const timeLeft = timeExpectedDate!.getTime() - now.getTime();
-                          const timeLeftInMinutes = Math.floor(timeLeft / (1000 * 60));
-                          const timeLeftInHours = Math.floor(timeLeft / (1000 * 60 * 60));
-                          const timeLeftInDays = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-                          
-                          if (timeLeftInMinutes <= 10 && timeLeftInMinutes > 0) {
-                            return { text: `Winding up — ${timeLeftInMinutes} min(s) to go`, cssClass: 'progress-urgent' };
-                          } else if (timeLeftInDays > 0) {
-                            return { text: `${timeLeftInDays} day(s) remaining`, cssClass: 'progress-pending' };
-                          } else if (timeLeftInHours > 0) {
-                            return { text: `${timeLeftInHours} hr(s) remaining`, cssClass: 'progress-pending' };
-                          } else if (timeLeftInMinutes > 0) {
-                            return { text: `${timeLeftInMinutes} min(s) to go`, cssClass: 'progress-pending' };
-                          }
-                          return { text: 'Due now', cssClass: 'progress-pending' };
-                        }
-                        
+                        if (isTimeOutValid) return { text: 'Completed', cssClass: 'progress-complete-actual' };
+                        if (isTimeExpectedValid && isTimeExpectedInPast && !isTimeOutValid) return { text: 'Delayed', cssClass: 'progress-overdue' };
+                        if (isTimeExpectedValid && !isTimeExpectedInPast) return { text: 'Pending', cssClass: 'progress-pending' };
                         return { text: 'No ETA', cssClass: 'progress-pending' };
                       };
 
@@ -397,8 +333,6 @@ const Progress: React.FC = () => {
                           <td>{row.request_time_expected ? formatDateTimeWithAMPM(row.request_time_expected) : 'N/A'}</td>
                           <td>{row.request_time_out ? formatDateTimeWithAMPM(row.request_time_out) : 'N/A'}</td>
                           <td className={progress.cssClass}>{progress.text}</td>
-                          <td className={getDelayStatusClass(row.request_delay_status || '')}>{formatDelayStatus(row.request_delay_status || '')}</td>
-                          <td>{formatTimeRange(row.request_time_range)}</td>
                         </tr>
                       );
                     })}
