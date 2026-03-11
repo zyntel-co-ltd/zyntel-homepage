@@ -10,7 +10,7 @@ export const getLabGuruInsightsController = async (req: AuthRequest, res: Respon
       startDate: startDate as string,
       endDate: endDate as string,
     });
-    if ('error' in result) {
+    if ('error' in result && !('ourCount' in result)) {
       return res.status(500).json({ error: result.error });
     }
     res.json(result);
@@ -28,7 +28,7 @@ export const getLabGuruTestsFullController = async (req: AuthRequest, res: Respo
       startDate: startDate as string,
       endDate: endDate as string,
     });
-    if ('error' in result) {
+    if ('error' in result && !('ourTests' in result)) {
       return res.status(500).json({ error: result.error });
     }
     res.json(result);

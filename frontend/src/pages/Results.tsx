@@ -27,6 +27,14 @@ interface TestStatus {
   time_out: string | null;
 }
 
+interface PatientProgress {
+  lab_number: string;
+  time_in: string | null;
+  request_time_expected: string | null;
+  request_time_out: string | null;
+  progress: 'Completed' | 'Delayed' | 'Pending' | 'No ETA';
+}
+
 interface ResultsData {
   found: boolean;
   tests: TestStatus[];
@@ -37,6 +45,7 @@ interface ResultsData {
     resulted: number;
     cancelled: number;
   };
+  patient?: PatientProgress;
   message?: string;
 }
 
@@ -169,6 +178,22 @@ const Results: React.FC = () => {
           <div className="results-content">
             {data.found ? (
               <>
+                {data.patient && (
+                  <div className="results-patient-progress" style={{ marginBottom: '20px', padding: '16px', background: '#f8f9fa', borderRadius: '8px', border: '1px solid #e9ecef' }}>
+                    <div style={{ fontWeight: 600, marginBottom: '12px', color: 'var(--main-color)' }}>Lab Number: {data.patient.lab_number}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', fontSize: '0.9rem' }}>
+                      <div><span style={{ color: '#666' }}>Time In:</span> {formatTime(data.patient.time_in)}</div>
+                      <div><span style={{ color: '#666' }}>Time Expected:</span> {formatTime(data.patient.request_time_expected)}</div>
+                      <div><span style={{ color: '#666' }}>Time Out:</span> {formatTime(data.patient.request_time_out)}</div>
+                      <div>
+                        <span style={{ color: '#666' }}>Progress: </span>
+                        <span className={`results-badge ${data.patient.progress === 'Completed' ? 'progress-complete-actual' : data.patient.progress === 'Delayed' ? 'progress-overdue' : 'progress-pending'}`} style={{ padding: '4px 10px', borderRadius: '6px', fontWeight: 500 }}>
+                          {data.patient.progress}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="results-summary">
                   <span>Your tests</span>
                   <span>

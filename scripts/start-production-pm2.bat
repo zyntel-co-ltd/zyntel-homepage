@@ -5,6 +5,18 @@ REM For deploying updates without stopping, use: scripts\deploy.bat
 
 cd /d "%~dp0.."
 
+REM Ensure Python is available for LabGuru scripts (PM2/Task Scheduler may not inherit PATH)
+REM Try to get full Python path so Node can spawn it reliably
+set PYTHON_PATH=
+for /f "delims=" %%i in ('py -3.11 -c "import sys; print(sys.executable)" 2^>nul') do set PYTHON_PATH=%%i
+if not defined PYTHON_PATH for /f "delims=" %%i in ('python -c "import sys; print(sys.executable)" 2^>nul') do set PYTHON_PATH=%%i
+if not defined PYTHON_PATH for /f "delims=" %%i in ('where python 2^>nul') do set PYTHON_PATH=%%i
+if defined PYTHON_PATH (
+  echo Python found: %PYTHON_PATH%
+) else (
+  echo WARNING: Python not found. LabGuru insights will show partial data. Set PYTHON_PATH in backend\.env to full path.
+)
+
 REM Build frontend
 echo Building frontend...
 call npm run build --prefix frontend

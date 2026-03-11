@@ -20,6 +20,7 @@ export interface LabGuruInsightsResult {
   endDate: string;
   gap: number; // labguruCount - ourCount
   granularity?: 'daily' | 'monthly';
+  labguruError?: string; // When LabGuru Python/DB fails but our data is available
 }
 
 export const getLabGuruInsights = async (params: {
@@ -79,18 +80,29 @@ export const getLabGuruInsights = async (params: {
   let labguruDaily: Array<{ date: string; count: number }> = [];
   try {
     const scriptPath = path.join(__dirname, '../../scripts/data-fetching/get_labguru_counts.py');
-    const cmd = process.platform === 'win32'
-      ? `py -3.11 "${scriptPath}" ${startStr} ${endStr}`
-      : `python3 "${scriptPath}" ${startStr} ${endStr}`;
-    const out = execSync(cmd, {
+    const pythonCmd = (process.env.PYTHON_PATH || (process.platform === 'win32' ? 'py -3.11' : 'python3')).trim();
+    const parts = pythonCmd.split(/\s+/);
+    const pythonExe = parts[0];
+    const pythonArgs = [...parts.slice(1), scriptPath, startStr, endStr];
+    const out = execSync(pythonExe, pythonArgs, {
       encoding: 'utf-8',
       timeout: 15000,
       cwd: path.join(__dirname, '../..'),
-      shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh',
     });
     const parsed = JSON.parse(out.trim());
     if (parsed.error) {
-      return { error: parsed.error };
+      return {
+        labguruCount: 0,
+        labguruDaily: [],
+        ourCount,
+        target,
+        ourDaily,
+        granularity,
+        startDate: startStr,
+        endDate: endStr,
+        gap: -ourCount,
+        labguruError: parsed.error,
+      };
     }
     labguruCount = parsed.labguruCount ?? 0;
     const rawDaily = parsed.daily ?? [];
@@ -106,7 +118,18 @@ export const getLabGuruInsights = async (params: {
     }
   } catch (err: any) {
     const msg = err?.stderr || err?.message || String(err);
-    return { error: `LabGuru query failed: ${msg}` };
+    return {
+      labguruCount: 0,
+      labguruDaily: [],
+      ourCount,
+      target,
+      ourDaily,
+      granularity,
+      startDate: startStr,
+      endDate: endStr,
+      gap: -ourCount,
+      labguruError: `LabGuru unavailable: ${msg}`,
+    };
   }
 
   return {
@@ -148,34 +171,15 @@ export const getLabGuruTestsFull = async (params: {
 
   // 1. Summary counts (LabGuru, Dashboard, Target, Gap) - same source as Tests page
   const insightsResult = await getLabGuruInsights({ period: params.period, startDate: params.startDate, endDate: params.endDate });
-  if ('error' in insightsResult) {
+  if ('error' in insightsResult && !('ourCount' in insightsResult)) {
     return { error: insightsResult.error };
   }
-  const { labguruCount, ourCount, target, gap } = insightsResult;
+  const labguruCount = (insightsResult as LabGuruInsightsResult).labguruCount ?? 0;
+  const ourCount = (insightsResult as LabGuruInsightsResult).ourCount;
+  const target = (insightsResult as LabGuruInsightsResult).target;
+  const gap = (insightsResult as LabGuruInsightsResult).gap ?? -ourCount;
 
-  // 2. LabGuru tests from LabGuruV3 analyzer tables (aggregated by test name)
-  let labguruTests: Array<{ test: string; count: number }> = [];
-  try {
-    const scriptPath = path.join(__dirname, '../../scripts/data-fetching/get_labguru_tests.py');
-    const cmd = process.platform === 'win32'
-      ? `py -3.11 "${scriptPath}" ${startStr} ${endStr}`
-      : `python3 "${scriptPath}" ${startStr} ${endStr}`;
-    const out = execSync(cmd, {
-      encoding: 'utf-8',
-      timeout: 30000,
-      cwd: path.join(__dirname, '../..'),
-      shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh',
-    });
-    const parsed = JSON.parse(out.trim());
-    if (parsed.error) {
-      return { error: parsed.error };
-    }
-    labguruTests = parsed.tests || [];
-  } catch (err: any) {
-    return { error: `LabGuru query failed: ${err?.message || err}` };
-  }
-
-  // 3. Our tests from test_records (meta/test names, descending by count)
+  // 2. Our tests from test_records (get first so we can return partial on LabGuru failure)
   const ourResult = await query(
     `SELECT test_name, COUNT(*) as count
      FROM test_records
@@ -188,6 +192,27 @@ export const getLabGuruTestsFull = async (params: {
     test: (r.test_name || '').trim(),
     count: parseInt(r.count),
   })).filter((t) => t.test);
+
+  // 3. LabGuru tests from LabGuruV3 analyzer tables (aggregated by test name)
+  let labguruTests: Array<{ test: string; count: number }> = [];
+  try {
+    const scriptPath = path.join(__dirname, '../../scripts/data-fetching/get_labguru_tests.py');
+    const pythonCmd = (process.env.PYTHON_PATH || (process.platform === 'win32' ? 'py -3.11' : 'python3')).trim();
+    const parts = pythonCmd.split(/\s+/);
+    const pythonExe = parts[0];
+    const pythonArgs = [...parts.slice(1), scriptPath, startStr, endStr];
+    const out = execSync(pythonExe, pythonArgs, {
+      encoding: 'utf-8',
+      timeout: 30000,
+      cwd: path.join(__dirname, '../..'),
+    });
+    const parsed = JSON.parse(out.trim());
+    if (!parsed.error) {
+      labguruTests = parsed.tests || [];
+    }
+  } catch (_err) {
+    // LabGuru unavailable - return our data only
+  }
 
   return { labguruTests, ourTests, labguruCount, ourCount, target, gap, startDate: startStr, endDate: endStr };
 };

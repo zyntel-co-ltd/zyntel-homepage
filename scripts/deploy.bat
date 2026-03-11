@@ -5,6 +5,11 @@ REM Server stays online during the entire process.
 
 cd /d "%~dp0.."
 
+REM Ensure Python path for LabGuru (PM2 inherits env from this shell)
+set PYTHON_PATH=
+for /f "delims=" %%i in ('py -3.11 -c "import sys; print(sys.executable)" 2^>nul') do set PYTHON_PATH=%%i
+if not defined PYTHON_PATH for /f "delims=" %%i in ('python -c "import sys; print(sys.executable)" 2^>nul') do set PYTHON_PATH=%%i
+
 echo === Pulling latest code ===
 call git pull origin main
 if errorlevel 1 (

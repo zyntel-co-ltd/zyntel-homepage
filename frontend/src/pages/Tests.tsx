@@ -307,16 +307,19 @@ const Tests: React.FC = () => {
                       — LabGuru: {insights.labguruCount.toLocaleString()}
                     </span>
                   )}
-                  {insightsError && !insights && (
+                  {(insightsError && !insights) && (
                     <span style={{ marginLeft: '12px', fontSize: '0.85rem', color: '#c00' }}>— Unable to load</span>
+                  )}
+                  {insights?.labguruError && (
+                    <span style={{ marginLeft: '12px', fontSize: '0.85rem', color: '#c00' }}>— LabGuru unavailable</span>
                   )}
                 </span>
                 <i className={`fas fa-chevron-${insightsOpen ? 'up' : 'down'}`}></i>
               </button>
               {insightsOpen && (
                 <div style={{ padding: '16px', background: 'var(--background-color)', borderTop: '1px solid var(--border-color)' }}>
-                  {insightsError ? (
-                    <p style={{ color: '#c00' }}>{insightsError}</p>
+                  {(insightsError || insights?.labguruError) ? (
+                    <p style={{ color: '#c00' }}>{insightsError || insights?.labguruError}</p>
                   ) : insights ? (
                     <>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>

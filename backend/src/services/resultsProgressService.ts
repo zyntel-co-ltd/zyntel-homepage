@@ -12,6 +12,14 @@ export interface TestStatus {
   time_out: string | null;
 }
 
+export interface PatientProgress {
+  lab_number: string;
+  time_in: string | null;
+  request_time_expected: string | null;
+  request_time_out: string | null;
+  progress: 'Completed' | 'Delayed' | 'Pending' | 'No ETA';
+}
+
 export interface ResultsProgress {
   found: boolean;
   tests: TestStatus[];
@@ -22,6 +30,8 @@ export interface ResultsProgress {
     resulted: number;
     cancelled: number;
   };
+  /** Patient-level progress (like LRIDS) - one row per lab number */
+  patient?: PatientProgress;
   /** Friendly message when not found (e.g. purged or invalid) */
   message?: string;
 }
@@ -55,6 +65,58 @@ export const getResultsByLabNo = async (labNo: string): Promise<ResultsProgress>
     };
   }
 
+  let patient: ResultsProgress['patient'] | undefined;
+  try {
+    const patientResult = await query(
+      `SELECT lab_number, time_in, request_time_expected, request_time_out
+       FROM patients WHERE lab_number = $1`,
+      [trimmed]
+    );
+    const p = patientResult.rows[0] as any;
+    if (p) {
+      const now = new Date();
+      const timeOut = p.request_time_out ? new Date(p.request_time_out) : null;
+      const timeExpected = p.request_time_expected ? new Date(p.request_time_expected) : null;
+      const hasTimeOut = timeOut && !isNaN(timeOut.getTime()) && timeOut <= now;
+      const hasTimeExpected = timeExpected && !isNaN(timeExpected.getTime());
+      const isExpectedPast = hasTimeExpected && timeExpected! <= now;
+      let progress: PatientProgress['progress'] = 'No ETA';
+      if (hasTimeOut) progress = 'Completed';
+      else if (hasTimeExpected && isExpectedPast) progress = 'Delayed';
+      else if (hasTimeExpected) progress = 'Pending';
+      patient = {
+        lab_number: p.lab_number,
+        time_in: p.time_in,
+        request_time_expected: p.request_time_expected,
+        request_time_out: p.request_time_out,
+        progress,
+      };
+    }
+  } catch (_) {
+    // patients table may not exist or lab_number not in patients
+  }
+
+  if (!patient && rows.length > 0) {
+    const r0 = rows[0] as any;
+    const allResulted = rows.every((r: any) => r.is_resulted);
+    const anyResulted = rows.some((r: any) => r.is_resulted);
+    const timeOuts = rows
+      .map((r: any) => r.time_out ? new Date(r.time_out) : null)
+      .filter((d): d is Date => d !== null);
+    const latestTimeOut = timeOuts.sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+    let progress: PatientProgress['progress'] = 'Pending';
+    if (allResulted && latestTimeOut) progress = 'Completed';
+    else if (!anyResulted) progress = 'Pending';
+    else progress = 'Pending';
+    patient = {
+      lab_number: trimmed,
+      time_in: r0.time_in,
+      request_time_expected: null,
+      request_time_out: latestTimeOut ? latestTimeOut.toISOString() : null,
+      progress,
+    };
+  }
+
   const tests: TestStatus[] = rows.map((r) => {
     let status: TestStatus['status'] = 'pending';
     if (r.is_cancelled) status = 'cancelled';
@@ -78,5 +140,5 @@ export const getResultsByLabNo = async (labNo: string): Promise<ResultsProgress>
     cancelled: tests.filter((t) => t.status === 'cancelled').length,
   };
 
-  return { found: true, tests, summary };
+  return { found: true, tests, summary, patient };
 };
