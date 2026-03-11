@@ -5,9 +5,17 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
-const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const getResultsApiBase = () => {
+  const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+  if (!base) return '';
+  if (typeof window !== 'undefined' && base.includes('localhost') && window.location.hostname !== 'localhost') {
+    return '';
+  }
+  return base;
+};
 const resultsApiUrl = (labNo: string) => {
-  const enc = encodeURIComponent(labNo);
+  const enc = encodeURIComponent(labNo.trim());
+  const base = getResultsApiBase();
   return base ? (base.endsWith('/api') ? `${base}/results/${enc}` : `${base}/api/results/${enc}`) : `/api/results/${enc}`;
 };
 
@@ -59,13 +67,13 @@ const Results: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (labNoParam && labNoParam.trim()) setLabNo(labNoParam.trim());
+    if (labNoParam) setLabNo(labNoParam.replace(/\s/g, '').trim());
   }, [labNoParam]);
 
   const MIN_LAB_NO_LENGTH = 4;
 
   const fetchResults = useCallback(async () => {
-    const trimmed = labNo.trim();
+    const trimmed = labNo.replace(/\s/g, '').trim();
     if (!trimmed) {
       setError('Please enter your full lab number from your receipt.');
       return;
@@ -74,10 +82,7 @@ const Results: React.FC = () => {
       setError('Please enter your complete lab number. Partial numbers cannot be searched.');
       return;
     }
-    if (/\s/.test(trimmed)) {
-      setError('Lab number should not contain spaces. Please enter the number exactly as shown on your receipt.');
-      return;
-    }
+    setLabNo(trimmed);
     setError(null);
     setLoading(true);
     setData(null);
@@ -99,7 +104,7 @@ const Results: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = labNo.trim();
+    const trimmed = labNo.replace(/\s/g, '').trim();
     if (!trimmed) {
       setError('Please enter your full lab number from your receipt.');
       return;
@@ -108,17 +113,15 @@ const Results: React.FC = () => {
       setError('Please enter your complete lab number. Partial numbers cannot be searched.');
       return;
     }
-    if (/\s/.test(trimmed)) {
-      setError('Lab number should not contain spaces. Please enter the number exactly as shown on your receipt.');
-      return;
-    }
+    setLabNo(trimmed);
     fetchResults();
   };
 
   // Auto-fetch when URL has /results/:labNo (e.g. from QR code with lab number in URL)
   useEffect(() => {
-    if (!labNoParam?.trim() || data || loading) return;
-    const trimmed = labNoParam.trim();
+    if (!labNoParam || data || loading) return;
+    const trimmed = labNoParam.replace(/\s/g, '').trim();
+    if (!trimmed) return;
     if (trimmed.length < MIN_LAB_NO_LENGTH) {
       setLabNo(trimmed);
       setError('Please enter your complete lab number. Partial numbers cannot be searched.');

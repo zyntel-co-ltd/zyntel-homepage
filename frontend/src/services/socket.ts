@@ -19,11 +19,11 @@ export const initializeSocket = (): Socket => {
     });
 
     socket.on('connect', () => {
-      console.log('Socket connected:', socket?.id);
+      if (import.meta.env.DEV) console.log('Socket connected:', socket?.id);
     });
 
     socket.on('disconnect', () => {
-      console.log('Socket disconnected');
+      if (import.meta.env.DEV) console.log('Socket disconnected');
     });
 
     socket.on('connect_error', (error) => {

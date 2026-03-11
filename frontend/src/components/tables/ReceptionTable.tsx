@@ -28,7 +28,6 @@ interface ReceptionTableProps {
   onCancelClick?: (id: number) => void;
   onUncancelClick?: (id: number) => void;
   onLabNumberDoubleClick?: (labNumber: string) => void;
-  isAdmin?: boolean;
   hasSearch?: boolean;
   isLoading?: boolean;
 }
@@ -44,7 +43,6 @@ const ReceptionTable: React.FC<ReceptionTableProps> = ({
   onCancelClick,
   onUncancelClick,
   onLabNumberDoubleClick,
-  isAdmin = false,
   hasSearch = false,
   isLoading = false
 }) => {

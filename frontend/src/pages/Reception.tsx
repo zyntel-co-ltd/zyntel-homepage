@@ -4,15 +4,13 @@ import { TABLE_REFRESH_MS } from '@/constants/refreshIntervals';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header, Navbar, Filters, Loader, Pagination, TestsForLabDialog, Footer } from '@/components/shared';
-import { isAdmin } from '@/utils/permissions';
 import { formatTimeWithAMPM } from '@/constants/metaOptions';
 import { ReceptionTable, type ReceptionRecord } from '@/components/tables';
 import { downloadCSV } from '@/utils/exportUtils';
 
 const Reception: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const userIsAdmin = isAdmin(user?.role as any);
+  useAuth();
   const [filters, setFilters] = useState({
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
@@ -628,7 +626,6 @@ const Reception: React.FC = () => {
                 onCancelClick={handleCancelClick}
                 onUncancelClick={handleUncancelClick}
                 onLabNumberDoubleClick={(labNumber) => setTestsDialogLabNo(labNumber)}
-                isAdmin={userIsAdmin}
                 hasSearch={!!filters.search}
                 isLoading={isLoading}
               />

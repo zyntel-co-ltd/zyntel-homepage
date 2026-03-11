@@ -29,7 +29,7 @@ export interface ResultsProgress {
 const MIN_LAB_NO_LENGTH = 4;
 
 export const getResultsByLabNo = async (labNo: string): Promise<ResultsProgress> => {
-  const trimmed = (labNo || '').trim();
+  const trimmed = (labNo || '').replace(/\s/g, '').trim();
   if (!trimmed) {
     return { found: false, tests: [], summary: { total: 0, pending: 0, received: 0, resulted: 0, cancelled: 0 }, message: 'Please enter your full lab number from your receipt.' };
   }

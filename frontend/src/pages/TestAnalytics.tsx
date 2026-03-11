@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Header, Navbar, Filters, Footer, KPICard } from '@/components/shared';
 import { TestVolumeChart, DailyRevenueChart } from '@/components/charts';
 import { exportElementToPdf, buildExportFilename } from '@/utils/exportPdf';
@@ -21,7 +21,6 @@ interface TestAnalyticsData {
 
 const TestAnalytics: React.FC = () => {
   const { testName } = useParams<{ testName: string }>();
-  const navigate = useNavigate();
   const chartsRef = useRef<HTMLDivElement>(null);
   const [filters, setFilters] = useState({
     startDate: '',
