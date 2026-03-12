@@ -1,0 +1,90 @@
+---
+// Particle canvas for hero — floating dots with connections, mouse repulsion
+---
+<canvas id="hero-particle-canvas" class="hero-particle-canvas" aria-hidden="true"></canvas>
+
+<script>
+  (function initParticles() {
+    const canvas = document.getElementById('hero-particle-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let W = 0, H = 0, particles = [], mouse = { x: 9999, y: 9999 };
+    const accent = '0, 240, 255'; // cyan
+
+    function resize() {
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      W = canvas.width = parent.offsetWidth;
+      H = canvas.height = parent.offsetHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    canvas.parentElement?.addEventListener('mousemove', (e) => {
+      const r = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - r.left;
+      mouse.y = e.clientY - r.top;
+    });
+
+    for (let i = 0; i < 80; i++) {
+      particles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2,
+        r: Math.random() * 1.5 + 0.4
+      });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = W;
+        if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H;
+        if (p.y > H) p.y = 0;
+        const dx = p.x - mouse.x, dy = p.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 100) {
+          p.x += dx * 0.02;
+          p.y += dy * 0.02;
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${accent}, 0.5)`;
+        ctx.fill();
+      });
+      particles.forEach((a, i) => {
+        for (let j = i + 1; j < particles.length; j++) {
+          const b = particles[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < 100) {
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = `rgba(${accent}, ${0.1 * (1 - d / 100)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+</script>
+
+<style>
+  .hero-particle-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+</style>

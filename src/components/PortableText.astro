@@ -1,0 +1,12 @@
+---
+import { toHTML } from '@portabletext/to-html';
+
+interface Props {
+  value: unknown;
+}
+
+const { value } = Astro.props;
+
+const html = value ? toHTML(value) : '';
+---
+{value && <div class="portable-text" set:html={html} />}

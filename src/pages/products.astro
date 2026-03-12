@@ -1,0 +1,142 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import { getProducts } from '../lib/sanity';
+
+const sanityProducts = await getProducts();
+const FALLBACK_PRODUCTS = [
+  { name: 'Zyntel Forms', slug: { current: 'zyntel-forms' }, description: 'Digital form builder and data collection platform for replacing paper workflows. Create, deploy, and manage forms with automated routing and structured data capture.', icon: '📋', status: 'active' as const },
+  { name: 'Zyntel Dashboard & Tracker', slug: { current: 'dashboard' }, description: 'Real-time operational visibility with sample journey tracking, performance analytics, and automated notifications.', icon: '◐', status: 'active' as const },
+  { name: 'Kanta', slug: { current: 'kanta' }, description: 'Equipment inventory management system for tracking assets, maintenance schedules, and utilization across facilities.', icon: '📦', status: 'active' as const },
+  { name: 'Property Management', slug: { current: 'property-management' }, description: 'End-to-end property and facility management for portfolios and estates. Lease tracking, maintenance workflows, tenant communications, and reporting.', icon: '🏢', status: 'active' as const },
+  { name: 'Laboratory Quality Management', slug: { current: 'laboratory-quality-management' }, description: 'Lab quality management for accredited laboratories. QC workflows, audits, compliance documentation, and traceability for diagnostics and testing.', icon: '🔬', status: 'active' as const },
+];
+const products = sanityProducts.length > 0 ? sanityProducts : FALLBACK_PRODUCTS;
+
+function statusLabel(s: string | undefined) {
+  if (!s) return null;
+  const map: Record<string, string> = { active: 'Active', beta: 'Beta', 'coming-soon': 'Coming Soon' };
+  return map[s] ?? s;
+}
+---
+<BaseLayout title="Products" description="Explore Zyntel's enterprise software: Zyntel Forms, Kanta, Property Management, and Laboratory Quality Management.">
+  <Nav />
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <h1>Our Products</h1>
+        <p>Enterprise software solutions built for healthcare and operations excellence</p>
+      </div>
+    </section>
+
+    <section class="section products-grid">
+      <div class="container">
+        <div class="product-cards">
+          {products.map((p) => (
+            <a href={`/products/${p.slug.current}`} class="product-card">
+              {p.status && (
+                <span class={`product-badge status-${p.status}`}>{statusLabel(p.status)}</span>
+              )}
+              <span class="product-icon">{p.icon || '◈'}</span>
+              <h3>{p.name}</h3>
+              <p>{p.description || ''}</p>
+              <span class="product-link">Learn more →</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-hero {
+    padding: 8rem 0 4rem;
+    text-align: center;
+  }
+
+  .page-hero h1 {
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.03em;
+  }
+
+  .page-hero p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .section {
+    padding: 4rem 0 6rem;
+  }
+
+  .product-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .product-card {
+    position: relative;
+    background: var(--bg-card);
+    padding: 2.5rem 2rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    transition: all 0.3s;
+    display: block;
+  }
+
+  .product-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--cyan);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
+  }
+
+  .product-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+  }
+  .product-badge.status-active { background: var(--cyan-bg); color: var(--cyan); }
+  .product-badge.status-beta { background: rgba(255, 224, 102, 0.15); color: var(--gold); }
+  .product-badge.status-coming-soon { background: var(--border); color: var(--text-muted); }
+  .product-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 1rem;
+    color: var(--cyan);
+  }
+
+  .product-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+  }
+
+  .product-card p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+
+  .product-link {
+    color: var(--cyan);
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 900px) {
+    .product-cards { grid-template-columns: 1fr; }
+  }
+</style>

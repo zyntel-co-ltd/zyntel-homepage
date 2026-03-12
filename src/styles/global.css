@@ -1,0 +1,275 @@
+/* === ZYNTEL DESIGN SYSTEM — Theme-aware === */
+:root {
+  --cyan: #00f0ff;
+  --cyan-dim: #00b8d4;
+  --gold: #ffe066;
+  --green: #7de19a;
+  --violet: #8b5cf6;
+  --violet-dim: #6d28d9;
+  --violet-glow: rgba(139, 92, 246, 0.35);
+  --violet-subtle: rgba(139, 92, 246, 0.12);
+  --violet-bg: rgba(139, 92, 246, 0.08);
+  --gray: #94a3b8;
+  --gray-light: #cbd5e1;
+  --gray-muted: #64748b;
+
+  --bg-dark: #0a0a0a;
+  --bg-elevated: #111827;
+  --bg-card: #1e293b;
+  --bg-card-hover: #334155;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  --border: #334155;
+  --border-light: rgba(255, 255, 255, 0.08);
+
+  --glow-cyan: rgba(0, 240, 255, 0.3);
+  --glow-cyan-subtle: rgba(0, 240, 255, 0.1);
+  --cyan-bg: rgba(0, 240, 255, 0.08);
+
+  --nav-bg: rgba(10, 10, 12, 0.94);
+  --nav-bg-scrolled: rgba(10, 10, 12, 0.98);
+  --nav-border: rgba(0, 240, 255, 0.03);
+  --nav-border-scrolled: rgba(0, 240, 255, 0.06);
+
+  --card-glass: rgba(30, 41, 59, 0.9);
+  --card-shadow: rgba(0, 0, 0, 0.5);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --cyan: #0097a7;
+  --cyan-dim: #00838f;
+  --gold: #f9a825;
+  --green: #43a047;
+  --violet: #7c4dff;
+  --violet-dim: #651fff;
+  --violet-glow: rgba(124, 77, 255, 0.25);
+  --violet-subtle: rgba(124, 77, 255, 0.1);
+  --violet-bg: rgba(124, 77, 255, 0.06);
+
+  --bg-dark: #f8fafc;
+  --bg-elevated: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #e2e8f0;
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+
+  --border: #cbd5e1;
+  --border-light: rgba(0, 0, 0, 0.06);
+
+  --glow-cyan: rgba(0, 151, 167, 0.25);
+  --glow-cyan-subtle: rgba(0, 151, 167, 0.12);
+  --cyan-bg: rgba(0, 151, 167, 0.1);
+
+  --nav-bg: rgba(248, 250, 252, 0.94);
+  --nav-bg-scrolled: rgba(255, 255, 255, 0.98);
+  --nav-border: rgba(0, 0, 0, 0.04);
+  --nav-border-scrolled: rgba(0, 0, 0, 0.06);
+
+  --card-glass: rgba(255, 255, 255, 0.95);
+  --card-shadow: rgba(0, 0, 0, 0.12);
+
+  --btn-primary-text: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg-dark);
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--cyan), var(--cyan-dim));
+  color: var(--btn-primary-text, var(--bg-dark));
+  box-shadow: 0 4px 20px var(--glow-cyan-subtle);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px var(--glow-cyan);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="light"] .btn-secondary {
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--text-primary);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+/* === Light sections (soft contrast, readable text) === */
+/* Softer background: warm slate-100, not pure white — reduces black-to-white harshness */
+.section-light {
+  background: #e8eef4 !important;
+  color: #1e293b;
+  border-top: 1px solid #c5d0dc;
+  border-bottom: 1px solid #c5d0dc;
+}
+.section-light .section-title,
+.section-light h2,
+.section-light h3,
+.section-light .faq-q,
+.section-light .cta-title { color: #0f172a !important; }
+.section-light .section-sub,
+.section-light .cta-desc,
+.section-light p,
+.section-light .stat-label,
+.section-light .faq-a p,
+.section-light .product-link,
+.section-light .newsletter-desc,
+.section-light .purchase-cta,
+.section-light a:not(.btn) { color: #334155 !important; }
+.section-light .stat-num,
+.section-light .product-icon,
+.section-light .price,
+.section-light .hero-hl { color: var(--cyan); }
+.section-light .faq-item { border-color: #c5d0dc; }
+.section-light .faq-icon { border-color: #94a3b8; color: #64748b; }
+.section-light .product-card,
+.section-light .service-card,
+.section-light .purchase-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: #c5d0dc;
+  color: #1e293b;
+}
+.section-light .product-card p,
+.section-light .service-card p { color: #475569; }
+.section-light .product-card:hover,
+.section-light .service-card:hover,
+.section-light .purchase-card:hover {
+  border-color: var(--cyan);
+  box-shadow: 0 12px 32px rgba(0, 151, 167, 0.12);
+}
+.section-light .form-control {
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+.section-light .form-control::placeholder {
+  color: #64748b;
+}
+.section-light .form-group label {
+  color: #334155;
+}
+.section-light .form-status {
+  color: #475569;
+}
+.section-light .link { color: var(--cyan); }
+.section-light .link:hover { color: var(--cyan-dim); }
+
+[data-theme="light"] .section-light {
+  background: #f1f5f9 !important;
+  border-color: #e2e8f0;
+}
+
+/* === Animation utilities === */
+@keyframes levitate {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-levitate {
+  animation: levitate 4s ease-in-out infinite;
+}
+
+/* Scroll-reveal: visible by default; GSAP animates on scroll (immediateRender: false) */
+
+/* === 3D tilt base — applied by JS on interactive cards === */
+.tilt-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* === Magnetic button base === */
+.btn {
+  will-change: transform;
+  position: relative;
+}
+
+/* === Page transition fade === */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.35s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+::view-transition-old(root) {
+  animation-name: vt-fade-out;
+}
+::view-transition-new(root) {
+  animation-name: vt-fade-in;
+}
+@keyframes vt-fade-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-12px); }
+}
+@keyframes vt-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

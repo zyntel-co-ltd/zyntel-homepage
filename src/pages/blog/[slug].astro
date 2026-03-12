@@ -1,0 +1,67 @@
+---
+export const prerender = true;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import PortableText from '../../components/PortableText.astro';
+import { getPosts, getPostBySlug } from '../../lib/sanity';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((p) => ({ params: { slug: p.slug.current } }));
+}
+
+const { slug } = Astro.params;
+const post = slug ? await getPostBySlug(slug) : null;
+---
+{post ? (
+  <BaseLayout title={post.title} description={post.excerpt || post.title}>
+    <Nav />
+    <main>
+      <article class="post">
+        <header class="post-header">
+          <div class="container">
+            <a href="/blog" class="back-link">← Blog</a>
+            <h1>{post.title}</h1>
+            {post.publishedAt && (
+              <time datetime={post.publishedAt} class="post-date">
+                {new Date(post.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </time>
+            )}
+            {post.author?.name && <p class="post-author">By {post.author.name}{post.author.role ? `, ${post.author.role}` : ''}</p>}
+          </div>
+        </header>
+        {post.body && (
+          <div class="post-body container prose">
+            <PortableText value={post.body} />
+          </div>
+        )}
+      </article>
+    </main>
+    <Footer />
+  </BaseLayout>
+) : (
+  <BaseLayout title="Not found">
+    <Nav />
+    <main class="container" style="padding: 8rem 0; text-align: center;">
+      <h1>Post not found</h1>
+      <a href="/blog">← Back to Blog</a>
+    </main>
+    <Footer />
+  </BaseLayout>
+)}
+
+<style>
+  .post-header { padding: 8rem 0 2rem; text-align: center; }
+  .back-link { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem; display: inline-block; }
+  .back-link:hover { color: var(--cyan); }
+  .post-header h1 { font-size: clamp(2rem, 4vw, 2.75rem); margin-bottom: 0.75rem; }
+  .post-date, .post-author { color: var(--text-muted); font-size: 0.95rem; }
+  .post-body { padding: 2rem 0 6rem; max-width: 720px; margin: 0 auto; }
+  .prose :global(p) { margin-bottom: 1.25rem; line-height: 1.7; }
+  .prose :global(h2) { margin: 2rem 0 1rem; font-size: 1.5rem; }
+  .prose :global(h3) { margin: 1.5rem 0 0.75rem; font-size: 1.25rem; }
+  .prose :global(ul), .prose :global(ol) { margin-bottom: 1.25rem; padding-left: 1.5rem; }
+  .prose :global(li) { margin-bottom: 0.5rem; }
+  .prose :global(a) { color: var(--cyan); text-decoration: underline; }
+</style>

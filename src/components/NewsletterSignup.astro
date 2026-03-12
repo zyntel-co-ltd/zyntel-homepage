@@ -1,0 +1,59 @@
+---
+---
+<form id="newsletter-form" class="newsletter-form">
+  <input id="newsletter-email" name="email" type="email" placeholder="Enter your email" required class="newsletter-input" />
+  <button type="submit" class="btn btn-primary">Subscribe</button>
+  <p id="newsletter-status" class="newsletter-status" aria-live="polite"></p>
+</form>
+
+<script>
+  document.getElementById('newsletter-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const status = document.getElementById('newsletter-status');
+    const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    if (!status || !btn) return;
+
+    btn.disabled = true;
+    status.textContent = '';
+    status.className = 'newsletter-status';
+
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: (form.elements.namedItem('email') as HTMLInputElement).value }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        status.textContent = 'Thanks for subscribing!';
+        status.className = 'newsletter-status success';
+        form.reset();
+      } else {
+        status.textContent = data?.error ?? 'Something went wrong.';
+        status.className = 'newsletter-status error';
+      }
+    } catch {
+      status.textContent = 'Network error. Please try again.';
+      status.className = 'newsletter-status error';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  .newsletter-form { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .newsletter-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+  }
+  .newsletter-status { margin-top: 0.5rem; font-size: 0.9rem; }
+  .newsletter-status.success { color: var(--green); }
+  .newsletter-status.error { color: #f87171; }
+</style>

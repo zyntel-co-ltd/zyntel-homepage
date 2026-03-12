@@ -1,0 +1,82 @@
+---
+interface Props {
+  productName: string;
+  productId: string;
+  suggestedAmount?: number;
+}
+const { productName, productId, suggestedAmount = 500000 } = Astro.props;
+---
+<div class="payment-form-wrap">
+  <form id="payment-form" class="payment-form" data-product-name={productName} data-product-id={productId} data-amount={suggestedAmount}>
+    <div class="form-group">
+      <label for="pay-email">Email *</label>
+      <input id="pay-email" name="email" type="email" required placeholder="you@example.com" class="form-control" />
+    </div>
+    <div class="form-group">
+      <label for="pay-amount">Amount (UGX) *</label>
+      <input id="pay-amount" name="amount" type="number" required min="1000" step="1000" value={suggestedAmount} class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Proceed to Payment</button>
+    <p id="payment-status" class="form-status" aria-live="polite"></p>
+  </form>
+</div>
+
+<script>
+  document.getElementById('payment-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement & { dataset: { productName: string; productId: string } };
+    const status = document.getElementById('payment-status');
+    const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    if (!status || !btn) return;
+
+    btn.disabled = true;
+    status.textContent = 'Creating payment session...';
+    status.className = 'form-status';
+
+    const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+    const amount = Number((form.elements.namedItem('amount') as HTMLInputElement).value);
+
+    try {
+      const res = await fetch('/api/payments/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          amount,
+          currency: 'UGX',
+          product_name: form.dataset.productName,
+          product_id: form.dataset.productId,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.link) {
+        window.location.href = data.link;
+      } else {
+        status.textContent = data?.error ?? 'Payment could not be created.';
+        status.className = 'form-status error';
+      }
+    } catch {
+      status.textContent = 'Network error. Please try again.';
+      status.className = 'form-status error';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  .payment-form-wrap { max-width: 360px; margin: 0 auto; }
+  .payment-form .form-group { margin-bottom: 1rem; }
+  .payment-form label { display: block; margin-bottom: 0.35rem; font-weight: 500; color: var(--text-secondary); }
+  .payment-form .form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 1rem;
+  }
+  .payment-form .form-status { margin-top: 1rem; font-size: 0.9rem; }
+  .payment-form .form-status.error { color: #f87171; }
+</style>

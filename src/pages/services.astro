@@ -1,0 +1,81 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import ContactForm from '../components/ContactForm.astro';
+import { getServices } from '../lib/sanity';
+
+const sanityServices = await getServices();
+const FALLBACK_SERVICES = [
+  { title: 'Implementation & Onboarding', description: 'End-to-end setup of Zyntel products with data import, configuration, and go-live support.' },
+  { title: 'Custom Integration', description: 'Connect Zyntel to your ERP, CRM, and BI tools via our API and pre-built connectors.' },
+  { title: 'Training & Adoption', description: 'Onboarding sessions and training programs so your team gets the most from the platform.' },
+  { title: 'Dedicated Support', description: 'Priority support and dedicated account managers for Enterprise plans.' },
+  { title: 'Data Migration', description: 'Secure migration of existing data into Zyntel with validation and reconciliation.' },
+  { title: 'API & Integration Support', description: 'Technical assistance for custom integrations and webhook setup.' },
+];
+const services = sanityServices.length > 0 ? sanityServices.map(s => ({ title: s.title, desc: s.description || '' })) : FALLBACK_SERVICES.map(s => ({ title: s.title, desc: s.description }));
+---
+<BaseLayout title="Implementation & Support" description="Get the most out of Zyntel with implementation, training, integrations, and dedicated support.">
+  <Nav />
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <h1>Professional Services</h1>
+        <p>Strategic support to maximize the value of your digital investments</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="services-grid">
+          {services.map((s) => (
+            <div class="service-card">
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section cta">
+      <div class="container">
+        <h2>Ready to transform?</h2>
+        <p>Start your free trial or talk to our team about Enterprise plans</p>
+        <ContactForm />
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-hero { padding: 8rem 0 4rem; text-align: center; }
+  .page-hero h1 { font-size: clamp(2.5rem, 5vw, 3.5rem); margin-bottom: 0.75rem; }
+  .page-hero p { color: var(--text-secondary); font-size: 1.2rem; }
+  .section { padding: 4rem 0; }
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  .service-card {
+    background: var(--bg-card);
+    padding: 2rem 1.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    transition: all 0.3s;
+  }
+  .service-card:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  }
+  .service-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+  .service-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
+  .cta { text-align: center; background: var(--bg-elevated); }
+  .cta h2 { margin-bottom: 0.5rem; }
+  .cta p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+  @media (max-width: 900px) { .services-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .services-grid { grid-template-columns: 1fr; } }
+</style>

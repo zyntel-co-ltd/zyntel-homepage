@@ -1,0 +1,46 @@
+---
+const logos = ['Nakasero Hospital', 'Property Management'];
+// Duplicate for seamless loop
+const allLogos = [...logos, ...logos];
+---
+<section class="logos-section" aria-label="Trusted by">
+  <div class="logos-wrapper">
+    <div class="logos-track">
+      {allLogos.map((name) => (
+        <span class="logo-item">{name}</span>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .logos-section {
+    padding: 3rem 0;
+    overflow: hidden;
+  }
+
+  .logos-wrapper {
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+  }
+
+  .logos-track {
+    display: flex;
+    gap: 4rem;
+    width: max-content;
+    animation: marquee 30s linear infinite;
+  }
+
+  .logo-item {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 1.1rem;
+    white-space: nowrap;
+    opacity: 0.7;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+</style>

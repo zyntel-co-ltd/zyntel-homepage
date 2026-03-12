@@ -1,0 +1,111 @@
+---
+export const prerender = true;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import { getProductBySlug, getProducts } from '../../lib/sanity';
+
+export async function getStaticPaths() {
+  const products = await getProducts();
+  if (products.length > 0) {
+    return products.map((p) => ({ params: { slug: p.slug.current } }));
+  }
+  return [
+    { params: { slug: 'zyntel-forms' } },
+    { params: { slug: 'dashboard' } },
+    { params: { slug: 'kanta' } },
+    { params: { slug: 'property-management' } },
+    { params: { slug: 'laboratory-quality-management' } },
+  ];
+}
+
+const { slug } = Astro.params;
+const product = await getProductBySlug(slug!);
+
+const FALLBACK: Record<string, { name: string; tagline?: string; description: string; features: string[]; externalUrl?: string }> = {
+  'zyntel-forms': {
+    name: 'Zyntel Forms',
+    tagline: 'Digital form builder and data collection',
+    description: 'Replace paper workflows with digital forms. Create, deploy, and manage forms with automated routing, validation, and structured data capture across healthcare and operations.',
+    features: ['Drag-and-drop form builder', 'Automated routing and approvals', 'Offline-capable data collection', 'Integrations with existing systems', 'Analytics and reporting'],
+  },
+  dashboard: {
+    name: 'Zyntel Dashboard & Tracker',
+    tagline: 'Real-time operational visibility',
+    description: 'Real-time operational visibility with sample journey tracking, performance analytics, and automated notifications for enterprise operations.',
+    features: ['Real-time dashboards', 'Sample journey tracking', 'Performance analytics', 'Automated notifications', 'Custom report generation'],
+  },
+  kanta: {
+    name: 'Kanta',
+    tagline: 'Equipment inventory management',
+    description: 'Equipment inventory management system for tracking assets, maintenance schedules, utilization, and lifecycle across facilities.',
+    features: ['Asset tracking and registration', 'Maintenance scheduling', 'Utilization reporting', 'Lifecycle management', 'Multi-site support'],
+  },
+  'property-management': {
+    name: 'Property Management',
+    tagline: 'End-to-end property and facility management',
+    description: 'Manage portfolios and estates with lease tracking, maintenance workflows, tenant communications, financial reporting, and document management.',
+    features: ['Lease and contract tracking', 'Maintenance workflows', 'Tenant portal and communications', 'Financial reporting', 'Document management'],
+  },
+  'laboratory-quality-management': {
+    name: 'Laboratory Quality Management',
+    tagline: 'Lab quality for accredited facilities',
+    description: 'QC workflows, internal and external audits, compliance documentation, and full traceability for accredited laboratories and diagnostic testing.',
+    features: ['Quality control workflows', 'Audit management', 'Compliance documentation', 'Instrument and sample traceability', 'Corrective action tracking'],
+  },
+};
+
+const data = product
+  ? { name: product.name, tagline: product.tagline, description: product.description || '', features: product.features || [], externalUrl: product.externalUrl, logo: product.logo }
+  : FALLBACK[slug!] ?? { name: 'Product', description: '', features: [] };
+---
+<BaseLayout title={data.name} description={data.description}>
+  <Nav />
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <a href="/products" class="back-link">← Products</a>
+        {data.logo ? (
+          <img src={data.logo} alt="" class="product-logo" />
+        ) : null}
+        <h1>{data.name}</h1>
+        {data.tagline && <p class="product-tagline">{data.tagline}</p>}
+        <p>{data.description}</p>
+        <div class="product-actions">
+          <a href="/purchase" class="btn btn-primary">Get License</a>
+          {data.externalUrl && (
+            <a href={data.externalUrl} target="_blank" rel="noopener" class="btn btn-secondary">View Demo</a>
+          )}
+        </div>
+      </div>
+    </section>
+
+    {data.features.length > 0 && (
+      <section class="section">
+        <div class="container prose">
+          <h2>Features</h2>
+          <ul>
+            {data.features.map((f) => (
+              <li>{f}</li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )}
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-hero { padding: 8rem 0 4rem; text-align: center; }
+  .product-logo { max-height: 80px; margin-bottom: 1rem; }
+  .product-tagline { color: var(--cyan); font-weight: 600; margin-bottom: 0.5rem; }
+  .product-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
+  .back-link { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem; display: inline-block; }
+  .back-link:hover { color: var(--cyan); }
+  .page-hero h1 { font-size: clamp(2rem, 4vw, 2.75rem); margin-bottom: 1rem; }
+  .page-hero p { color: var(--text-secondary); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+  .section { padding: 4rem 0; }
+  .prose h2 { margin-bottom: 1rem; }
+  .prose ul { color: var(--text-secondary); line-height: 2; }
+</style>

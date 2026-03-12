@@ -1,0 +1,70 @@
+---
+// Custom cursor — only shown on devices with fine pointer (desktop). Touch devices use default.
+---
+<div id="cursor-dot" class="cursor-dot" aria-hidden="true"></div>
+<div id="cursor-ring" class="cursor-ring" aria-hidden="true"></div>
+
+<script>
+  if (typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches) {
+    document.body.classList.add('custom-cursor');
+    const dot = document.getElementById('cursor-dot');
+    const ring = document.getElementById('cursor-ring');
+    if (dot && ring) {
+      let mx = 0, my = 0, rx = 0, ry = 0;
+      document.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
+      function anim() {
+        dot.style.left = mx + 'px';
+        dot.style.top = my + 'px';
+        rx += (mx - rx) * 0.12;
+        ry += (my - ry) * 0.12;
+        ring.style.left = rx + 'px';
+        ring.style.top = ry + 'px';
+        requestAnimationFrame(anim);
+      }
+      anim();
+      document.querySelectorAll('a, button, [role="button"]').forEach((el) => {
+        el.addEventListener('mouseenter', () => {
+          dot.style.transform = 'translate(-50%,-50%) scale(2.5)';
+          ring.style.transform = 'translate(-50%,-50%) scale(1.4)';
+        });
+        el.addEventListener('mouseleave', () => {
+          dot.style.transform = 'translate(-50%,-50%) scale(1)';
+          ring.style.transform = 'translate(-50%,-50%) scale(1)';
+        });
+      });
+    }
+  }
+</script>
+
+<style>
+  .cursor-dot, .cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    pointer-events: none;
+  }
+  .cursor-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--cyan);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: transform 0.08s, width 0.2s, height 0.2s;
+    mix-blend-mode: screen;
+  }
+  .cursor-ring {
+    width: 32px;
+    height: 32px;
+    border: 1.5px solid var(--glow-cyan);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: transform 0.18s ease;
+  }
+  body.custom-cursor {
+    cursor: none;
+  }
+  @media (pointer: coarse) {
+    .cursor-dot, .cursor-ring { display: none !important; }
+  }
+</style>

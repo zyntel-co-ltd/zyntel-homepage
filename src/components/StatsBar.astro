@@ -1,0 +1,86 @@
+---
+const stats = [
+  { value: 50, suffix: '+', label: 'Enterprise facilities using our solutions' },
+  { value: 30, suffix: '%', label: 'Average reduction in operational costs' },
+  { value: 99.9, suffix: '%', label: 'Uptime and reliability guarantee', decimals: 1 },
+];
+---
+<section class="stats-bar section-light" id="stats">
+  <div class="container">
+    <div class="stats-grid">
+      {stats.map((s, i) => (
+        <div class="stat" data-value={s.decimals ? s.value : Math.round(s.value)} data-suffix={s.suffix} data-decimals={s.decimals ?? 0}>
+          <span class="stat-num" data-target={s.decimals ? s.value : Math.round(s.value)} data-suffix={s.suffix} data-decimals={s.decimals ?? 0}>0</span>
+          <span class="stat-label">{s.label}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  function animateValue(el: Element, target: number, suffix: string, decimals: number, duration = 1500) {
+    const start = 0;
+    const startTime = performance.now();
+    function update(currentTime: number) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const current = start + (target - start) * easeOut;
+      const formatted = decimals ? current.toFixed(1) : Math.round(current).toString();
+      (el as HTMLElement).textContent = formatted + suffix;
+      if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const stat = entry.target as HTMLElement;
+      const numEl = stat.querySelector('.stat-num') as HTMLElement;
+      if (!numEl || numEl.dataset.animated === 'true') return;
+      numEl.dataset.animated = 'true';
+      const target = parseFloat(numEl.dataset.target ?? '0');
+      const suffix = numEl.dataset.suffix ?? '';
+      const decimals = parseInt(numEl.dataset.decimals ?? '0', 10);
+      animateValue(numEl, target, suffix, decimals);
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.stat').forEach((el) => observer.observe(el));
+</script>
+
+<style>
+  .stats-bar {
+    padding: 4rem 0;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+    text-align: center;
+  }
+
+  .stat-num {
+    display: block;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    color: var(--cyan);
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-label {
+    font-size: 1rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+</style>

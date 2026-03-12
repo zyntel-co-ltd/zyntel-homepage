@@ -1,0 +1,86 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import PaymentForm from '../components/PaymentForm.astro';
+import { getProducts } from '../lib/sanity';
+
+const sanityProducts = await getProducts();
+const FALLBACK = [
+  { _id: 'zyntel-forms', name: 'Zyntel Forms', slug: { current: 'zyntel-forms' }, amount: 500000 },
+  { _id: 'dashboard', name: 'Zyntel Dashboard & Tracker', slug: { current: 'dashboard' }, amount: 500000 },
+  { _id: 'kanta', name: 'Kanta', slug: { current: 'kanta' }, amount: 500000 },
+  { _id: 'property-management', name: 'Property Management', slug: { current: 'property-management' }, amount: 500000 },
+  { _id: 'laboratory-quality-management', name: 'Laboratory Quality Management', slug: { current: 'laboratory-quality-management' }, amount: 500000 },
+];
+const products = sanityProducts.length > 0
+  ? sanityProducts.map(p => ({ id: p._id, name: p.name, href: `/products/${p.slug.current}`, price: 'License', amount: 500000 }))
+  : FALLBACK.map(p => ({ id: p._id || p.slug.current, name: p.name, href: `/products/${p.slug.current}`, price: 'License', amount: p.amount }));
+---
+<BaseLayout title="Purchase" description="Purchase Zyntel desktop applications and software licenses.">
+  <Nav />
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <h1>Purchase Desktop Apps</h1>
+        <p>Get licenses for Zyntel enterprise software. Pay via Mobile Money, M-Pesa, or card.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="purchase-grid">
+          {products.map((p) => (
+            <div class="purchase-card">
+              <h3>{p.name}</h3>
+              <span class="price">{p.price}</span>
+              <a href={p.href} class="product-link">View details →</a>
+              <div class="purchase-pay">
+                <PaymentForm productName={p.name} productId={p.id} suggestedAmount={p.amount} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section cta">
+      <div class="container">
+        <p>Enterprise or volume licensing?</p>
+        <a href="mailto:contact@zyntel.net" class="btn btn-secondary">Request a quote</a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-hero { padding: 8rem 0 4rem; text-align: center; }
+  .page-hero h1 { font-size: clamp(2.5rem, 5vw, 3.5rem); margin-bottom: 0.75rem; }
+  .page-hero p { color: var(--text-secondary); }
+  .section { padding: 4rem 0; }
+  .purchase-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+  .purchase-card {
+    background: var(--bg-card);
+    padding: 2.5rem 2rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    transition: all 0.3s;
+    text-align: center;
+  }
+  .purchase-card:hover {
+    border-color: var(--cyan);
+  }
+  .purchase-card h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+  .price { color: var(--cyan); font-weight: 600; display: block; margin-bottom: 0.5rem; }
+  .product-link { color: var(--text-muted); font-size: 0.9rem; display: block; margin-bottom: 1.5rem; }
+  .product-link:hover { color: var(--cyan); }
+  .purchase-pay { margin-top: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border-light); }
+  .cta { text-align: center; }
+  .cta p { margin-bottom: 1rem; color: var(--text-secondary); }
+  @media (max-width: 900px) { .purchase-grid { grid-template-columns: 1fr; } }
+</style>

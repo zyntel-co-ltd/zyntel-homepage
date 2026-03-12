@@ -1,0 +1,79 @@
+---
+interface Props {
+  src: string;
+  fallback?: string;
+  size?: string;
+}
+const { src, fallback = '◈', size = '2.5rem' } = Astro.props;
+---
+<div class="lottie-icon-wrap" data-lottie-src={src} data-lottie-fallback={fallback} style={`--lottie-size: ${size}`}>
+  <span class="lottie-fallback">{fallback}</span>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll<HTMLElement>('[data-lottie-src]').forEach(async (wrap) => {
+      const src = wrap.dataset.lottieSrc;
+      const fallback = wrap.querySelector('.lottie-fallback') as HTMLElement;
+      if (!src || !fallback) return;
+
+      const loadPlayer = (): Promise<any> => {
+        if ((window as any).lottie?.loadAnimation) {
+          return Promise.resolve((window as any).lottie);
+        }
+        return new Promise((resolve) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js';
+          script.onload = () => resolve((window as any).lottie);
+          document.head.appendChild(script);
+        });
+      };
+
+      try {
+        const lottie = await loadPlayer();
+        const anim = lottie.loadAnimation({
+          container: wrap,
+          renderer: 'svg',
+          loop: true,
+          autoplay: false,
+          path: src,
+        });
+        fallback.style.display = 'none';
+
+        wrap.addEventListener('mouseenter', () => anim.play());
+        wrap.addEventListener('mouseleave', () => anim.stop());
+        wrap.addEventListener('focus', () => anim.play());
+        wrap.addEventListener('blur', () => anim.stop());
+      } catch {
+        /* keep fallback visible */
+      }
+    });
+  });
+</script>
+
+<style>
+  .lottie-icon-wrap {
+    width: var(--lottie-size, 2.5rem);
+    height: var(--lottie-size, 2.5rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    color: var(--cyan);
+  }
+  .lottie-icon-wrap :global(svg) {
+    width: 100%;
+    height: 100%;
+    color: inherit;
+  }
+  .lottie-icon-wrap :global(svg path[fill]) {
+    fill: currentColor;
+  }
+  .lottie-icon-wrap :global(svg path[stroke]) {
+    stroke: currentColor;
+  }
+  .lottie-fallback {
+    font-size: 1.5em;
+    color: inherit;
+  }
+</style>

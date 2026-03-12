@@ -1,0 +1,109 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import ContactForm from '../components/ContactForm.astro';
+import { getTeamMembers } from '../lib/sanity';
+
+const team = await getTeamMembers();
+---
+<BaseLayout title="About Us" description="Zyntel builds and sells enterprise software for healthcare and operations. Learn about our team and mission.">
+  <Nav />
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <h1>About Zyntel</h1>
+        <p>We build and sell enterprise software for healthcare and operations. Our products help teams streamline workflows, gain real-time visibility, and drive operational excellence.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2 class="section-title">Our Mission</h2>
+        <p class="about-copy">Zyntel exists to transform how healthcare and operations teams work with data. We build software that streamlines workflows, provides real-time visibility, and drives operational excellence across inventory, laboratories, and beyond.</p>
+      </div>
+    </section>
+
+    {team.length > 0 && (
+      <section class="section section-alt">
+        <div class="container">
+          <h2 class="section-title">Our Team</h2>
+          <div class="team-grid">
+            {team.map((member) => (
+              <div class="team-card">
+                {member.image ? (
+                  <img src={member.image} alt={member.name} class="team-photo" />
+                ) : (
+                  <div class="team-photo-placeholder"><span>{member.name.charAt(0)}</span></div>
+                )}
+                <h3>{member.name}</h3>
+                {member.role && <p class="team-role">{member.role}</p>}
+                {member.bio && <p class="team-bio">{member.bio}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section class="section cta">
+      <div class="container">
+        <h2>Get in touch</h2>
+        <p>Start your free trial or reach out to discuss your needs.</p>
+        <ContactForm />
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-hero { padding: 8rem 0 4rem; text-align: center; }
+  .page-hero h1 { font-size: clamp(2.5rem, 5vw, 3.5rem); margin-bottom: 0.75rem; }
+  .page-hero p { font-size: 1.2rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto; }
+  .section { padding: 4rem 0 6rem; }
+  .section-alt { background: var(--bg-elevated); }
+  .section-title { text-align: center; font-size: clamp(1.75rem, 3vw, 2.5rem); margin-bottom: 2rem; }
+  .about-copy { max-width: 720px; margin: 0 auto; font-size: 1.1rem; line-height: 1.7; color: var(--text-secondary); text-align: center; }
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 2rem;
+  }
+  .team-card {
+    background: var(--bg-card);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    text-align: center;
+    transition: all 0.3s;
+  }
+  .team-card:hover { border-color: var(--cyan); }
+  .team-photo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 1rem;
+    display: block;
+  }
+  .team-photo-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: var(--cyan-bg);
+    color: var(--cyan);
+    font-size: 2.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+  }
+  .team-card h3 { font-size: 1.25rem; margin-bottom: 0.25rem; }
+  .team-role { color: var(--cyan); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .team-bio { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
+  .cta { text-align: center; }
+  .cta h2 { margin-bottom: 0.5rem; }
+  .cta p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+</style>

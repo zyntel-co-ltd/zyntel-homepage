@@ -1,0 +1,73 @@
+---
+---
+<button
+  type="button"
+  class="scroll-to-top"
+  id="scroll-to-top"
+  aria-label="Scroll back to top"
+  title="Back to top"
+>
+  <span class="scroll-to-top-icon" aria-hidden="true">↑</span>
+</button>
+
+<script>
+  (function() {
+    const btn = document.getElementById('scroll-to-top');
+    const threshold = 400;
+
+    function updateVisibility() {
+      if (!btn) return;
+      const show = window.scrollY > threshold;
+      btn.classList.toggle('visible', show);
+      btn.setAttribute('aria-hidden', String(!show));
+    }
+
+    window.addEventListener('scroll', updateVisibility, { passive: true });
+    updateVisibility();
+
+    btn?.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  })();
+</script>
+
+<style>
+  .scroll-to-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 999;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--cyan), var(--cyan-dim));
+    color: var(--bg-dark);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px var(--glow-cyan-subtle);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition: opacity 0.25s, visibility 0.25s, transform 0.25s, box-shadow 0.2s;
+  }
+
+  .scroll-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .scroll-to-top:hover {
+    box-shadow: 0 6px 28px var(--glow-cyan);
+    transform: translateY(-2px);
+  }
+
+  .scroll-to-top-icon {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+</style>

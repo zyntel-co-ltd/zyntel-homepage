@@ -1,0 +1,47 @@
+---
+import '../styles/global.css';
+import CustomCursor from '../components/CustomCursor.astro';
+import ScrollToTop from '../components/ScrollToTop.astro';
+import StickyCTA from '../components/StickyCTA.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Zyntel — healthcare-focused web development agency building modern SaaS products and client solutions for enterprises.' } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script is:inline>
+      (function(){
+        var k='zyntel-theme',s=localStorage.getItem(k);
+        var p=window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark';
+        var t=s==='light'||s==='dark'?s:p;
+        document.documentElement.setAttribute('data-theme',t);
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#00f0ff" />
+    <meta name="description" content={description} />
+    <title>{title} | Zyntel</title>
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <CustomCursor />
+    <slot />
+    <ScrollToTop />
+    <StickyCTA />
+  </body>
+</html>

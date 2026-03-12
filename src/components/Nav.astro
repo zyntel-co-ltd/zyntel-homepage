@@ -1,0 +1,253 @@
+---
+const currentPath = Astro.url.pathname;
+import ThemeToggle from './ThemeToggle.astro';
+---
+<nav class="nav">
+  <div class="nav-container container">
+    <a href="/" class="nav-logo" aria-label="Zyntel Home">
+      <span class="nav-logo-text">Zyn<span class="nav-logo-accent">tel</span></span>
+    </a>
+
+    <div class="nav-links" id="nav-links" role="navigation" aria-label="Main">
+      <a href="/#products" class="nav-link" data-section="products">Products</a>
+      <a href="/#services" class="nav-link" data-section="services">Support</a>
+      <a href="/blog" class={currentPath.startsWith('/blog') ? 'nav-link active' : 'nav-link'}>Blog</a>
+      <a href="/about" class={currentPath.startsWith('/about') ? 'nav-link active' : 'nav-link'}>About</a>
+    </div>
+
+    <div class="nav-actions">
+      <ThemeToggle />
+      <a href="/#products" class="btn btn-primary nav-cta">Get Started</a>
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<script>
+  const toggle = document.getElementById('nav-toggle');
+  const links = document.getElementById('nav-links');
+  if (toggle && links) {
+    toggle.addEventListener('click', () => {
+      const open = links.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(open));
+    });
+    links.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => links.classList.remove('open'));
+    });
+  }
+  /* Scroll spy: highlight nav link for section in view (homepage only) */
+  if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+    const sections = ['products','services'];
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        const id = e.target.id;
+        document.querySelectorAll('.nav-link').forEach((a) => {
+          (a as HTMLElement).classList.toggle('active', (a as HTMLElement).dataset.section === id);
+        });
+      });
+    }, { rootMargin: '-40% 0px -50% 0px', threshold: 0 });
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+  } else {
+    const hash = window.location.hash?.slice(1);
+    document.querySelectorAll('.nav-link').forEach((a) => {
+      const href = (a as HTMLAnchorElement).href ?? '';
+      (a as HTMLElement).classList.toggle('active', !!hash && href?.includes(hash));
+    });
+  }
+  window.addEventListener('scroll', () => {
+    const nav = document.querySelector('.nav');
+    if (nav) {
+      const scrolled = window.scrollY > 40;
+      (nav as HTMLElement).classList.toggle('scrolled', scrolled);
+    }
+  });
+</script>
+
+<style>
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 0.9rem 0;
+    background: var(--nav-bg);
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    border-bottom: 1px solid var(--nav-border);
+    box-shadow: 0 1px 0 0 var(--nav-border);
+    transition: background 0.3s, box-shadow 0.3s, border-color 0.3s;
+  }
+
+  .nav.scrolled {
+    background: var(--nav-bg-scrolled);
+    border-bottom-color: var(--nav-border-scrolled);
+    box-shadow: 0 1px 0 0 var(--nav-border-scrolled), 0 4px 24px rgba(0,0,0,0.15);
+  }
+
+  [data-theme="light"] .nav.scrolled {
+    box-shadow: 0 1px 0 0 var(--nav-border-scrolled), 0 4px 24px rgba(0,0,0,0.08);
+  }
+
+  .nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+    transition: color 0.2s, transform 0.2s;
+  }
+
+  .nav-logo:hover {
+    transform: translateY(-1px);
+  }
+
+  .nav-logo-accent {
+    color: var(--cyan);
+  }
+
+  [data-theme="light"] .nav-logo-accent {
+    color: var(--cyan);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2.25rem;
+    align-items: center;
+  }
+
+  .nav-links a {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.92rem;
+    letter-spacing: 0.01em;
+    padding: 0.35rem 0;
+    position: relative;
+    transition: color 0.25s;
+  }
+
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1.5px;
+    background: linear-gradient(90deg, var(--cyan), var(--cyan-dim));
+    transition: width 0.25s ease;
+  }
+
+  .nav-links a:hover,
+  .nav-links a.active {
+    color: var(--cyan);
+  }
+
+  .nav-links a:hover::after,
+  .nav-links a.active::after {
+    width: 100%;
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .nav-cta {
+    padding: 0.5rem 1.2rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    background: linear-gradient(135deg, var(--cyan), var(--cyan-dim));
+    box-shadow: 0 2px 16px rgba(0,240,255,0.25);
+    transition: box-shadow 0.25s, transform 0.2s;
+  }
+
+  .nav-cta:hover {
+    box-shadow: 0 4px 24px rgba(0,240,255,0.4);
+    transform: translateY(-1px);
+  }
+
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .nav-toggle span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+    transition: transform 0.3s, opacity 0.3s;
+  }
+
+  .nav-toggle[aria-expanded="true"] span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+  }
+
+  .nav-toggle[aria-expanded="true"] span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .nav-toggle[aria-expanded="true"] span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+  }
+
+  @media (max-width: 768px) {
+    .nav-toggle {
+      display: flex;
+    }
+
+    .nav-cta {
+      display: none;
+    }
+
+    .nav-links {
+      position: fixed;
+      top: 65px;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      background: var(--nav-bg-scrolled);
+      backdrop-filter: blur(20px);
+      padding: 2rem;
+      gap: 1.5rem;
+      border-bottom: 1px solid var(--border-light);
+      transform: translateY(-100%);
+      opacity: 0;
+      visibility: hidden;
+      transition: transform 0.3s, opacity 0.3s, visibility 0.3s;
+    }
+
+    .nav-links.open {
+      transform: translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .nav-links a {
+      font-size: 1.1rem;
+    }
+  }
+</style>

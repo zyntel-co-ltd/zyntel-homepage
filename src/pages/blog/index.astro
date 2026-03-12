@@ -1,0 +1,77 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import { getPosts } from '../../lib/sanity';
+
+const posts = await getPosts();
+---
+<BaseLayout title="Blog" description="Insights, updates, and news from Zyntel.">
+  <Nav />
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <h1>Blog & Insights</h1>
+        <p>Latest updates, product news, and industry insights</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        {posts.length > 0 ? (
+          <div class="posts-grid">
+            {posts.map((post) => (
+              <a href={`/blog/${post.slug.current}`} class="post-card">
+                <h3>{post.title}</h3>
+                {post.excerpt && <p class="post-excerpt">{post.excerpt}</p>}
+                {post.publishedAt && (
+                  <time class="post-date" datetime={post.publishedAt}>
+                    {new Date(post.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </time>
+                )}
+                {post.author?.name && <span class="post-author">By {post.author.name}</span>}
+                <span class="post-link">Read more →</span>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div class="empty-state">
+            <p>No posts yet. Check back soon for insights and updates.</p>
+          </div>
+        )}
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-hero { padding: 8rem 0 4rem; text-align: center; }
+  .page-hero h1 { font-size: clamp(2.5rem, 5vw, 3.5rem); margin-bottom: 0.75rem; }
+  .page-hero p { color: var(--text-secondary); font-size: 1.2rem; }
+  .section { padding: 4rem 0 6rem; }
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+  .post-card {
+    background: var(--bg-card);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    display: block;
+    transition: all 0.3s;
+  }
+  .post-card:hover {
+    border-color: var(--cyan);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+  .post-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; font-weight: 600; }
+  .post-excerpt { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem; }
+  .post-date, .post-author { font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem; }
+  .post-link { color: var(--cyan); font-weight: 600; font-size: 0.95rem; }
+  .empty-state { text-align: center; padding: 4rem; color: var(--text-muted); }
+  @media (max-width: 900px) { .posts-grid { grid-template-columns: 1fr; } }
+</style>

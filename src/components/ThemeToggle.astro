@@ -1,0 +1,103 @@
+---
+---
+<button
+  type="button"
+  class="theme-toggle"
+  id="theme-toggle"
+  aria-label="Toggle light/dark theme"
+  title="Toggle theme"
+>
+  <span class="theme-icon theme-icon-sun" aria-hidden="true">☀</span>
+  <span class="theme-icon theme-icon-moon" aria-hidden="true">☽</span>
+</button>
+
+<script>
+  (function() {
+    const STORAGE_KEY = 'zyntel-theme';
+    const html = document.documentElement;
+
+    function getStored(): 'light' | 'dark' | null {
+      try {
+        const v = localStorage.getItem(STORAGE_KEY);
+        return v === 'light' || v === 'dark' ? v : null;
+      } catch { return null; }
+    }
+
+    function setTheme(theme: 'light' | 'dark') {
+      html.setAttribute('data-theme', theme);
+      try { localStorage.setItem(STORAGE_KEY, theme); } catch {}
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', theme === 'light' ? '#f8fafc' : '#00f0ff');
+    }
+
+    function init() {
+      const stored = getStored();
+      const prefers = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      const theme = stored ?? prefers;
+      setTheme(theme);
+    }
+
+    function toggle() {
+      const current = html.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      setTheme(next);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+    document.getElementById('theme-toggle')?.addEventListener('click', toggle);
+
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+      if (!getStored()) init();
+    });
+  })();
+</script>
+
+<style>
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: var(--cyan-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
+  }
+
+  .theme-toggle:hover {
+    color: var(--cyan);
+    border-color: rgba(0, 240, 255, 0.3);
+  }
+
+  .theme-icon {
+    position: absolute;
+    font-size: 1.1rem;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .theme-icon-moon {
+    opacity: 1;
+  }
+
+  .theme-icon-sun {
+    opacity: 0;
+  }
+
+  [data-theme="light"] .theme-icon-moon {
+    opacity: 0;
+  }
+
+  [data-theme="light"] .theme-icon-sun {
+    opacity: 1;
+    color: var(--gold);
+  }
+</style>

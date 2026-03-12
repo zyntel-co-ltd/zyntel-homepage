@@ -1,0 +1,18 @@
+{
+  "name": "zyntel-sanity-studio",
+  "private": true,
+  "scripts": {
+    "dev": "sanity dev",
+    "build": "sanity build"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "sanity": "^3.56.0",
+    "styled-components": "^6.3.11"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "typescript": "^5"
+  }
+}
