@@ -8,17 +8,16 @@ export interface SendEmailOptions {
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<{ ok: boolean; messageId?: string; error?: string }> {
-  const user = import.meta.env.GMAIL_USER;
-  const pass = import.meta.env.GMAIL_APP_PASSWORD;
+  const user = String(import.meta.env.GMAIL_USER ?? '').trim();
+  const pass = String(import.meta.env.GMAIL_APP_PASSWORD ?? '').trim();
   if (!user || !pass) {
-    return { ok: false, error: 'GMAIL_USER and GMAIL_APP_PASSWORD must be set' };
+    return { ok: false, error: 'GMAIL_USER and GMAIL_APP_PASSWORD must be set (separate env vars)' };
   }
   const from = import.meta.env.EMAIL_FROM ?? `Zyntel <${user}>`;
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    requireTLS: true,
+    port: 465,
+    secure: true,
     auth: { user, pass },
   });
   try {
@@ -31,7 +30,10 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ ok: boolea
     });
     return { ok: true, messageId: info.messageId };
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Unknown error';
+    const err = e as Error & { code?: string; response?: string };
+    let msg = err?.message ?? 'Unknown error';
+    if (err?.code === 'EAUTH') msg = 'Invalid Gmail credentials. Check GMAIL_USER and GMAIL_APP_PASSWORD.';
+    if (err?.code === 'ESOCKET' || msg.includes('403')) msg = 'Gmail blocked. Use App Password (myaccount.google.com/apppasswords), enable 2FA, and ensure GMAIL_USER matches the account.';
     return { ok: false, error: msg };
   }
 }

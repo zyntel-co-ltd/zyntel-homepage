@@ -27,7 +27,7 @@ In **Neon** → your project → **SQL Editor**, run in order:
 
 **Bank accounts:** Use **Admin → Bank accounts** to add multiple banks. When creating an invoice, choose which bank's details to show. This overrides the env vars above.
 
-**Gmail:** Enable [2-Step Verification](https://myaccount.google.com/security) first, then create an App Password for "Mail". If you get **403** when sending, verify credentials and try port 587 in `src/lib/email.ts` (currently 465).
+**Gmail:** `GMAIL_USER` and `GMAIL_APP_PASSWORD` must be **two separate** env vars. Enable [2-Step Verification](https://myaccount.google.com/security), then create an [App Password](https://myaccount.google.com/apppasswords) for "Mail". For `noreply@zyntel.net`, use that exact address as `GMAIL_USER` and create the App Password for that account. **403** = wrong credentials or App Password not created for that account.
 
 3. Ensure `DATABASE_URL` is already set (from Neon integration or manual).
 

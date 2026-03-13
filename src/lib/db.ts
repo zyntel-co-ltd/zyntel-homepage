@@ -14,6 +14,7 @@ export interface InvoiceItem {
 export interface Invoice {
   id: number;
   invoice_number: string;
+  client_id: number | null;
   client_name: string;
   client_email: string;
   client_phone: string | null;
@@ -54,6 +55,15 @@ export interface PaymentAccount {
   created_at: string;
 }
 
+export interface Client {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  created_at: string;
+}
+
 export async function insertLead(email: string, name?: string, source = 'newsletter') {
   if (!import.meta.env.DATABASE_URL) return;
   await sql`INSERT INTO leads (email, name, source) VALUES (${email}, ${name ?? null}, ${source})`;
@@ -88,6 +98,7 @@ function nextInvoiceNumber(): string {
 }
 
 export async function createInvoice(data: {
+  client_id?: number;
   client_name: string;
   client_email: string;
   client_phone?: string;
@@ -107,11 +118,76 @@ export async function createInvoice(data: {
   const total = subtotal + taxAmount;
   const invoiceNumber = nextInvoiceNumber();
   const rows = await sql`
-    INSERT INTO invoices (invoice_number, client_name, client_email, client_phone, client_address, items, subtotal, tax_rate, tax_amount, total, currency, due_date, notes, payment_account_id, status)
-    VALUES (${invoiceNumber}, ${data.client_name}, ${data.client_email}, ${data.client_phone ?? null}, ${data.client_address ?? null}, ${JSON.stringify(items)}, ${subtotal}, ${taxRate}, ${taxAmount}, ${total}, ${data.currency ?? 'UGX'}, ${data.due_date ?? null}, ${data.notes ?? null}, ${data.payment_account_id ?? null}, 'draft')
+    INSERT INTO invoices (invoice_number, client_id, client_name, client_email, client_phone, client_address, items, subtotal, tax_rate, tax_amount, total, currency, due_date, notes, payment_account_id, status)
+    VALUES (${invoiceNumber}, ${data.client_id ?? null}, ${data.client_name}, ${data.client_email}, ${data.client_phone ?? null}, ${data.client_address ?? null}, ${JSON.stringify(items)}, ${subtotal}, ${taxRate}, ${taxAmount}, ${total}, ${data.currency ?? 'UGX'}, ${data.due_date ?? null}, ${data.notes ?? null}, ${data.payment_account_id ?? null}, 'draft')
     RETURNING *
   `;
   return (rows[0] as Invoice) ?? null;
+}
+
+export async function updateInvoice(id: number, data: {
+  client_id?: number | null;
+  client_name: string;
+  client_email: string;
+  client_phone?: string | null;
+  client_address?: string | null;
+  items: InvoiceItem[];
+  tax_rate?: number;
+  currency?: string;
+  due_date?: string | null;
+  notes?: string | null;
+  payment_account_id?: number | null;
+}): Promise<Invoice | null> {
+  if (!import.meta.env.DATABASE_URL) return null;
+  const inv = await getInvoice(id);
+  if (!inv || inv.status !== 'draft') return null;
+  const items = data.items;
+  const subtotal = items.reduce((s, i) => s + i.amount, 0);
+  const taxRate = data.tax_rate ?? inv.tax_rate ?? 0;
+  const taxAmount = (subtotal * taxRate) / 100;
+  const total = subtotal + taxAmount;
+  await sql`
+    UPDATE invoices SET
+      client_id = ${data.client_id ?? null},
+      client_name = ${data.client_name},
+      client_email = ${data.client_email},
+      client_phone = ${data.client_phone ?? null},
+      client_address = ${data.client_address ?? null},
+      items = ${JSON.stringify(items)},
+      subtotal = ${subtotal},
+      tax_rate = ${taxRate},
+      tax_amount = ${taxAmount},
+      total = ${total},
+      currency = ${data.currency ?? inv.currency ?? 'UGX'},
+      due_date = ${data.due_date ?? null},
+      notes = ${data.notes ?? null},
+      payment_account_id = ${data.payment_account_id ?? null},
+      updated_at = NOW()
+    WHERE id = ${id} AND status = 'draft'
+  `;
+  return getInvoice(id);
+}
+
+export async function listClients(): Promise<Client[]> {
+  if (!import.meta.env.DATABASE_URL) return [];
+  const rows = await sql`SELECT * FROM clients ORDER BY name ASC`;
+  return rows as Client[];
+}
+
+export async function getClient(id: number): Promise<Client | null> {
+  if (!import.meta.env.DATABASE_URL) return null;
+  const rows = await sql`SELECT * FROM clients WHERE id = ${id}`;
+  return (rows[0] as Client) ?? null;
+}
+
+export async function createClient(data: { name: string; email: string; phone?: string; address?: string }): Promise<Client | null> {
+  if (!import.meta.env.DATABASE_URL) return null;
+  const rows = await sql`
+    INSERT INTO clients (name, email, phone, address)
+    VALUES (${data.name}, ${data.email}, ${data.phone ?? null}, ${data.address ?? null})
+    RETURNING *
+  `;
+  return (rows[0] as Client) ?? null;
 }
 
 export async function listPaymentAccounts(): Promise<PaymentAccount[]> {

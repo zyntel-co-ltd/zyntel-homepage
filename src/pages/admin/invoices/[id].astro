@@ -11,9 +11,11 @@ export const prerender = false;
         <h1 class="admin-title" id="invoice-number">—</h1>
         <p class="admin-subtitle" id="invoice-client">—</p>
       </div>
-      <div class="admin-actions-cell">
-        <a href="#" id="pdf-link" class="admin-btn admin-btn-secondary" target="_blank">Download PDF</a>
-        <button type="button" class="admin-btn admin-btn-primary" id="send-invoice-btn">Send invoice</button>
+      <div class="admin-actions-cell" id="actions-cell">
+        <a href="#" id="pdf-link" class="admin-btn admin-btn-secondary" target="_blank" style="display: none;">Download PDF</a>
+        <button type="button" class="admin-btn admin-btn-primary" id="send-invoice-btn" style="display: none;">Send invoice</button>
+        <button type="button" class="admin-btn admin-btn-secondary" id="finalize-btn" style="display: none;">Finalize</button>
+        <a href="#" id="edit-link" class="admin-btn admin-btn-secondary" style="display: none;">Edit</a>
         <button type="button" class="admin-btn admin-btn-primary" id="record-payment-btn">Record payment</button>
       </div>
     </div>
@@ -135,7 +137,13 @@ export const prerender = false;
 
     document.getElementById('invoice-number')!.textContent = inv.invoice_number;
     document.getElementById('invoice-client')!.textContent = `${inv.client_name} · ${inv.client_email}`;
-    (document.getElementById('pdf-link') as HTMLAnchorElement).href = `/api/invoices/${id}/pdf`;
+    const pdfLink = document.getElementById('pdf-link') as HTMLAnchorElement;
+    pdfLink.href = `/api/invoices/${id}/pdf`;
+    pdfLink.style.display = inv.status === 'draft' ? 'none' : 'inline-flex';
+    (document.getElementById('send-invoice-btn') as HTMLButtonElement).style.display = inv.status === 'draft' ? 'none' : 'inline-flex';
+    (document.getElementById('finalize-btn') as HTMLButtonElement).style.display = inv.status === 'draft' ? 'inline-flex' : 'none';
+    (document.getElementById('edit-link') as HTMLAnchorElement).href = `/admin/invoices/${id}/edit`;
+    (document.getElementById('edit-link') as HTMLAnchorElement).style.display = inv.status === 'draft' ? 'inline-flex' : 'none';
     document.getElementById('status-badge')!.className = statusClass(inv.status);
     document.getElementById('status-badge')!.textContent = inv.status;
 
@@ -220,6 +228,25 @@ export const prerender = false;
     renderPayments();
   }
 
+  // Finalize
+  document.getElementById('finalize-btn')?.addEventListener('click', async () => {
+    if (!confirm('Finalize this invoice? It will become read-only and you can then download or send it.')) return;
+    const btn = document.getElementById('finalize-btn') as HTMLButtonElement;
+    btn.disabled = true;
+    btn.textContent = 'Finalizing...';
+    try {
+      const res = await fetch(`/api/invoices/${id}/finalize`, { method: 'POST', headers });
+      const data = await res.json();
+      if (res.ok) {
+        invoice = data.invoice;
+        renderInvoice();
+        renderPayments();
+      } else alert(data.error || 'Failed');
+    } catch { alert('Failed'); }
+    btn.disabled = false;
+    btn.textContent = 'Finalize';
+  });
+
   // Send invoice
   document.getElementById('send-invoice-btn')?.addEventListener('click', async () => {
     const btn = document.getElementById('send-invoice-btn') as HTMLButtonElement;
@@ -230,7 +257,7 @@ export const prerender = false;
       const data = await res.json();
       if (res.ok) btn.textContent = 'Sent';
       else alert(data.error || 'Failed');
-    } catch { alert('Failed'); }
+    } catch (e) { alert('Failed: ' + (e instanceof Error ? e.message : 'Unknown error')); }
     btn.disabled = false;
     btn.textContent = 'Send invoice';
   });

@@ -12,6 +12,12 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     <div class="admin-modal-body">
       <form id="create-invoice-form">
         <div class="admin-form-group">
+          <label class="admin-form-label">Client</label>
+          <select name="client_id" class="admin-form-input" id="client-select">
+            <option value="">— New client —</option>
+          </select>
+        </div>
+        <div class="admin-form-group">
           <label class="admin-form-label">Client name *</label>
           <input type="text" name="client_name" class="admin-form-input" required placeholder="Acme Ltd" />
         </div>
@@ -66,6 +72,12 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           <label class="admin-form-label">Notes</label>
           <textarea name="notes" class="admin-form-input" rows="3" placeholder="Payment terms, etc."></textarea>
         </div>
+        <div class="admin-form-group">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" name="save_client" id="save-client" />
+            <span>Save client for future invoices</span>
+          </label>
+        </div>
 
         <p class="admin-login-error" id="form-error" style="display: none;"></p>
         <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
@@ -94,15 +106,41 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
   const headers = { 'x-api-key': API_KEY };
 
   (async () => {
-    const res = await fetch('/api/payment-accounts/list', { headers });
-    if (res.ok) {
-      const { accounts } = await res.json();
+    const [accRes, clientRes] = await Promise.all([
+      fetch('/api/payment-accounts/list', { headers }),
+      fetch('/api/clients/list', { headers }),
+    ]);
+    if (accRes.ok) {
+      const { accounts } = await accRes.json();
       const sel = document.getElementById('payment-account-select') as HTMLSelectElement;
       accounts?.forEach((a: { id: number; name: string }) => {
         const opt = document.createElement('option');
         opt.value = String(a.id);
         opt.textContent = a.name;
         sel?.appendChild(opt);
+      });
+    }
+    if (clientRes.ok) {
+      const { clients } = await clientRes.json();
+      const sel = document.getElementById('client-select') as HTMLSelectElement;
+      clients?.forEach((c: { id: number; name: string; email: string; phone?: string; address?: string }) => {
+        const opt = document.createElement('option');
+        opt.value = String(c.id);
+        opt.textContent = `${c.name} (${c.email})`;
+        opt.dataset.name = c.name;
+        opt.dataset.email = c.email;
+        opt.dataset.phone = c.phone || '';
+        opt.dataset.address = c.address || '';
+        sel?.appendChild(opt);
+      });
+      sel?.addEventListener('change', () => {
+        const o = sel.options[sel.selectedIndex];
+        if (o?.value) {
+          (document.querySelector('[name="client_name"]') as HTMLInputElement).value = o.dataset.name || '';
+          (document.querySelector('[name="client_email"]') as HTMLInputElement).value = o.dataset.email || '';
+          (document.querySelector('[name="client_phone"]') as HTMLInputElement).value = o.dataset.phone || '';
+          (document.querySelector('[name="client_address"]') as HTMLInputElement).value = o.dataset.address || '';
+        }
       });
     }
   })();
@@ -160,7 +198,9 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     }
 
     const paymentAccountId = (form.querySelector('[name="payment_account_id"]') as HTMLSelectElement).value;
+    const clientId = (form.querySelector('[name="client_id"]') as HTMLSelectElement).value;
     const payload = {
+      client_id: clientId ? Number(clientId) : undefined,
       client_name: (form.querySelector('[name="client_name"]') as HTMLInputElement).value.trim(),
       client_email: (form.querySelector('[name="client_email"]') as HTMLInputElement).value.trim(),
       client_phone: (form.querySelector('[name="client_phone"]') as HTMLInputElement).value.trim() || undefined,
@@ -171,6 +211,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       due_date: (form.querySelector('[name="due_date"]') as HTMLInputElement).value || undefined,
       notes: (form.querySelector('[name="notes"]') as HTMLTextAreaElement).value.trim() || undefined,
       payment_account_id: paymentAccountId ? Number(paymentAccountId) : undefined,
+      save_client: (form.querySelector('#save-client') as HTMLInputElement)?.checked ?? false,
     };
 
     try {

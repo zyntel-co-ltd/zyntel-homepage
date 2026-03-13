@@ -22,6 +22,9 @@ export const POST: APIRoute = async ({ params, request }) => {
     if (!invoice) {
       return new Response(JSON.stringify({ error: 'Invoice not found' }), { status: 404 });
     }
+    if (invoice.status === 'draft') {
+      return new Response(JSON.stringify({ error: 'Draft invoices cannot be sent. Finalize the invoice first.' }), { status: 403 });
+    }
     const baseUrl = new URL(request.url).origin;
     const paymentAccount = invoice.payment_account_id ? await getPaymentAccount(invoice.payment_account_id) : null;
     const pdfBytes = await generateInvoicePdf(invoice, { baseUrl, paymentAccount: paymentAccount ?? undefined });

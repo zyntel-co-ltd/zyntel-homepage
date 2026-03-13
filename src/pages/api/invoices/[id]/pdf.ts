@@ -12,6 +12,12 @@ export const GET: APIRoute = async ({ params, request }) => {
     if (!invoice) {
       return new Response('Invoice not found', { status: 404 });
     }
+    if (invoice.status === 'draft') {
+      return new Response(JSON.stringify({ error: 'Draft invoices cannot be downloaded. Finalize the invoice first.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
     const baseUrl = new URL(request.url).origin;
     const paymentAccount = invoice.payment_account_id ? await getPaymentAccount(invoice.payment_account_id) : null;
     const pdfBytes = await generateInvoicePdf(invoice, { baseUrl, paymentAccount: paymentAccount ?? undefined });
