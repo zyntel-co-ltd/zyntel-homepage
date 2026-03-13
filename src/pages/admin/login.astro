@@ -1,0 +1,72 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="Sign in" showSidebar={false}>
+  <div class="admin-login-page">
+    <div class="admin-login-card">
+      <a href="/" class="admin-logo">
+        <span class="admin-logo-text">Zyn<span class="admin-logo-accent">tel</span></span>
+        <span class="admin-logo-badge">Admin</span>
+      </a>
+      <form id="admin-login-form">
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="api-key">API Key</label>
+          <input
+            type="password"
+            id="api-key"
+            class="admin-form-input"
+            placeholder="Enter your invoice API key"
+            autocomplete="off"
+            required
+          />
+          <p class="admin-login-error" id="login-error" style="display: none;"></p>
+        </div>
+        <button type="submit" class="admin-btn admin-btn-primary" id="login-btn">
+          Sign in
+        </button>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  const form = document.getElementById('admin-login-form');
+  const apiKeyInput = document.getElementById('api-key') as HTMLInputElement;
+  const errorEl = document.getElementById('login-error') as HTMLElement;
+  const btn = document.getElementById('login-btn') as HTMLButtonElement;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const key = apiKeyInput?.value?.trim();
+    if (!key) return;
+
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+
+    try {
+      const res = await fetch('/api/invoices/list?limit=1', {
+        headers: { 'x-api-key': key },
+      });
+      if (res.ok) {
+        sessionStorage.setItem('zyntel_invoice_api_key', key);
+        window.location.href = '/admin';
+      } else {
+        const data = await res.json().catch(() => ({}));
+        errorEl.textContent = data.error || 'Invalid API key';
+        errorEl.style.display = 'block';
+      }
+    } catch {
+      errorEl.textContent = 'Connection failed';
+      errorEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign in';
+    }
+  });
+
+  // Redirect if already logged in
+  if (sessionStorage.getItem('zyntel_invoice_api_key')) {
+    window.location.href = '/admin';
+  }
+</script>

@@ -1,0 +1,297 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+export const prerender = false;
+---
+<AdminLayout title="Invoice">
+  <header class="admin-header">
+    <a href="/admin/invoices" class="admin-btn admin-btn-ghost" style="margin-bottom: 1rem;">← Back to invoices</a>
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 class="admin-title" id="invoice-number">—</h1>
+        <p class="admin-subtitle" id="invoice-client">—</p>
+      </div>
+      <div class="admin-actions-cell">
+        <a href="#" id="pdf-link" class="admin-btn admin-btn-secondary" target="_blank">Download PDF</a>
+        <button type="button" class="admin-btn admin-btn-primary" id="send-invoice-btn">Send invoice</button>
+        <button type="button" class="admin-btn admin-btn-primary" id="record-payment-btn">Record payment</button>
+      </div>
+    </div>
+  </header>
+
+  <div style="display: grid; grid-template-columns: 1fr 340px; gap: 2rem;" class="invoice-layout">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h2 class="admin-card-title">Invoice details</h2>
+        <span class="admin-badge" id="status-badge">—</span>
+      </div>
+      <div style="padding: 1.5rem;">
+        <div id="invoice-details"></div>
+        <hr style="border: none; border-top: 1px solid var(--admin-border); margin: 1.5rem 0;" />
+        <div id="invoice-items"></div>
+        <div style="margin-top: 1.5rem; text-align: right;" id="invoice-totals"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h2 class="admin-card-title">Payments</h2>
+        </div>
+        <div style="padding: 1rem;" id="payments-list">
+          <div class="admin-empty"><div class="admin-empty-icon">Loading...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Record payment modal -->
+  <div class="admin-modal-overlay" id="payment-modal" style="display: none;">
+    <div class="admin-modal">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title">Record payment</h3>
+      </div>
+      <form id="record-payment-form">
+        <div class="admin-modal-body">
+          <div class="admin-form-group">
+            <label class="admin-form-label">Amount *</label>
+            <input type="number" name="amount" class="admin-form-input" required min="0.01" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Payment method</label>
+            <select name="payment_method" class="admin-form-input">
+              <option value="cash">Cash</option>
+              <option value="bank_transfer">Bank transfer</option>
+              <option value="mobile_money">Mobile money</option>
+              <option value="flutterwave">Flutterwave</option>
+              <option value="cheque">Cheque</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Reference</label>
+            <input type="text" name="reference" class="admin-form-input" placeholder="e.g. Cash received at office" />
+          </div>
+          <p class="admin-login-error" id="payment-error" style="display: none;"></p>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="admin-btn admin-btn-secondary" id="close-payment-modal">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary" id="payment-submit-btn">Record payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .invoice-layout { }
+  @media (max-width: 900px) {
+    .invoice-layout { grid-template-columns: 1fr; }
+  }
+  .invoice-meta { font-size: 0.9375rem; color: var(--admin-text-muted); }
+  .invoice-meta p { margin-bottom: 0.25rem; }
+  .payment-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--admin-border); font-size: 0.9375rem; }
+  .payment-row:last-child { border-bottom: none; }
+</style>
+
+<script>
+  const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
+  if (!API_KEY) window.location.href = '/admin/login';
+
+  const headers = { 'x-api-key': API_KEY };
+  const id = document.location.pathname.split('/').pop();
+  if (!id || id === 'invoices') window.location.href = '/admin/invoices';
+
+  let invoice: Record<string, unknown> | null = null;
+  let payments: Array<Record<string, unknown>> = [];
+
+  function formatMoney(n: number, currency: string) {
+    return (currency ? `${currency} ` : '') + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 });
+  }
+
+  function statusClass(s: string) {
+    return `admin-badge admin-badge-${s}`;
+  }
+
+  function renderInvoice() {
+    if (!invoice) return;
+    const inv = invoice as {
+      invoice_number: string;
+      client_name: string;
+      client_email: string;
+      client_phone?: string;
+      client_address?: string;
+      items: Array<{ description: string; quantity: number; unitPrice: number; amount: number }>;
+      subtotal: number;
+      tax_rate: number;
+      tax_amount: number;
+      total: number;
+      currency: string;
+      status: string;
+      due_date?: string;
+      notes?: string;
+      created_at: string;
+    };
+
+    document.getElementById('invoice-number')!.textContent = inv.invoice_number;
+    document.getElementById('invoice-client')!.textContent = `${inv.client_name} · ${inv.client_email}`;
+    (document.getElementById('pdf-link') as HTMLAnchorElement).href = `/api/invoices/${id}/pdf`;
+    document.getElementById('status-badge')!.className = statusClass(inv.status);
+    document.getElementById('status-badge')!.textContent = inv.status;
+
+    document.getElementById('invoice-details')!.innerHTML = `
+      <div class="invoice-meta">
+        <p><strong>Client:</strong> ${inv.client_name}</p>
+        <p><strong>Email:</strong> ${inv.client_email}</p>
+        ${inv.client_phone ? `<p><strong>Phone:</strong> ${inv.client_phone}</p>` : ''}
+        ${inv.client_address ? `<p><strong>Address:</strong> ${inv.client_address}</p>` : ''}
+        <p><strong>Created:</strong> ${new Date(inv.created_at).toLocaleDateString()}</p>
+        ${inv.due_date ? `<p><strong>Due:</strong> ${new Date(inv.due_date).toLocaleDateString()}</p>` : ''}
+      </div>
+    `;
+
+    const items = Array.isArray(inv.items) ? inv.items : [];
+    document.getElementById('invoice-items')!.innerHTML = `
+      <table class="admin-table">
+        <thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead>
+        <tbody>
+          ${items.map((i: { description: string; quantity: number; unitPrice: number; amount: number }) => `
+            <tr>
+              <td>${i.description}</td>
+              <td>${i.quantity}</td>
+              <td>${formatMoney(i.unitPrice, inv.currency)}</td>
+              <td>${formatMoney(i.amount, inv.currency)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
+    document.getElementById('invoice-totals')!.innerHTML = `
+      <p style="margin-bottom: 0.25rem;"><strong>Subtotal:</strong> ${formatMoney(inv.subtotal, inv.currency)}</p>
+      ${inv.tax_rate ? `<p style="margin-bottom: 0.25rem;"><strong>Tax (${inv.tax_rate}%):</strong> ${formatMoney(inv.tax_amount, inv.currency)}</p>` : ''}
+      <p style="font-size: 1.125rem; font-weight: 700;"><strong>Total:</strong> ${formatMoney(inv.total, inv.currency)}</p>
+    `;
+  }
+
+  function renderPayments() {
+    const el = document.getElementById('payments-list')!;
+    if (payments.length === 0) {
+      el.innerHTML = '<div class="admin-empty"><div class="admin-empty-icon">No payments yet</div><div class="admin-empty-desc">Record a payment when the client pays.</div></div>';
+    } else {
+      const inv = invoice as { currency: string };
+      el.innerHTML = payments.map((p: Record<string, unknown>) => `
+        <div class="payment-row">
+          <div>
+            <strong>${formatMoney(Number(p.amount), inv?.currency || '')}</strong>
+            <span style="color: var(--admin-text-muted); font-size: 0.8125rem;"> · ${String(p.payment_method).replace('_', ' ')}</span>
+          </div>
+          <div>
+            <a href="/api/receipts/${p.id}/pdf" target="_blank" class="admin-btn admin-btn-ghost" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem;">Receipt</a>
+            <button type="button" class="admin-btn admin-btn-ghost send-receipt-btn" data-payment-id="${p.id}" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem;">Email</button>
+          </div>
+        </div>
+      `).join('');
+      el.querySelectorAll('.send-receipt-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const pid = (btn as HTMLElement).dataset.paymentId;
+          (btn as HTMLButtonElement).disabled = true;
+          (btn as HTMLButtonElement).textContent = 'Sending...';
+          try {
+            const res = await fetch(`/api/receipts/${pid}/send`, { method: 'POST', headers });
+            if (res.ok) (btn as HTMLButtonElement).textContent = 'Sent';
+            else (btn as HTMLButtonElement).textContent = 'Failed';
+          } catch {
+            (btn as HTMLButtonElement).textContent = 'Failed';
+          }
+        });
+      });
+    }
+  }
+
+  async function loadInvoice() {
+    const res = await fetch(`/api/invoices/${id}`, { headers });
+    if (res.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = '/admin/login'; return; }
+    if (!res.ok) { document.getElementById('payments-list')!.innerHTML = '<div class="admin-empty"><div class="admin-empty-desc">Invoice not found</div></div>'; return; }
+    const data = await res.json();
+    invoice = data.invoice;
+    payments = data.payments ?? [];
+    renderInvoice();
+    renderPayments();
+  }
+
+  // Send invoice
+  document.getElementById('send-invoice-btn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('send-invoice-btn') as HTMLButtonElement;
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    try {
+      const res = await fetch(`/api/invoices/${id}/send`, { method: 'POST', headers });
+      const data = await res.json();
+      if (res.ok) btn.textContent = 'Sent';
+      else alert(data.error || 'Failed');
+    } catch { alert('Failed'); }
+    btn.disabled = false;
+    btn.textContent = 'Send invoice';
+  });
+
+  // Record payment modal
+  const modal = document.getElementById('payment-modal')!;
+  const form = document.getElementById('record-payment-form')!;
+  const amountInput = form.querySelector('[name="amount"]') as HTMLInputElement;
+
+  document.getElementById('record-payment-btn')?.addEventListener('click', () => {
+    amountInput.value = invoice ? String((invoice as { total: number }).total) : '';
+    (form.querySelector('[name="reference"]') as HTMLInputElement).value = '';
+    (document.getElementById('payment-error') as HTMLElement).style.display = 'none';
+    modal.style.display = 'flex';
+  });
+
+  document.getElementById('close-payment-modal')?.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById('payment-error') as HTMLElement;
+    const submitBtn = document.getElementById('payment-submit-btn') as HTMLButtonElement;
+    errorEl.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Recording...';
+
+    try {
+      const res = await fetch(`/api/invoices/${id}/record-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({
+          amount: Number(amountInput.value),
+          payment_method: (form.querySelector('[name="payment_method"]') as HTMLSelectElement).value,
+          reference: (form.querySelector('[name="reference"]') as HTMLInputElement).value.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        modal.style.display = 'none';
+        payments.push(data.payment);
+        invoice = data.invoice ? { ...invoice, ...data.invoice } : invoice;
+        renderInvoice();
+        renderPayments();
+      } else {
+        errorEl.textContent = data.error || 'Failed';
+        errorEl.style.display = 'block';
+      }
+    } catch {
+      errorEl.textContent = 'Connection failed';
+      errorEl.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Record payment';
+    }
+  });
+
+  loadInvoice();
+</script>
