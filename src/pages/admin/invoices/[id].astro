@@ -98,13 +98,14 @@ export const prerender = false;
 
 <script>
   const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
-  if (!API_KEY) window.location.href = '/admin/login';
+  const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '/admin';
+  if (!API_KEY) window.location.href = B + '/login';
 
   const headers = { 'x-api-key': API_KEY };
   const parts = document.location.pathname.split('/').filter(Boolean);
   const invoicesIdx = parts.indexOf('invoices');
   const id = invoicesIdx >= 0 && parts[invoicesIdx + 1] ? parts[invoicesIdx + 1] : null;
-  if (!id || id === 'invoices') window.location.href = '/admin/invoices';
+  if (!id || id === 'invoices') window.location.href = B + '/invoices';
 
   let invoice: Record<string, unknown> | null = null;
   let payments: Array<Record<string, unknown>> = [];
@@ -144,7 +145,7 @@ export const prerender = false;
     pdfLink.style.display = inv.status === 'draft' ? 'none' : 'inline-flex';
     (document.getElementById('send-invoice-btn') as HTMLButtonElement).style.display = inv.status === 'draft' ? 'none' : 'inline-flex';
     (document.getElementById('finalize-btn') as HTMLButtonElement).style.display = inv.status === 'draft' ? 'inline-flex' : 'none';
-    (document.getElementById('edit-link') as HTMLAnchorElement).href = `/admin/invoices/${id}/edit`;
+    (document.getElementById('edit-link') as HTMLAnchorElement).href = `${B}/invoices/${id}/edit`;
     (document.getElementById('edit-link') as HTMLAnchorElement).style.display = inv.status === 'draft' ? 'inline-flex' : 'none';
     document.getElementById('status-badge')!.className = statusClass(inv.status);
     document.getElementById('status-badge')!.textContent = inv.status;
@@ -221,7 +222,7 @@ export const prerender = false;
 
   async function loadInvoice() {
     const res = await fetch(`/api/invoices/${id}`, { headers });
-    if (res.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = '/admin/login'; return; }
+    if (res.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = B + '/login'; return; }
     if (!res.ok) { document.getElementById('payments-list')!.innerHTML = '<div class="admin-empty"><div class="admin-empty-desc">Invoice not found</div></div>'; return; }
     const data = await res.json();
     invoice = data.invoice;

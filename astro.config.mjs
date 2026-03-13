@@ -4,8 +4,8 @@ import vercel from '@astrojs/vercel';
 export default defineConfig({
   output: 'server',
   adapter: vercel(),
-  site: 'https://zyntel.net',
+  site: import.meta.env.SITE_URL || 'https://zyntel.net',
   security: {
-    checkOrigin: false, // Allow POST from preview URLs (e.g. *.vercel.app) when site is zyntel.net
+    checkOrigin: false, // Allow POST from both admin.zyntel.net and preview.zyntel.net
   },
 });

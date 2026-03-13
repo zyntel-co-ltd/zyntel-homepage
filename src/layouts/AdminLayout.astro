@@ -8,10 +8,19 @@ interface Props {
 }
 
 const { title, showSidebar = true } = Astro.props;
+const isAdminSubdomain = ['admin.zyntel.net', 'admin-preview.zyntel.net'].includes(Astro.url.hostname);
+const base = isAdminSubdomain ? '' : '/admin';
+const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
 ---
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <script is:inline>
+      (function(){
+        var h=window.location.hostname;
+        window.__ADMIN_BASE__=(h==='admin.zyntel.net'||h==='admin-preview.zyntel.net')?'':'/admin';
+      })();
+    </script>
     <script is:inline>
       (function(){
         var k='zyntel-theme',s=localStorage.getItem(k);
@@ -34,14 +43,14 @@ const { title, showSidebar = true } = Astro.props;
       {showSidebar && (
         <aside class="admin-sidebar">
           <header class="admin-sidebar-header">
-            <a href="/admin" class="admin-logo">
+            <a href={path('/')} class="admin-logo">
               <img src="/logos/zyntel_logo_cyan.png" alt="" class="admin-logo-img" />
               <span class="admin-logo-text">Zyn<span class="admin-logo-accent">tel</span></span>
               <span class="admin-logo-badge">Admin</span>
             </a>
           </header>
           <nav class="admin-nav">
-            <a href="/admin" class="admin-nav-item" data-active={Astro.url.pathname === '/admin' || Astro.url.pathname === '/admin/' ? 'true' : 'false'}>
+            <a href={path('/')} class="admin-nav-item" data-active={Astro.url.pathname === '/admin' || Astro.url.pathname === '/admin/' || Astro.url.pathname === '/' ? 'true' : 'false'}>
               <svg class="admin-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="7" height="7" rx="1"/>
                 <rect x="14" y="3" width="7" height="7" rx="1"/>
@@ -50,7 +59,7 @@ const { title, showSidebar = true } = Astro.props;
               </svg>
               <span class="admin-nav-text">Dashboard</span>
             </a>
-            <a href="/admin/invoices" class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/admin/invoices') ? 'true' : 'false'}>
+            <a href={path('/invoices')} class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/admin/invoices') || Astro.url.pathname.startsWith('/invoices') ? 'true' : 'false'}>
               <svg class="admin-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
@@ -60,7 +69,7 @@ const { title, showSidebar = true } = Astro.props;
               </svg>
               <span class="admin-nav-text">Invoices</span>
             </a>
-            <a href="/admin/clients" class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/admin/clients') ? 'true' : 'false'}>
+            <a href={path('/clients')} class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/admin/clients') || Astro.url.pathname.startsWith('/clients') ? 'true' : 'false'}>
               <svg class="admin-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
@@ -69,7 +78,7 @@ const { title, showSidebar = true } = Astro.props;
               </svg>
               <span class="admin-nav-text">Clients</span>
             </a>
-            <a href="/admin/banks" class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/admin/banks') ? 'true' : 'false'}>
+            <a href={path('/banks')} class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/admin/banks') || Astro.url.pathname.startsWith('/banks') ? 'true' : 'false'}>
               <svg class="admin-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
                 <line x1="1" y1="10" x2="23" y2="10"/>
@@ -89,8 +98,12 @@ const { title, showSidebar = true } = Astro.props;
     <script>
       document.getElementById('admin-logout')?.addEventListener('click', () => {
         sessionStorage.removeItem('zyntel_invoice_api_key');
-        window.location.href = '/admin/login';
+        window.location.href = (window.__ADMIN_BASE__ || '/admin') + '/login';
       });
+      (function(){
+        var b=window.__ADMIN_BASE__;
+        if(b==='') document.querySelectorAll('a[href^="/admin"]').forEach(function(a){var h=a.getAttribute('href');if(h)a.href=h.replace(/^\/admin/,'')||'/';});
+      })();
     </script>
   </body>
 </html>

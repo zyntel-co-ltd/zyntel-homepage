@@ -51,7 +51,8 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       });
       if (res.ok) {
         sessionStorage.setItem('zyntel_invoice_api_key', key);
-        window.location.href = '/admin';
+        const base = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '/admin';
+        window.location.href = base || '/';
       } else {
         const data = await res.json().catch(() => ({}));
         errorEl.textContent = data.error || 'Invalid API key';
@@ -68,6 +69,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
   // Redirect if already logged in
   if (sessionStorage.getItem('zyntel_invoice_api_key')) {
-    window.location.href = '/admin';
+    const base = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '/admin';
+    window.location.href = base || '/';
   }
 </script>

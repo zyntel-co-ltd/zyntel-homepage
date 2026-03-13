@@ -6,20 +6,35 @@ Send invoices to clients and issue receipts after payment. Supports **cash**, **
 
 ## Vercel Setup (Preview Deployments)
 
-### 1. Run the database migrations
+### 1. Add custom domains
+
+In **Vercel** → your project → **Settings** → **Domains**:
+
+| Domain | Assign to | Purpose |
+|--------|-----------|---------|
+| `zyntel.net` | Production | Main site (already configured) |
+| `admin.zyntel.net` | Production | Admin at root — no `/admin` path |
+| `preview.zyntel.net` | Preview | Main site for development |
+| `admin-preview.zyntel.net` | Preview | Admin at root — no `/admin` path |
+
+Add CNAME records at your DNS provider. See [ADMIN_SETUP.md](./ADMIN_SETUP.md) for enterprise security practices.
+
+### 2. Run the database migrations
 
 In **Neon** → your project → **SQL Editor**, run in order:
 1. `scripts/migrations/002_invoices.sql`
 2. `scripts/migrations/003_payment_accounts.sql`
+3. `scripts/migrations/004_clients.sql`
 
-### 2. Add environment variables in Vercel
+### 3. Add environment variables in Vercel
 
 1. Go to [vercel.com](https://vercel.com) → your project → **Settings** → **Environment Variables**
-2. Add these (enable for **Preview** and **Production**):
+2. Add these:
 
-| Variable | Value |
-|----------|-------|
-| `INVOICE_API_KEY` | A secret string (e.g. generate with `openssl rand -hex 32`) |
+| Variable | Production | Preview |
+|----------|------------|---------|
+| `SITE_URL` | `https://zyntel.net` | `https://preview.zyntel.net` |
+| `INVOICE_API_KEY` | A secret string (e.g. `openssl rand -hex 32`) | Same or different key |
 | `GMAIL_USER` | Your Gmail address |
 | `GMAIL_APP_PASSWORD` | 16-char App Password from [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) |
 | `EMAIL_FROM` | `Zyntel <invoices@zyntel.net>` (optional) |
@@ -33,12 +48,10 @@ In **Neon** → your project → **SQL Editor**, run in order:
 
 3. Ensure `DATABASE_URL` is already set (from Neon integration or manual).
 
-### 3. Deploy
+### 4. Deploy
 
-Push to your branch or open a PR. Vercel will build a preview. Your base URL will be something like:
-
-- Preview: `https://zyntel-homepage-xxx-yourteam.vercel.app`
-- Production: `https://zyntel.net` (or your custom domain)
+- **Production admin:** `admin.zyntel.net` (no /admin needed)
+- **Preview admin:** `preview.zyntel.net` (no /admin needed)
 
 ---
 
@@ -46,7 +59,7 @@ Push to your branch or open a PR. Vercel will build a preview. Your base URL wil
 
 A production-ready dashboard is available at **`/admin`**.
 
-1. Go to `https://YOUR_PREVIEW_URL/admin`
+1. Go to `https://admin.zyntel.net` (production) or `https://preview.zyntel.net` (preview)
 2. Sign in with your `INVOICE_API_KEY`
 3. Use the dashboard to:
    - View stats (total, pending, paid, overdue)
@@ -59,12 +72,12 @@ A production-ready dashboard is available at **`/admin`**.
 
 ## How to Record a Payment (API / cURL)
 
-Use the API from any tool that can send HTTP requests. Replace `YOUR_PREVIEW_URL` and `YOUR_INVOICE_API_KEY` with your values.
+Use the API from any tool that can send HTTP requests. Replace `YOUR_INVOICE_API_KEY` with your value. Use `preview.zyntel.net` for preview or `admin.zyntel.net` for production.
 
 ### Step 1: List invoices to get the invoice ID
 
 ```bash
-curl "https://YOUR_PREVIEW_URL/api/invoices/list?limit=10" \
+curl "https://preview.zyntel.net/api/invoices/list?limit=10" \
   -H "x-api-key: YOUR_INVOICE_API_KEY"
 ```
 
@@ -73,7 +86,7 @@ Note the `id` of the invoice you want to record a payment for.
 ### Step 2: Record the payment
 
 ```bash
-curl -X POST "https://YOUR_PREVIEW_URL/api/invoices/INVOICE_ID/record-payment" \
+curl -X POST "https://preview.zyntel.net/api/invoices/INVOICE_ID/record-payment" \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_INVOICE_API_KEY" \
   -d '{
@@ -90,20 +103,20 @@ The response includes `paymentId`. Use it to send the receipt or download the PD
 ### Step 3: Send receipt (optional)
 
 ```bash
-curl -X POST "https://YOUR_PREVIEW_URL/api/receipts/PAYMENT_ID/send" \
+curl -X POST "https://preview.zyntel.net/api/receipts/PAYMENT_ID/send" \
   -H "x-api-key: YOUR_INVOICE_API_KEY"
 ```
 
 Or download the receipt PDF (no auth):
 
 ```
-https://YOUR_PREVIEW_URL/api/receipts/PAYMENT_ID/pdf
+https://preview.zyntel.net/api/receipts/PAYMENT_ID/pdf
 ```
 
 **On Windows (PowerShell):** Use `curl.exe` instead of `curl`, or:
 
 ```powershell
-Invoke-RestMethod -Uri "https://YOUR_PREVIEW_URL/api/invoices/1/record-payment" `
+Invoke-RestMethod -Uri "https://preview.zyntel.net/api/invoices/1/record-payment" `
   -Method POST -Headers @{ "x-api-key" = "YOUR_INVOICE_API_KEY"; "Content-Type" = "application/json" } `
   -Body '{"amount":600000,"payment_method":"cash","reference":"Cash received"}'
 ```
@@ -242,17 +255,17 @@ Your existing Flutterwave webhook can call `record-payment` when a payment succe
 
 ```bash
 # Create invoice
-curl -X POST https://zyntel.net/api/invoices/create \
+curl -X POST https://admin.zyntel.net/api/invoices/create \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_KEY" \
   -d '{"client_name":"John Doe","client_email":"john@example.com","items":[{"description":"License","quantity":1,"unitPrice":100000}]}'
 
 # Record cash payment
-curl -X POST https://zyntel.net/api/invoices/1/record-payment \
+curl -X POST https://admin.zyntel.net/api/invoices/1/record-payment \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_KEY" \
   -d '{"amount":100000,"payment_method":"cash","reference":"Cash received"}'
 
 # Download receipt PDF (no auth)
-curl -o receipt.pdf "https://zyntel.net/api/receipts/1/pdf"
+curl -o receipt.pdf "https://admin.zyntel.net/api/receipts/1/pdf"
 ```

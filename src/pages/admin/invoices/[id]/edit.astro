@@ -81,13 +81,14 @@ export const prerender = false;
 
 <script>
   const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
-  if (!API_KEY) window.location.href = '/admin/login';
+  const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '/admin';
+  if (!API_KEY) window.location.href = B + '/login';
 
   const headers = { 'x-api-key': API_KEY };
   const parts = document.location.pathname.split('/').filter(Boolean);
   const editIdx = parts.indexOf('edit');
   const id = editIdx > 0 ? parts[editIdx - 1] : null;
-  if (!id || id === 'invoices') window.location.href = '/admin/invoices';
+  if (!id || id === 'invoices') window.location.href = B + '/invoices';
 
   let itemIndex = 0;
   const container = document.getElementById('line-items')!;
@@ -116,7 +117,7 @@ export const prerender = false;
       fetch('/api/payment-accounts/list', { headers }),
       fetch('/api/clients/list', { headers }),
     ]);
-    if (invRes.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = '/admin/login'; return; }
+    if (invRes.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = B + '/login'; return; }
     if (!invRes.ok) { document.getElementById('edit-subtitle')!.textContent = 'Invoice not found'; return; }
     const { invoice } = await invRes.json();
     if (invoice.status !== 'draft') {
@@ -169,7 +170,7 @@ export const prerender = false;
       });
     }
 
-    (document.getElementById('cancel-link') as HTMLAnchorElement).href = `/admin/invoices/${id}`;
+    (document.getElementById('cancel-link') as HTMLAnchorElement).href = `${B}/invoices/${id}`;
   }
 
   document.getElementById('edit-invoice-form')?.addEventListener('submit', async (e) => {
@@ -221,7 +222,7 @@ export const prerender = false;
       });
       const data = await res.json();
       if (res.ok) {
-        window.location.href = `/admin/invoices/${id}`;
+        window.location.href = `${B}/invoices/${id}`;
       } else {
         errorEl.textContent = data.error || 'Failed';
         errorEl.style.display = 'block';

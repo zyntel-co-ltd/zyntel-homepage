@@ -101,7 +101,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
 <script>
   const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
-  if (!API_KEY) window.location.href = '/admin/login';
+  const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '/admin';
+  if (!API_KEY) window.location.href = B + '/login';
 
   const headers = { 'x-api-key': API_KEY };
 
@@ -223,7 +224,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       const data = await res.json();
 
       if (res.ok && data.invoice) {
-        window.location.href = `/admin/invoices/${data.invoice.id}`;
+        window.location.href = `${B}/invoices/${data.invoice.id}`;
       } else {
         errorEl.textContent = data.error || 'Failed to create invoice';
         errorEl.style.display = 'block';

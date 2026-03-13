@@ -2,5 +2,39 @@
   "framework": "astro",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "admin.zyntel.net" }],
+      "headers": [
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "admin-preview.zyntel.net" }],
+      "headers": [
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ],
+  "redirects": [
+    { "source": "/admin", "destination": "https://admin.zyntel.net/", "has": [{ "type": "host", "value": "zyntel.net" }], "permanent": false },
+    { "source": "/admin/:path*", "destination": "https://admin.zyntel.net/:path*", "has": [{ "type": "host", "value": "zyntel.net" }], "permanent": false },
+    { "source": "/admin", "destination": "https://admin-preview.zyntel.net/", "has": [{ "type": "host", "value": "preview.zyntel.net" }], "permanent": false },
+    { "source": "/admin/:path*", "destination": "https://admin-preview.zyntel.net/:path*", "has": [{ "type": "host", "value": "preview.zyntel.net" }], "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/:path*", "has": [{ "type": "host", "value": "admin.zyntel.net" }] },
+    { "source": "/_astro/:path*", "destination": "/_astro/:path*", "has": [{ "type": "host", "value": "admin.zyntel.net" }] },
+    { "source": "/:path*", "destination": "/admin/:path*", "has": [{ "type": "host", "value": "admin.zyntel.net" }] },
+    { "source": "/api/:path*", "destination": "/api/:path*", "has": [{ "type": "host", "value": "admin-preview.zyntel.net" }] },
+    { "source": "/_astro/:path*", "destination": "/_astro/:path*", "has": [{ "type": "host", "value": "admin-preview.zyntel.net" }] },
+    { "source": "/:path*", "destination": "/admin/:path*", "has": [{ "type": "host", "value": "admin-preview.zyntel.net" }] }
+  ]
 }

@@ -28,12 +28,13 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
 <script>
   const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
-  if (!API_KEY) window.location.href = '/admin/login';
+  const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '/admin';
+  if (!API_KEY) window.location.href = B + '/login';
 
   async function load() {
     const tbody = document.getElementById('clients-tbody')!;
     const res = await fetch('/api/clients/list', { headers: { 'x-api-key': API_KEY } });
-    if (res.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = '/admin/login'; return; }
+    if (res.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = B + '/login'; return; }
     const { clients } = await res.json();
     const list = clients ?? [];
     if (list.length === 0) {
