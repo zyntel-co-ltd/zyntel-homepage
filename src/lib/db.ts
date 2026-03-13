@@ -170,8 +170,12 @@ export async function updateInvoice(id: number, data: {
 
 export async function listClients(): Promise<Client[]> {
   if (!import.meta.env.DATABASE_URL) return [];
-  const rows = await sql`SELECT * FROM clients ORDER BY name ASC`;
-  return rows as Client[];
+  try {
+    const rows = await sql`SELECT * FROM clients ORDER BY name ASC`;
+    return rows as Client[];
+  } catch {
+    return [];
+  }
 }
 
 export async function getClient(id: number): Promise<Client | null> {
@@ -182,12 +186,16 @@ export async function getClient(id: number): Promise<Client | null> {
 
 export async function createClient(data: { name: string; email: string; phone?: string; address?: string }): Promise<Client | null> {
   if (!import.meta.env.DATABASE_URL) return null;
-  const rows = await sql`
-    INSERT INTO clients (name, email, phone, address)
-    VALUES (${data.name}, ${data.email}, ${data.phone ?? null}, ${data.address ?? null})
-    RETURNING *
-  `;
-  return (rows[0] as Client) ?? null;
+  try {
+    const rows = await sql`
+      INSERT INTO clients (name, email, phone, address)
+      VALUES (${data.name}, ${data.email}, ${data.phone ?? null}, ${data.address ?? null})
+      RETURNING *
+    `;
+    return (rows[0] as Client) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function listPaymentAccounts(): Promise<PaymentAccount[]> {

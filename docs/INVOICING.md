@@ -29,6 +29,8 @@ In **Neon** → your project → **SQL Editor**, run in order:
 
 **Gmail:** `GMAIL_USER` and `GMAIL_APP_PASSWORD` must be **two separate** env vars. Enable [2-Step Verification](https://myaccount.google.com/security), then create an [App Password](https://myaccount.google.com/apppasswords) for "Mail". For `noreply@zyntel.net`, use that exact address as `GMAIL_USER` and create the App Password for that account. **403** = wrong credentials or App Password not created for that account.
 
+**Vercel Deployment Protection:** If you see 403 with "Cross-site" or "Cross-Origin" when sending invoices, Vercel's password protection may be blocking API requests. Either disable Deployment Protection for the project, or ensure you visit and use the **same URL** (e.g. your custom domain) for both the admin UI and API calls—don't mix preview URLs with production.
+
 3. Ensure `DATABASE_URL` is already set (from Neon integration or manual).
 
 ### 3. Deploy

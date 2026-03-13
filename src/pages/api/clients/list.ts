@@ -9,7 +9,7 @@ export const GET: APIRoute = async ({ request }) => {
   }
   try {
     const clients = await listClients();
-    return new Response(JSON.stringify({ ok: true, clients }), {
+    return new Response(JSON.stringify({ ok: true, clients: clients ?? [] }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

@@ -11,7 +11,7 @@ export const POST: APIRoute = async ({ params, request }) => {
   const apiKey = request.headers.get('x-api-key') ?? request.headers.get('authorization')?.replace('Bearer ', '');
   const expectedKey = import.meta.env.INVOICE_API_KEY;
   if (expectedKey && apiKey !== expectedKey) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
   }
   const gmailUser = import.meta.env.GMAIL_USER;
   if (!gmailUser) {
@@ -23,7 +23,7 @@ export const POST: APIRoute = async ({ params, request }) => {
       return new Response(JSON.stringify({ error: 'Invoice not found' }), { status: 404 });
     }
     if (invoice.status === 'draft') {
-      return new Response(JSON.stringify({ error: 'Draft invoices cannot be sent. Finalize the invoice first.' }), { status: 403 });
+      return new Response(JSON.stringify({ error: 'Draft invoices cannot be sent. Finalize the invoice first.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     }
     const baseUrl = new URL(request.url).origin;
     const paymentAccount = invoice.payment_account_id ? await getPaymentAccount(invoice.payment_account_id) : null;
