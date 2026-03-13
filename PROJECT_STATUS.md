@@ -1,6 +1,7 @@
 # Zyntel Homepage — Project Status
 
-**Last updated:** March 2025  
+**Last updated:** March 2026  
+**Updated by:** Cursor  
 **Stack:** Astro 5, Vercel, Neon PostgreSQL, Sanity CMS
 
 ---
