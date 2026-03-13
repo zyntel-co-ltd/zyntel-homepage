@@ -80,6 +80,7 @@
 .admin-nav {
   flex: 1;
   padding: 1rem 0.75rem;
+  overflow-y: auto;
 }
 
 .admin-nav-item {
