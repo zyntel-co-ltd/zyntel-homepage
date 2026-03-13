@@ -101,7 +101,9 @@ export const prerender = false;
   if (!API_KEY) window.location.href = '/admin/login';
 
   const headers = { 'x-api-key': API_KEY };
-  const id = document.location.pathname.split('/').pop();
+  const parts = document.location.pathname.split('/').filter(Boolean);
+  const invoicesIdx = parts.indexOf('invoices');
+  const id = invoicesIdx >= 0 && parts[invoicesIdx + 1] ? parts[invoicesIdx + 1] : null;
   if (!id || id === 'invoices') window.location.href = '/admin/invoices';
 
   let invoice: Record<string, unknown> | null = null;
@@ -236,13 +238,15 @@ export const prerender = false;
     btn.textContent = 'Finalizing...';
     try {
       const res = await fetch(`/api/invoices/${id}/finalize`, { method: 'POST', headers });
-      const data = await res.json();
+      const text = await res.text();
+      let data: { error?: string; invoice?: unknown } = {};
+      try { data = JSON.parse(text); } catch { data = { error: text.slice(0, 120) || `HTTP ${res.status}` }; }
       if (res.ok) {
-        invoice = data.invoice;
+        invoice = data.invoice as Record<string, unknown>;
         renderInvoice();
         renderPayments();
-      } else alert(data.error || 'Failed');
-    } catch { alert('Failed'); }
+      } else alert(data.error || `Failed (${res.status})`);
+    } catch (e) { alert('Failed: ' + (e instanceof Error ? e.message : 'Unknown error')); }
     btn.disabled = false;
     btn.textContent = 'Finalize';
   });
