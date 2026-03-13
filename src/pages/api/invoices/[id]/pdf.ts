@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
-import { getInvoice } from '../../../../lib/db';
+import { getInvoice, getPaymentAccount } from '../../../../lib/db';
 import { generateInvoicePdf } from '../../../../lib/invoice-pdf';
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, request }) => {
   const id = Number(params.id);
   if (!id || isNaN(id)) {
     return new Response('Invalid invoice ID', { status: 400 });
@@ -12,7 +12,9 @@ export const GET: APIRoute = async ({ params }) => {
     if (!invoice) {
       return new Response('Invoice not found', { status: 404 });
     }
-    const pdfBytes = await generateInvoicePdf(invoice);
+    const baseUrl = new URL(request.url).origin;
+    const paymentAccount = invoice.payment_account_id ? await getPaymentAccount(invoice.payment_account_id) : null;
+    const pdfBytes = await generateInvoicePdf(invoice, { baseUrl, paymentAccount: paymentAccount ?? undefined });
     return new Response(pdfBytes, {
       status: 200,
       headers: {

@@ -56,6 +56,13 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           <input type="date" name="due_date" class="admin-form-input" />
         </div>
         <div class="admin-form-group">
+          <label class="admin-form-label">Payment account (bank details on invoice)</label>
+          <select name="payment_account_id" class="admin-form-input" id="payment-account-select">
+            <option value="">— No bank details —</option>
+          </select>
+          <a href="/admin/banks" class="admin-invoice-link" style="font-size: 0.875rem; margin-top: 0.25rem; display: inline-block;">Manage bank accounts</a>
+        </div>
+        <div class="admin-form-group">
           <label class="admin-form-label">Notes</label>
           <textarea name="notes" class="admin-form-input" rows="3" placeholder="Payment terms, etc."></textarea>
         </div>
@@ -83,6 +90,22 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 <script>
   const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
   if (!API_KEY) window.location.href = '/admin/login';
+
+  const headers = { 'x-api-key': API_KEY };
+
+  (async () => {
+    const res = await fetch('/api/payment-accounts/list', { headers });
+    if (res.ok) {
+      const { accounts } = await res.json();
+      const sel = document.getElementById('payment-account-select') as HTMLSelectElement;
+      accounts?.forEach((a: { id: number; name: string }) => {
+        const opt = document.createElement('option');
+        opt.value = String(a.id);
+        opt.textContent = a.name;
+        sel?.appendChild(opt);
+      });
+    }
+  })();
 
   let itemIndex = 1;
   const container = document.getElementById('line-items')!;
@@ -136,6 +159,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       return;
     }
 
+    const paymentAccountId = (form.querySelector('[name="payment_account_id"]') as HTMLSelectElement).value;
     const payload = {
       client_name: (form.querySelector('[name="client_name"]') as HTMLInputElement).value.trim(),
       client_email: (form.querySelector('[name="client_email"]') as HTMLInputElement).value.trim(),
@@ -146,6 +170,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       currency: (form.querySelector('[name="currency"]') as HTMLInputElement).value.trim() || 'UGX',
       due_date: (form.querySelector('[name="due_date"]') as HTMLInputElement).value || undefined,
       notes: (form.querySelector('[name="notes"]') as HTMLTextAreaElement).value.trim() || undefined,
+      payment_account_id: paymentAccountId ? Number(paymentAccountId) : undefined,
     };
 
     try {

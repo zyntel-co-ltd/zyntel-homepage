@@ -1,0 +1,169 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="Bank Accounts">
+  <header class="admin-header">
+    <h1 class="admin-title">Bank accounts</h1>
+    <p class="admin-subtitle">Payment details shown on invoices. Choose which bank to use when creating each invoice.</p>
+  </header>
+
+  <div class="admin-card">
+    <div class="admin-card-header">
+      <h2 class="admin-card-title">Payment accounts</h2>
+      <button type="button" class="admin-btn admin-btn-primary" id="add-bank-btn">Add bank account</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table" id="banks-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Bank</th>
+            <th>Account</th>
+            <th>Account name</th>
+          </tr>
+        </thead>
+        <tbody id="banks-tbody">
+          <tr><td colspan="4"><div class="admin-empty"><div class="admin-empty-icon">Loading...</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="admin-modal-overlay" id="bank-modal" style="display: none;">
+    <div class="admin-modal">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title">Add bank account</h3>
+      </div>
+      <form id="bank-form">
+        <div class="admin-modal-body">
+          <div class="admin-form-group">
+            <label class="admin-form-label">Display name *</label>
+            <input type="text" name="name" class="admin-form-input" required placeholder="e.g. ABSA UGX" />
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Bank name *</label>
+            <input type="text" name="bank_name" class="admin-form-input" required placeholder="ABSA Bank" />
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Account number *</label>
+            <input type="text" name="account_number" class="admin-form-input" required placeholder="6007816276" />
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Account name *</label>
+            <input type="text" name="account_name" class="admin-form-input" required placeholder="Zyntel Ltd" />
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Bank address</label>
+            <input type="text" name="bank_address" class="admin-form-input" placeholder="Kampala, Uganda" />
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Swift code</label>
+            <input type="text" name="swift_code" class="admin-form-input" placeholder="BARCUGKX" />
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Instructions</label>
+            <textarea name="instructions" class="admin-form-input" rows="2" placeholder="Use invoice number as reference"></textarea>
+          </div>
+          <p class="admin-login-error" id="bank-error" style="display: none;"></p>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="admin-btn admin-btn-secondary" id="close-bank-modal">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
+  if (!API_KEY) window.location.href = '/admin/login';
+
+  const headers = { 'x-api-key': API_KEY };
+
+  async function loadBanks() {
+    const tbody = document.getElementById('banks-tbody')!;
+    const res = await fetch('/api/payment-accounts/list', { headers });
+    if (res.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = '/admin/login'; return; }
+    const data = await res.json();
+    const accounts = data.accounts ?? [];
+
+    if (accounts.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4">
+            <div class="admin-empty">
+              <div class="admin-empty-icon">🏦</div>
+              <div class="admin-empty-title">No bank accounts yet</div>
+              <div class="admin-empty-desc">Add a bank account to show payment details on invoices.</div>
+              <button type="button" class="admin-btn admin-btn-primary" id="add-first-btn">Add bank account</button>
+            </div>
+          </td>
+        </tr>
+      `;
+      document.getElementById('add-first-btn')?.addEventListener('click', () => document.getElementById('add-bank-btn')?.click());
+    } else {
+      tbody.innerHTML = accounts.map((a: { id: number; name: string; bank_name: string; account_number: string; account_name: string }) => `
+        <tr>
+          <td><strong>${a.name}</strong></td>
+          <td>${a.bank_name}</td>
+          <td>${a.account_number}</td>
+          <td>${a.account_name}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  const modal = document.getElementById('bank-modal')!;
+  const form = document.getElementById('bank-form')!;
+
+  document.getElementById('add-bank-btn')?.addEventListener('click', () => {
+    (form.querySelector('[name="name"]') as HTMLInputElement).value = '';
+    (form.querySelector('[name="bank_name"]') as HTMLInputElement).value = '';
+    (form.querySelector('[name="account_number"]') as HTMLInputElement).value = '';
+    (form.querySelector('[name="account_name"]') as HTMLInputElement).value = '';
+    (form.querySelector('[name="bank_address"]') as HTMLInputElement).value = '';
+    (form.querySelector('[name="swift_code"]') as HTMLInputElement).value = '';
+    (form.querySelector('[name="instructions"]') as HTMLTextAreaElement).value = '';
+    (document.getElementById('bank-error') as HTMLElement).style.display = 'none';
+    modal.style.display = 'flex';
+  });
+
+  document.getElementById('close-bank-modal')?.addEventListener('click', () => { modal.style.display = 'none'; });
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById('bank-error') as HTMLElement;
+    errorEl.style.display = 'none';
+    const payload = {
+      name: (form.querySelector('[name="name"]') as HTMLInputElement).value.trim(),
+      bank_name: (form.querySelector('[name="bank_name"]') as HTMLInputElement).value.trim(),
+      account_number: (form.querySelector('[name="account_number"]') as HTMLInputElement).value.trim(),
+      account_name: (form.querySelector('[name="account_name"]') as HTMLInputElement).value.trim(),
+      bank_address: (form.querySelector('[name="bank_address"]') as HTMLInputElement).value.trim() || undefined,
+      swift_code: (form.querySelector('[name="swift_code"]') as HTMLInputElement).value.trim() || undefined,
+      instructions: (form.querySelector('[name="instructions"]') as HTMLTextAreaElement).value.trim() || undefined,
+    };
+    try {
+      const res = await fetch('/api/payment-accounts/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        modal.style.display = 'none';
+        loadBanks();
+      } else {
+        errorEl.textContent = data.error || 'Failed';
+        errorEl.style.display = 'block';
+      }
+    } catch {
+      errorEl.textContent = 'Connection failed';
+      errorEl.style.display = 'block';
+    }
+  });
+
+  loadBanks();
+</script>

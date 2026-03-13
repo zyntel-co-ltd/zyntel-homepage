@@ -4,7 +4,7 @@ import { getInvoice } from '../../../../lib/db';
 import { generateReceiptPdf } from '../../../../lib/invoice-pdf';
 import type { PaymentRecord } from '../../../../lib/db';
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, request }) => {
   const paymentId = Number(params.paymentId);
   if (!paymentId || isNaN(paymentId)) {
     return new Response('Invalid payment ID', { status: 400 });
@@ -20,7 +20,8 @@ export const GET: APIRoute = async ({ params }) => {
     if (!invoice) {
       return new Response('Invoice not found', { status: 404 });
     }
-    const pdfBytes = await generateReceiptPdf(invoice, payment);
+    const baseUrl = new URL(request.url).origin;
+    const pdfBytes = await generateReceiptPdf(invoice, payment, { baseUrl });
     return new Response(pdfBytes, {
       status: 200,
       headers: {

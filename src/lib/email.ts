@@ -18,6 +18,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ ok: boolea
     host: 'smtp.gmail.com',
     port: 587,
     secure: false,
+    requireTLS: true,
     auth: { user, pass },
   });
   try {

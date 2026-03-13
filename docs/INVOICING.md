@@ -6,9 +6,11 @@ Send invoices to clients and issue receipts after payment. Supports **cash**, **
 
 ## Vercel Setup (Preview Deployments)
 
-### 1. Run the database migration
+### 1. Run the database migrations
 
-In **Neon** → your project → **SQL Editor**, paste and run the contents of `scripts/migrations/002_invoices.sql`.
+In **Neon** → your project → **SQL Editor**, run in order:
+1. `scripts/migrations/002_invoices.sql`
+2. `scripts/migrations/003_payment_accounts.sql`
 
 ### 2. Add environment variables in Vercel
 
@@ -21,8 +23,11 @@ In **Neon** → your project → **SQL Editor**, paste and run the contents of `
 | `GMAIL_USER` | Your Gmail address |
 | `GMAIL_APP_PASSWORD` | 16-char App Password from [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) |
 | `EMAIL_FROM` | `Zyntel <invoices@zyntel.net>` (optional) |
+| `INVOICE_BANK_*` | Fallback when no bank selected per invoice (optional if using Bank accounts) |
 
-**Gmail:** Enable [2-Step Verification](https://myaccount.google.com/security) first, then create an App Password for "Mail".
+**Bank accounts:** Use **Admin → Bank accounts** to add multiple banks. When creating an invoice, choose which bank's details to show. This overrides the env vars above.
+
+**Gmail:** Enable [2-Step Verification](https://myaccount.google.com/security) first, then create an App Password for "Mail". If you get **403** when sending, verify credentials and try port 587 in `src/lib/email.ts` (currently 465).
 
 3. Ensure `DATABASE_URL` is already set (from Neon integration or manual).
 

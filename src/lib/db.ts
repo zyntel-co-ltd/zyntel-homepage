@@ -27,6 +27,7 @@ export interface Invoice {
   status: string;
   due_date: string | null;
   notes: string | null;
+  payment_account_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -38,6 +39,18 @@ export interface PaymentRecord {
   payment_method: PaymentMethod;
   reference: string | null;
   paid_at: string;
+  created_at: string;
+}
+
+export interface PaymentAccount {
+  id: number;
+  name: string;
+  bank_name: string;
+  account_number: string;
+  account_name: string;
+  bank_address: string | null;
+  swift_code: string | null;
+  instructions: string | null;
   created_at: string;
 }
 
@@ -84,6 +97,7 @@ export async function createInvoice(data: {
   currency?: string;
   due_date?: string;
   notes?: string;
+  payment_account_id?: number;
 }): Promise<Invoice | null> {
   if (!import.meta.env.DATABASE_URL) return null;
   const items = data.items;
@@ -93,11 +107,41 @@ export async function createInvoice(data: {
   const total = subtotal + taxAmount;
   const invoiceNumber = nextInvoiceNumber();
   const rows = await sql`
-    INSERT INTO invoices (invoice_number, client_name, client_email, client_phone, client_address, items, subtotal, tax_rate, tax_amount, total, currency, due_date, notes, status)
-    VALUES (${invoiceNumber}, ${data.client_name}, ${data.client_email}, ${data.client_phone ?? null}, ${data.client_address ?? null}, ${JSON.stringify(items)}, ${subtotal}, ${taxRate}, ${taxAmount}, ${total}, ${data.currency ?? 'UGX'}, ${data.due_date ?? null}, ${data.notes ?? null}, 'draft')
+    INSERT INTO invoices (invoice_number, client_name, client_email, client_phone, client_address, items, subtotal, tax_rate, tax_amount, total, currency, due_date, notes, payment_account_id, status)
+    VALUES (${invoiceNumber}, ${data.client_name}, ${data.client_email}, ${data.client_phone ?? null}, ${data.client_address ?? null}, ${JSON.stringify(items)}, ${subtotal}, ${taxRate}, ${taxAmount}, ${total}, ${data.currency ?? 'UGX'}, ${data.due_date ?? null}, ${data.notes ?? null}, ${data.payment_account_id ?? null}, 'draft')
     RETURNING *
   `;
   return (rows[0] as Invoice) ?? null;
+}
+
+export async function listPaymentAccounts(): Promise<PaymentAccount[]> {
+  if (!import.meta.env.DATABASE_URL) return [];
+  const rows = await sql`SELECT * FROM payment_accounts ORDER BY name ASC`;
+  return rows as PaymentAccount[];
+}
+
+export async function getPaymentAccount(id: number): Promise<PaymentAccount | null> {
+  if (!import.meta.env.DATABASE_URL) return null;
+  const rows = await sql`SELECT * FROM payment_accounts WHERE id = ${id}`;
+  return (rows[0] as PaymentAccount) ?? null;
+}
+
+export async function createPaymentAccount(data: {
+  name: string;
+  bank_name: string;
+  account_number: string;
+  account_name: string;
+  bank_address?: string;
+  swift_code?: string;
+  instructions?: string;
+}): Promise<PaymentAccount | null> {
+  if (!import.meta.env.DATABASE_URL) return null;
+  const rows = await sql`
+    INSERT INTO payment_accounts (name, bank_name, account_number, account_name, bank_address, swift_code, instructions)
+    VALUES (${data.name}, ${data.bank_name}, ${data.account_number}, ${data.account_name}, ${data.bank_address ?? null}, ${data.swift_code ?? null}, ${data.instructions ?? null})
+    RETURNING *
+  `;
+  return (rows[0] as PaymentAccount) ?? null;
 }
 
 export async function getInvoice(id: number): Promise<Invoice | null> {

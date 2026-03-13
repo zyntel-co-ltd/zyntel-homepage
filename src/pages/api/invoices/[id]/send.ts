@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getInvoice, updateInvoiceStatus } from '../../../../lib/db';
+import { getInvoice, updateInvoiceStatus, getPaymentAccount } from '../../../../lib/db';
 import { generateInvoicePdf } from '../../../../lib/invoice-pdf';
 import { sendEmail } from '../../../../lib/email';
 
@@ -22,7 +22,9 @@ export const POST: APIRoute = async ({ params, request }) => {
     if (!invoice) {
       return new Response(JSON.stringify({ error: 'Invoice not found' }), { status: 404 });
     }
-    const pdfBytes = await generateInvoicePdf(invoice);
+    const baseUrl = new URL(request.url).origin;
+    const paymentAccount = invoice.payment_account_id ? await getPaymentAccount(invoice.payment_account_id) : null;
+    const pdfBytes = await generateInvoicePdf(invoice, { baseUrl, paymentAccount: paymentAccount ?? undefined });
     const result = await sendEmail({
       to: invoice.client_email,
       subject: `Invoice ${invoice.invoice_number} from Zyntel`,

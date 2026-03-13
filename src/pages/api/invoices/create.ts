@@ -12,7 +12,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
   try {
     const body = await request.json();
-    const { client_name, client_email, client_phone, client_address, items, tax_rate, currency, due_date, notes } = body ?? {};
+    const { client_name, client_email, client_phone, client_address, items, tax_rate, currency, due_date, notes, payment_account_id } = body ?? {};
     if (!client_name?.trim() || !client_email?.trim() || !Array.isArray(items) || items.length === 0) {
       return new Response(JSON.stringify({ error: 'client_name, client_email, and items (array) required' }), { status: 400 });
     }
@@ -31,6 +31,7 @@ export const POST: APIRoute = async ({ request }) => {
       currency: currency ? String(currency) : undefined,
       due_date: due_date ? String(due_date) : undefined,
       notes: notes ? String(notes) : undefined,
+      payment_account_id: payment_account_id != null ? Number(payment_account_id) : undefined,
     });
     if (!invoice) {
       return new Response(JSON.stringify({ error: 'Database error' }), { status: 500 });
