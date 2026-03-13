@@ -5,7 +5,7 @@ import ThemeToggle from './ThemeToggle.astro';
 <nav class="nav">
   <div class="nav-container container">
     <a href="/" class="nav-logo" aria-label="Zyntel Home">
-      <span class="nav-logo-text">Zyn<span class="nav-logo-accent">tel</span></span>
+      <img src="/logos/zyntel_full_cyan.png" alt="Zyntel" class="nav-logo-img" />
     </a>
 
     <div class="nav-links" id="nav-links" role="navigation" aria-label="Main">
@@ -111,6 +111,11 @@ import ThemeToggle from './ThemeToggle.astro';
     color: var(--text-primary);
     letter-spacing: -0.025em;
     transition: color 0.2s, transform 0.2s;
+  }
+  .nav-logo-img {
+    height: 36px;
+    width: auto;
+    display: block;
   }
 
   .nav-logo:hover {

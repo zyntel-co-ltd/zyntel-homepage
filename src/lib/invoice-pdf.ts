@@ -44,7 +44,8 @@ export async function generateInvoicePdf(invoice: Invoice, options: PdfOptions =
   let y = height - 40;
 
   const baseUrl = options.baseUrl ?? import.meta.env.SITE ?? 'https://zyntel.net';
-  const logoBytes = await loadLogo(baseUrl, '/images/logos/zyntel_full_cyan.png');
+  let logoBytes = await loadLogo(baseUrl, '/images/logos/zyntel_full_cyan.png');
+  if (!logoBytes) logoBytes = await loadLogo(baseUrl, '/logos/zyntel_full_cyan.png');
 
   if (logoBytes) {
     try {
@@ -200,7 +201,8 @@ export async function generateReceiptPdf(
   let y = height - 50;
 
   const baseUrl = options.baseUrl ?? import.meta.env.SITE ?? 'https://zyntel.net';
-  const logoBytes = await loadLogo(baseUrl, '/images/logos/zyntel_logo_cyan.png');
+  let logoBytes = await loadLogo(baseUrl, '/images/logos/zyntel_logo_cyan.png');
+  if (!logoBytes) logoBytes = await loadLogo(baseUrl, '/logos/zyntel_logo_cyan.png');
 
   if (logoBytes) {
     try {
