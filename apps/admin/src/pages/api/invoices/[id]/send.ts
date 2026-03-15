@@ -40,7 +40,7 @@ export const POST: APIRoute = async ({ params, request }) => {
         <p>Total: ${invoice.currency} ${invoice.total.toLocaleString()}</p>
         <p>Thank you,<br>Zyntel</p>
       `,
-      attachments: [{ filename: `invoice-${invoice.invoice_number}.pdf`, content: Buffer.from(pdfBytes) }],
+      attachments: [{ filename: `Invoice-${invoice.invoice_number}.pdf`, content: Buffer.from(pdfBytes) }],
     });
     if (!result.ok) {
       return new Response(JSON.stringify({ error: result.error ?? 'Failed to send email' }), { status: 400 });

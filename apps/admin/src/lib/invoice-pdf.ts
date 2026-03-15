@@ -101,7 +101,7 @@ export async function generateInvoicePdf(invoice: Invoice, options: PdfOptions =
     y -= size + 4;
   };
 
-  draw('INVOICE', MARGIN, 20, true);
+  draw(`Invoice ${invoice.invoice_number}`, MARGIN, 20, true);
   y -= 8;
 
   const colRightStart = rightEdge - 140;
@@ -265,7 +265,7 @@ export async function generateReceiptPdf(
   };
 
   const receiptNumber = `RCT-${invoice.invoice_number}-P${payment.id}`;
-  draw('PAYMENT RECEIPT', MARGIN, 18, true);
+  draw(`Receipt ${receiptNumber}`, MARGIN, 18, true);
   draw(`Receipt No: ${receiptNumber}`, MARGIN);
   draw(`Invoice: ${invoice.invoice_number}`, MARGIN);
   draw(`Date: ${new Date(payment.paid_at).toLocaleDateString()} · ${new Date(payment.paid_at).toLocaleTimeString()}`, MARGIN);
