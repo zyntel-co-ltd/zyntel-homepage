@@ -1,0 +1,54 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="Clients">
+  <header class="admin-header">
+    <h1 class="admin-title">Clients</h1>
+    <p class="admin-subtitle">Saved clients for quick invoice creation</p>
+  </header>
+
+  <div class="admin-card">
+    <div class="admin-table-wrap">
+      <table class="admin-table" id="clients-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Address</th>
+          </tr>
+        </thead>
+        <tbody id="clients-tbody">
+          <tr><td colspan="4"><div class="admin-empty"><div class="admin-empty-icon">Loading...</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
+  const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '/admin';
+  if (!API_KEY) window.location.href = B + '/login';
+
+  async function load() {
+    const tbody = document.getElementById('clients-tbody')!;
+    const res = await fetch('/api/clients/list', { headers: { 'x-api-key': API_KEY } });
+    if (res.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = B + '/login'; return; }
+    const { clients } = await res.json();
+    const list = clients ?? [];
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="admin-empty"><div class="admin-empty-icon">👤</div><div class="admin-empty-title">No clients yet</div><div class="admin-empty-desc">Clients are saved when you check "Save client" when creating an invoice.</div></div></td></tr>';
+    } else {
+      tbody.innerHTML = list.map((c: { name: string; email: string; phone?: string; address?: string }) => `
+        <tr>
+          <td><strong>${c.name}</strong></td>
+          <td>${c.email}</td>
+          <td>${c.phone || '—'}</td>
+          <td>${c.address || '—'}</td>
+        </tr>
+      `).join('');
+    }
+  }
+  load();
+</script>

@@ -1,0 +1,128 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="Saved Items">
+  <header class="admin-header">
+    <h1 class="admin-title">Saved items</h1>
+    <p class="admin-subtitle">Reusable line items for quick invoice creation</p>
+  </header>
+
+  <div class="admin-card" style="max-width: 640px;">
+    <div class="admin-card-header">
+      <h2 class="admin-card-title">Add new item</h2>
+    </div>
+    <form id="add-item-form" style="padding: 1.5rem;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="admin-form-group">
+          <label class="admin-form-label">Name (short)</label>
+          <input type="text" name="name" class="admin-form-input" required placeholder="e.g. Monthly hosting" />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Default quantity</label>
+          <input type="number" name="default_quantity" class="admin-form-input" min="1" value="1" />
+        </div>
+      </div>
+      <div class="admin-form-group">
+        <label class="admin-form-label">Description (on invoice)</label>
+        <input type="text" name="description" class="admin-form-input" required placeholder="e.g. Web hosting — 1 month" />
+      </div>
+      <div class="admin-form-group">
+        <label class="admin-form-label">Unit price</label>
+        <input type="number" name="unit_price" class="admin-form-input" min="0" step="0.01" required placeholder="0.00" />
+      </div>
+      <button type="submit" class="admin-btn admin-btn-primary">Save item</button>
+    </form>
+  </div>
+
+  <div class="admin-card" style="max-width: 640px; margin-top: 1.5rem;">
+    <div class="admin-card-header">
+      <h2 class="admin-card-title">Your saved items</h2>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table" id="items-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Unit price</th>
+            <th>Qty</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="items-tbody">
+          <tr><td colspan="5"><div class="admin-empty"><div class="admin-empty-icon">Loading...</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
+  if (!API_KEY) window.location.href = '/login';
+
+  const headers = { 'x-api-key': API_KEY };
+
+  async function loadItems() {
+    const tbody = document.getElementById('items-tbody');
+    if (!tbody) return;
+    try {
+      const res = await fetch('/api/saved-items/list', { headers });
+      if (res.status === 401) {
+        sessionStorage.removeItem('zyntel_invoice_api_key');
+        window.location.href = '/login';
+        return;
+      }
+      const { items } = await res.json();
+      if (!items?.length) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="admin-empty"><div class="admin-empty-icon">No saved items yet</div><div class="admin-empty-desc">Add items above to reuse them when creating invoices.</div></div></td></tr>';
+      } else {
+        tbody.innerHTML = items.map((i: { id: number; name: string; description: string; unit_price: number; default_quantity: number }) => `
+          <tr>
+            <td>${i.name}</td>
+            <td>${i.description}</td>
+            <td>${Number(i.unit_price).toLocaleString()}</td>
+            <td>${i.default_quantity ?? 1}</td>
+            <td>
+              <button type="button" class="admin-btn admin-btn-ghost delete-item" data-id="${i.id}">Delete</button>
+            </td>
+          </tr>
+        `).join('');
+        tbody.querySelectorAll('.delete-item').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            if (!confirm('Delete this item?')) return;
+            const id = (btn as HTMLElement).dataset.id;
+            const r = await fetch(`/api/saved-items/${id}/delete`, { method: 'DELETE', headers });
+            if (r.ok) loadItems();
+          });
+        });
+      }
+    } catch {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="admin-empty"><div class="admin-empty-desc">Failed to load</div></div></td></tr>';
+    }
+  }
+
+  document.getElementById('add-item-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const res = await fetch('/api/saved-items/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify({
+        name: (form.querySelector('[name="name"]') as HTMLInputElement).value.trim(),
+        description: (form.querySelector('[name="description"]') as HTMLInputElement).value.trim(),
+        unit_price: Number((form.querySelector('[name="unit_price"]') as HTMLInputElement).value) || 0,
+        default_quantity: Number((form.querySelector('[name="default_quantity"]') as HTMLInputElement).value) || 1,
+      }),
+    });
+    if (res.ok) {
+      form.reset();
+      loadItems();
+    } else {
+      const data = await res.json();
+      alert(data.error || 'Failed');
+    }
+  });
+
+  loadItems();
+</script>

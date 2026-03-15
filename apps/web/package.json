@@ -1,0 +1,28 @@
+{
+  "name": "zyntel-homepage",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@zyntel/db": "*",
+    "pdf-lib": "^1.17.1",
+    "nodemailer": "^6.9.0",
+    "@portabletext/to-html": "^5.0.2",
+    "@sanity/client": "^6.22.0",
+    "aos": "^2.3.4",
+    "astro": "^5.0.0",
+    "gsap": "^3.14.2"
+  },
+  "devDependencies": {
+    "@astrojs/vercel": "^8.0.0",
+    "typescript": "^5.6.0"
+  }
+}

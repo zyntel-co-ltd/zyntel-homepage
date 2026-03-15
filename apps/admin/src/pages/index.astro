@@ -1,0 +1,163 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro';
+---
+<AdminLayout title="Dashboard">
+  <header class="admin-header">
+    <h1 class="admin-title">Dashboard</h1>
+    <p class="admin-subtitle">Overview of your invoicing activity</p>
+  </header>
+
+  <div class="admin-quick-actions" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+    <a href="/invoices/new" class="admin-btn admin-btn-primary">New invoice</a>
+    <a href="/clients" class="admin-btn admin-btn-secondary">Clients</a>
+    <a href="/banks" class="admin-btn admin-btn-secondary">Bank accounts</a>
+    <a href="/items" class="admin-btn admin-btn-secondary">Saved items</a>
+  </div>
+  <div class="admin-form-group" style="margin-bottom: 1rem;">
+    <label class="admin-form-label" style="margin-right: 0.5rem;">Filter by type:</label>
+    <select class="admin-form-input" id="type-filter" style="width: auto; display: inline-block;">
+      <option value="">All</option>
+      <option value="one_off">One-off</option>
+      <option value="subscription">Subscription</option>
+      <option value="consultation">Consultation</option>
+      <option value="other">Other</option>
+    </select>
+  </div>
+  <div class="admin-stats" id="stats">
+    <div class="admin-stat-card">
+      <div class="admin-stat-label">Total Invoices</div>
+      <div class="admin-stat-value" id="stat-total">—</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-label">Pending</div>
+      <div class="admin-stat-value" id="stat-pending">—</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-label">Paid</div>
+      <div class="admin-stat-value" id="stat-paid">—</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-label">Overdue</div>
+      <div class="admin-stat-value" id="stat-overdue">—</div>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-card-header">
+      <h2 class="admin-card-title">Recent Invoices</h2>
+      <a href="/invoices/new" class="admin-btn admin-btn-primary">New invoice</a>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table" id="invoices-table">
+        <thead>
+          <tr>
+            <th>Invoice</th>
+            <th>Client</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="invoices-tbody">
+          <tr>
+            <td colspan="6">
+              <div class="admin-empty">
+                <div class="admin-empty-icon" id="loading-msg">Loading...</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
+  if (!API_KEY) window.location.href = '/login';
+
+  const headers = { 'x-api-key': API_KEY };
+
+  async function loadDashboard() {
+    const tbody = document.getElementById('invoices-tbody');
+    const loadingMsg = document.getElementById('loading-msg');
+    if (!tbody) return;
+
+    const typeFilter = (document.getElementById('type-filter') as HTMLSelectElement)?.value;
+    const url = typeFilter ? `/api/invoices/list?limit=20&type=${typeFilter}` : '/api/invoices/list?limit=20';
+
+    try {
+      const res = await fetch(url, { headers });
+      if (res.status === 401) {
+        sessionStorage.removeItem('zyntel_invoice_api_key');
+        window.location.href = '/login';
+        return;
+      }
+      const data = await res.json();
+      const invoices = data.invoices ?? [];
+
+      // Stats
+      const total = invoices.length;
+      const pending = invoices.filter((i: { status: string }) => ['draft', 'sent'].includes(i.status)).length;
+      const paid = invoices.filter((i: { status: string }) => i.status === 'paid').length;
+      const overdue = invoices.filter((i: { status: string }) => i.status === 'overdue').length;
+
+      document.getElementById('stat-total')!.textContent = String(total);
+      document.getElementById('stat-pending')!.textContent = String(pending);
+      document.getElementById('stat-paid')!.textContent = String(paid);
+      document.getElementById('stat-overdue')!.textContent = String(overdue);
+
+      // Table
+      if (invoices.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6">
+              <div class="admin-empty">
+                <div class="admin-empty-icon">📄</div>
+                <div class="admin-empty-title">No invoices yet</div>
+                <div class="admin-empty-desc">Create your first invoice to get started.</div>
+                <a href="/invoices/new" class="admin-btn admin-btn-primary">New invoice</a>
+              </div>
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = invoices.map((inv: {
+          id: number;
+          invoice_number: string;
+          client_name: string;
+          total: number;
+          currency: string;
+          status: string;
+          created_at: string;
+        }) => {
+          const statusClass = `admin-badge-${inv.status}`;
+          const date = new Date(inv.created_at).toLocaleDateString();
+          const amount = `${inv.currency || ''} ${Number(inv.total).toLocaleString()}`.trim();
+          return `
+            <tr>
+              <td><a href="/invoices/${inv.id}" class="admin-invoice-link">${inv.invoice_number}</a></td>
+              <td>${inv.client_name}</td>
+              <td>${amount}</td>
+              <td><span class="admin-badge ${statusClass}">${inv.status}</span></td>
+              <td>${date}</td>
+              <td>
+                <div class="admin-actions-cell">
+                  <a href="/api/invoices/${inv.id}/pdf" target="_blank" class="admin-btn admin-btn-ghost">PDF</a>
+                  <a href="${B}/invoices/${inv.id}" class="admin-btn admin-btn-ghost">View</a>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    } catch (e) {
+      loadingMsg!.textContent = 'Failed to load. Check your connection.';
+    }
+  }
+
+  document.getElementById('type-filter')?.addEventListener('change', loadDashboard);
+
+  loadDashboard();
+</script>

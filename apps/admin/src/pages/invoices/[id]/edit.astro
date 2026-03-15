@@ -1,0 +1,307 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+export const prerender = false;
+---
+<AdminLayout title="Edit Invoice">
+  <header class="admin-header">
+    <a href="/invoices" class="admin-btn admin-btn-ghost" style="margin-bottom: 1rem;">← Back</a>
+    <h1 class="admin-title">Edit invoice</h1>
+    <p class="admin-subtitle" id="edit-subtitle">Loading...</p>
+  </header>
+
+  <div class="admin-card" style="max-width: 640px;">
+    <div class="admin-modal-body">
+      <form id="edit-invoice-form">
+        <input type="hidden" name="invoice_id" id="invoice-id" />
+        <div class="admin-form-group">
+          <label class="admin-form-label">Invoice date</label>
+          <input type="date" name="invoice_date" class="admin-form-input" id="invoice-date-input" />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Invoice type</label>
+          <select name="invoice_type" class="admin-form-input" id="invoice-type-select">
+            <option value="one_off">One-off</option>
+            <option value="subscription">Subscription</option>
+            <option value="consultation">Consultation</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="admin-form-group" id="recurring-section" style="display: none;">
+          <label class="admin-form-label">Recurring (next invoice date)</label>
+          <input type="date" name="recurring_next_run" class="admin-form-input" id="recurring-next-run" />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Client</label>
+          <select name="client_id" class="admin-form-input" id="client-select">
+            <option value="">— New client —</option>
+          </select>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Client name *</label>
+          <input type="text" name="client_name" class="admin-form-input" required />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Client email *</label>
+          <input type="email" name="client_email" class="admin-form-input" required />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Client phone</label>
+          <input type="text" name="client_phone" class="admin-form-input" />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Client address</label>
+          <input type="text" name="client_address" class="admin-form-input" />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Line items *</label>
+          <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <select class="admin-form-input" id="saved-item-select" style="flex: 1; max-width: 280px;">
+              <option value="">— Add from saved items —</option>
+            </select>
+            <button type="button" class="admin-btn admin-btn-secondary" id="add-saved-item">Add</button>
+          </div>
+          <div id="line-items"></div>
+          <button type="button" class="admin-btn admin-btn-secondary" id="add-line-item" style="margin-top: 0.5rem;">+ Add line</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="admin-form-group">
+            <label class="admin-form-label">Tax rate (%)</label>
+            <input type="number" name="tax_rate" class="admin-form-input" min="0" step="0.01" />
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Currency</label>
+            <input type="text" name="currency" class="admin-form-input" />
+          </div>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Due date</label>
+          <input type="date" name="due_date" class="admin-form-input" />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Payment account</label>
+          <select name="payment_account_id" class="admin-form-input" id="payment-account-select">
+            <option value="">— No bank details —</option>
+          </select>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Notes</label>
+          <textarea name="notes" class="admin-form-input" rows="3"></textarea>
+        </div>
+        <p class="admin-login-error" id="form-error" style="display: none;"></p>
+        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+          <button type="submit" class="admin-btn admin-btn-primary" id="submit-btn">Save changes</button>
+          <a href="/invoices" id="cancel-link" class="admin-btn admin-btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .line-item-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+  .line-item-row input:first-child { flex: 1; }
+</style>
+
+<script>
+  const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
+  const B = '';
+  if (!API_KEY) window.location.href = '/login';
+
+  const headers = { 'x-api-key': API_KEY };
+  const parts = document.location.pathname.split('/').filter(Boolean);
+  const editIdx = parts.indexOf('edit');
+  const id = editIdx > 0 ? parts[editIdx - 1] : null;
+  if (!id || id === 'invoices') window.location.href = '/invoices';
+
+  let itemIndex = 0;
+  const container = document.getElementById('line-items')!;
+  const addBtn = document.getElementById('add-line-item')!;
+
+  function addLineItem(desc = '', qty = 1, price = 0) {
+    const row = document.createElement('div');
+    row.className = 'line-item-row';
+    row.dataset.index = String(itemIndex);
+    row.innerHTML = `
+      <input type="text" name="item_desc_${itemIndex}" class="admin-form-input" placeholder="Description" required value="${desc.replace(/"/g, '&quot;')}" />
+      <input type="number" name="item_qty_${itemIndex}" class="admin-form-input" min="1" value="${qty}" style="width: 80px;" />
+      <input type="number" name="item_price_${itemIndex}" class="admin-form-input" min="0" step="0.01" required value="${price}" style="width: 140px;" />
+      <button type="button" class="admin-btn admin-btn-ghost remove-item">Remove</button>
+    `;
+    container.appendChild(row);
+    row.querySelector('.remove-item')?.addEventListener('click', () => row.remove());
+    itemIndex++;
+  }
+
+  addBtn.addEventListener('click', () => addLineItem());
+
+  document.getElementById('invoice-type-select')?.addEventListener('change', () => {
+    const section = document.getElementById('recurring-section');
+    const type = (document.getElementById('invoice-type-select') as HTMLSelectElement).value;
+    if (section) section.style.display = type === 'subscription' ? 'block' : 'none';
+  });
+
+  document.getElementById('add-saved-item')?.addEventListener('click', async () => {
+    const sel = document.getElementById('saved-item-select') as HTMLSelectElement;
+    const o = sel?.options[sel.selectedIndex];
+    if (!o?.value) return;
+    const desc = o.dataset.desc || '';
+    const price = Number(o.dataset.price) || 0;
+    const qty = Number(o.dataset.qty) || 1;
+    addLineItem(desc, qty, price);
+  });
+
+  async function load() {
+    const [invRes, accRes, clientRes, itemsRes] = await Promise.all([
+      fetch(`/api/invoices/${id}`, { headers }),
+      fetch('/api/payment-accounts/list', { headers }),
+      fetch('/api/clients/list', { headers }),
+      fetch('/api/saved-items/list', { headers }),
+    ]);
+    if (invRes.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = '/login'; return; }
+    if (!invRes.ok) { document.getElementById('edit-subtitle')!.textContent = 'Invoice not found'; return; }
+    const { invoice } = await invRes.json();
+    if (invoice.status !== 'draft') {
+      document.getElementById('edit-subtitle')!.textContent = 'Only draft invoices can be edited.';
+      document.getElementById('edit-invoice-form')!.style.display = 'none';
+      return;
+    }
+
+    document.getElementById('edit-subtitle')!.textContent = invoice.invoice_number;
+    document.getElementById('invoice-id')!.setAttribute('value', invoice.id);
+    (document.querySelector('[name="client_name"]') as HTMLInputElement).value = invoice.client_name || '';
+    (document.querySelector('[name="client_email"]') as HTMLInputElement).value = invoice.client_email || '';
+    (document.querySelector('[name="client_phone"]') as HTMLInputElement).value = invoice.client_phone || '';
+    (document.querySelector('[name="client_address"]') as HTMLInputElement).value = invoice.client_address || '';
+    (document.querySelector('[name="tax_rate"]') as HTMLInputElement).value = invoice.tax_rate ?? 18;
+    (document.querySelector('[name="currency"]') as HTMLInputElement).value = invoice.currency || 'UGX';
+    (document.querySelector('[name="due_date"]') as HTMLInputElement).value = invoice.due_date ? invoice.due_date.slice(0, 10) : '';
+    (document.getElementById('invoice-date-input') as HTMLInputElement).value = invoice.invoice_date ? invoice.invoice_date.slice(0, 10) : (invoice.created_at ? invoice.created_at.slice(0, 10) : '');
+    (document.getElementById('invoice-type-select') as HTMLSelectElement).value = invoice.invoice_type || 'one_off';
+    const recSection = document.getElementById('recurring-section');
+    if (recSection) recSection.style.display = (invoice.invoice_type === 'subscription') ? 'block' : 'none';
+    (document.getElementById('recurring-next-run') as HTMLInputElement).value = invoice.recurring_config?.next_run?.slice(0, 10) || '';
+    (document.querySelector('[name="notes"]') as HTMLTextAreaElement).value = invoice.notes || '';
+
+    const items = invoice.items || [];
+    container.innerHTML = '';
+    itemIndex = 0;
+    items.forEach((i: { description: string; quantity: number; unitPrice: number }) => addLineItem(i.description, i.quantity, i.unitPrice));
+    if (items.length === 0) addLineItem();
+
+    if (accRes.ok) {
+      const { accounts } = await accRes.json();
+      const sel = document.getElementById('payment-account-select') as HTMLSelectElement;
+      accounts?.forEach((a: { id: number; name: string }) => {
+        const opt = document.createElement('option');
+        opt.value = String(a.id);
+        opt.textContent = a.name;
+        if (a.id === invoice.payment_account_id) opt.selected = true;
+        sel?.appendChild(opt);
+      });
+    }
+    if (clientRes.ok) {
+      const { clients } = await clientRes.json();
+      const sel = document.getElementById('client-select') as HTMLSelectElement;
+      clients?.forEach((c: { id: number; name: string; email: string; phone?: string; address?: string }) => {
+        const opt = document.createElement('option');
+        opt.value = String(c.id);
+        opt.textContent = `${c.name} (${c.email})`;
+        opt.dataset.name = c.name;
+        opt.dataset.email = c.email;
+        opt.dataset.phone = c.phone || '';
+        opt.dataset.address = c.address || '';
+        if (c.id === invoice.client_id) opt.selected = true;
+        sel?.appendChild(opt);
+      });
+    }
+    if (itemsRes.ok) {
+      const { items } = await itemsRes.json();
+      const sel = document.getElementById('saved-item-select') as HTMLSelectElement;
+      items?.forEach((i: { id: number; name: string; description: string; unit_price: number; default_quantity: number }) => {
+        const opt = document.createElement('option');
+        opt.value = String(i.id);
+        opt.textContent = `${i.name} — ${i.description}`;
+        opt.dataset.desc = i.description;
+        opt.dataset.price = String(i.unit_price);
+        opt.dataset.qty = String(i.default_quantity ?? 1);
+        sel?.appendChild(opt);
+      });
+    }
+
+    (document.getElementById('cancel-link') as HTMLAnchorElement).href = `/invoices/${id}`;
+  }
+
+  document.getElementById('edit-invoice-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const errorEl = document.getElementById('form-error')!;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+
+    errorEl.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+
+    const items: { description: string; quantity: number; unitPrice: number }[] = [];
+    container.querySelectorAll('.line-item-row').forEach((row) => {
+      const idx = (row as HTMLElement).dataset.index!;
+      const desc = (form.querySelector(`[name="item_desc_${idx}"]`) as HTMLInputElement)?.value;
+      const qty = Number((form.querySelector(`[name="item_qty_${idx}"]`) as HTMLInputElement)?.value) || 1;
+      const price = Number((form.querySelector(`[name="item_price_${idx}"]`) as HTMLInputElement)?.value) || 0;
+      if (desc) items.push({ description: desc, quantity: qty, unitPrice: price });
+    });
+
+    if (items.length === 0) {
+      errorEl.textContent = 'Add at least one line item';
+      errorEl.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save changes';
+      return;
+    }
+
+    const invoiceType = (form.querySelector('[name="invoice_type"]') as HTMLSelectElement).value;
+    const recurringNextRun = (form.querySelector('[name="recurring_next_run"]') as HTMLInputElement)?.value;
+    const payload: Record<string, unknown> = {
+      client_id: (form.querySelector('[name="client_id"]') as HTMLSelectElement).value || null,
+      client_name: (form.querySelector('[name="client_name"]') as HTMLInputElement).value.trim(),
+      client_email: (form.querySelector('[name="client_email"]') as HTMLInputElement).value.trim(),
+      client_phone: (form.querySelector('[name="client_phone"]') as HTMLInputElement).value.trim() || null,
+      client_address: (form.querySelector('[name="client_address"]') as HTMLInputElement).value.trim() || null,
+      items,
+      tax_rate: Number((form.querySelector('[name="tax_rate"]') as HTMLInputElement).value) || 0,
+      currency: (form.querySelector('[name="currency"]') as HTMLInputElement).value.trim() || 'UGX',
+      due_date: (form.querySelector('[name="due_date"]') as HTMLInputElement).value || null,
+      invoice_date: (form.querySelector('[name="invoice_date"]') as HTMLInputElement)?.value || null,
+      invoice_type: invoiceType || 'one_off',
+      notes: (form.querySelector('[name="notes"]') as HTMLTextAreaElement).value.trim() || null,
+      payment_account_id: (form.querySelector('[name="payment_account_id"]') as HTMLSelectElement).value || null,
+    };
+    if (invoiceType === 'subscription' && recurringNextRun) {
+      payload.recurring_config = { frequency: 'monthly', next_run: recurringNextRun };
+    } else if (invoiceType !== 'subscription') {
+      payload.recurring_config = null;
+    }
+
+    try {
+      const res = await fetch(`/api/invoices/${id}/update`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        window.location.href = `/invoices/${id}`;
+      } else {
+        errorEl.textContent = data.error || 'Failed';
+        errorEl.style.display = 'block';
+      }
+    } catch {
+      errorEl.textContent = 'Connection failed';
+      errorEl.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save changes';
+    }
+  });
+
+  load();
+</script>

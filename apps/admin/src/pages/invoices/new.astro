@@ -1,0 +1,314 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="New Invoice">
+  <header class="admin-header">
+    <a href="/invoices" class="admin-btn admin-btn-ghost" style="margin-bottom: 1rem;">← Back to invoices</a>
+    <h1 class="admin-title">New invoice</h1>
+    <p class="admin-subtitle">Create a new invoice for your client</p>
+  </header>
+
+  <div class="admin-card" style="max-width: 640px;">
+    <div class="admin-modal-body">
+      <form id="create-invoice-form">
+        <div class="admin-form-group">
+          <label class="admin-form-label">Client</label>
+          <select name="client_id" class="admin-form-input" id="client-select">
+            <option value="">— New client —</option>
+          </select>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Client name *</label>
+          <input type="text" name="client_name" class="admin-form-input" required placeholder="Acme Ltd" />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Client email *</label>
+          <input type="email" name="client_email" class="admin-form-input" required placeholder="billing@acme.com" />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Client phone</label>
+          <input type="text" name="client_phone" class="admin-form-input" placeholder="+256..." />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Client address</label>
+          <input type="text" name="client_address" class="admin-form-input" placeholder="Kampala, Uganda" />
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Invoice date</label>
+          <input type="date" name="invoice_date" class="admin-form-input" id="invoice-date-input" />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Invoice type</label>
+          <select name="invoice_type" class="admin-form-input" id="invoice-type-select">
+            <option value="one_off">One-off</option>
+            <option value="subscription">Subscription</option>
+            <option value="consultation">Consultation</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="admin-form-group" id="recurring-section" style="display: none;">
+          <label class="admin-form-label">Recurring (next invoice date)</label>
+          <input type="date" name="recurring_next_run" class="admin-form-input" id="recurring-next-run" />
+          <p class="admin-form-hint" style="font-size: 0.8125rem; color: var(--admin-text-muted); margin-top: 0.25rem;">Set for subscriptions: when to create the next invoice (e.g. 1st of next month)</p>
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Line items *</label>
+          <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <select class="admin-form-input" id="saved-item-select" style="flex: 1; max-width: 280px;">
+              <option value="">— Add from saved items —</option>
+            </select>
+            <button type="button" class="admin-btn admin-btn-secondary" id="add-saved-item">Add</button>
+          </div>
+          <div id="line-items">
+            <div class="line-item-row" data-index="0">
+              <input type="text" name="item_desc_0" class="admin-form-input" placeholder="Description" required />
+              <input type="number" name="item_qty_0" class="admin-form-input" placeholder="Qty" min="1" value="1" style="width: 80px;" />
+              <input type="number" name="item_price_0" class="admin-form-input" placeholder="Unit price" min="0" step="0.01" required style="width: 140px;" />
+              <button type="button" class="admin-btn admin-btn-ghost remove-item" data-index="0" style="display: none;">Remove</button>
+            </div>
+          </div>
+          <button type="button" class="admin-btn admin-btn-secondary" id="add-line-item" style="margin-top: 0.5rem;">+ Add line</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="admin-form-group">
+            <label class="admin-form-label">Tax rate (%)</label>
+            <input type="number" name="tax_rate" class="admin-form-input" value="18" min="0" step="0.01" />
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Currency</label>
+            <input type="text" name="currency" class="admin-form-input" value="UGX" placeholder="UGX" />
+          </div>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Due date</label>
+          <input type="date" name="due_date" class="admin-form-input" />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Payment account (bank details on invoice)</label>
+          <select name="payment_account_id" class="admin-form-input" id="payment-account-select">
+            <option value="">— No bank details —</option>
+          </select>
+          <a href="/banks" class="admin-invoice-link" style="font-size: 0.875rem; margin-top: 0.25rem; display: inline-block;">Manage bank accounts</a>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Notes</label>
+          <textarea name="notes" class="admin-form-input" rows="3" placeholder="Payment terms, etc."></textarea>
+        </div>
+        <div class="admin-form-group">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" name="save_client" id="save-client" />
+            <span>Save client for future invoices</span>
+          </label>
+        </div>
+
+        <p class="admin-login-error" id="form-error" style="display: none;"></p>
+        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+          <button type="submit" class="admin-btn admin-btn-primary" id="submit-btn">Create invoice</button>
+          <a href="/invoices" class="admin-btn admin-btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .line-item-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .line-item-row input:first-child { flex: 1; }
+</style>
+
+<script>
+  const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
+  if (!API_KEY) window.location.href = '/login';
+
+  const headers = { 'x-api-key': API_KEY };
+
+  (document.getElementById('invoice-date-input') as HTMLInputElement).value = new Date().toISOString().slice(0, 10);
+
+  document.getElementById('invoice-type-select')?.addEventListener('change', () => {
+    const section = document.getElementById('recurring-section');
+    const type = (document.getElementById('invoice-type-select') as HTMLSelectElement).value;
+    if (section) section.style.display = type === 'subscription' ? 'block' : 'none';
+  });
+
+  (async () => {
+    const [accRes, clientRes, itemsRes] = await Promise.all([
+      fetch('/api/payment-accounts/list', { headers }),
+      fetch('/api/clients/list', { headers }),
+      fetch('/api/saved-items/list', { headers }),
+    ]);
+    if (accRes.ok) {
+      const { accounts } = await accRes.json();
+      const sel = document.getElementById('payment-account-select') as HTMLSelectElement;
+      accounts?.forEach((a: { id: number; name: string }) => {
+        const opt = document.createElement('option');
+        opt.value = String(a.id);
+        opt.textContent = a.name;
+        sel?.appendChild(opt);
+      });
+    }
+    if (clientRes.ok) {
+      const { clients } = await clientRes.json();
+      const sel = document.getElementById('client-select') as HTMLSelectElement;
+      clients?.forEach((c: { id: number; name: string; email: string; phone?: string; address?: string }) => {
+        const opt = document.createElement('option');
+        opt.value = String(c.id);
+        opt.textContent = `${c.name} (${c.email})`;
+        opt.dataset.name = c.name;
+        opt.dataset.email = c.email;
+        opt.dataset.phone = c.phone || '';
+        opt.dataset.address = c.address || '';
+        sel?.appendChild(opt);
+      });
+      sel?.addEventListener('change', () => {
+        const o = sel.options[sel.selectedIndex];
+        if (o?.value) {
+          (document.querySelector('[name="client_name"]') as HTMLInputElement).value = o.dataset.name || '';
+          (document.querySelector('[name="client_email"]') as HTMLInputElement).value = o.dataset.email || '';
+          (document.querySelector('[name="client_phone"]') as HTMLInputElement).value = o.dataset.phone || '';
+          (document.querySelector('[name="client_address"]') as HTMLInputElement).value = o.dataset.address || '';
+        }
+      });
+    }
+    if (itemsRes.ok) {
+      const { items } = await itemsRes.json();
+      const sel = document.getElementById('saved-item-select') as HTMLSelectElement;
+      items?.forEach((i: { id: number; name: string; description: string; unit_price: number; default_quantity: number }) => {
+        const opt = document.createElement('option');
+        opt.value = String(i.id);
+        opt.textContent = `${i.name} — ${i.description} (${Number(i.unit_price).toLocaleString()})`;
+        opt.dataset.desc = i.description;
+        opt.dataset.price = String(i.unit_price);
+        opt.dataset.qty = String(i.default_quantity ?? 1);
+        sel?.appendChild(opt);
+      });
+    }
+  })();
+
+  document.getElementById('add-saved-item')?.addEventListener('click', () => {
+    const sel = document.getElementById('saved-item-select') as HTMLSelectElement;
+    const o = sel?.options[sel.selectedIndex];
+    if (!o?.value) return;
+    const desc = o.dataset.desc || '';
+    const price = Number(o.dataset.price) || 0;
+    const qty = Number(o.dataset.qty) || 1;
+    const row = document.createElement('div');
+    row.className = 'line-item-row';
+    row.dataset.index = String(itemIndex);
+    row.innerHTML = `
+      <input type="text" name="item_desc_${itemIndex}" class="admin-form-input" placeholder="Description" required value="${desc.replace(/"/g, '&quot;')}" />
+      <input type="number" name="item_qty_${itemIndex}" class="admin-form-input" placeholder="Qty" min="1" value="${qty}" style="width: 80px;" />
+      <input type="number" name="item_price_${itemIndex}" class="admin-form-input" placeholder="Unit price" min="0" step="0.01" required value="${price}" style="width: 140px;" />
+      <button type="button" class="admin-btn admin-btn-ghost remove-item" data-index="${itemIndex}">Remove</button>
+    `;
+    container.appendChild(row);
+    row.querySelector('.remove-item')?.addEventListener('click', () => row.remove());
+    itemIndex++;
+  });
+
+  let itemIndex = 1;
+  const container = document.getElementById('line-items')!;
+  const addBtn = document.getElementById('add-line-item')!;
+
+  addBtn.addEventListener('click', () => {
+    const row = document.createElement('div');
+    row.className = 'line-item-row';
+    row.dataset.index = String(itemIndex);
+    row.innerHTML = `
+      <input type="text" name="item_desc_${itemIndex}" class="admin-form-input" placeholder="Description" required />
+      <input type="number" name="item_qty_${itemIndex}" class="admin-form-input" placeholder="Qty" min="1" value="1" style="width: 80px;" />
+      <input type="number" name="item_price_${itemIndex}" class="admin-form-input" placeholder="Unit price" min="0" step="0.01" required style="width: 140px;" />
+      <button type="button" class="admin-btn admin-btn-ghost remove-item" data-index="${itemIndex}">Remove</button>
+    `;
+    container.appendChild(row);
+    row.querySelector('.remove-item')?.addEventListener('click', () => row.remove());
+    itemIndex++;
+  });
+
+  container.querySelector('.remove-item')?.addEventListener('click', function() {
+    if (container.querySelectorAll('.line-item-row').length > 1) {
+      (this as HTMLElement).closest('.line-item-row')?.remove();
+    }
+  });
+
+  document.getElementById('create-invoice-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const errorEl = document.getElementById('form-error')!;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+
+    errorEl.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating...';
+
+    const items: { description: string; quantity: number; unitPrice: number }[] = [];
+    container.querySelectorAll('.line-item-row').forEach((row) => {
+      const idx = (row as HTMLElement).dataset.index!;
+      const desc = (form.querySelector(`[name="item_desc_${idx}"]`) as HTMLInputElement)?.value;
+      const qty = Number((form.querySelector(`[name="item_qty_${idx}"]`) as HTMLInputElement)?.value) || 1;
+      const price = Number((form.querySelector(`[name="item_price_${idx}"]`) as HTMLInputElement)?.value) || 0;
+      if (desc) items.push({ description: desc, quantity: qty, unitPrice: price });
+    });
+
+    if (items.length === 0) {
+      errorEl.textContent = 'Add at least one line item';
+      errorEl.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create invoice';
+      return;
+    }
+
+    const paymentAccountId = (form.querySelector('[name="payment_account_id"]') as HTMLSelectElement).value;
+    const clientId = (form.querySelector('[name="client_id"]') as HTMLSelectElement).value;
+    const invoiceType = (form.querySelector('[name="invoice_type"]') as HTMLSelectElement).value;
+    const recurringNextRun = (form.querySelector('[name="recurring_next_run"]') as HTMLInputElement)?.value;
+    const payload: Record<string, unknown> = {
+      client_id: clientId ? Number(clientId) : undefined,
+      client_name: (form.querySelector('[name="client_name"]') as HTMLInputElement).value.trim(),
+      client_email: (form.querySelector('[name="client_email"]') as HTMLInputElement).value.trim(),
+      client_phone: (form.querySelector('[name="client_phone"]') as HTMLInputElement).value.trim() || undefined,
+      client_address: (form.querySelector('[name="client_address"]') as HTMLInputElement).value.trim() || undefined,
+      items,
+      tax_rate: Number((form.querySelector('[name="tax_rate"]') as HTMLInputElement).value) || 0,
+      currency: (form.querySelector('[name="currency"]') as HTMLInputElement).value.trim() || 'UGX',
+      due_date: (form.querySelector('[name="due_date"]') as HTMLInputElement).value || undefined,
+      invoice_date: (form.querySelector('[name="invoice_date"]') as HTMLInputElement)?.value || undefined,
+      invoice_type: invoiceType || 'one_off',
+      notes: (form.querySelector('[name="notes"]') as HTMLTextAreaElement).value.trim() || undefined,
+      payment_account_id: paymentAccountId ? Number(paymentAccountId) : undefined,
+      save_client: (form.querySelector('#save-client') as HTMLInputElement)?.checked ?? false,
+    };
+    if (invoiceType === 'subscription' && recurringNextRun) {
+      payload.recurring_config = { frequency: 'monthly', next_run: recurringNextRun };
+    }
+
+    try {
+      const res = await fetch('/api/invoices/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY! },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.invoice) {
+        window.location.href = `/invoices/${data.invoice.id}`;
+      } else {
+        errorEl.textContent = data.error || 'Failed to create invoice';
+        errorEl.style.display = 'block';
+      }
+    } catch {
+      errorEl.textContent = 'Connection failed';
+      errorEl.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create invoice';
+    }
+  });
+</script>

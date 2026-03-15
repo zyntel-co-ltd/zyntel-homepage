@@ -39,25 +39,39 @@ Adding `admin.zyntel.net` and `admin-preview.zyntel.net` does **not** remove any
 
 ---
 
-## Project Structure
+## Project Structure (Monorepo)
 
 ```
 zyntel-homepage/
-├── src/
-│   ├── components/       # Shared UI (Nav, Footer, forms, etc.)
-│   ├── layouts/          # BaseLayout, AdminLayout
-│   ├── lib/              # db.ts, email.ts, invoice-pdf.ts, sanity.ts
-│   ├── pages/
-│   │   ├── admin/        # Admin UI (dashboard, invoices, clients, banks)
-│   │   ├── api/          # API routes
-│   │   ├── blog/         # Blog (Sanity)
-│   │   ├── products/    # Products (Sanity)
-│   │   ├── policy/      # Policy pages
-│   │   └── *.astro      # Public pages (index, about, services, etc.)
-│   └── styles/
+├── apps/
+│   ├── web/              # zyntel-homepage Vercel project
+│   │   ├── src/
+│   │   │   ├── components/   # Shared UI (Nav, Footer, forms, etc.)
+│   │   │   ├── layouts/      # BaseLayout
+│   │   │   ├── lib/         # sanity.ts (db, email, invoice-pdf in admin)
+│   │   │   ├── pages/
+│   │   │   │   ├── api/     # contact, newsletter, payments, webhooks
+│   │   │   │   ├── blog/    # Blog (Sanity)
+│   │   │   │   ├── products/ # Products (Sanity)
+│   │   │   │   ├── policy/  # Policy pages
+│   │   │   │   └── *.astro  # Public pages
+│   │   │   └── styles/
+│   │   └── public/
+│   └── admin/            # zyntel-admin Vercel project
+│       ├── src/
+│       │   ├── layouts/   # AdminLayout
+│       │   ├── lib/       # db (via @zyntel/db), email, invoice-pdf
+│       │   ├── pages/
+│       │   │   ├── api/   # invoices, clients, payment-accounts, receipts
+│       │   │   ├── invoices/, clients/, banks/
+│       │   │   ├── login.astro, index.astro
+│       │   │   └── ...
+│       │   └── styles/
+│       └── public/
+├── packages/
+│   └── db/               # Shared Neon client, types, schema (@zyntel/db)
 ├── scripts/migrations/   # SQL migrations for Neon
 ├── sanity/               # Sanity schema and config
-├── public/               # Static assets, logos
 └── docs/                 # INVOICING.md, ADMIN_SETUP.md
 ```
 
@@ -65,7 +79,16 @@ zyntel-homepage/
 
 ## API Routes
 
-### Invoicing (require `x-api-key: INVOICE_API_KEY`)
+### Web App (apps/web) — Public
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/contact` | Contact form |
+| POST | `/api/newsletter` | Newsletter signup |
+| POST | `/api/payments/create` | Flutterwave payment |
+| POST | `/api/webhooks/flutterwave` | Flutterwave webhook |
+
+### Admin App (apps/admin) — Require `x-api-key: INVOICE_API_KEY`
 
 | Method | Route | Description |
 |--------|-------|-------------|
@@ -83,15 +106,6 @@ zyntel-homepage/
 | POST | `/api/payment-accounts/create` | Create bank account |
 | GET | `/api/receipts/[id]/pdf` | Receipt PDF |
 | POST | `/api/receipts/[id]/send` | Email receipt |
-
-### Public
-
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/contact` | Contact form |
-| POST | `/api/newsletter` | Newsletter signup |
-| POST | `/api/payments/create` | Flutterwave payment |
-| POST | `/api/webhooks/flutterwave` | Flutterwave webhook |
 
 ---
 
@@ -153,11 +167,10 @@ zyntel-homepage/
 
 ---
 
-## Vercel Config (`vercel.json`)
+## Vercel Config
 
-- **Headers:** Security headers on admin.zyntel.net, admin-preview.zyntel.net
-- **Redirects:** /admin → admin subdomains (zyntel.net, preview.zyntel.net)
-- **Rewrites:** admin subdomains serve /admin at root, /api and /_astro pass through
+- **zyntel-homepage** (apps/web): Redirects `/admin` → admin.zyntel.net on zyntel.net and preview.zyntel.net
+- **zyntel-admin** (apps/admin): Security headers (X-Frame-Options, X-Content-Type-Options, noindex, etc.). Admin is a separate project; no rewrites needed.
 
 ---
 
