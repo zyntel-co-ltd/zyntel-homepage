@@ -40,7 +40,9 @@ export const prerender = false;
   const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '/admin';
   if (!API_KEY) window.location.href = B + '/login';
 
-  const id = window.location.pathname.split('/').filter(Boolean).pop();
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  const clientsIdx = parts.indexOf('clients');
+  const id = clientsIdx >= 0 && parts[clientsIdx + 1] ? parts[clientsIdx + 1] : null;
   if (!id) window.location.href = B + '/clients';
 
   async function load() {

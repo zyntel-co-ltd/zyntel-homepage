@@ -17,8 +17,12 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
   <head>
     <script is:inline>
       (function(){
-        var h=window.location.hostname;
         window.__ADMIN_BASE__='';
+        var p=window.location.pathname.replace(/\/$/,'')||'/';
+        var isLogin=p==='/login';
+        if(!isLogin&&!sessionStorage.getItem('zyntel_invoice_api_key')){
+          window.location.replace('/login');
+        }
       })();
     </script>
     <script is:inline>

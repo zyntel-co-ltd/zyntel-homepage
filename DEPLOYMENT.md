@@ -200,3 +200,25 @@ The install runs from the monorepo root so workspaces (including `@zyntel/db`) a
 ### Redirects
 
 `zyntel.net/admin` and `preview.zyntel.net/admin` redirect to `admin.zyntel.net` and `admin-preview.zyntel.net` respectively. Configured in `apps/web/vercel.json`.
+
+### Cloudflare Zero Trust — Not asking for email
+
+If you reach the admin UI without seeing the Cloudflare login gate:
+
+1. **DNS must be Proxied (orange cloud)**  
+   Cloudflare Dashboard → DNS → Records. For `admin` and `admin-preview`, the proxy status must be **Proxied** (orange cloud). If it is **DNS only** (grey cloud), traffic goes straight to Vercel and bypasses Cloudflare. Zero Trust only runs when traffic passes through Cloudflare.
+
+2. **Use the correct URL**  
+   Zero Trust applies only to `admin.zyntel.net` and `admin-preview.zyntel.net`. The Vercel URL (e.g. `zyntel-admin-xxx.vercel.app`) does **not** go through Cloudflare, so you will not see the login gate there.
+
+3. **Application domain must match**  
+   Zero Trust Dashboard → Access → Applications. The Application domain must be exactly `admin.zyntel.net` (no trailing slash, no `www`). Add a separate application for `admin-preview.zyntel.net` if you use it.
+
+4. **Policy must be active**  
+   Ensure the Access policy (e.g. "Founding Team") is attached to the application and not disabled.
+
+5. **Bypass rules**  
+   Check Access → Settings → Bypass. If your IP or a range is in the bypass list, you will not be challenged.
+
+6. **Cache / incognito**  
+   Try an incognito/private window or clear cookies for `*.zyntel.net` and `*.cloudflareaccess.com`.
