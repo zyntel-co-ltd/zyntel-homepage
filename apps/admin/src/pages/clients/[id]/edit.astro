@@ -84,6 +84,7 @@ export const prerender = false;
         alert(data.error || 'Failed to save');
         return;
       }
+      window.__adminClearUnsavedChanges?.();
       window.location.href = B + '/clients';
     } catch {
       alert('Failed to save');

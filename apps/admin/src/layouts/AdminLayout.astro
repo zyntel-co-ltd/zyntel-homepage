@@ -38,6 +38,7 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
     <meta name="robots" content="noindex, nofollow" />
     <title>{title} | Zyntel Admin</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -109,7 +110,29 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
       </main>
     </div>
     <script>
+      (function(){
+        var p=window.location.pathname.replace(/\/$/,'')||'/';
+        if(p==='/login')return;
+        window.__adminUnsavedChanges=false;
+        window.__adminClearUnsavedChanges=function(){window.__adminUnsavedChanges=false;};
+        window.addEventListener('beforeunload',function(e){
+          if(window.__adminUnsavedChanges){e.preventDefault();e.returnValue='';}
+        });
+        document.addEventListener('change',function(e){
+          var t=e.target;
+          if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')&&t.closest('form')){
+            window.__adminUnsavedChanges=true;
+          }
+        },true);
+        document.addEventListener('input',function(e){
+          var t=e.target;
+          if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')&&t.closest('form')){
+            window.__adminUnsavedChanges=true;
+          }
+        },true);
+      })();
       document.getElementById('admin-logout')?.addEventListener('click', () => {
+        window.__adminClearUnsavedChanges?.();
         sessionStorage.removeItem('zyntel_invoice_api_key');
         window.location.href = '/login';
       });

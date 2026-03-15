@@ -97,7 +97,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           <label class="admin-form-label">Notes</label>
           <textarea name="notes" class="admin-form-input" rows="3" placeholder="Payment terms, etc."></textarea>
         </div>
-        <div class="admin-form-group">
+        <div class="admin-form-group" id="save-client-wrap">
           <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
             <input type="checkbox" name="save_client" id="save-client" />
             <span>Save client for future invoices</span>
@@ -167,6 +167,11 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         opt.dataset.address = c.address || '';
         sel?.appendChild(opt);
       });
+      const saveClientWrap = document.getElementById('save-client-wrap');
+      const toggleSaveClient = () => {
+        const o = sel.options[sel.selectedIndex];
+        if (saveClientWrap) saveClientWrap.style.display = o?.value ? 'none' : 'block';
+      };
       sel?.addEventListener('change', () => {
         const o = sel.options[sel.selectedIndex];
         if (o?.value) {
@@ -175,7 +180,9 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           (document.querySelector('[name="client_phone"]') as HTMLInputElement).value = o.dataset.phone || '';
           (document.querySelector('[name="client_address"]') as HTMLInputElement).value = o.dataset.address || '';
         }
+        toggleSaveClient();
       });
+      toggleSaveClient();
     }
     if (itemsRes.ok) {
       const { items } = await itemsRes.json();
@@ -298,6 +305,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const data = await res.json();
 
       if (res.ok && data.invoice) {
+        window.__adminClearUnsavedChanges?.();
         window.location.href = `/invoices/${data.invoice.id}`;
       } else {
         errorEl.textContent = data.error || 'Failed to create invoice';

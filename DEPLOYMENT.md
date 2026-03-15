@@ -182,6 +182,17 @@ GitHub: zyntel-co-ltd/zyntel-homepage
 
 ## Troubleshooting
 
+### Record payment 500: "invoices_status_check" constraint
+
+If recording a payment returns 500 with `violates check constraint "invoices_status_check"`, run migration 006 in Neon SQL Editor:
+
+```sql
+-- scripts/migrations/006_invoice_status_partial.sql
+ALTER TABLE invoices DROP CONSTRAINT IF EXISTS invoices_status_check;
+ALTER TABLE invoices ADD CONSTRAINT invoices_status_check
+  CHECK (status IN ('draft', 'sent', 'partial', 'paid', 'overdue', 'cancelled'));
+```
+
 ### Build fails: "Cannot find module '@zyntel/db'"
 
 Ensure `npm install` was run from the **repo root**. Workspaces link `packages/db` automatically.

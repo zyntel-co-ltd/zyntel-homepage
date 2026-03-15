@@ -332,6 +332,7 @@ export const prerender = false;
         invoice = data.invoice ? { ...invoice, ...data.invoice } : invoice;
         totalPaid += Number(data.payment?.amount ?? 0);
         balance = Math.max(0, ((invoice?.total as number) ?? 0) - totalPaid);
+        window.__adminClearUnsavedChanges?.();
         renderInvoice();
         renderPayments();
       } else {
