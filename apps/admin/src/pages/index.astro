@@ -53,6 +53,7 @@ import AdminLayout from '../layouts/AdminLayout.astro';
           <tr>
             <th>Invoice</th>
             <th>Client</th>
+            <th>Type</th>
             <th>Amount</th>
             <th>Status</th>
             <th>Date</th>
@@ -61,7 +62,7 @@ import AdminLayout from '../layouts/AdminLayout.astro';
         </thead>
         <tbody id="invoices-tbody">
           <tr>
-            <td colspan="6">
+            <td colspan="7">
               <div class="admin-empty">
                 <div class="admin-empty-icon" id="loading-msg">Loading...</div>
               </div>
@@ -75,7 +76,8 @@ import AdminLayout from '../layouts/AdminLayout.astro';
 
 <script>
   const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
-  if (!API_KEY) window.location.href = '/login';
+  const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '/admin';
+  if (!API_KEY) window.location.href = B + '/login';
 
   const headers = { 'x-api-key': API_KEY };
 
@@ -91,7 +93,7 @@ import AdminLayout from '../layouts/AdminLayout.astro';
       const res = await fetch(url, { headers });
       if (res.status === 401) {
         sessionStorage.removeItem('zyntel_invoice_api_key');
-        window.location.href = '/login';
+        window.location.href = B + '/login';
         return;
       }
       const data = await res.json();
@@ -112,7 +114,7 @@ import AdminLayout from '../layouts/AdminLayout.astro';
       if (invoices.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="6">
+            <td colspan="7">
               <div class="admin-empty">
                 <div class="admin-empty-icon">📄</div>
                 <div class="admin-empty-title">No invoices yet</div>
@@ -127,18 +129,23 @@ import AdminLayout from '../layouts/AdminLayout.astro';
           id: number;
           invoice_number: string;
           client_name: string;
+          invoice_type?: string;
           total: number;
           currency: string;
           status: string;
           created_at: string;
+          invoice_date?: string;
         }) => {
           const statusClass = `admin-badge-${inv.status}`;
-          const date = new Date(inv.created_at).toLocaleDateString();
+          const dateStr = inv.invoice_date || inv.created_at;
+          const date = new Date(dateStr).toLocaleDateString();
           const amount = `${inv.currency || ''} ${Number(inv.total).toLocaleString()}`.trim();
+          const type = inv.invoice_type || 'one_off';
           return `
             <tr>
-              <td><a href="/invoices/${inv.id}" class="admin-invoice-link">${inv.invoice_number}</a></td>
+              <td><a href="${B}/invoices/${inv.id}" class="admin-invoice-link">${inv.invoice_number}</a></td>
               <td>${inv.client_name}</td>
+              <td><span class="admin-badge admin-badge-ghost">${type.replace('_', ' ')}</span></td>
               <td>${amount}</td>
               <td><span class="admin-badge ${statusClass}">${inv.status}</span></td>
               <td>${date}</td>

@@ -294,6 +294,11 @@
   color: var(--admin-danger);
 }
 
+.admin-badge-ghost {
+  background: rgba(105, 115, 134, 0.08);
+  color: var(--admin-text-muted);
+}
+
 /* Buttons */
 .admin-btn {
   display: inline-flex;
