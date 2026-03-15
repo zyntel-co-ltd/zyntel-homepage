@@ -4,3 +4,5 @@ node_modules
 !.env.example
 sanity/.env
 .vercel
+
+.vercel

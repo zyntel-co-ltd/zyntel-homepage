@@ -92,7 +92,7 @@ export async function generateInvoicePdf(invoice: Invoice, options: PdfOptions =
 
   draw('Bill To:', MARGIN, 12, true);
   draw(invoice.client_name, MARGIN);
-  draw(invoice.client_email, MARGIN);
+  if (invoice.client_email) draw(invoice.client_email, MARGIN);
   if (invoice.client_phone) draw(invoice.client_phone, MARGIN);
   if (invoice.client_address) draw(invoice.client_address, MARGIN);
   y -= 20;
@@ -239,7 +239,7 @@ export async function generateReceiptPdf(
 
   draw('Received From:', MARGIN, 12, true);
   draw(invoice.client_name, MARGIN);
-  draw(invoice.client_email, MARGIN);
+  if (invoice.client_email) draw(invoice.client_email, MARGIN);
   y -= 20;
 
   draw('Payment Details:', MARGIN, 12, true);

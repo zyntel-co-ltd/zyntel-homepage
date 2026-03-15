@@ -20,7 +20,7 @@ export interface Invoice {
   invoice_number: string;
   client_id: number | null;
   client_name: string;
-  client_email: string;
+  client_email?: string | null;
   client_phone: string | null;
   client_address: string | null;
   items: InvoiceItem[];

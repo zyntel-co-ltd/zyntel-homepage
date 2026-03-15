@@ -16,6 +16,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
             <th>Email</th>
             <th>Phone</th>
             <th>Address</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="clients-tbody">
@@ -38,14 +39,15 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     const { clients } = await res.json();
     const list = clients ?? [];
     if (list.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4"><div class="admin-empty"><div class="admin-empty-icon">👤</div><div class="admin-empty-title">No clients yet</div><div class="admin-empty-desc">Clients are saved when you check "Save client" when creating an invoice.</div></div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5"><div class="admin-empty"><div class="admin-empty-icon">👤</div><div class="admin-empty-title">No clients yet</div><div class="admin-empty-desc">Clients are saved when you check "Save client" when creating an invoice.</div></div></td></tr>';
     } else {
-      tbody.innerHTML = list.map((c: { name: string; email: string; phone?: string; address?: string }) => `
+      tbody.innerHTML = list.map((c: { id: number; name: string; email: string; phone?: string; address?: string }) => `
         <tr>
           <td><strong>${c.name}</strong></td>
           <td>${c.email}</td>
           <td>${c.phone || '—'}</td>
           <td>${c.address || '—'}</td>
+          <td><a href="${B}/clients/${c.id}/edit" class="admin-btn admin-btn-ghost" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">Edit</a></td>
         </tr>
       `).join('');
     }

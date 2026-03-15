@@ -17,8 +17,8 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   try {
     const body = await request.json();
     const { client_id, client_name, client_email, client_phone, client_address, items, tax_rate, currency, due_date, invoice_date, invoice_type, recurring_config, notes, payment_account_id } = body ?? {};
-    if (!client_name?.trim() || !client_email?.trim() || !Array.isArray(items) || items.length === 0) {
-      return new Response(JSON.stringify({ error: 'client_name, client_email, and items (array) required' }), { status: 400 });
+    if (!client_name?.trim() || !Array.isArray(items) || items.length === 0) {
+      return new Response(JSON.stringify({ error: 'client_name and items (array) required' }), { status: 400 });
     }
     const invoiceItems = items.map((i: { description?: string; quantity?: number; unitPrice?: number }) => {
       const qty = Number(i.quantity) || 1;
@@ -28,7 +28,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     const invoice = await updateInvoice(id, {
       client_id: client_id != null ? Number(client_id) : null,
       client_name: String(client_name).trim(),
-      client_email: String(client_email).trim(),
+      client_email: client_email != null ? String(client_email).trim() || null : null,
       client_phone: client_phone ? String(client_phone).trim() : null,
       client_address: client_address ? String(client_address).trim() : null,
       items: invoiceItems,

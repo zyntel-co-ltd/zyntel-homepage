@@ -25,6 +25,9 @@ export const POST: APIRoute = async ({ params, request }) => {
     if (invoice.status === 'draft') {
       return new Response(JSON.stringify({ error: 'Draft invoices cannot be sent. Finalize the invoice first.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     }
+    if (!invoice.client_email?.trim()) {
+      return new Response(JSON.stringify({ error: 'Invoice has no client email. Add an email to send.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
     const baseUrl = new URL(request.url).origin;
     const paymentAccount = invoice.payment_account_id ? await getPaymentAccount(invoice.payment_account_id) : null;
     const pdfBytes = await generateInvoicePdf(invoice, { baseUrl, paymentAccount: paymentAccount ?? undefined });

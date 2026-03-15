@@ -143,7 +143,7 @@ export const prerender = false;
     };
 
     document.getElementById('invoice-number')!.textContent = inv.invoice_number;
-    document.getElementById('invoice-client')!.textContent = `${inv.client_name} · ${inv.client_email}`;
+    document.getElementById('invoice-client')!.textContent = inv.client_email ? `${inv.client_name} · ${inv.client_email}` : inv.client_name;
     const pdfLink = document.getElementById('pdf-link') as HTMLAnchorElement;
     pdfLink.href = `/api/invoices/${id}/pdf`;
     pdfLink.style.display = inv.status === 'draft' ? 'none' : 'inline-flex';
@@ -158,7 +158,7 @@ export const prerender = false;
     document.getElementById('invoice-details')!.innerHTML = `
       <div class="invoice-meta">
         <p><strong>Client:</strong> ${inv.client_name}</p>
-        <p><strong>Email:</strong> ${inv.client_email}</p>
+        ${inv.client_email ? `<p><strong>Email:</strong> ${inv.client_email}</p>` : ''}
         ${inv.client_phone ? `<p><strong>Phone:</strong> ${inv.client_phone}</p>` : ''}
         ${inv.client_address ? `<p><strong>Address:</strong> ${inv.client_address}</p>` : ''}
         <p><strong>Invoice date:</strong> ${(invAny.invoice_date ? new Date(invAny.invoice_date) : new Date(inv.created_at)).toLocaleDateString()}</p>

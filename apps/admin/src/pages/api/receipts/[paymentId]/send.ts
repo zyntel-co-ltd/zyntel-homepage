@@ -26,6 +26,9 @@ export const POST: APIRoute = async ({ params, request }) => {
     if (!invoice) {
       return new Response(JSON.stringify({ error: 'Invoice not found' }), { status: 404 });
     }
+    if (!invoice.client_email?.trim()) {
+      return new Response(JSON.stringify({ error: 'Invoice has no client email. Add an email to send receipt.' }), { status: 400 });
+    }
     const baseUrl = new URL(request.url).origin;
     const pdfBytes = await generateReceiptPdf(invoice, payment, { baseUrl });
     const result = await sendEmail({

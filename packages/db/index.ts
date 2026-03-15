@@ -43,7 +43,7 @@ function nextInvoiceNumber(): string {
 export async function createInvoice(data: {
   client_id?: number;
   client_name: string;
-  client_email: string;
+  client_email?: string | null;
   client_phone?: string;
   client_address?: string;
   items: InvoiceItem[];
@@ -63,20 +63,34 @@ export async function createInvoice(data: {
   const taxAmount = (subtotal * taxRate) / 100;
   const total = subtotal + taxAmount;
   const invoiceNumber = nextInvoiceNumber();
+  const clientEmail = data.client_email?.trim() || null;
   const invDate = data.invoice_date ?? new Date().toISOString().slice(0, 10);
   const invType = data.invoice_type ?? 'one_off';
-  const rows = await sql`
-    INSERT INTO invoices (invoice_number, client_id, client_name, client_email, client_phone, client_address, items, subtotal, tax_rate, tax_amount, total, currency, due_date, invoice_date, invoice_type, recurring_config, notes, payment_account_id, status)
-    VALUES (${invoiceNumber}, ${data.client_id ?? null}, ${data.client_name}, ${data.client_email}, ${data.client_phone ?? null}, ${data.client_address ?? null}, ${JSON.stringify(items)}, ${subtotal}, ${taxRate}, ${taxAmount}, ${total}, ${data.currency ?? 'UGX'}, ${data.due_date ?? null}, ${invDate}, ${invType}, ${data.recurring_config ? JSON.stringify(data.recurring_config) : null}, ${data.notes ?? null}, ${data.payment_account_id ?? null}, 'draft')
-    RETURNING *
-  `;
-  return (rows[0] as Invoice) ?? null;
+  try {
+    const rows = await sql`
+      INSERT INTO invoices (invoice_number, client_id, client_name, client_email, client_phone, client_address, items, subtotal, tax_rate, tax_amount, total, currency, due_date, invoice_date, invoice_type, recurring_config, notes, payment_account_id, status)
+      VALUES (${invoiceNumber}, ${data.client_id ?? null}, ${data.client_name}, ${clientEmail}, ${data.client_phone ?? null}, ${data.client_address ?? null}, ${JSON.stringify(items)}, ${subtotal}, ${taxRate}, ${taxAmount}, ${total}, ${data.currency ?? 'UGX'}, ${data.due_date ?? null}, ${invDate}, ${invType}, ${data.recurring_config ? JSON.stringify(data.recurring_config) : null}, ${data.notes ?? null}, ${data.payment_account_id ?? null}, 'draft')
+      RETURNING *
+    `;
+    return (rows[0] as Invoice) ?? null;
+  } catch (e: unknown) {
+    const err = e as { code?: string; message?: string };
+    if (err?.code === '42703' || err?.message?.includes('invoice_date') || err?.message?.includes('does not exist')) {
+      const rows = await sql`
+        INSERT INTO invoices (invoice_number, client_id, client_name, client_email, client_phone, client_address, items, subtotal, tax_rate, tax_amount, total, currency, due_date, notes, payment_account_id, status)
+        VALUES (${invoiceNumber}, ${data.client_id ?? null}, ${data.client_name}, ${clientEmail ?? ''}, ${data.client_phone ?? null}, ${data.client_address ?? null}, ${JSON.stringify(items)}, ${subtotal}, ${taxRate}, ${taxAmount}, ${total}, ${data.currency ?? 'UGX'}, ${data.due_date ?? null}, ${data.notes ?? null}, ${data.payment_account_id ?? null}, 'draft')
+        RETURNING *
+      `;
+      return (rows[0] as Invoice) ?? null;
+    }
+    throw e;
+  }
 }
 
 export async function updateInvoice(id: number, data: {
   client_id?: number | null;
   client_name: string;
-  client_email: string;
+  client_email?: string | null;
   client_phone?: string | null;
   client_address?: string | null;
   items: InvoiceItem[];
@@ -104,7 +118,7 @@ export async function updateInvoice(id: number, data: {
     UPDATE invoices SET
       client_id = ${data.client_id ?? null},
       client_name = ${data.client_name},
-      client_email = ${data.client_email},
+      client_email = ${data.client_email ?? null},
       client_phone = ${data.client_phone ?? null},
       client_address = ${data.client_address ?? null},
       items = ${JSON.stringify(items)},
@@ -147,6 +161,27 @@ export async function createClient(data: { name: string; email: string; phone?: 
     const rows = await sql`
       INSERT INTO clients (name, email, phone, address)
       VALUES (${data.name}, ${data.email}, ${data.phone ?? null}, ${data.address ?? null})
+      RETURNING *
+    `;
+    return (rows[0] as Client) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function updateClient(id: number, data: { name?: string; email?: string; phone?: string; address?: string }): Promise<Client | null> {
+  if (!import.meta.env.DATABASE_URL) return null;
+  const existing = await getClient(id);
+  if (!existing) return null;
+  const name = data.name != null ? String(data.name).trim() : existing.name;
+  const email = data.email != null ? String(data.email).trim() : existing.email;
+  const phone = data.phone !== undefined ? (data.phone ? String(data.phone).trim() : null) : existing.phone;
+  const address = data.address !== undefined ? (data.address ? String(data.address).trim() : null) : existing.address;
+  if (!name || !email) return null;
+  try {
+    const rows = await sql`
+      UPDATE clients SET name = ${name}, email = ${email}, phone = ${phone}, address = ${address}
+      WHERE id = ${id}
       RETURNING *
     `;
     return (rows[0] as Client) ?? null;
@@ -254,8 +289,12 @@ export async function listInvoices(limit = 50, type?: string): Promise<Invoice[]
 
 export async function listSavedItems(): Promise<SavedItem[]> {
   if (!import.meta.env.DATABASE_URL) return [];
-  const rows = await sql`SELECT * FROM saved_items ORDER BY name ASC`;
-  return rows as SavedItem[];
+  try {
+    const rows = await sql`SELECT * FROM saved_items ORDER BY name ASC`;
+    return rows as SavedItem[];
+  } catch {
+    return [];
+  }
 }
 
 export async function createSavedItem(data: {

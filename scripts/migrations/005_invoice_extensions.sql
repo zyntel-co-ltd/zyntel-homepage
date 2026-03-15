@@ -1,6 +1,9 @@
 -- Invoice extensions: invoice_date, invoice_type, recurring, saved items
 -- Run after 004_clients.sql
 
+-- Make client_email optional
+ALTER TABLE invoices ALTER COLUMN client_email DROP NOT NULL;
+
 -- Invoice date (for backdating; displayed on invoice)
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS invoice_date DATE;
 UPDATE invoices SET invoice_date = created_at::date WHERE invoice_date IS NULL;

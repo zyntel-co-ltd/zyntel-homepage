@@ -13,8 +13,8 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
     const { client_id, client_name, client_email, client_phone, client_address, items, tax_rate, currency, due_date, invoice_date, invoice_type, recurring_config, notes, payment_account_id, save_client } = body ?? {};
-    if (!client_name?.trim() || !client_email?.trim() || !Array.isArray(items) || items.length === 0) {
-      return new Response(JSON.stringify({ error: 'client_name, client_email, and items (array) required' }), { status: 400 });
+    if (!client_name?.trim() || !Array.isArray(items) || items.length === 0) {
+      return new Response(JSON.stringify({ error: 'client_name and items (array) required' }), { status: 400 });
     }
     const invoiceItems = items.map((i: { description?: string; quantity?: number; unitPrice?: number }) => {
       const qty = Number(i.quantity) || 1;
@@ -22,15 +22,16 @@ export const POST: APIRoute = async ({ request }) => {
       return { description: String(i.description ?? ''), quantity: qty, unitPrice, amount: qty * unitPrice };
     });
     let resolvedClientId = client_id != null ? Number(client_id) : undefined;
-    if (save_client && !resolvedClientId) {
+    const emailTrimmed = client_email ? String(client_email).trim() : '';
+    if (save_client && !resolvedClientId && emailTrimmed) {
       const existing = await listClients();
-      const match = existing.find((c) => c.email.toLowerCase() === String(client_email).trim().toLowerCase());
+      const match = existing.find((c) => c.email.toLowerCase() === emailTrimmed.toLowerCase());
       if (match) {
         resolvedClientId = match.id;
       } else {
         const newClient = await createClient({
           name: String(client_name).trim(),
-          email: String(client_email).trim(),
+          email: emailTrimmed,
           phone: client_phone ? String(client_phone).trim() : undefined,
           address: client_address ? String(client_address).trim() : undefined,
         });
@@ -40,7 +41,7 @@ export const POST: APIRoute = async ({ request }) => {
     const invoice = await createInvoice({
       client_id: resolvedClientId,
       client_name: String(client_name).trim(),
-      client_email: String(client_email).trim(),
+      client_email: emailTrimmed || undefined,
       client_phone: client_phone ? String(client_phone).trim() : undefined,
       client_address: client_address ? String(client_address).trim() : undefined,
       items: invoiceItems,
