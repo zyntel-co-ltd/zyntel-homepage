@@ -33,6 +33,36 @@ function truncate(text: string, font: { widthOfTextAtSize: (t: string, s: number
   return s ? s + '...' : '...';
 }
 
+function wrapText(text: string, font: { widthOfTextAtSize: (t: string, s: number) => number }, size: number, maxWidth: number): string[] {
+  if (!text.trim()) return [];
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = '';
+  for (const w of words) {
+    const test = current ? `${current} ${w}` : w;
+    if (font.widthOfTextAtSize(test, size) <= maxWidth) {
+      current = test;
+    } else {
+      if (current) lines.push(current);
+      if (font.widthOfTextAtSize(w, size) <= maxWidth) {
+        current = w;
+      } else {
+        let chunk = w;
+        while (chunk.length > 0) {
+          let fit = chunk.length;
+          while (fit > 0 && font.widthOfTextAtSize(chunk.slice(0, fit), size) > maxWidth) fit--;
+          if (fit === 0) fit = 1;
+          lines.push(chunk.slice(0, fit));
+          chunk = chunk.slice(fit);
+        }
+        current = '';
+      }
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
 export async function generateInvoicePdf(invoice: Invoice, options: PdfOptions = {}): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
@@ -120,17 +150,24 @@ export async function generateInvoicePdf(invoice: Invoice, options: PdfOptions =
   y -= 16;
 
   const fSize = 9;
+  const lineHeight = 12;
   for (const item of items) {
-    const desc = truncate(item.description, font, fSize, descWidth - 5);
+    const descLines = wrapText(item.description, font, fSize, descWidth - 5);
     const qtyStr = String(item.quantity);
     const priceStr = formatMoney(item.unitPrice, '');
     const amtStr = formatMoney(item.amount, invoice.currency);
     const amtW = font.widthOfTextAtSize(amtStr, fSize);
-    page.drawText(desc, { x: colDesc, y: y + 3, size: fSize, font, color: rgb(0.2, 0.2, 0.2) });
-    page.drawText(qtyStr, { x: colQty, y: y + 3, size: fSize, font, color: rgb(0.2, 0.2, 0.2) });
-    page.drawText(truncate(priceStr, font, fSize, priceWidth), { x: colPrice, y: y + 3, size: fSize, font, color: rgb(0.2, 0.2, 0.2) });
-    page.drawText(truncate(amtStr, font, fSize, amtWidth), { x: colAmt + amtWidth - Math.min(amtW, amtWidth), y: y + 3, size: fSize, font, color: rgb(0.2, 0.2, 0.2) });
-    y -= 16;
+    const rowLines = Math.max(1, descLines.length);
+    let rowY = y + 3;
+    for (const line of descLines) {
+      page.drawText(line, { x: colDesc, y: rowY, size: fSize, font, color: rgb(0.2, 0.2, 0.2) });
+      rowY -= lineHeight;
+    }
+    const firstLineY = y + 3;
+    page.drawText(qtyStr, { x: colQty, y: firstLineY, size: fSize, font, color: rgb(0.2, 0.2, 0.2) });
+    page.drawText(truncate(priceStr, font, fSize, priceWidth), { x: colPrice, y: firstLineY, size: fSize, font, color: rgb(0.2, 0.2, 0.2) });
+    page.drawText(truncate(amtStr, font, fSize, amtWidth), { x: colAmt + amtWidth - Math.min(amtW, amtWidth), y: firstLineY, size: fSize, font, color: rgb(0.2, 0.2, 0.2) });
+    y -= rowLines * lineHeight;
   }
   y -= 10;
 
@@ -151,8 +188,12 @@ export async function generateInvoicePdf(invoice: Invoice, options: PdfOptions =
 
   if (invoice.notes) {
     draw('Notes:', MARGIN, 10, true);
-    for (const line of invoice.notes.split('\n')) {
-      draw(line, MARGIN, 9);
+    for (const para of invoice.notes.split('\n')) {
+      const wrapped = wrapText(para, font, 9, CONTENT_WIDTH);
+      for (const line of wrapped) {
+        page.drawText(line, { x: MARGIN, y, size: 9, font, color: rgb(0.2, 0.2, 0.2) });
+        y -= 12;
+      }
     }
   }
 
@@ -178,11 +219,6 @@ export async function generateInvoicePdf(invoice: Invoice, options: PdfOptions =
       for (const line of paymentInstructions.split('\n')) draw(line, MARGIN, 9);
     }
   }
-
-  y -= 20;
-  page.drawText('Thank you for your business.', { x: MARGIN, y, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
-  y -= 18;
-  page.drawText('Zyntel · zyntel.net', { x: MARGIN, y, size: 9, font: fontMono, color: rgb(0.5, 0.5, 0.5) });
 
   return doc.save();
 }
@@ -228,8 +264,10 @@ export async function generateReceiptPdf(
     y -= size + 4;
   };
 
+  const receiptNumber = `RCT-${invoice.invoice_number}-P${payment.id}`;
   draw('PAYMENT RECEIPT', MARGIN, 18, true);
-  draw(`Receipt for Invoice #${invoice.invoice_number}`, MARGIN);
+  draw(`Receipt No: ${receiptNumber}`, MARGIN);
+  draw(`Invoice: ${invoice.invoice_number}`, MARGIN);
   draw(`Date: ${new Date(payment.paid_at).toLocaleDateString()} · ${new Date(payment.paid_at).toLocaleTimeString()}`, MARGIN);
   y -= 20;
 
@@ -249,13 +287,6 @@ export async function generateReceiptPdf(
   y -= 24;
 
   page.drawRectangle({ x: MARGIN, y: y - 2, width: receiptWidth, height: 1, color: rgb(0.9, 0.9, 0.9) });
-  y -= 24;
-
-  draw('Thank you for your payment!', MARGIN, 12);
-  y -= 30;
-  page.drawText('This receipt confirms your payment. Please retain for your records.', { x: MARGIN, y, size: 9, font, color: rgb(0.5, 0.5, 0.5) });
-  y -= 24;
-  page.drawText('Zyntel · zyntel.net', { x: MARGIN, y, size: 9, font: fontMono, color: rgb(0.5, 0.5, 0.5) });
 
   return doc.save();
 }

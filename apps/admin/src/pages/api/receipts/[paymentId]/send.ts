@@ -41,7 +41,7 @@ export const POST: APIRoute = async ({ params, request }) => {
         <p>Method: ${payment.payment_method.replace('_', ' ')}</p>
         <p>Thank you,<br>Zyntel</p>
       `,
-      attachments: [{ filename: `receipt-${invoice.invoice_number}.pdf`, content: Buffer.from(pdfBytes) }],
+      attachments: [{ filename: `Receipt-${invoice.invoice_number}-P${payment.id}.pdf`, content: Buffer.from(pdfBytes) }],
     });
     if (!result.ok) {
       return new Response(JSON.stringify({ error: result.error ?? 'Failed to send email' }), { status: 400 });

@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ params, request }) => {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="invoice-${invoice.invoice_number}.pdf"`,
+        'Content-Disposition': `attachment; filename="Invoice-${invoice.invoice_number}.pdf"`,
       },
     });
   } catch (e) {
