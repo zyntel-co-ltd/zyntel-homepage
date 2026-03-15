@@ -37,7 +37,9 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
     <title>{title} | Zyntel Admin</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" />
+    <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -64,7 +66,7 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
               </svg>
               <span class="admin-nav-text">Dashboard</span>
             </a>
-            <a href={path('/invoices')} class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/invoices') ? 'true' : 'false'}>
+            <a href={path('/invoices')} class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/invoices') && !Astro.url.pathname.includes('/trash') ? 'true' : 'false'}>
               <svg class="admin-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
@@ -73,6 +75,15 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
                 <polyline points="10 9 9 9 8 9"/>
               </svg>
               <span class="admin-nav-text">Invoices</span>
+            </a>
+            <a href={path('/invoices/trash')} class="admin-nav-item" data-active={Astro.url.pathname.includes('/invoices/trash') ? 'true' : 'false'}>
+              <svg class="admin-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+              <span class="admin-nav-text">Trash</span>
             </a>
             <a href={path('/clients')} class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/clients') ? 'true' : 'false'}>
               <svg class="admin-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { listInvoices } from '@zyntel/db';
+import { listInvoices, listDeletedInvoices } from '@zyntel/db';
 
 export const GET: APIRoute = async ({ request }) => {
   const apiKey = request.headers.get('x-api-key') ?? request.headers.get('authorization')?.replace('Bearer ', '');
@@ -11,7 +11,8 @@ export const GET: APIRoute = async ({ request }) => {
     const url = new URL(request.url);
     const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 100);
     const type = url.searchParams.get('type') || undefined;
-    const invoices = await listInvoices(limit, type);
+    const deleted = url.searchParams.get('deleted') === '1';
+    const invoices = deleted ? await listDeletedInvoices(limit) : await listInvoices(limit, type);
     return new Response(JSON.stringify({ ok: true, invoices }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

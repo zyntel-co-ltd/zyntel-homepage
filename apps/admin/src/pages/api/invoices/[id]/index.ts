@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getInvoice, getPaymentsForInvoice } from '@zyntel/db';
+import { getInvoice, getPaymentsForInvoice, softDeleteInvoice } from '@zyntel/db';
 
 export const GET: APIRoute = async ({ params, request }) => {
   const id = Number(params.id);
@@ -12,7 +12,7 @@ export const GET: APIRoute = async ({ params, request }) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
   try {
-    const invoice = await getInvoice(id);
+    const invoice = await getInvoice(id, true);
     if (!invoice) {
       return new Response(JSON.stringify({ error: 'Invoice not found' }), { status: 404 });
     }
@@ -25,6 +25,31 @@ export const GET: APIRoute = async ({ params, request }) => {
     });
   } catch (e) {
     console.error('Get invoice error:', e);
+    return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
+  }
+};
+
+export const DELETE: APIRoute = async ({ params, request }) => {
+  const id = Number(params.id);
+  if (!id || isNaN(id)) {
+    return new Response(JSON.stringify({ error: 'Invalid invoice ID' }), { status: 400 });
+  }
+  const apiKey = request.headers.get('x-api-key') ?? request.headers.get('authorization')?.replace('Bearer ', '');
+  const expectedKey = import.meta.env.INVOICE_API_KEY;
+  if (expectedKey && apiKey !== expectedKey) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+  }
+  try {
+    const ok = await softDeleteInvoice(id);
+    if (!ok) {
+      return new Response(JSON.stringify({ error: 'Invoice not found or already deleted' }), { status: 404 });
+    }
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (e) {
+    console.error('Soft delete invoice error:', e);
     return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
   }
 };

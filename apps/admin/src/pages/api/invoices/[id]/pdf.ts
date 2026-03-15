@@ -8,7 +8,7 @@ export const GET: APIRoute = async ({ params, request }) => {
     return new Response('Invalid invoice ID', { status: 400 });
   }
   try {
-    const invoice = await getInvoice(id);
+    const invoice = await getInvoice(id, true);
     if (!invoice) {
       return new Response('Invoice not found', { status: 404 });
     }

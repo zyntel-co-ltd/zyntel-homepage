@@ -4,5 +4,12 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "favicons": "node scripts/generate-favicons.mjs"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5",
+    "svg-to-ico": "^1.1.0"
+  }
 }

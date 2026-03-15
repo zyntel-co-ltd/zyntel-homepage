@@ -1,0 +1,89 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="Trash">
+  <header class="admin-header">
+    <a href="/invoices" class="admin-btn admin-btn-ghost" style="margin-bottom: 1rem;">← Back to invoices</a>
+    <h1 class="admin-title">Trash</h1>
+    <p class="admin-subtitle">Deleted invoices. Restore to bring them back.</p>
+  </header>
+
+  <div class="admin-card">
+    <div class="admin-card-header">
+      <h2 class="admin-card-title">Deleted invoices</h2>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table" id="trash-table">
+        <thead>
+          <tr>
+            <th>Invoice</th>
+            <th>Client</th>
+            <th>Amount</th>
+            <th>Deleted</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="trash-tbody">
+          <tr><td colspan="5"><div class="admin-empty"><div class="admin-empty-icon">Loading...</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
+  const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '';
+  if (!API_KEY) window.location.href = B + '/login';
+
+  async function load() {
+    const tbody = document.getElementById('trash-tbody');
+    const res = await fetch('/api/invoices/list?limit=100&deleted=1', { headers: { 'x-api-key': API_KEY } });
+    if (res.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = B + '/login'; return; }
+    const data = await res.json();
+    const invoices = data.invoices ?? [];
+
+    if (invoices.length === 0) {
+      tbody!.innerHTML = `<tr><td colspan="5"><div class="admin-empty"><div class="admin-empty-icon">🗑️</div><div class="admin-empty-title">Trash is empty</div><div class="admin-empty-desc">Deleted invoices will appear here.</div><a href="${B}/invoices" class="admin-btn admin-btn-primary">Back to invoices</a></div></td></tr>`;
+    } else {
+      tbody!.innerHTML = invoices.map((inv: { id: number; invoice_number: string; client_name: string; total: number; currency: string; deleted_at: string }) => {
+        const amount = `${inv.currency || ''} ${Number(inv.total).toLocaleString()}`.trim();
+        const deletedDate = inv.deleted_at ? new Date(inv.deleted_at).toLocaleDateString() : '—';
+        return `<tr>
+          <td><a href="${B}/invoices/${inv.id}" class="admin-invoice-link">${inv.invoice_number}</a></td>
+          <td>${inv.client_name}</td>
+          <td>${amount}</td>
+          <td>${deletedDate}</td>
+          <td><div class="admin-actions-cell"><button type="button" class="admin-btn admin-btn-primary restore-btn" data-id="${inv.id}">Restore</button></div></td>
+        </tr>`;
+      }).join('');
+
+      document.querySelectorAll('.restore-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = (btn as HTMLElement).dataset.id;
+          (btn as HTMLButtonElement).disabled = true;
+          (btn as HTMLButtonElement).textContent = 'Restoring...';
+          try {
+            const res = await fetch(`/api/invoices/${id}/restore`, { method: 'POST', headers: { 'x-api-key': API_KEY } });
+            const data = await res.json();
+            if (res.ok) {
+              (btn as HTMLElement).closest('tr')?.remove();
+              if (document.querySelectorAll('#trash-tbody tr').length === 0) {
+                load();
+              }
+            } else {
+              alert(data.error || 'Failed to restore');
+              (btn as HTMLButtonElement).disabled = false;
+              (btn as HTMLButtonElement).textContent = 'Restore';
+            }
+          } catch {
+            alert('Connection failed');
+            (btn as HTMLButtonElement).disabled = false;
+            (btn as HTMLButtonElement).textContent = 'Restore';
+          }
+        });
+      });
+    }
+  }
+  load();
+</script>

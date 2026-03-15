@@ -151,7 +151,7 @@ Ensure `zyntel-homepage` has:
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | Read/write for leads, contact_submissions, payment_events |
+| `DATABASE_URL` | Connection string for `zyntel_web_ro` role (INSERT on leads, contact_submissions, payment_events). See [docs/DATABASE_ROLES.md](docs/DATABASE_ROLES.md) for setup. |
 | `PUBLIC_SANITY_*` | Sanity CMS |
 | `GMAIL_USER`, `GMAIL_APP_PASSWORD` | Contact form (if same as admin, or separate) |
 | `FLW_SECRET_KEY`, `FLW_WEBHOOK_HASH` | Product payments |
@@ -211,6 +211,16 @@ The install runs from the monorepo root so workspaces (including `@zyntel/db`) a
 ### Redirects
 
 `zyntel.net/admin` and `preview.zyntel.net/admin` redirect to `admin.zyntel.net` and `admin-preview.zyntel.net` respectively. Configured in `apps/web/vercel.json`.
+
+### Favicons not showing in browser tab
+
+The layouts reference `/favicon.ico`, `/favicon.svg`, and `/favicon-32x32.png`. If only `favicon.svg` exists, some browsers will not display a favicon. Run from the repo root:
+
+```powershell
+npm run favicons
+```
+
+This generates `favicon.ico` and `favicon-32x32.png` from `favicon.svg` and copies them to `apps/web/public` and `apps/admin/public`. Ensure these files are committed and deployed.
 
 ### Cloudflare Zero Trust — Not asking for email
 

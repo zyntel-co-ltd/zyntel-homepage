@@ -38,6 +38,7 @@ export interface Invoice {
   payment_account_id: number | null;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
 export interface SavedItem {

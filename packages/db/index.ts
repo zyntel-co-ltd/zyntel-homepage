@@ -220,15 +220,17 @@ export async function createPaymentAccount(data: {
   return (rows[0] as PaymentAccount) ?? null;
 }
 
-export async function getInvoice(id: number): Promise<Invoice | null> {
+export async function getInvoice(id: number, includeDeleted = false): Promise<Invoice | null> {
   if (!import.meta.env.DATABASE_URL) return null;
-  const rows = await sql`SELECT * FROM invoices WHERE id = ${id}`;
+  const rows = includeDeleted
+    ? await sql`SELECT * FROM invoices WHERE id = ${id}`
+    : await sql`SELECT * FROM invoices WHERE id = ${id} AND deleted_at IS NULL`;
   return (rows[0] as Invoice) ?? null;
 }
 
 export async function getInvoiceByNumber(invoiceNumber: string): Promise<Invoice | null> {
   if (!import.meta.env.DATABASE_URL) return null;
-  const rows = await sql`SELECT * FROM invoices WHERE invoice_number = ${invoiceNumber}`;
+  const rows = await sql`SELECT * FROM invoices WHERE invoice_number = ${invoiceNumber} AND deleted_at IS NULL`;
   return (rows[0] as Invoice) ?? null;
 }
 
@@ -252,6 +254,8 @@ export async function recordPayment(data: {
   paid_at?: string;
 }): Promise<PaymentRecord | null> {
   if (!import.meta.env.DATABASE_URL) return null;
+  const invCheck = await sql`SELECT id FROM invoices WHERE id = ${data.invoice_id} AND deleted_at IS NULL`;
+  if (invCheck.length === 0) return null;
   const paidAt = data.paid_at ? new Date(data.paid_at) : new Date();
   const rows = await sql`
     INSERT INTO payment_records (invoice_id, amount, payment_method, reference, paid_at)
@@ -260,7 +264,7 @@ export async function recordPayment(data: {
   `;
   const payment = (rows[0] as PaymentRecord) ?? null;
   if (payment) {
-    const invRows = await sql`SELECT total FROM invoices WHERE id = ${data.invoice_id}`;
+    const invRows = await sql`SELECT total FROM invoices WHERE id = ${data.invoice_id} AND deleted_at IS NULL`;
     const inv = invRows[0] as { total: number };
     const sumRows = await sql`SELECT COALESCE(SUM(amount), 0) as total_paid FROM payment_records WHERE invoice_id = ${data.invoice_id}`;
     const totalPaid = Number((sumRows[0] as { total_paid: string }).total_paid);
@@ -278,11 +282,29 @@ export async function updateInvoiceStatus(id: number, status: string): Promise<v
 export async function listInvoices(limit = 50, type?: string): Promise<Invoice[]> {
   if (!import.meta.env.DATABASE_URL) return [];
   if (type) {
-    const rows = await sql`SELECT * FROM invoices WHERE invoice_type = ${type} ORDER BY created_at DESC LIMIT ${limit}`;
+    const rows = await sql`SELECT * FROM invoices WHERE invoice_type = ${type} AND deleted_at IS NULL ORDER BY created_at DESC LIMIT ${limit}`;
     return rows as Invoice[];
   }
-  const rows = await sql`SELECT * FROM invoices ORDER BY created_at DESC LIMIT ${limit}`;
+  const rows = await sql`SELECT * FROM invoices WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT ${limit}`;
   return rows as Invoice[];
+}
+
+export async function listDeletedInvoices(limit = 50): Promise<Invoice[]> {
+  if (!import.meta.env.DATABASE_URL) return [];
+  const rows = await sql`SELECT * FROM invoices WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC LIMIT ${limit}`;
+  return rows as Invoice[];
+}
+
+export async function softDeleteInvoice(id: number): Promise<boolean> {
+  if (!import.meta.env.DATABASE_URL) return false;
+  const result = await sql`UPDATE invoices SET deleted_at = NOW() WHERE id = ${id} AND deleted_at IS NULL RETURNING id`;
+  return result.length > 0;
+}
+
+export async function restoreInvoice(id: number): Promise<boolean> {
+  if (!import.meta.env.DATABASE_URL) return false;
+  const result = await sql`UPDATE invoices SET deleted_at = NULL WHERE id = ${id} AND deleted_at IS NOT NULL RETURNING id`;
+  return result.length > 0;
 }
 
 // --- Saved items ---
@@ -328,6 +350,7 @@ export async function getRecurringInvoicesDue(): Promise<Invoice[]> {
     const rows = await sql`
       SELECT * FROM invoices
       WHERE invoice_type = 'subscription'
+        AND deleted_at IS NULL
         AND recurring_config IS NOT NULL
         AND (recurring_config->>'next_run') <= ${today}
         AND status IN ('sent', 'paid')

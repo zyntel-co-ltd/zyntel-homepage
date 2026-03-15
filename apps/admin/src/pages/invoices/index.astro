@@ -10,7 +10,10 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   <div class="admin-card">
     <div class="admin-card-header">
       <h2 class="admin-card-title">All invoices</h2>
-      <a href="/invoices/new" class="admin-btn admin-btn-primary">New invoice</a>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <a href="/invoices/trash" class="admin-btn admin-btn-ghost">Trash</a>
+        <a href="/invoices/new" class="admin-btn admin-btn-primary">New invoice</a>
+      </div>
     </div>
     <div class="admin-table-wrap">
       <table class="admin-table" id="invoices-table">
@@ -57,10 +60,33 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           <td>${amount}</td>
           <td><span class="admin-badge ${statusClass}">${inv.status}</span></td>
           <td>${date}</td>
-          <td><div class="admin-actions-cell"><a href="/api/invoices/${inv.id}/pdf" target="_blank" class="admin-btn admin-btn-ghost">PDF</a><a href="${B}/invoices/${inv.id}" class="admin-btn admin-btn-ghost">View</a></div></td>
+          <td><div class="admin-actions-cell"><a href="/api/invoices/${inv.id}/pdf" target="_blank" class="admin-btn admin-btn-ghost">PDF</a><a href="${B}/invoices/${inv.id}" class="admin-btn admin-btn-ghost">View</a><button type="button" class="admin-btn admin-btn-ghost delete-invoice-btn" data-id="${inv.id}" data-number="${inv.invoice_number}">Delete</button></div></td>
         </tr>`;
       }).join('');
     }
+
+    document.querySelectorAll('.delete-invoice-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = (btn as HTMLElement).dataset.id;
+        const number = (btn as HTMLElement).dataset.number;
+        if (!confirm(`Move invoice ${number} to trash?`)) return;
+        (btn as HTMLButtonElement).disabled = true;
+        try {
+          const res = await fetch(`/api/invoices/${id}`, { method: 'DELETE', headers: { 'x-api-key': API_KEY } });
+          const data = await res.json();
+          if (res.ok) {
+            (btn as HTMLElement).closest('tr')?.remove();
+            if (document.querySelectorAll('#invoices-tbody tr').length === 0) load();
+          } else {
+            alert(data.error || 'Failed to delete');
+          }
+        } catch {
+          alert('Connection failed');
+        } finally {
+          (btn as HTMLButtonElement).disabled = false;
+        }
+      });
+    });
   }
   load();
 </script>
