@@ -284,6 +284,11 @@
   color: var(--admin-success);
 }
 
+.admin-badge-partial {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--admin-warning);
+}
+
 .admin-badge-overdue {
   background: rgba(245, 158, 11, 0.2);
   color: var(--admin-warning);

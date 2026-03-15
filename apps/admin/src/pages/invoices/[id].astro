@@ -113,6 +113,8 @@ export const prerender = false;
 
   let invoice: Record<string, unknown> | null = null;
   let payments: Array<Record<string, unknown>> = [];
+  let totalPaid = 0;
+  let balance = 0;
 
   function formatMoney(n: number, currency: string) {
     return (currency ? `${currency} ` : '') + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 });
@@ -151,8 +153,9 @@ export const prerender = false;
     (document.getElementById('finalize-btn') as HTMLButtonElement).style.display = inv.status === 'draft' ? 'inline-flex' : 'none';
     (document.getElementById('edit-link') as HTMLAnchorElement).href = `/invoices/${id}/edit`;
     (document.getElementById('edit-link') as HTMLAnchorElement).style.display = inv.status === 'draft' ? 'inline-flex' : 'none';
-    document.getElementById('status-badge')!.className = statusClass(inv.status);
-    document.getElementById('status-badge')!.textContent = inv.status;
+    const displayStatus = totalPaid >= inv.total ? 'paid' : totalPaid > 0 ? 'partial' : inv.status;
+    document.getElementById('status-badge')!.className = statusClass(displayStatus);
+    document.getElementById('status-badge')!.textContent = displayStatus;
 
     const invAny = inv as { invoice_date?: string; invoice_type?: string };
     document.getElementById('invoice-details')!.innerHTML = `
@@ -188,6 +191,10 @@ export const prerender = false;
       <p style="margin-bottom: 0.25rem;"><strong>Subtotal:</strong> ${formatMoney(inv.subtotal, inv.currency)}</p>
       ${inv.tax_rate ? `<p style="margin-bottom: 0.25rem;"><strong>Tax (${inv.tax_rate}%):</strong> ${formatMoney(inv.tax_amount, inv.currency)}</p>` : ''}
       <p style="font-size: 1.125rem; font-weight: 700;"><strong>Total:</strong> ${formatMoney(inv.total, inv.currency)}</p>
+      ${totalPaid > 0 ? `
+        <p style="margin-top: 0.75rem; margin-bottom: 0.25rem; color: var(--admin-success);"><strong>Amount paid:</strong> ${formatMoney(totalPaid, inv.currency)}</p>
+        <p style="font-size: 1rem; font-weight: 600;"><strong>Balance due:</strong> ${formatMoney(balance, inv.currency)}</p>
+      ` : ''}
     `;
   }
 
@@ -233,6 +240,8 @@ export const prerender = false;
     const data = await res.json();
     invoice = data.invoice;
     payments = data.payments ?? [];
+    totalPaid = data.total_paid ?? payments.reduce((s: number, p: { amount: number }) => s + Number(p.amount), 0);
+    balance = data.balance ?? Math.max(0, ((invoice?.total as number) ?? 0) - totalPaid);
     renderInvoice();
     renderPayments();
   }
@@ -281,7 +290,7 @@ export const prerender = false;
   const amountInput = form.querySelector('[name="amount"]') as HTMLInputElement;
 
   document.getElementById('record-payment-btn')?.addEventListener('click', () => {
-    amountInput.value = invoice ? String((invoice as { total: number }).total) : '';
+    amountInput.value = invoice ? String(balance > 0 ? balance : (invoice as { total: number }).total) : '';
     (form.querySelector('[name="reference"]') as HTMLInputElement).value = '';
     const paidAtInput = document.getElementById('paid-at-input') as HTMLInputElement;
     if (paidAtInput) paidAtInput.value = new Date().toISOString().slice(0, 10);
@@ -321,6 +330,8 @@ export const prerender = false;
         modal.style.display = 'none';
         payments.push(data.payment);
         invoice = data.invoice ? { ...invoice, ...data.invoice } : invoice;
+        totalPaid += Number(data.payment?.amount ?? 0);
+        balance = Math.max(0, ((invoice?.total as number) ?? 0) - totalPaid);
         renderInvoice();
         renderPayments();
       } else {

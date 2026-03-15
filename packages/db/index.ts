@@ -264,7 +264,7 @@ export async function recordPayment(data: {
     const inv = invRows[0] as { total: number };
     const sumRows = await sql`SELECT COALESCE(SUM(amount), 0) as total_paid FROM payment_records WHERE invoice_id = ${data.invoice_id}`;
     const totalPaid = Number((sumRows[0] as { total_paid: string }).total_paid);
-    const newStatus = totalPaid >= inv.total ? 'paid' : 'sent';
+    const newStatus = totalPaid >= inv.total ? 'paid' : totalPaid > 0 ? 'partial' : 'sent';
     await sql`UPDATE invoices SET status = ${newStatus}, updated_at = NOW() WHERE id = ${data.invoice_id}`;
   }
   return payment;

@@ -17,7 +17,9 @@ export const GET: APIRoute = async ({ params, request }) => {
       return new Response(JSON.stringify({ error: 'Invoice not found' }), { status: 404 });
     }
     const payments = await getPaymentsForInvoice(id);
-    return new Response(JSON.stringify({ ok: true, invoice, payments }), {
+    const totalPaid = payments.reduce((s, p) => s + Number(p.amount), 0);
+    const balance = Math.max(0, invoice.total - totalPaid);
+    return new Response(JSON.stringify({ ok: true, invoice, payments, total_paid: totalPaid, balance }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
