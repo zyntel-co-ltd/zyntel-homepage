@@ -1,8 +1,15 @@
 # Zyntel Homepage — Project Status
 
-**Last updated:** March 2026  
+**Last updated:** March 13, 2026  
 **Updated by:** Cursor  
 **Stack:** Astro 5, Vercel, Neon PostgreSQL, Sanity CMS
+
+---
+
+## Recent Changes (March 2026)
+
+- **Invoice/Receipt PDFs:** Text wrapping for descriptions and notes (no clipping); unique receipt numbers per installment (`RCT-INV-xxx-P{id}`); descriptive document titles and filenames; footer removed.
+- **Custom cursor:** Theme-aware visibility — light mode uses dark teal (`#006064`) for contrast on light backgrounds; dark mode unchanged.
 
 ---
 
@@ -117,6 +124,9 @@ zyntel-homepage/
 2. `scripts/migrations/002_invoices.sql` — invoices, payment_records
 3. `scripts/migrations/003_payment_accounts.sql` — payment_accounts, invoices.payment_account_id
 4. `scripts/migrations/004_clients.sql` — clients, invoices.client_id
+5. `scripts/migrations/005_invoice_extensions.sql` — invoice_type, recurring_config
+6. `scripts/migrations/006_invoice_status_partial.sql` — partial status for installments
+7. `scripts/migrations/007_invoice_soft_delete.sql` — deleted_at for soft delete
 
 ### Tables
 
