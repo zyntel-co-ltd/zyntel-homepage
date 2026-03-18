@@ -1,0 +1,68 @@
+# Pulse Intelligence Sync
+# Add to each connected repo. Requires PULSE_API_KEY (secret) and PULSE_ORG, PULSE_REPO (vars).
+
+name: Pulse Sync
+
+on:
+  push:
+    branches: [main, development, staging]
+
+jobs:
+  pulse-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Extract PULSE comments
+        id: extract
+        run: |
+          git diff HEAD~1 HEAD -U0 | grep -E '^\+.*// PULSE:' > /tmp/pulse-comments.txt || true
+          echo "has_comments=$([ -s /tmp/pulse-comments.txt ] && echo true || echo false)" >> $GITHUB_OUTPUT
+
+      - name: Send PULSE comments to API
+        if: steps.extract.outputs.has_comments == 'true'
+        run: |
+          TICKET=$(echo "${{ github.ref_name }}" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+          OBSERVATIONS=$(python3 << 'PYEOF'
+          import json, re
+          obs = []
+          with open('/tmp/pulse-comments.txt') as f:
+            for line in f:
+              m = re.search(r'// PULSE:(\w+)', line)
+              if m:
+                t = m.group(1).lower()
+                r = 'low'
+                rm = re.search(r'risk=(\w+)', line)
+                if rm: r = rm.group(1).lower()
+                if t in ('structural','debt','fix','assumption'):
+                  obs.append({"type": t, "risk": r, "description": line.strip()[:200], "raw": line.strip(), "file": ""})
+          print(json.dumps(obs))
+          PYEOF
+          )
+          if [ "$OBSERVATIONS" != "[]" ]; then
+            curl -s -X POST "${{ vars.PULSE_API_URL || 'https://pulse.zyntel.net' }}/api/ingest/observations" \
+              -H "Authorization: Bearer ${{ secrets.PULSE_API_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"org\":\"${{ vars.PULSE_ORG }}\",\"repo\":\"${{ vars.PULSE_REPO }}\",\"branch\":\"${{ github.ref_name }}\",\"commit_sha\":\"${{ github.sha }}\",\"ticket\":\"$TICKET\",\"author_email\":\"${{ github.event.pusher.email || 'unknown' }}\",\"author_name\":\"${{ github.event.pusher.name || 'unknown' }}\",\"observations\":$OBSERVATIONS}" || true
+          fi
+
+      - name: Queue diff for analysis
+        if: steps.extract.outputs.has_comments != 'true'
+        run: |
+          DIFF=$(git diff HEAD~1 HEAD -U3 -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.go' 2>/dev/null | head -c 8000)
+          TICKET=$(echo "${{ github.ref_name }}" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+          curl -s -X POST "${{ vars.PULSE_API_URL || 'https://pulse.zyntel.net' }}/api/ingest/diff" \
+            -H "Authorization: Bearer ${{ secrets.PULSE_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"repo\": \"${{ vars.PULSE_REPO }}\",
+              \"org\": \"${{ vars.PULSE_ORG }}\",
+              \"commit_sha\": \"${{ github.sha }}\",
+              \"branch\": \"${{ github.ref_name }}\",
+              \"ticket\": \"$TICKET\",
+              \"author_email\": \"${{ github.event.pusher.email || 'unknown' }}\",
+              \"author_name\": \"${{ github.event.pusher.name || 'unknown' }}\",
+              \"diff\": $(echo "$DIFF" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')
+            }" || true
