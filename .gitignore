@@ -7,6 +7,10 @@ sanity/.env
 
 .vercel
 
+# Astro build artifacts (never commit)
+apps/web/.astro/
+apps/web/dist/
+
 # Local AI codebase pack (Repomix; never commit)
 repomix-output.xml
 repomix-output.*.xml
