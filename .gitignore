@@ -6,3 +6,7 @@ sanity/.env
 .vercel
 
 .vercel
+
+# Local AI codebase pack (Repomix; never commit)
+repomix-output.xml
+repomix-output.*.xml

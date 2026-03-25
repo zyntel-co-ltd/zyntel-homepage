@@ -6,6 +6,29 @@
 
 ---
 
+## Repo map (high-signal)
+
+Generated from a `repomix --no-files` snapshot (paths only). **No secrets or file contents** are included here.
+
+### Top-level
+
+```text
+.astro/
+.cursor/
+.github/
+apps/
+packages/
+scripts/
+```
+
+### Key entrypoints
+
+```text
+.env.example
+package.json
+PROJECT_STATUS.md
+```
+
 ## Recent Changes (March 2026)
 
 - **Invoice/Receipt PDFs:** Text wrapping for descriptions and notes (no clipping); unique receipt numbers per installment (`RCT-INV-xxx-P{id}`); descriptive document titles and filenames; footer removed.

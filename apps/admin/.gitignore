@@ -22,3 +22,7 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Local AI codebase pack (Repomix; never commit)
+repomix-output.xml
+repomix-output.*.xml
