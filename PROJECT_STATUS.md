@@ -1,8 +1,13 @@
-# Zyntel Homepage — Project Status
+# Zyntel Homepage — Project Status & Functional Specification
 
-**Last updated:** March 13, 2026  
+**Last updated:** 2026-03-27  
 **Updated by:** Cursor  
-**Stack:** Astro 5, Vercel, Neon PostgreSQL, Sanity CMS
+**Product type:** Marketing / company site + tooling in monorepo  
+**Production URL:** zyntel.net (see Domains below)  
+**Repo:** https://github.com/zyntel-co-ltd/zyntel-homepage  
+**Stack:** Astro 5, Vercel, Neon PostgreSQL, Sanity CMS  
+
+This document follows **`knowledge` → `zyntel-playbook/05-infrastructure/project-status-file.md`**. Expand **Section 5** with **Feature** blocks for CMS-driven pages, invoicing PDFs, and any interactive flows.
 
 ---
 
