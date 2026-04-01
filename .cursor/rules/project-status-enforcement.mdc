@@ -14,8 +14,9 @@ The canonical standard lives in **`zyntel-playbook/05-infrastructure/project-sta
 ## On Session Start
 
 1. Read **`PROJECT_STATUS/START_HERE.md`** before writing any code.
-2. Before touching a feature, read **`PROJECT_STATUS/features/[relevant-module].md`** (or `features/app.md` for simple repos).
-3. If the `PROJECT_STATUS/` folder does not exist yet, create it using the templates in `project-status-file.md` and migrate any legacy root `PROJECT_STATUS.md` content into **`phase-log.md`**, then replace the root file with the two-line redirect.
+2. Skim **`PROJECT_STATUS/phase-log.md`** (first entries). If the latest dated block does not reflect work you are about to ship or just shipped, **prepend the missing entry before writing new feature code** (do not leave the log stale across sessions).
+3. Before touching a feature, read **`PROJECT_STATUS/features/[relevant-module].md`** (or `features/app.md` for simple repos).
+4. If the `PROJECT_STATUS/` folder does not exist yet, create it using the templates in `project-status-file.md` and migrate any legacy root `PROJECT_STATUS.md` content into **`phase-log.md`**, then replace the root file with the two-line redirect.
 
 ---
 
@@ -51,7 +52,7 @@ If you complete a task without updating the folder, the task is not done.
 - `PROJECT_STATUS/decisions.md` — append a new row (**never** edit existing rows)
 
 **Phase or significant milestone completed:**
-- `PROJECT_STATUS/phase-log.md` — append a new entry (**never** rewrite past entries)
+- `PROJECT_STATUS/phase-log.md` — **prepend** a new dated `###` block **immediately under the first `---` after the title** (most recent first). Do not edit or reorder older entries (**never** rewrite history).
 
 **Minimum for any change (including typos, copy, config):**
 - `PROJECT_STATUS/START_HERE.md` — bump **`Last updated`**
@@ -73,6 +74,16 @@ If any question is unanswered, the block is incomplete. Complete it before pushi
 
 ---
 
+## MANDATORY FINAL STEP — do not skip
+
+Before ending the session or running **`git push`** / opening a PR:
+
+1. If you shipped a phase, milestone, or cross-cutting behaviour: **prepend** a new block to **`PROJECT_STATUS/phase-log.md`** (format matches existing `### YYYY-MM-DD — …` entries; `- [x]` bullets; deploy notes if any).
+2. Bump **`PROJECT_STATUS/START_HERE.md`** — at minimum **`Last updated`**; build table / status line if module state changed.
+3. Confirm files are saved. Cursor rules do **not** run automatically — this checklist is the only enforcement.
+
+---
+
 ## Pre-Push Checklist
 
 ```
@@ -84,7 +95,7 @@ If any question is unanswered, the block is incomplete. Complete it before pushi
 [ ] PROJECT_STATUS/roles.md — updated if permissions changed
 [ ] PROJECT_STATUS/decisions.md — new row appended if architectural decision made
 [ ] PROJECT_STATUS/issues.md — Linear / blocker state current
-[ ] PROJECT_STATUS/phase-log.md — new entry appended if a named phase or milestone shipped
+[ ] PROJECT_STATUS/phase-log.md — new block prepended if a named phase or milestone shipped
 ```
 
 ---
