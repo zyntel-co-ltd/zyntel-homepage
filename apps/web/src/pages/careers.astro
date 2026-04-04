@@ -1,0 +1,142 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+<BaseLayout
+  title="Careers"
+  description="Work at Zyntel Co. Limited — building operational intelligence software for healthcare in East Africa."
+>
+  <Nav />
+  <main>
+    <section class="page-header">
+      <div class="container">
+        <p class="page-eyebrow">Careers</p>
+        <h1 class="page-title">Work with us.</h1>
+        <p class="page-sub">We're a small, focused team building software that matters. Based in Kampala, Uganda.</p>
+      </div>
+    </section>
+
+    <section class="careers-body">
+      <div class="container prose-narrow">
+        <div class="notice-card">
+          <p class="notice-label">No open roles right now</p>
+          <p class="notice-text">We're heads-down on Kanta and Zyntel Forms. When we're ready to grow, we'll post roles here. We hire carefully — small team, high trust.</p>
+          <p class="notice-text">In the meantime, if you're a developer or designer who believes in operational intelligence for healthcare in East Africa, send a brief note to <a href="mailto:contact@zyntel.net">contact@zyntel.net</a>.</p>
+        </div>
+
+        <div class="values-row">
+          <div class="value-item">
+            <h3>What we look for</h3>
+            <ul>
+              <li>You care about the problem, not just the code</li>
+              <li>You work well with minimal supervision</li>
+              <li>You can hold complexity without breaking it into chaos</li>
+              <li>You are honest — especially when things are not working</li>
+            </ul>
+          </div>
+          <div class="value-item">
+            <h3>How we work</h3>
+            <ul>
+              <li>Small, flat team with high autonomy</li>
+              <li>Kampala-based (remote possible for the right role)</li>
+              <li>Next.js, Supabase, Astro, Cloudflare stack</li>
+              <li>Linear for project tracking</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-header {
+    padding: 9rem 0 4rem;
+    text-align: center;
+  }
+  .page-eyebrow {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 0.75rem;
+  }
+  .page-title {
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+  .page-sub {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
+  .careers-body {
+    padding: 2rem 0 8rem;
+  }
+  .prose-narrow {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .notice-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    margin-bottom: 3rem;
+  }
+  .notice-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+  .notice-text {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+  }
+  .notice-text:last-child { margin-bottom: 0; }
+  .notice-text a { color: var(--cyan); }
+  .values-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  .value-item h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+  }
+  .value-item ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .value-item ul li {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    padding-left: 1.25rem;
+    position: relative;
+  }
+  .value-item ul li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--cyan);
+  }
+  @media (max-width: 600px) {
+    .values-row { grid-template-columns: 1fr; }
+    .notice-card { padding: 1.75rem; }
+  }
+</style>

@@ -9,15 +9,15 @@ import ThemeToggle from './ThemeToggle.astro';
     </a>
 
     <div class="nav-links" id="nav-links" role="navigation" aria-label="Main">
-      <a href="/#products" class="nav-link" data-section="products">Products</a>
-      <a href="/#services" class="nav-link" data-section="services">Support</a>
-      <a href="/blog" class={currentPath.startsWith('/blog') ? 'nav-link active' : 'nav-link'}>Blog</a>
+      <a href="/products" class={currentPath.startsWith('/products') ? 'nav-link active' : 'nav-link'}>Products</a>
       <a href="/about" class={currentPath.startsWith('/about') ? 'nav-link active' : 'nav-link'}>About</a>
+      <a href="/blog" class={currentPath.startsWith('/blog') ? 'nav-link active' : 'nav-link'}>Blog</a>
+      <a href="/contact" class={currentPath.startsWith('/contact') ? 'nav-link active' : 'nav-link'}>Contact</a>
     </div>
 
     <div class="nav-actions">
       <ThemeToggle />
-      <a href="/#products" class="btn btn-primary nav-cta">Get Started</a>
+      <a href="https://app.zyntel.net" class="btn btn-primary nav-cta">Try Kanta</a>
       <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
         <span></span>
         <span></span>

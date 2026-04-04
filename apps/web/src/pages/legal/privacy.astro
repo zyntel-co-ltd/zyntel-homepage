@@ -1,0 +1,164 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+const updated = "April 2026";
+---
+<BaseLayout
+  title="Privacy Policy"
+  description="Zyntel Co. Limited privacy policy — how we collect, use, and protect your data."
+>
+  <Nav />
+  <main>
+    <section class="page-header">
+      <div class="container">
+        <p class="page-eyebrow">Legal</p>
+        <h1 class="page-title">Privacy Policy</h1>
+        <p class="page-sub">Last updated: {updated}</p>
+      </div>
+    </section>
+
+    <section class="legal-body">
+      <div class="container legal-prose">
+
+        <p class="lead">This Privacy Policy explains how Zyntel Co. Limited ("Zyntel", "we", "us") collects, uses, and protects information about you when you use our websites and products (Kanta, Zyntel Forms).</p>
+
+        <h2>1. Who we are</h2>
+        <p>Zyntel Co. Limited is a technology company incorporated in Uganda and headquartered in Kampala. We build operational intelligence software for healthcare and regulated industries.</p>
+
+        <h2>2. Information we collect</h2>
+        <h3>Information you provide</h3>
+        <ul>
+          <li>Account information: name, email address, organisation name</li>
+          <li>Contact form submissions</li>
+          <li>Data you enter into Kanta or Zyntel Forms (equipment records, lab results, form responses)</li>
+        </ul>
+        <h3>Information collected automatically</h3>
+        <ul>
+          <li>Log data: IP address, browser type, pages visited, timestamps</li>
+          <li>Device information: operating system, screen size</li>
+          <li>Usage data: features used, actions taken within the product</li>
+        </ul>
+
+        <h2>3. How we use your information</h2>
+        <ul>
+          <li>To provide, maintain, and improve our products</li>
+          <li>To respond to support requests and contact form submissions</li>
+          <li>To send important product and security updates (not marketing unless you opt in)</li>
+          <li>To comply with legal obligations applicable in Uganda and any jurisdictions we operate in</li>
+        </ul>
+
+        <h2>4. Data storage and security</h2>
+        <p>Your data is stored on Supabase infrastructure (PostgreSQL) with encryption at rest and in transit. We apply role-based access control so only authorised team members can access production data. We do not sell your data to third parties.</p>
+
+        <h2>5. Third-party services</h2>
+        <p>We use the following third-party services:</p>
+        <ul>
+          <li><strong>Supabase</strong> — database and authentication</li>
+          <li><strong>Vercel</strong> — hosting and edge deployment</li>
+          <li><strong>Cloudflare</strong> — DNS, CDN, and Workers</li>
+        </ul>
+        <p>Each of these services has its own privacy policy. We select vendors that meet adequate data protection standards.</p>
+
+        <h2>6. Data retention</h2>
+        <p>We retain your data for as long as your account is active or as required by law. You may request deletion of your account and data at any time by emailing <a href="mailto:contact@zyntel.net">contact@zyntel.net</a>. We will process deletion requests within 30 days.</p>
+
+        <h2>7. Your rights</h2>
+        <p>You have the right to:</p>
+        <ul>
+          <li>Access the personal data we hold about you</li>
+          <li>Correct inaccurate data</li>
+          <li>Request deletion of your data</li>
+          <li>Object to or restrict processing in certain circumstances</li>
+        </ul>
+        <p>To exercise any of these rights, contact us at <a href="mailto:contact@zyntel.net">contact@zyntel.net</a>.</p>
+
+        <h2>8. Cookies</h2>
+        <p>Our marketing site (zyntel.net) uses minimal cookies — only those necessary for security and basic analytics (session identifiers). We do not use tracking cookies or cross-site advertising cookies. Our products (Kanta, Zyntel Forms) use session cookies required for authentication.</p>
+
+        <h2>9. Children's privacy</h2>
+        <p>Our products are designed for healthcare and business teams. We do not knowingly collect data from children under 18. If you believe we have collected data from a minor, contact us immediately.</p>
+
+        <h2>10. Changes to this policy</h2>
+        <p>We may update this policy from time to time. Material changes will be communicated via email or an in-product notice. The "Last updated" date at the top of this page reflects the current version.</p>
+
+        <h2>11. Contact</h2>
+        <p>For privacy questions or data requests: <a href="mailto:contact@zyntel.net">contact@zyntel.net</a><br />
+        Zyntel Co. Limited, Kampala, Uganda.</p>
+
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-header {
+    padding: 9rem 0 3rem;
+    text-align: center;
+  }
+  .page-eyebrow {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 0.75rem;
+  }
+  .page-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+  .page-sub {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+  .legal-body {
+    padding: 2rem 0 8rem;
+  }
+  .legal-prose {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .lead {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .legal-prose h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 2.5rem 0 0.75rem;
+  }
+  .legal-prose h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 1.25rem 0 0.5rem;
+  }
+  .legal-prose p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    font-size: 0.97rem;
+  }
+  .legal-prose ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .legal-prose ul li {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 0.97rem;
+    margin-bottom: 0.35rem;
+  }
+  .legal-prose a { color: var(--cyan); }
+</style>

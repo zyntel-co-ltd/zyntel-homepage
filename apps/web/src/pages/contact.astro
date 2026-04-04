@@ -1,0 +1,321 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+<BaseLayout
+  title="Contact"
+  description="Get in touch with the Zyntel team. We're a small team in Kampala. We read every message."
+>
+  <Nav />
+  <main>
+    <section class="page-header">
+      <div class="container">
+        <p class="page-eyebrow">Contact</p>
+        <h1 class="page-title">Get in touch.</h1>
+        <p class="page-sub">We're a small team in Kampala. We read every message.</p>
+      </div>
+    </section>
+
+    <section class="contact-section">
+      <div class="container contact-grid">
+
+        <!-- Left: contact info -->
+        <div class="contact-info">
+          <div class="info-block">
+            <h2>Email</h2>
+            <a href="mailto:contact@zyntel.net" class="contact-link">contact@zyntel.net</a>
+          </div>
+
+          <div class="info-block">
+            <h2>LinkedIn</h2>
+            <a href="https://www.linkedin.com/company/zynteltech" target="_blank" rel="noopener noreferrer" class="contact-link">
+              Connect on LinkedIn →
+            </a>
+          </div>
+
+          <div class="info-block">
+            <h2>WhatsApp</h2>
+            <p class="info-text">WhatsApp is our fastest channel for existing clients and implementation support. Email us at <a href="mailto:contact@zyntel.net" class="inline-link">contact@zyntel.net</a> and we'll share our WhatsApp number.</p>
+          </div>
+
+          <div class="info-block response-time">
+            <p>We typically respond within 1 business day<br /><span class="timezone">(Kampala time, EAT — UTC+3)</span></p>
+          </div>
+        </div>
+
+        <!-- Right: form -->
+        <div class="contact-form-wrap">
+          <form id="contact-form" class="contact-form" novalidate>
+            <div class="form-row">
+              <label for="name">Name <span class="req">*</span></label>
+              <input type="text" id="name" name="name" required autocomplete="name" placeholder="Your full name" />
+            </div>
+
+            <div class="form-row">
+              <label for="email">Email <span class="req">*</span></label>
+              <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com" />
+            </div>
+
+            <div class="form-row">
+              <label for="subject">Subject</label>
+              <select id="subject" name="subject">
+                <option value="Kanta product inquiry">Kanta product inquiry</option>
+                <option value="Partnership">Partnership</option>
+                <option value="Press / Media">Press / Media</option>
+                <option value="Support">Support</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="message">Message <span class="req">*</span></label>
+              <textarea id="message" name="message" required rows="6" placeholder="Tell us what's on your mind…"></textarea>
+            </div>
+
+            <div id="form-status" class="form-status" aria-live="polite"></div>
+
+            <button type="submit" class="btn btn-primary submit-btn" id="submit-btn">
+              Send message
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </section>
+
+    <div class="kanta-strip">
+      <div class="container">
+        <p>Looking for Kanta? <a href="https://app.zyntel.net" class="kanta-link">Open the Kanta dashboard →</a></p>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('contact-form') as HTMLFormElement;
+  const status = document.getElementById('form-status') as HTMLElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = (form.querySelector('#name') as HTMLInputElement).value.trim();
+    const email = (form.querySelector('#email') as HTMLInputElement).value.trim();
+    const subject = (form.querySelector('#subject') as HTMLSelectElement).value;
+    const message = (form.querySelector('#message') as HTMLTextAreaElement).value.trim();
+
+    if (!name || !email || !message) {
+      status.textContent = 'Please fill in all required fields.';
+      status.className = 'form-status error';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+    status.textContent = '';
+    status.className = 'form-status';
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message: `[${subject}] ${message}` }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        status.textContent = 'Message sent — we\'ll be in touch soon.';
+        status.className = 'form-status success';
+        form.reset();
+      } else {
+        throw new Error(data.error ?? 'unknown');
+      }
+    } catch {
+      status.innerHTML = 'Something went wrong. Please email us directly at <a href="mailto:contact@zyntel.net">contact@zyntel.net</a>.';
+      status.className = 'form-status error';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send message';
+    }
+  });
+</script>
+
+<style>
+  .page-header {
+    padding: 9rem 0 4rem;
+    text-align: center;
+  }
+  .page-eyebrow {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 0.75rem;
+  }
+  .page-title {
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+  .page-sub {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
+
+  .contact-section {
+    padding: 2rem 0 6rem;
+  }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 5rem;
+    align-items: start;
+  }
+
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  .info-block h2 {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+  }
+  .contact-link {
+    color: var(--cyan);
+    font-size: 1rem;
+    font-weight: 500;
+    transition: opacity 0.2s;
+  }
+  .contact-link:hover { opacity: 0.75; }
+  .info-text {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .inline-link {
+    color: var(--cyan);
+    text-decoration: underline;
+  }
+  .response-time p {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+  .timezone {
+    font-size: 0.85rem;
+    opacity: 0.8;
+  }
+
+  /* Form */
+  .contact-form-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+  }
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .form-row label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .req {
+    color: var(--cyan);
+  }
+  .form-row input,
+  .form-row select,
+  .form-row textarea {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    background: var(--bg-dark);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    width: 100%;
+  }
+  .form-row input:focus,
+  .form-row select:focus,
+  .form-row textarea:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px var(--glow-cyan-subtle);
+  }
+  .form-row textarea {
+    resize: vertical;
+    min-height: 140px;
+  }
+
+  .form-status {
+    font-size: 0.92rem;
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    display: none;
+  }
+  .form-status:not(:empty) { display: block; }
+  .form-status.success {
+    background: rgba(67, 160, 71, 0.1);
+    color: #2e7d32;
+    border: 1px solid rgba(67, 160, 71, 0.3);
+  }
+  .form-status.error {
+    background: rgba(229, 57, 53, 0.08);
+    color: #c62828;
+    border: 1px solid rgba(229, 57, 53, 0.25);
+  }
+  .form-status a { color: inherit; text-decoration: underline; }
+
+  .submit-btn {
+    align-self: flex-start;
+    padding: 0.75rem 2rem;
+    font-size: 0.95rem;
+  }
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Kanta strip */
+  .kanta-strip {
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border-light);
+    padding: 1.5rem 0;
+    text-align: center;
+  }
+  .kanta-strip p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+  .kanta-link {
+    color: var(--cyan);
+    font-weight: 600;
+  }
+
+  @media (max-width: 900px) {
+    .contact-grid {
+      grid-template-columns: 1fr;
+      gap: 3rem;
+    }
+    .contact-form-wrap {
+      padding: 2rem;
+    }
+  }
+</style>
