@@ -1,0 +1,212 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+---
+<BaseLayout
+  title="Products"
+  description="Kanta by Zyntel — hospital operational intelligence. Zyntel Forms — the form builder built for teams. Two products, one company, built for East Africa."
+>
+  <Nav />
+  <main>
+
+    <section class="page-header">
+      <div class="container">
+        <p class="page-eyebrow">Products</p>
+        <h1 class="page-title">Software built for operations.</h1>
+        <p class="page-sub">Two products. One focus: giving teams the visibility they need to run well.</p>
+      </div>
+    </section>
+
+    <!-- Kanta — flagship -->
+    <section class="product-section product-kanta">
+      <div class="container product-inner">
+        <div class="product-label kanta-label">Flagship</div>
+        <h2 class="product-name">Kanta by Zyntel</h2>
+        <p class="product-tagline">Hospital Operational Intelligence Platform</p>
+        <p class="product-desc">Kanta gives hospital operations teams real-time visibility into equipment, maintenance, and lab performance. It runs on any device, works with intermittent internet, and starts free — forever.</p>
+
+        <div class="product-features">
+          <div class="pf-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>QR scan equipment tracking — any ward, any device</span>
+          </div>
+          <div class="pf-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Automated maintenance alerts before equipment fails</span>
+          </div>
+          <div class="pf-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>TAT tracking and Westgard QC for lab departments</span>
+          </div>
+          <div class="pf-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Multi-department dashboards — live operational data</span>
+          </div>
+        </div>
+
+        <div class="product-actions">
+          <a href="#" title="kanta.app — coming soon" class="btn btn-primary">Explore Kanta →</a>
+          <a href="/contact" class="btn btn-secondary">Request a demo</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Zyntel Forms — secondary -->
+    <section class="product-section product-forms">
+      <div class="container product-inner">
+        <div class="product-label">Also from Zyntel</div>
+        <h2 class="product-name">Zyntel Forms</h2>
+        <p class="product-tagline">The form builder built for teams</p>
+        <p class="product-desc">Multi-company org structure, AI-assisted form generation, unlimited forms on the free plan. Replace paper workflows without replacing your team's mental model of how forms work.</p>
+
+        <div class="product-features">
+          <div class="pf-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Multi-company org structure — manage multiple entities</span>
+          </div>
+          <div class="pf-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>AI form generation — describe it, Zyntel builds it</span>
+          </div>
+          <div class="pf-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Unlimited forms, free forever — no cap on form count</span>
+          </div>
+          <div class="pf-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>QR code sharing — collect responses without a link</span>
+          </div>
+        </div>
+
+        <div class="product-actions">
+          <a href="#" title="zyntel.app — coming soon" class="btn btn-secondary">Explore Zyntel Forms →</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-header {
+    padding: 8rem 0 4rem;
+    background: var(--bg-dark);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--cyan);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 1rem;
+  }
+
+  .page-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .page-sub {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 520px;
+  }
+
+  .product-section {
+    padding: 5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .product-section:last-child {
+    border-bottom: none;
+  }
+
+  .product-kanta {
+    background: var(--bg-dark);
+  }
+
+  .product-forms {
+    background: var(--bg-elevated);
+  }
+
+  .product-inner {
+    max-width: 640px;
+  }
+
+  .product-label {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    background: var(--bg-card);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+  }
+
+  .kanta-label {
+    background: rgba(0, 96, 100, 0.1);
+    color: var(--cyan);
+    border-color: rgba(0, 151, 167, 0.3);
+  }
+
+  .product-name {
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+  }
+
+  .product-tagline {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+    font-weight: 500;
+  }
+
+  .product-desc {
+    font-size: 0.975rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  .product-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .pf-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .pf-item svg {
+    color: var(--cyan);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .product-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+</style>

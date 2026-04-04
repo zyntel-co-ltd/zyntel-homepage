@@ -1,5 +1,53 @@
-/* === ZYNTEL DESIGN SYSTEM — Theme-aware === */
+/* === ZYNTEL DESIGN SYSTEM — Theme-aware (light-first) === */
 :root {
+  --cyan: #0097a7;
+  --cyan-dim: #00838f;
+  --gold: #f9a825;
+  --green: #43a047;
+  --violet: #7c4dff;
+  --violet-dim: #651fff;
+  --violet-glow: rgba(124, 77, 255, 0.25);
+  --violet-subtle: rgba(124, 77, 255, 0.1);
+  --violet-bg: rgba(124, 77, 255, 0.06);
+  --gray: #94a3b8;
+  --gray-light: #cbd5e1;
+  --gray-muted: #64748b;
+
+  --bg-dark: #f8fafc;
+  --bg-elevated: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #e2e8f0;
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+
+  --border: #cbd5e1;
+  --border-light: rgba(0, 0, 0, 0.06);
+
+  --glow-cyan: rgba(0, 151, 167, 0.25);
+  --glow-cyan-subtle: rgba(0, 151, 167, 0.12);
+  --cyan-bg: rgba(0, 151, 167, 0.1);
+
+  --nav-bg: rgba(248, 250, 252, 0.94);
+  --nav-bg-scrolled: rgba(255, 255, 255, 0.98);
+  --nav-border: rgba(0, 0, 0, 0.04);
+  --nav-border-scrolled: rgba(0, 0, 0, 0.06);
+
+  --card-glass: rgba(255, 255, 255, 0.95);
+  --card-shadow: rgba(0, 0, 0, 0.12);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --btn-primary-text: #ffffff;
+}
+
+[data-theme="dark"] {
   --cyan: #00f0ff;
   --cyan-dim: #00b8d4;
   --gold: #ffe066;
@@ -36,52 +84,6 @@
 
   --card-glass: rgba(30, 41, 59, 0.9);
   --card-shadow: rgba(0, 0, 0, 0.5);
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-xl: 24px;
-
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-}
-
-/* Light theme */
-[data-theme="light"] {
-  --cyan: #0097a7;
-  --cyan-dim: #00838f;
-  --gold: #f9a825;
-  --green: #43a047;
-  --violet: #7c4dff;
-  --violet-dim: #651fff;
-  --violet-glow: rgba(124, 77, 255, 0.25);
-  --violet-subtle: rgba(124, 77, 255, 0.1);
-  --violet-bg: rgba(124, 77, 255, 0.06);
-
-  --bg-dark: #f8fafc;
-  --bg-elevated: #f1f5f9;
-  --bg-card: #ffffff;
-  --bg-card-hover: #e2e8f0;
-
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-
-  --border: #cbd5e1;
-  --border-light: rgba(0, 0, 0, 0.06);
-
-  --glow-cyan: rgba(0, 151, 167, 0.25);
-  --glow-cyan-subtle: rgba(0, 151, 167, 0.12);
-  --cyan-bg: rgba(0, 151, 167, 0.1);
-
-  --nav-bg: rgba(248, 250, 252, 0.94);
-  --nav-bg-scrolled: rgba(255, 255, 255, 0.98);
-  --nav-border: rgba(0, 0, 0, 0.04);
-  --nav-border-scrolled: rgba(0, 0, 0, 0.06);
-
-  --card-glass: rgba(255, 255, 255, 0.95);
-  --card-shadow: rgba(0, 0, 0, 0.12);
-
-  --btn-primary-text: #ffffff;
 }
 
 * {
@@ -100,6 +102,8 @@ body {
   color: var(--text-primary);
   background: var(--bg-dark);
   overflow-x: hidden;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  letter-spacing: -0.01em;
 }
 
 .container {
@@ -138,25 +142,25 @@ a {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-[data-theme="light"] .btn-secondary {
   background: rgba(0, 0, 0, 0.03);
   color: var(--text-primary);
   border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
-[data-theme="light"] .btn-secondary:hover {
+.btn-secondary:hover {
   background: rgba(0, 0, 0, 0.06);
   border-color: rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* === Light sections (soft contrast, readable text) === */

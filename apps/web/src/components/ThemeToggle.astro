@@ -32,13 +32,12 @@
 
     function init() {
       const stored = getStored();
-      const prefers = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-      const theme = stored ?? prefers;
+      const theme = stored ?? 'light';
       setTheme(theme);
     }
 
     function toggle() {
-      const current = html.getAttribute('data-theme') || 'dark';
+      const current = html.getAttribute('data-theme') || 'light';
       const next = current === 'dark' ? 'light' : 'dark';
       setTheme(next);
     }
@@ -50,10 +49,6 @@
     }
 
     document.getElementById('theme-toggle')?.addEventListener('click', toggle);
-
-    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
-      if (!getStored()) init();
-    });
   })();
 </script>
 

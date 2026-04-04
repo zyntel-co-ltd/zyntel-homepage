@@ -2,108 +2,184 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import ContactForm from '../components/ContactForm.astro';
-import { getTeamMembers } from '../lib/sanity';
-
-const team = await getTeamMembers();
 ---
-<BaseLayout title="About Us" description="Zyntel builds and sells enterprise software for healthcare and operations. Learn about our team and mission.">
+<BaseLayout
+  title="About"
+  description="Zyntel Co. Limited builds operational intelligence software for healthcare and regulated industries in East Africa. Headquartered in Kampala, Uganda."
+>
   <Nav />
   <main>
-    <section class="page-hero">
+
+    <section class="page-header">
       <div class="container">
-        <h1>About Zyntel</h1>
-        <p>We build and sell enterprise software for healthcare and operations. Our products help teams streamline workflows, gain real-time visibility, and drive operational excellence.</p>
+        <p class="page-eyebrow">Zyntel Co. Limited</p>
+        <h1 class="page-title">Operational Intelligence<br />for East Africa.</h1>
       </div>
     </section>
 
-    <section class="section">
-      <div class="container">
-        <h2 class="section-title">Our Mission</h2>
-        <p class="about-copy">Zyntel exists to transform how healthcare and operations teams work with data. We build software that streamlines workflows, provides real-time visibility, and drives operational excellence across inventory, laboratories, and beyond.</p>
-      </div>
-    </section>
+    <section class="about-content">
+      <div class="container prose">
 
-    {team.length > 0 && (
-      <section class="section section-alt">
-        <div class="container">
-          <h2 class="section-title">Our Team</h2>
-          <div class="team-grid">
-            {team.map((member) => (
-              <div class="team-card">
-                {member.image ? (
-                  <img src={member.image} alt={member.name} class="team-photo" />
-                ) : (
-                  <div class="team-photo-placeholder"><span>{member.name.charAt(0)}</span></div>
-                )}
-                <h3>{member.name}</h3>
-                {member.role && <p class="team-role">{member.role}</p>}
-                {member.bio && <p class="team-bio">{member.bio}</p>}
-              </div>
-            ))}
+        <div class="prose-section">
+          <p class="lead">We build software that gives hospitals and regulated organisations the operational visibility they need to run well. Our flagship product, Kanta, tracks medical equipment, monitors lab performance, and helps hospital teams make better decisions — starting with Uganda, built for East Africa.</p>
+        </div>
+
+        <div class="prose-section">
+          <h2>Where we operate</h2>
+          <p>Headquartered in Kampala, Uganda. Building for East Africa.</p>
+        </div>
+
+        <div class="prose-section">
+          <h2>What we believe</h2>
+          <div class="values-grid">
+            <div class="value-card">
+              <h3>Precision over assumption</h3>
+              <p>Hospitals deserve tools that tell them what is actually happening, not approximations.</p>
+            </div>
+            <div class="value-card">
+              <h3>Measured. Managed.</h3>
+              <p>Our signature: <code>zyntel() =&gt; &#123; "measured.managed" &#125;</code>. If it is not measured, it cannot be managed.</p>
+            </div>
+            <div class="value-card">
+              <h3>Built for the real world</h3>
+              <p>Works on a 2018 Android phone with intermittent internet. We build for the infrastructure that actually exists in East African hospitals.</p>
+            </div>
           </div>
         </div>
-      </section>
-    )}
 
-    <section class="section cta">
-      <div class="container">
-        <h2>Get in touch</h2>
-        <p>Start your free trial or reach out to discuss your needs.</p>
-        <ContactForm />
+        <div class="prose-section">
+          <h2>The team</h2>
+          <p>Founded by a team of three based in Kampala: a CEO responsible for product and commercial strategy, a CTO who owns the laboratory intelligence stack, and a COO who manages operations and finance.</p>
+        </div>
+
+        <div class="prose-section contact-cta">
+          <p>Have a question or want to see Kanta in action?</p>
+          <a href="/contact" class="btn btn-primary">Get in touch →</a>
+        </div>
+
       </div>
     </section>
+
   </main>
   <Footer />
 </BaseLayout>
 
 <style>
-  .page-hero { padding: 8rem 0 4rem; text-align: center; }
-  .page-hero h1 { font-size: clamp(2.5rem, 5vw, 3.5rem); margin-bottom: 0.75rem; }
-  .page-hero p { font-size: 1.2rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto; }
-  .section { padding: 4rem 0 6rem; }
-  .section-alt { background: var(--bg-elevated); }
-  .section-title { text-align: center; font-size: clamp(1.75rem, 3vw, 2.5rem); margin-bottom: 2rem; }
-  .about-copy { max-width: 720px; margin: 0 auto; font-size: 1.1rem; line-height: 1.7; color: var(--text-secondary); text-align: center; }
-  .team-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 2rem;
+  .page-header {
+    padding: 8rem 0 4rem;
+    background: var(--bg-dark);
+    border-bottom: 1px solid var(--border);
   }
-  .team-card {
-    background: var(--bg-card);
-    padding: 2rem;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-light);
-    text-align: center;
-    transition: all 0.3s;
-  }
-  .team-card:hover { border-color: var(--cyan); }
-  .team-photo {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin: 0 auto 1rem;
-    display: block;
-  }
-  .team-photo-placeholder {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: var(--cyan-bg);
+
+  .page-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 600;
     color: var(--cyan);
-    font-size: 2.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 1rem;
+  }
+
+  .page-title {
+    font-size: clamp(2rem, 4vw, 3rem);
     font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    line-height: 1.15;
+  }
+
+  .about-content {
+    padding: 5rem 0 6rem;
+    background: var(--bg-dark);
+  }
+
+  .prose {
+    max-width: 800px;
+  }
+
+  .prose-section {
+    margin-bottom: 3.5rem;
+  }
+
+  .prose-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .lead {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    line-height: 1.75;
+  }
+
+  .prose-section h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+  }
+
+  .prose-section p {
+    font-size: 0.975rem;
+    color: var(--text-secondary);
+    line-height: 1.75;
+  }
+
+  .values-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+  }
+
+  .value-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+  }
+
+  .value-card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.6rem;
+    letter-spacing: -0.01em;
+  }
+
+  .value-card p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  code {
+    font-size: 0.82rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.15em 0.4em;
+    color: var(--cyan);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0;
+  }
+
+  .contact-cta {
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
+    gap: 1.5rem;
+    flex-wrap: wrap;
   }
-  .team-card h3 { font-size: 1.25rem; margin-bottom: 0.25rem; }
-  .team-role { color: var(--cyan); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; }
-  .team-bio { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
-  .cta { text-align: center; }
-  .cta h2 { margin-bottom: 0.5rem; }
-  .cta p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+
+  .contact-cta p {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 768px) {
+    .values-grid { grid-template-columns: 1fr; }
+    .contact-cta { flex-direction: column; align-items: flex-start; }
+  }
 </style>
