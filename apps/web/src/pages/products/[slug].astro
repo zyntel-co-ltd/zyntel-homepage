@@ -37,9 +37,16 @@ const FALLBACK: Record<string, { name: string; tagline?: string; description: st
   },
   kanta: {
     name: 'Kanta',
-    tagline: 'Equipment inventory management',
-    description: 'Equipment inventory management system for tracking assets, maintenance schedules, utilization, and lifecycle across facilities.',
-    features: ['Asset tracking and registration', 'Maintenance scheduling', 'Utilization reporting', 'Lifecycle management', 'Multi-site support'],
+    tagline: 'Hospital operations intelligence',
+    description:
+      'Real-time visibility for equipment, maintenance, and lab performance — QR tracking, TAT and Westgard QC, multi-department dashboards. Built for intermittent connectivity and East African hospital workflows. Start with a 14-day pilot.',
+    features: [
+      'QR equipment tracking from any ward or device',
+      'Maintenance alerts and utilization visibility',
+      'Lab TAT tracking and Westgard QC workflows',
+      'Multi-department operational dashboards',
+      'Works offline-first where connectivity is uneven',
+    ],
   },
   'property-management': {
     name: 'Property Management',
@@ -58,8 +65,16 @@ const FALLBACK: Record<string, { name: string; tagline?: string; description: st
 const data = product
   ? { name: product.name, tagline: product.tagline, description: product.description || '', features: product.features || [], externalUrl: product.externalUrl, logo: product.logo }
   : FALLBACK[slug!] ?? { name: 'Product', description: '', features: [] };
+
+const isKanta = slug === 'kanta';
+const isZyntelForms = slug === 'zyntel-forms';
 ---
-<BaseLayout title={data.name} description={data.description}>
+<BaseLayout
+  title={data.name}
+  description={data.description}
+  ogTitle={isKanta ? `${data.name} — hospital operations intelligence` : undefined}
+  ogImage={isKanta ? '/images/og-kanta-hero.jpg' : undefined}
+>
   <Nav />
   <main>
     <section class="page-hero">
@@ -72,9 +87,24 @@ const data = product
         {data.tagline && <p class="product-tagline">{data.tagline}</p>}
         <p>{data.description}</p>
         <div class="product-actions">
-          <a href="/purchase" class="btn btn-primary">Get License</a>
-          {data.externalUrl && (
-            <a href={data.externalUrl} target="_blank" rel="noopener" class="btn btn-secondary">View Demo</a>
+          {isKanta ? (
+            <>
+              <a href="https://app.zyntel.net" class="btn btn-primary">Start 14-day pilot</a>
+              <a href="/#demo" class="btn btn-secondary">Watch demo</a>
+              <a href="/contact" class="btn btn-secondary">Live walkthrough</a>
+            </>
+          ) : isZyntelForms ? (
+            <>
+              <a href="https://forms.zyntel.net" class="btn btn-primary">Try Zyntel Forms</a>
+              <a href="/contact" class="btn btn-secondary">Talk to us</a>
+            </>
+          ) : (
+            <>
+              <a href="/purchase" class="btn btn-primary">Get License</a>
+              {data.externalUrl && (
+                <a href={data.externalUrl} target="_blank" rel="noopener" class="btn btn-secondary">View demo</a>
+              )}
+            </>
           )}
         </div>
       </div>

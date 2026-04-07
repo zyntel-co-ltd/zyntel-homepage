@@ -5,7 +5,9 @@ import Footer from '../components/Footer.astro';
 ---
 <BaseLayout
   title="Contact"
-  description="Get in touch with the Zyntel team. We're a small team in Kampala. We read every message."
+  ogTitle="Contact Zyntel — Kanta walkthrough & pilots"
+  description="Book a Kanta walkthrough or talk to the Zyntel team in Kampala. We respond within one business day (EAT)."
+  hideStickyCta={true}
 >
   <Nav />
   <main>
@@ -13,7 +15,7 @@ import Footer from '../components/Footer.astro';
       <div class="container">
         <p class="page-eyebrow">Contact</p>
         <h1 class="page-title">Get in touch.</h1>
-        <p class="page-sub">We're a small team in Kampala. We read every message.</p>
+        <p class="page-sub">Book a live Kanta walkthrough, ask about a pilot, or reach the team in Kampala — we read every message.</p>
       </div>
     </section>
 
@@ -60,6 +62,7 @@ import Footer from '../components/Footer.astro';
             <div class="form-row">
               <label for="subject">Subject</label>
               <select id="subject" name="subject">
+                <option value="Live walkthrough / demo request">Live walkthrough / demo request</option>
                 <option value="Kanta product inquiry">Kanta product inquiry</option>
                 <option value="Partnership">Partnership</option>
                 <option value="Press / Media">Press / Media</option>

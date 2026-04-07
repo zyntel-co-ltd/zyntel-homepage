@@ -6,9 +6,29 @@ import StickyCTA from '../components/StickyCTA.astro';
 interface Props {
   title: string;
   description?: string;
+  /** Overrides og:title / twitter:title (defaults to `title | Zyntel`) */
+  ogTitle?: string;
+  /** Path under site root, e.g. `/logos/icon_cyan_512x512.png` */
+  ogImage?: string;
+  ogType?: 'website' | 'article';
+  noIndex?: boolean;
+  hideStickyCta?: boolean;
 }
 
-const { title, description = 'Zyntel — healthcare-focused web development agency building modern SaaS products and client solutions for enterprises.' } = Astro.props;
+const {
+  title,
+  description = 'Kanta by Zyntel — hospital equipment and lab operations platform for East Africa. TAT visibility, QC workflows, maintenance intelligence.',
+  ogTitle,
+  ogImage = '/logos/icon_cyan_512x512.png',
+  ogType = 'website',
+  noIndex = false,
+  hideStickyCta = false,
+} = Astro.props;
+
+const siteOrigin = Astro.site?.origin ?? 'https://zyntel.net';
+const canonicalURL = new URL(Astro.url.pathname, siteOrigin).href;
+const ogImageURL = new URL(ogImage.startsWith('/') ? ogImage : `/${ogImage}`, siteOrigin).href;
+const socialTitle = ogTitle ?? `${title} | Zyntel`;
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -24,8 +44,22 @@ const { title, description = 'Zyntel — healthcare-focused web development agen
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f8fafc" />
     <meta name="description" content={description} />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content={noIndex ? 'noindex, nofollow' : 'index, follow'} />
+    <link rel="canonical" href={canonicalURL} />
     <title>{title} | Zyntel</title>
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={socialTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImageURL} />
+    <meta property="og:site_name" content="Zyntel" />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={socialTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageURL} />
 
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" />
@@ -43,6 +77,6 @@ const { title, description = 'Zyntel — healthcare-focused web development agen
   <body>
     <slot />
     <ScrollToTop />
-    <StickyCTA />
+    {!hideStickyCta && <StickyCTA />}
   </body>
 </html>

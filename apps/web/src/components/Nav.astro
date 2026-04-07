@@ -9,6 +9,7 @@ import ThemeToggle from './ThemeToggle.astro';
     </a>
 
     <div class="nav-links" id="nav-links" role="navigation" aria-label="Main">
+      <a href="/#demo" class="nav-link" data-section="demo">Demo</a>
       <a href="/products" class={currentPath.startsWith('/products') ? 'nav-link active' : 'nav-link'}>Products</a>
       <a href="/about" class={currentPath.startsWith('/about') ? 'nav-link active' : 'nav-link'}>About</a>
       <a href="/blog" class={currentPath.startsWith('/blog') ? 'nav-link active' : 'nav-link'}>Blog</a>
@@ -17,7 +18,7 @@ import ThemeToggle from './ThemeToggle.astro';
 
     <div class="nav-actions">
       <ThemeToggle />
-      <a href="https://app.zyntel.net" class="btn btn-primary nav-cta">Try Kanta</a>
+      <a href="https://app.zyntel.net" class="btn btn-primary nav-cta">Start Pilot</a>
       <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
         <span></span>
         <span></span>
@@ -39,14 +40,14 @@ import ThemeToggle from './ThemeToggle.astro';
       a.addEventListener('click', () => links.classList.remove('open'));
     });
   }
-  /* Scroll spy: highlight nav link for section in view (homepage only) */
+  /* Scroll spy: only when homepage has section anchors with data-section (optional) */
   if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
-    const sections = ['products','services'];
+    const sections = ['demo'];
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (!e.isIntersecting) return;
         const id = e.target.id;
-        document.querySelectorAll('.nav-link').forEach((a) => {
+        document.querySelectorAll('.nav-link[data-section]').forEach((a) => {
           (a as HTMLElement).classList.toggle('active', (a as HTMLElement).dataset.section === id);
         });
       });

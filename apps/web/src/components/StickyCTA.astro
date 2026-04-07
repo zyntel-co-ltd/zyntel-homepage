@@ -1,9 +1,12 @@
 ---
 ---
-<aside class="sticky-cta" id="sticky-cta" aria-label="Get started" role="complementary">
+<aside class="sticky-cta" id="sticky-cta" aria-label="Kanta calls to action" role="complementary">
   <div class="sticky-cta-inner container">
-    <p class="sticky-cta-text">Ready to transform your operations?</p>
-    <a href="/#products" class="btn btn-primary sticky-cta-btn">Get Started</a>
+    <p class="sticky-cta-text">Kanta — hospital operations intelligence</p>
+    <div class="sticky-cta-actions">
+      <a href="/#demo" class="btn btn-secondary sticky-cta-btn sticky-cta-demo">Watch demo</a>
+      <a href="https://app.zyntel.net" class="btn btn-primary sticky-cta-btn">Start pilot</a>
+    </div>
   </div>
 </aside>
 
@@ -55,21 +58,34 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1.5rem;
+    gap: 1rem;
     flex-wrap: wrap;
   }
 
   .sticky-cta-text {
-    font-size: 1rem;
+    font-size: 0.92rem;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
+    flex: 1 1 200px;
+  }
+
+  .sticky-cta-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .sticky-cta-btn {
     flex-shrink: 0;
-    padding: 0.5rem 1.25rem;
-    font-size: 0.95rem;
+    padding: 0.5rem 1.1rem;
+    font-size: 0.9rem;
+  }
+
+  .sticky-cta-demo {
+    padding: 0.5rem 1rem;
   }
 
   @media (max-width: 600px) {
@@ -78,6 +94,9 @@
       align-items: stretch;
       text-align: center;
     }
-    .sticky-cta-text { font-size: 0.95rem; }
+    .sticky-cta-text { font-size: 0.88rem; }
+    .sticky-cta-actions {
+      justify-content: center;
+    }
   }
 </style>

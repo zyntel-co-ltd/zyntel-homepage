@@ -5,6 +5,8 @@ import Footer from '../components/Footer.astro';
 ---
 <BaseLayout
   title="Hospital operations, intelligently managed"
+  ogTitle="Kanta by Zyntel — hospital operations intelligence"
+  ogImage="/images/og-kanta-hero.jpg"
   description="Kanta by Zyntel tracks equipment, monitors lab performance, and gives hospital teams the visibility they need — starting free, forever. Built for East Africa."
 >
   <Nav />
@@ -15,65 +17,175 @@ import Footer from '../components/Footer.astro';
       <div class="container hero-inner">
         <div class="hero-content">
           <p class="hero-eyebrow">Kanta by Zyntel</p>
-          <h1 class="hero-title">Hospital operations,<br /><span class="hero-hl">intelligently managed.</span></h1>
-          <p class="hero-desc">Kanta tracks equipment, monitors lab performance, and gives hospital teams the visibility they need — starting free, forever.</p>
+          <h1 class="hero-title">Zyntel Platform.<br /><span class="hero-hl">Kanta for hospital operations.</span></h1>
+          <p class="hero-desc">Track equipment, monitor lab performance, and stay audit-ready with one platform designed for East African hospital workflows.</p>
           <div class="hero-actions">
-            <a href="https://app.zyntel.net" class="btn btn-primary">Try Kanta Free →</a>
-            <a href="/products" class="btn btn-secondary">See how it works →</a>
+            <a href="https://app.zyntel.net" class="btn btn-primary">Start 14-Day Pilot</a>
+            <a href="#demo" class="btn btn-secondary">Watch 1-Min Demo</a>
           </div>
+          <ul class="hero-checks" aria-label="Highlights">
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Works offline-first
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              ISO 15189–ready reporting
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Smart maintenance alerts
+            </li>
+          </ul>
         </div>
+        <figure class="hero-visual">
+          <div class="hero-mockup hero-mockup--product">
+            <img
+              src="/images/kanta-dashboard-hero.jpg"
+              alt="Kanta operational intelligence dashboard: welcome workspace with quick actions and modules for lab metrics, quality and samples, and asset management."
+              width="1024"
+              height="536"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+            />
+          </div>
+        </figure>
       </div>
     </section>
 
     <!-- Social proof strip -->
     <div class="proof-strip">
       <div class="container">
-        <p class="proof-text">Trusted by hospitals in Kampala, Uganda</p>
+        <p class="proof-text">Piloted with healthcare teams in East Africa</p>
+        <div class="proof-logos">
+          <div class="logo-chip">
+            <strong>Nakasero Hospital</strong>
+            <small>Lab metrics pilot</small>
+          </div>
+          <div class="logo-chip">
+            <strong>IOM Kampala Laboratory</strong>
+            <small>QC workflow pilot</small>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Kanta feature highlights -->
-    <section class="section features-section">
+    <!-- How it works (visual flow aligned with product story) -->
+    <section class="section how-section" aria-labelledby="how-heading">
       <div class="container">
-        <h2 class="section-title">Everything a hospital operations team needs</h2>
-        <p class="section-sub">Three modules. One platform. Real visibility.</p>
-        <div class="features-grid">
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+        <h2 id="how-heading" class="section-title">How it works</h2>
+        <p class="section-sub how-sub">From scan to audit-ready export — the same flow your lab runs every day.</p>
+        <div class="how-steps">
+          <div class="how-step">
+            <div class="how-icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="1.75"/><path d="M9 6h6M9 10h6M9 14h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><rect x="8" y="16" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
             </div>
-            <h3>Equipment Tracking</h3>
-            <p>QR scan, location, status. Any device, any ward. Know where every asset is and whether it is fit for use.</p>
+            <span class="how-step-title">Scan QR on equipment</span>
+            <span class="how-step-desc">Log status from any ward phone.</span>
           </div>
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+          <span class="how-arrow" aria-hidden="true">→</span>
+          <div class="how-step">
+            <div class="how-icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/><path d="M6 8h8M6 11h12M6 14h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             </div>
-            <h3>Maintenance Intelligence</h3>
-            <p>Automated alerts before equipment fails. Maintenance logs that actually get used. Preventive, not reactive.</p>
+            <span class="how-step-title">View history &amp; trends</span>
+            <span class="how-step-desc">Maintenance, TAT, and QC in one place.</span>
           </div>
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span class="how-arrow" aria-hidden="true">→</span>
+          <div class="how-step">
+            <div class="how-icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
             </div>
-            <h3>Lab &amp; QC Monitoring</h3>
-            <p>TAT tracking. Westgard QC. Multi-department dashboards. Know your performance numbers before an auditor does.</p>
+            <span class="how-step-title">Get alerts &amp; reminders</span>
+            <span class="how-step-desc">Email or WhatsApp before issues escalate.</span>
+          </div>
+          <span class="how-arrow" aria-hidden="true">→</span>
+          <div class="how-step">
+            <div class="how-icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <span class="how-step-title">Export reports</span>
+            <span class="how-step-desc">Inspection-ready documentation in clicks.</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Secondary product: Zyntel Forms -->
-    <section class="section forms-section">
-      <div class="container">
-        <div class="forms-card">
-          <div class="forms-card-content">
-            <p class="forms-eyebrow">Also from Zyntel</p>
-            <h2 class="forms-title">Zyntel Forms</h2>
-            <p class="forms-desc">The form builder built for teams. Multi-company org structure, AI generation, unlimited forms free. Replace paper workflows without replacing your team.</p>
-                        <a href="https://forms.zyntel.net" class="btn btn-primary forms-cta">Try Zyntel Forms →</a>
-                        <a href="/products" class="btn btn-secondary forms-cta">Learn more</a>
+    <!-- 1-minute demo section -->
+    <section class="section demo-section" id="demo">
+      <div class="container demo-inner">
+        <h2 class="section-title">See Kanta in 60 seconds</h2>
+        <p class="section-sub">From QR scan to audit-ready report in one workflow.</p>
+        <div class="demo-video-card">
+          <p class="demo-video-label">Demo preview</p>
+          <p class="demo-video-title">Kanta Clinical Operations Walkthrough</p>
+          <div class="demo-video-frame">
+            <video class="demo-video" controls preload="metadata" playsinline>
+              <source src="/videos/kanta-demo-v2.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
           </div>
+        </div>
+        <div class="demo-outcomes">
+          <p>Track asset status in real time</p>
+          <p>Get QC failure alerts by email</p>
+          <p>Export ISO-ready reports instantly</p>
+        </div>
+        <div class="demo-actions">
+          <a href="/videos/kanta-demo-v2.mp4" class="btn btn-primary" target="_blank" rel="noopener">Watch 60-sec Demo</a>
+          <a href="/contact" class="btn btn-secondary">Book Live Walkthrough</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compliance scenarios -->
+    <section class="section features-section">
+      <div class="container">
+        <h2 class="section-title">Compliance Scenarios, Not Just Features</h2>
+        <p class="section-sub">Built for real hospital constraints: audits, downtime, and quality control.</p>
+        <div class="features-grid">
+          <div class="feature-card feature-card--perf">
+            <div class="feature-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4"/></svg>
+            </div>
+            <p class="status-chip ok">Operational</p>
+            <h3>Lab Metrics &amp; TAT Heatmaps</h3>
+            <p>Spot bottlenecks by bench, test, or shift before turnaround-time breaches become audit findings.</p>
+            <p class="example">Example: If TAT spikes in Chemistry, Kanta flags the shift and backlog instantly.</p>
+          </div>
+          <div class="feature-card feature-card--maint">
+            <div class="feature-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+            </div>
+            <p class="status-chip warn">Overdue</p>
+            <h3>Maintenance Intelligence</h3>
+            <p>Drive zero-downtime operations with automated WhatsApp/email reminders 14 days before service due dates.</p>
+            <p class="example">Example: If service is due in 14 days, Kanta alerts engineering and the lab lead automatically.</p>
+          </div>
+          <div class="feature-card feature-card--qc">
+            <div class="feature-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+            </div>
+            <p class="status-chip qc">Passed QC</p>
+            <h3>ISO 15189 Readiness</h3>
+            <p>Monitor Levey-Jennings trends and Westgard rules in one workflow, with records ready for inspection.</p>
+            <p class="example">Example: If QC fails, Kanta emails failed QC alerts to your team and logs corrective action.</p>
+          </div>
+        </div>
+        <div class="audit-callout">
+          <strong>Audit pain point?</strong> Export ISO-compliant reports in one click.
+          <a href="/contact" class="btn btn-secondary">Export ISO-Compliant Report</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Secondary product: Zyntel Forms -->
+    <section class="forms-band">
+      <div class="container">
+        <div class="forms-band-inner">
+          <p><strong>Also in the Zyntel Platform:</strong> Zyntel Forms for digital data capture and workflow approvals.</p>
+          <a href="https://forms.zyntel.net" class="btn btn-secondary forms-cta">Explore Zyntel Forms</a>
         </div>
       </div>
     </section>
@@ -84,17 +196,26 @@ import Footer from '../components/Footer.astro';
         <div class="about-strip-text">
           <h2 class="about-strip-title">Built in Kampala. Built for East Africa.</h2>
           <p class="about-strip-desc">Zyntel Co. Limited builds operational intelligence software for healthcare and regulated industries. We build for the infrastructure that actually exists — not the infrastructure that would be convenient.</p>
+          <div class="infra-badges">
+            <span>Works Offline</span>
+            <span>Low-Bandwidth Optimized</span>
+            <span>WhatsApp Alerts</span>
+          </div>
+          <blockquote class="impact-quote">"We cut missed maintenance events and prepared audit reports in minutes instead of days." - Lab Manager, Kampala</blockquote>
           <a href="/about" class="btn btn-secondary about-cta">About us →</a>
         </div>
       </div>
     </section>
 
-    <!-- Final CTA -->
-    <section class="section final-cta">
+    <!-- Final CTA / contact anchor -->
+    <section class="section final-cta" id="contact">
       <div class="container final-cta-inner">
-        <h2 class="final-cta-title">Start with Kanta — free forever.</h2>
-        <p class="final-cta-sub">No credit card. No time limit. Full access to equipment tracking and lab monitoring.</p>
-        <a href="https://app.zyntel.net" class="btn btn-primary">Try Kanta Free</a>
+        <h2 class="final-cta-title">Start your 14-day Kanta pilot</h2>
+        <p class="final-cta-sub">No credit card to start. Full access to equipment tracking, lab metrics, and QC workflows.</p>
+        <div class="final-cta-actions">
+          <a href="https://app.zyntel.net" class="btn btn-primary">Start pilot</a>
+          <a href="/contact" class="btn btn-secondary">Book live walkthrough</a>
+        </div>
       </div>
     </section>
 
@@ -111,7 +232,10 @@ import Footer from '../components/Footer.astro';
   }
 
   .hero-inner {
-    max-width: 720px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
   }
 
   .hero-eyebrow {
@@ -148,6 +272,122 @@ import Footer from '../components/Footer.astro';
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+
+  .hero-checks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    max-width: 520px;
+  }
+  .hero-checks li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+  }
+  .hero-checks svg {
+    flex-shrink: 0;
+    color: #16a34a;
+  }
+
+  .hero-visual {
+    margin: 0;
+    justify-self: end;
+    width: 100%;
+    max-width: min(580px, 100%);
+  }
+  .hero-mockup {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 16px 48px var(--card-shadow);
+    background: var(--bg-card);
+  }
+  .hero-mockup--product {
+    aspect-ratio: 1024 / 536;
+    max-height: min(400px, 48vh);
+  }
+  .hero-mockup--product img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center top;
+    display: block;
+  }
+
+  /* How it works */
+  .how-section {
+    padding: 4rem 0;
+    background: var(--bg-dark);
+    border-bottom: 1px solid var(--border);
+  }
+  .how-sub {
+    margin-bottom: 2rem;
+  }
+  .how-steps {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+  .how-step {
+    flex: 1 1 140px;
+    max-width: 200px;
+    text-align: center;
+    padding: 0.5rem;
+  }
+  .how-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 0.65rem;
+    border-radius: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cyan);
+  }
+  .how-step-title {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+  .how-step-desc {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+  .how-arrow {
+    flex: 0 0 auto;
+    align-self: center;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0 0.15rem;
+    margin-top: 1.25rem;
+    user-select: none;
+  }
+  @media (max-width: 900px) {
+    .how-arrow { display: none; }
+    .how-steps {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    .how-step { max-width: none; }
   }
 
   /* ── Social proof strip ── */
@@ -162,6 +402,107 @@ import Footer from '../components/Footer.astro';
     color: var(--text-muted);
     text-align: center;
     font-weight: 500;
+    margin-bottom: 0.75rem;
+  }
+  .proof-logos {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .logo-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.76rem;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    text-align: center;
+  }
+  .logo-chip strong {
+    font-size: 0.78rem;
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .logo-chip small {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+  }
+
+  .demo-section {
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }
+  .demo-inner {
+    text-align: center;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .demo-video-card {
+    margin: 0 auto 1rem;
+    max-width: 720px;
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1rem 1.15rem;
+    box-shadow: 0 10px 30px var(--card-shadow);
+    box-sizing: border-box;
+  }
+  .demo-video-label {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0.2rem 0 0.4rem;
+  }
+  .demo-video-title {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem;
+  }
+  .demo-video-frame {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0a0a0a;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .demo-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    background: #000;
+  }
+  .demo-outcomes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+    margin: 0 0 1.2rem;
+  }
+  .demo-outcomes p {
+    margin: 0;
+    padding: 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 0.86rem;
+  }
+  .demo-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   /* ── Features ── */
@@ -194,7 +535,6 @@ import Footer from '../components/Footer.astro';
     grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
   }
-
   .feature-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -202,16 +542,33 @@ import Footer from '../components/Footer.astro';
     padding: 2rem;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-
   .feature-card:hover {
     border-color: var(--cyan);
     box-shadow: 0 8px 32px var(--card-shadow);
   }
-
   .feature-icon {
-    color: var(--cyan);
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
     margin-bottom: 1.25rem;
     display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .feature-card--perf .feature-icon {
+    background: linear-gradient(145deg, rgba(14, 165, 233, 0.22), rgba(14, 165, 233, 0.06));
+    color: #0369a1;
+    border: 1px solid rgba(14, 165, 233, 0.25);
+  }
+  .feature-card--maint .feature-icon {
+    background: linear-gradient(145deg, rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0.06));
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.28);
+  }
+  .feature-card--qc .feature-icon {
+    background: linear-gradient(145deg, rgba(59, 130, 246, 0.2), rgba(30, 64, 175, 0.08));
+    color: #1d4ed8;
+    border: 1px solid rgba(59, 130, 246, 0.22);
   }
 
   .feature-card h3 {
@@ -227,44 +584,56 @@ import Footer from '../components/Footer.astro';
     color: var(--text-secondary);
     line-height: 1.6;
   }
+  .status-chip {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 0.2rem 0.55rem;
+    margin-bottom: 0.65rem;
+  }
+  .status-chip.ok { background: rgba(34, 197, 94, 0.15); color: #15803d; }
+  .status-chip.warn { background: rgba(245, 158, 11, 0.2); color: #92400e; }
+  .status-chip.qc { background: rgba(14, 165, 233, 0.18); color: #0369a1; }
+  .feature-card .example {
+    margin-top: 0.7rem;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    border-top: 1px dashed var(--border);
+    padding-top: 0.65rem;
+  }
+  .audit-callout {
+    margin-top: 1.5rem;
+    text-align: center;
+    color: var(--text-secondary);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
 
   /* ── Zyntel Forms card ── */
-  .forms-section {
+  .forms-band {
     background: var(--bg-elevated);
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
+    padding: 1rem 0;
   }
-
-  .forms-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    padding: 3rem;
-    max-width: 640px;
+  .forms-band-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
-
-  .forms-eyebrow {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 0.75rem;
-  }
-
-  .forms-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    color: var(--text-primary);
-    margin-bottom: 0.75rem;
-  }
-
-  .forms-desc {
-    font-size: 0.95rem;
+  .forms-band-inner p {
     color: var(--text-secondary);
-    line-height: 1.65;
-    margin-bottom: 1.5rem;
+    font-size: 0.92rem;
   }
 
   /* ── About strip ── */
@@ -291,6 +660,26 @@ import Footer from '../components/Footer.astro';
     line-height: 1.7;
     margin-bottom: 1.75rem;
   }
+  .infra-badges {
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .infra-badges span {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.25rem 0.55rem;
+  }
+  .impact-quote {
+    font-size: 0.92rem;
+    color: var(--text-primary);
+    border-left: 3px solid var(--cyan);
+    padding-left: 0.8rem;
+    margin: 0 0 1.2rem;
+  }
 
   /* ── Final CTA ── */
   .final-cta {
@@ -316,13 +705,26 @@ import Footer from '../components/Footer.astro';
   .final-cta-sub {
     font-size: 0.95rem;
     color: var(--text-secondary);
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     line-height: 1.6;
+  }
+
+  .final-cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    align-items: center;
   }
 
   @media (max-width: 768px) {
     .hero { padding: 7rem 0 4rem; }
+    .hero-inner { grid-template-columns: 1fr; }
+    .hero-visual { max-width: none; justify-self: stretch; }
+    .hero-mockup--product { max-height: min(280px, 42vw); aspect-ratio: 1024 / 536; }
+    .demo-outcomes { grid-template-columns: 1fr; }
     .features-grid { grid-template-columns: 1fr; }
-    .forms-card { padding: 2rem; }
+    .forms-band-inner { align-items: flex-start; }
+    .final-cta { padding-bottom: 6.5rem; }
   }
 </style>
