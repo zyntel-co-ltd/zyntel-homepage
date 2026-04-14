@@ -76,6 +76,8 @@ export interface Client {
   id: number;
   name: string;
   email: string;
+  /** All contact emails (primary is `email`, mirrors index 0 when set). */
+  emails?: string[] | null;
   phone: string | null;
   address: string | null;
   created_at: string;

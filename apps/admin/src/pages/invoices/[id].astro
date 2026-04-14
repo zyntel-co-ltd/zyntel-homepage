@@ -60,6 +60,7 @@ export const prerender = false;
           <div class="admin-form-group">
             <label class="admin-form-label">Amount *</label>
             <input type="number" name="amount" class="admin-form-input" required min="0.01" step="0.01" placeholder="0.00" />
+            <p class="invoice-meta" id="payment-remaining-hint" style="margin-top: 0.35rem; display: none;"></p>
           </div>
           <div class="admin-form-group">
             <label class="admin-form-label">Payment method</label>
@@ -87,6 +88,38 @@ export const prerender = false;
           <button type="submit" class="admin-btn admin-btn-primary" id="payment-submit-btn">Record payment</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Send invoice: edit client emails & pick recipient -->
+  <div class="admin-modal-overlay" id="send-invoice-modal" style="display: none;">
+    <div class="admin-modal" style="max-width: 440px;">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title">Send invoice</h3>
+      </div>
+      <div class="admin-modal-body">
+        <p class="invoice-meta" style="margin-bottom: 1rem;">Set contact emails (saved to the client when linked), choose where to send, then send.</p>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Email 1 (primary)</label>
+          <input type="email" class="admin-form-input" id="send-email-1" autocomplete="email" />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Email 2 (optional)</label>
+          <input type="email" class="admin-form-input" id="send-email-2" autocomplete="email" placeholder="second@…" />
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Send to</label>
+          <select id="send-email-target" class="admin-form-input">
+            <option value="0">Email 1</option>
+            <option value="1">Email 2</option>
+          </select>
+        </div>
+        <p class="admin-login-error" id="send-invoice-error" style="display: none;"></p>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="admin-btn admin-btn-secondary" id="close-send-modal">Cancel</button>
+        <button type="button" class="admin-btn admin-btn-primary" id="confirm-send-invoice">Send</button>
+      </div>
     </div>
   </div>
 </AdminLayout>
@@ -120,6 +153,13 @@ export const prerender = false;
 
   function formatMoney(n: number, currency: string) {
     return (currency ? `${currency} ` : '') + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 });
+  }
+
+  /** Remaining balance after payments already recorded (deposit / partial pay). */
+  function computeRemaining(inv: { total: unknown }, paid: number): number {
+    const t = Number(inv.total);
+    if (Number.isNaN(t)) return 0;
+    return Math.max(0, Math.round((t - paid) * 100) / 100);
   }
 
   function statusClass(s: string) {
@@ -248,8 +288,15 @@ export const prerender = false;
     const data = await res.json();
     invoice = data.invoice;
     payments = data.payments ?? [];
-    totalPaid = data.total_paid ?? payments.reduce((s: number, p: { amount: number }) => s + Number(p.amount), 0);
-    balance = data.balance ?? Math.max(0, ((invoice?.total as number) ?? 0) - totalPaid);
+    let tp = Number(data.total_paid);
+    if (Number.isNaN(tp)) {
+      tp = payments.reduce((s: number, p: { amount: unknown }) => s + Number(p.amount), 0);
+    }
+    totalPaid = tp;
+    const invTotal = Number((invoice as { total?: unknown })?.total);
+    let bal = data.balance != null ? Number(data.balance) : NaN;
+    if (Number.isNaN(bal)) bal = computeRemaining({ total: invTotal }, totalPaid);
+    balance = bal;
     renderInvoice();
     renderPayments();
   }
@@ -275,21 +322,99 @@ export const prerender = false;
     btn.textContent = 'Finalize';
   });
 
-  // Send invoice
-  document.getElementById('send-invoice-btn')?.addEventListener('click', async () => {
-    const btn = document.getElementById('send-invoice-btn') as HTMLButtonElement;
+  const sendModal = document.getElementById('send-invoice-modal') as HTMLElement;
+  const sendEmail1 = document.getElementById('send-email-1') as HTMLInputElement;
+  const sendEmail2 = document.getElementById('send-email-2') as HTMLInputElement;
+  const sendTarget = document.getElementById('send-email-target') as HTMLSelectElement;
+  const sendErr = document.getElementById('send-invoice-error') as HTMLElement;
+
+  function syncSendTargetOptions() {
+    const has2 = !!sendEmail2.value.trim();
+    sendTarget.options[1]!.disabled = !has2;
+    if (!has2 && sendTarget.value === '1') sendTarget.value = '0';
+  }
+
+  sendEmail2?.addEventListener('input', syncSendTargetOptions);
+
+  async function openSendInvoiceModal() {
+    sendErr.style.display = 'none';
+    let emails: string[] = [];
+    const inv = invoice as { client_id?: number | null; client_email?: string | null } | null;
+    if (inv?.client_id) {
+      try {
+        const r = await fetch(`/api/clients/${inv.client_id}`, { headers });
+        if (r.ok) {
+          const d = await r.json();
+          const raw = d.client?.emails;
+          if (Array.isArray(raw) && raw.length) emails = raw.map((e: string) => String(e).trim()).filter(Boolean);
+        }
+      } catch {
+        /* use invoice snapshot */
+      }
+    }
+    if (!emails.length && inv?.client_email?.trim()) emails = [inv.client_email.trim()];
+    sendEmail1.value = emails[0] ?? '';
+    sendEmail2.value = emails[1] ?? '';
+    syncSendTargetOptions();
+    sendModal.style.display = 'flex';
+  }
+
+  document.getElementById('close-send-modal')?.addEventListener('click', () => {
+    sendModal.style.display = 'none';
+  });
+  sendModal.addEventListener('click', (e) => {
+    if (e.target === sendModal) sendModal.style.display = 'none';
+  });
+
+  // Send invoice (opens modal first)
+  document.getElementById('send-invoice-btn')?.addEventListener('click', () => {
+    void openSendInvoiceModal();
+  });
+
+  document.getElementById('confirm-send-invoice')?.addEventListener('click', async () => {
+    const btn = document.getElementById('confirm-send-invoice') as HTMLButtonElement;
+    sendErr.style.display = 'none';
+    const e1 = sendEmail1.value.trim();
+    const e2 = sendEmail2.value.trim();
+    const list = [e1, e2].filter(Boolean);
+    if (!list.length) {
+      sendErr.textContent = 'Enter at least one email.';
+      sendErr.style.display = 'block';
+      return;
+    }
+    const useSecond = sendTarget.value === '1' && !!e2;
+    const to = useSecond ? e2 : list[0];
     btn.disabled = true;
     btn.textContent = 'Sending...';
     try {
-      const res = await fetch(`/api/invoices/${id}/send`, { method: 'POST', headers });
+      const res = await fetch(`/api/invoices/${id}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ to, client_emails: list }),
+      });
       const text = await res.text();
-      let data: { error?: string; ok?: boolean } = {};
-      try { data = JSON.parse(text); } catch { data = { error: text.slice(0, 120) || `HTTP ${res.status}` }; }
-      if (res.ok) btn.textContent = 'Sent';
-      else alert(data.error || `Failed (${res.status})`);
-    } catch (e) { alert('Failed: ' + (e instanceof Error ? e.message : 'Unknown error')); }
-    btn.disabled = false;
-    btn.textContent = 'Send invoice';
+      let data: { error?: string; ok?: boolean; invoice?: { client_email?: string | null } } = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { error: text.slice(0, 120) || `HTTP ${res.status}` };
+      }
+      if (res.ok) {
+        sendModal.style.display = 'none';
+        if (data.invoice) invoice = { ...invoice, ...data.invoice } as Record<string, unknown>;
+        const outerBtn = document.getElementById('send-invoice-btn') as HTMLButtonElement;
+        outerBtn.textContent = 'Sent';
+      } else {
+        sendErr.textContent = data.error || `Failed (${res.status})`;
+        sendErr.style.display = 'block';
+      }
+    } catch (e) {
+      sendErr.textContent = e instanceof Error ? e.message : 'Unknown error';
+      sendErr.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send';
+    }
   });
 
   // Record payment modal
@@ -298,7 +423,24 @@ export const prerender = false;
   const amountInput = form.querySelector('[name="amount"]') as HTMLInputElement;
 
   document.getElementById('record-payment-btn')?.addEventListener('click', () => {
-    amountInput.value = invoice ? String(balance > 0 ? balance : (invoice as { total: number }).total) : '';
+    const hint = document.getElementById('payment-remaining-hint') as HTMLElement;
+    if (invoice) {
+      const inv = invoice as { total: unknown; currency?: string };
+      const paid = Number(totalPaid);
+      const remaining = computeRemaining(inv, paid);
+      if (remaining > 0) {
+        amountInput.value = String(remaining);
+        hint.style.display = 'block';
+        hint.textContent = `Outstanding (invoice total minus payments recorded): ${formatMoney(remaining, inv.currency ?? '')}`;
+      } else {
+        amountInput.value = '';
+        hint.style.display = 'block';
+        hint.textContent = 'Balance is fully paid. Enter an amount only if you are correcting a mistake.';
+      }
+    } else {
+      amountInput.value = '';
+      hint.style.display = 'none';
+    }
     (form.querySelector('[name="reference"]') as HTMLInputElement).value = '';
     const paidAtInput = document.getElementById('paid-at-input') as HTMLInputElement;
     if (paidAtInput) paidAtInput.value = new Date().toISOString().slice(0, 10);

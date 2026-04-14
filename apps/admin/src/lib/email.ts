@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 export interface SendEmailOptions {
   to: string;
@@ -8,32 +8,29 @@ export interface SendEmailOptions {
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<{ ok: boolean; messageId?: string; error?: string }> {
-  const user = String(import.meta.env.GMAIL_USER ?? '').trim();
-  const pass = String(import.meta.env.GMAIL_APP_PASSWORD ?? '').trim();
-  if (!user || !pass) {
-    return { ok: false, error: 'GMAIL_USER and GMAIL_APP_PASSWORD must be set (separate env vars)' };
+  const apiKey = String(import.meta.env.RESEND_API_KEY ?? '').trim();
+  if (!apiKey) {
+    return { ok: false, error: 'RESEND_API_KEY must be set' };
   }
-  const from = import.meta.env.EMAIL_FROM ?? `Zyntel <${user}>`;
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: { user, pass },
-  });
+  const from = String(import.meta.env.EMAIL_FROM ?? '').trim() || 'onboarding@resend.dev';
+  const resend = new Resend(apiKey);
   try {
-    const info = await transporter.sendMail({
+    const { data, error } = await resend.emails.send({
       from,
       to: options.to,
       subject: options.subject,
       html: options.html,
-      attachments: options.attachments?.map((a) => ({ filename: a.filename, content: a.content })),
+      attachments: options.attachments?.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+      })),
     });
-    return { ok: true, messageId: info.messageId };
+    if (error) {
+      return { ok: false, error: error.message ?? 'Resend error' };
+    }
+    return { ok: true, messageId: data?.id };
   } catch (e) {
-    const err = e as Error & { code?: string; response?: string };
-    let msg = err?.message ?? 'Unknown error';
-    if (err?.code === 'EAUTH') msg = 'Invalid Gmail credentials. Check GMAIL_USER and GMAIL_APP_PASSWORD.';
-    if (err?.code === 'ESOCKET' || msg.includes('403')) msg = 'Gmail blocked. Use App Password (myaccount.google.com/apppasswords), enable 2FA, and ensure GMAIL_USER matches the account.';
-    return { ok: false, error: msg };
+    const err = e as Error;
+    return { ok: false, error: err?.message ?? 'Unknown error' };
   }
 }

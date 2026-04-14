@@ -13,9 +13,16 @@ export const POST: APIRoute = async ({ params, request }) => {
   if (expectedKey && apiKey !== expectedKey) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
-  const gmailUser = import.meta.env.GMAIL_USER;
-  if (!gmailUser) {
-    return new Response(JSON.stringify({ error: 'GMAIL_USER and GMAIL_APP_PASSWORD must be configured' }), { status: 503 });
+  if (!String(import.meta.env.RESEND_API_KEY ?? '').trim()) {
+    return new Response(JSON.stringify({ error: 'RESEND_API_KEY must be configured' }), { status: 503 });
+  }
+  let body: { to?: string } = {};
+  if (request.headers.get('content-type')?.includes('application/json')) {
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {
+      body = {};
+    }
   }
   try {
     const payment = await getPayment(paymentId);
@@ -26,13 +33,14 @@ export const POST: APIRoute = async ({ params, request }) => {
     if (!invoice) {
       return new Response(JSON.stringify({ error: 'Invoice not found' }), { status: 404 });
     }
-    if (!invoice.client_email?.trim()) {
+    const toAddr = (body.to?.trim() || invoice.client_email?.trim() || '').trim();
+    if (!toAddr) {
       return new Response(JSON.stringify({ error: 'Invoice has no client email. Add an email to send receipt.' }), { status: 400 });
     }
     const baseUrl = new URL(request.url).origin;
     const pdfBytes = await generateReceiptPdf(invoice, payment, { baseUrl });
     const result = await sendEmail({
-      to: invoice.client_email,
+      to: toAddr,
       subject: `Payment Receipt - Invoice ${invoice.invoice_number}`,
       html: `
         <p>Dear ${invoice.client_name},</p>

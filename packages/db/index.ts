@@ -139,11 +139,38 @@ export async function updateInvoice(id: number, data: {
   return getInvoice(id);
 }
 
+function normalizeClientRow(row: Record<string, unknown>): Client {
+  const email = String(row.email ?? '');
+  let emails: string[] | null = null;
+  const raw = row.emails;
+  if (raw != null) {
+    if (Array.isArray(raw)) emails = raw.map((e) => String(e).trim()).filter(Boolean);
+    else if (typeof raw === 'string') {
+      try {
+        const p = JSON.parse(raw) as unknown;
+        if (Array.isArray(p)) emails = p.map((e) => String(e).trim()).filter(Boolean);
+      } catch {
+        emails = null;
+      }
+    }
+  }
+  if (!emails?.length && email) emails = [email];
+  return {
+    id: Number(row.id),
+    name: String(row.name),
+    email: emails?.[0] ?? email,
+    emails: emails?.length ? emails : email ? [email] : [],
+    phone: row.phone != null ? String(row.phone) : null,
+    address: row.address != null ? String(row.address) : null,
+    created_at: String(row.created_at),
+  };
+}
+
 export async function listClients(): Promise<Client[]> {
   if (!import.meta.env.DATABASE_URL) return [];
   try {
     const rows = await sql`SELECT * FROM clients ORDER BY name ASC`;
-    return rows as Client[];
+    return (rows as Record<string, unknown>[]).map(normalizeClientRow);
   } catch {
     return [];
   }
@@ -152,41 +179,78 @@ export async function listClients(): Promise<Client[]> {
 export async function getClient(id: number): Promise<Client | null> {
   if (!import.meta.env.DATABASE_URL) return null;
   const rows = await sql`SELECT * FROM clients WHERE id = ${id}`;
-  return (rows[0] as Client) ?? null;
+  const row = rows[0] as Record<string, unknown> | undefined;
+  return row ? normalizeClientRow(row) : null;
 }
 
-export async function createClient(data: { name: string; email: string; phone?: string; address?: string }): Promise<Client | null> {
+export async function createClient(data: { name: string; email: string; phone?: string; address?: string; emails?: string[] }): Promise<Client | null> {
   if (!import.meta.env.DATABASE_URL) return null;
+  const primary = String(data.email).trim();
+  const list = (data.emails?.length ? data.emails.map((e) => String(e).trim()).filter(Boolean) : [primary]).filter(Boolean);
+  if (!list.length) return null;
+  const emailCol = list[0];
+  const emailsJson = JSON.stringify(list);
   try {
     const rows = await sql`
-      INSERT INTO clients (name, email, phone, address)
-      VALUES (${data.name}, ${data.email}, ${data.phone ?? null}, ${data.address ?? null})
+      INSERT INTO clients (name, email, phone, address, emails)
+      VALUES (${data.name}, ${emailCol}, ${data.phone ?? null}, ${data.address ?? null}, ${emailsJson})
       RETURNING *
     `;
-    return (rows[0] as Client) ?? null;
+    return normalizeClientRow(rows[0] as Record<string, unknown>);
   } catch {
-    return null;
+    try {
+      const rows = await sql`
+        INSERT INTO clients (name, email, phone, address)
+        VALUES (${data.name}, ${emailCol}, ${data.phone ?? null}, ${data.address ?? null})
+        RETURNING *
+      `;
+      return normalizeClientRow(rows[0] as Record<string, unknown>);
+    } catch {
+      return null;
+    }
   }
 }
 
-export async function updateClient(id: number, data: { name?: string; email?: string; phone?: string; address?: string }): Promise<Client | null> {
+export async function updateClient(id: number, data: { name?: string; email?: string; emails?: string[]; phone?: string; address?: string }): Promise<Client | null> {
   if (!import.meta.env.DATABASE_URL) return null;
   const existing = await getClient(id);
   if (!existing) return null;
   const name = data.name != null ? String(data.name).trim() : existing.name;
-  const email = data.email != null ? String(data.email).trim() : existing.email;
+  let emailsList: string[];
+  if (data.emails != null) {
+    emailsList = data.emails.map((e) => String(e).trim()).filter(Boolean);
+    if (emailsList.length === 0) return null;
+  } else if (data.email != null) {
+    const one = String(data.email).trim();
+    if (!one) return null;
+    const rest = (existing.emails ?? []).slice(1).filter((e) => e !== one);
+    emailsList = [one, ...rest];
+  } else {
+    emailsList = existing.emails?.length ? [...existing.emails] : [existing.email].filter(Boolean);
+  }
+  const email = emailsList[0];
   const phone = data.phone !== undefined ? (data.phone ? String(data.phone).trim() : null) : existing.phone;
   const address = data.address !== undefined ? (data.address ? String(data.address).trim() : null) : existing.address;
   if (!name || !email) return null;
+  const emailsJson = JSON.stringify(emailsList);
   try {
     const rows = await sql`
-      UPDATE clients SET name = ${name}, email = ${email}, phone = ${phone}, address = ${address}
+      UPDATE clients SET name = ${name}, email = ${email}, emails = ${emailsJson}, phone = ${phone}, address = ${address}
       WHERE id = ${id}
       RETURNING *
     `;
-    return (rows[0] as Client) ?? null;
+    return normalizeClientRow(rows[0] as Record<string, unknown>);
   } catch {
-    return null;
+    try {
+      const rows = await sql`
+        UPDATE clients SET name = ${name}, email = ${email}, phone = ${phone}, address = ${address}
+        WHERE id = ${id}
+        RETURNING *
+      `;
+      return normalizeClientRow(rows[0] as Record<string, unknown>);
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -218,6 +282,13 @@ export async function createPaymentAccount(data: {
     RETURNING *
   `;
   return (rows[0] as PaymentAccount) ?? null;
+}
+
+/** Update invoice snapshot email (any status; for linking sends to chosen address). */
+export async function patchInvoiceClientEmail(id: number, client_email: string | null): Promise<Invoice | null> {
+  if (!import.meta.env.DATABASE_URL) return null;
+  await sql`UPDATE invoices SET client_email = ${client_email}, updated_at = NOW() WHERE id = ${id} AND deleted_at IS NULL`;
+  return getInvoice(id);
 }
 
 export async function getInvoice(id: number, includeDeleted = false): Promise<Invoice | null> {
