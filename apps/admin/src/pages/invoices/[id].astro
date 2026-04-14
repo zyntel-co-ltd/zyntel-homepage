@@ -122,6 +122,8 @@ export const prerender = false;
       </div>
     </div>
   </div>
+
+  <div id="admin-sent-toast" class="admin-sent-toast" role="status" aria-live="polite" hidden></div>
 </AdminLayout>
 
 <style>
@@ -133,6 +135,29 @@ export const prerender = false;
   .invoice-meta p { margin-bottom: 0.25rem; }
   .payment-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--admin-border); font-size: 0.9375rem; }
   .payment-row:last-child { border-bottom: none; }
+  .admin-sent-toast {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    z-index: 10000;
+    max-width: min(22rem, calc(100vw - 2rem));
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    color: var(--admin-text, #e2e8f0);
+    background: var(--admin-card-bg, #1e293b);
+    border: 1px solid var(--admin-success, #0d9488);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transform: translateY(0.5rem);
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+  .admin-sent-toast.admin-sent-toast--visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 </style>
 
 <script>
@@ -160,6 +185,25 @@ export const prerender = false;
     const t = Number(inv.total);
     if (Number.isNaN(t)) return 0;
     return Math.max(0, Math.round((t - paid) * 100) / 100);
+  }
+
+  let sentToastTimer: ReturnType<typeof setTimeout> | null = null;
+  let sentToastHideTimer: ReturnType<typeof setTimeout> | null = null;
+  function showSentNotification(message: string) {
+    const el = document.getElementById('admin-sent-toast');
+    if (!el) return;
+    el.textContent = message;
+    el.removeAttribute('hidden');
+    requestAnimationFrame(() => el.classList.add('admin-sent-toast--visible'));
+    if (sentToastTimer) clearTimeout(sentToastTimer);
+    if (sentToastHideTimer) clearTimeout(sentToastHideTimer);
+    sentToastTimer = window.setTimeout(() => {
+      el.classList.remove('admin-sent-toast--visible');
+      sentToastHideTimer = window.setTimeout(() => {
+        el.setAttribute('hidden', '');
+        el.textContent = '';
+      }, 240);
+    }, 4200);
   }
 
   function statusClass(s: string) {
@@ -271,8 +315,14 @@ export const prerender = false;
           (btn as HTMLButtonElement).textContent = 'Sending...';
           try {
             const res = await fetch(`/api/receipts/${pid}/send`, { method: 'POST', headers });
-            if (res.ok) (btn as HTMLButtonElement).textContent = 'Sent';
-            else (btn as HTMLButtonElement).textContent = 'Failed';
+            if (res.ok) {
+              (btn as HTMLButtonElement).textContent = 'Sent';
+              const ce = (invoice as { client_email?: string } | null)?.client_email?.trim();
+              showSentNotification(ce ? `Receipt sent to ${ce}.` : 'Receipt email sent.');
+              window.setTimeout(() => {
+                (btn as HTMLButtonElement).textContent = 'Email';
+              }, 3200);
+            } else (btn as HTMLButtonElement).textContent = 'Failed';
           } catch {
             (btn as HTMLButtonElement).textContent = 'Failed';
           }
@@ -402,8 +452,8 @@ export const prerender = false;
       if (res.ok) {
         sendModal.style.display = 'none';
         if (data.invoice) invoice = { ...invoice, ...data.invoice } as Record<string, unknown>;
-        const outerBtn = document.getElementById('send-invoice-btn') as HTMLButtonElement;
-        outerBtn.textContent = 'Sent';
+        showSentNotification(`Invoice sent to ${to}.`);
+        renderInvoice();
       } else {
         sendErr.textContent = data.error || `Failed (${res.status})`;
         sendErr.style.display = 'block';
