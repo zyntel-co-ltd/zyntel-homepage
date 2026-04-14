@@ -12,7 +12,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ ok: boolea
   if (!apiKey) {
     return { ok: false, error: 'RESEND_API_KEY must be set' };
   }
-  const from = String(import.meta.env.EMAIL_FROM ?? '').trim() || 'onboarding@resend.dev';
+  const from =
+    String(import.meta.env.EMAIL_FROM ?? '').trim() || 'Zyntel <billing@zyntel.net>';
   const resend = new Resend(apiKey);
   try {
     const { data, error } = await resend.emails.send({

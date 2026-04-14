@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { createInvoice, createClient, listClients } from '@zyntel/db';
+import { createInvoice, createClient, listClients, updateClient } from '@zyntel/db';
 
 export const POST: APIRoute = async ({ request }) => {
   if (request.headers.get('content-type') !== 'application/json') {
@@ -12,7 +12,24 @@ export const POST: APIRoute = async ({ request }) => {
   }
   try {
     const body = await request.json();
-    const { client_id, client_name, client_email, client_phone, client_address, items, tax_rate, currency, due_date, invoice_date, invoice_type, recurring_config, notes, payment_account_id, save_client } = body ?? {};
+    const {
+      client_id,
+      client_name,
+      client_email,
+      client_emails: rawClientEmails,
+      client_phone,
+      client_address,
+      items,
+      tax_rate,
+      currency,
+      due_date,
+      invoice_date,
+      invoice_type,
+      recurring_config,
+      notes,
+      payment_account_id,
+      save_client,
+    } = body ?? {};
     if (!client_name?.trim() || !Array.isArray(items) || items.length === 0) {
       return new Response(JSON.stringify({ error: 'client_name and items (array) required' }), { status: 400 });
     }
@@ -21,8 +38,14 @@ export const POST: APIRoute = async ({ request }) => {
       const unitPrice = Number(i.unitPrice) || 0;
       return { description: String(i.description ?? ''), quantity: qty, unitPrice, amount: qty * unitPrice };
     });
+    const fromList = Array.isArray(rawClientEmails)
+      ? rawClientEmails.map((e: unknown) => String(e).trim()).filter(Boolean)
+      : [];
+    const emailTrimmed = fromList[0] ?? (client_email ? String(client_email).trim() : '');
+    const effectiveEmails = fromList.length ? fromList : emailTrimmed ? [emailTrimmed] : [];
+
     let resolvedClientId = client_id != null ? Number(client_id) : undefined;
-    const emailTrimmed = client_email ? String(client_email).trim() : '';
+    let createdNewClient = false;
     if (save_client && !resolvedClientId && emailTrimmed) {
       const existing = await listClients();
       const match = existing.find((c) => c.email.toLowerCase() === emailTrimmed.toLowerCase());
@@ -32,11 +55,18 @@ export const POST: APIRoute = async ({ request }) => {
         const newClient = await createClient({
           name: String(client_name).trim(),
           email: emailTrimmed,
+          emails: effectiveEmails.length ? effectiveEmails : [emailTrimmed],
           phone: client_phone ? String(client_phone).trim() : undefined,
           address: client_address ? String(client_address).trim() : undefined,
         });
-        if (newClient) resolvedClientId = newClient.id;
+        if (newClient) {
+          resolvedClientId = newClient.id;
+          createdNewClient = true;
+        }
       }
+    }
+    if (resolvedClientId && effectiveEmails.length > 0 && !createdNewClient) {
+      await updateClient(resolvedClientId, { emails: effectiveEmails });
     }
     const invoice = await createInvoice({
       client_id: resolvedClientId,

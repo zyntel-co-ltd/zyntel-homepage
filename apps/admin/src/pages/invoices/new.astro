@@ -22,8 +22,10 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           <input type="text" name="client_name" class="admin-form-input" required placeholder="Acme Ltd" />
         </div>
         <div class="admin-form-group">
-          <label class="admin-form-label">Client email</label>
-          <input type="email" name="client_email" class="admin-form-input" placeholder="billing@acme.com" />
+          <label class="admin-form-label">Client emails</label>
+          <p class="admin-form-hint" style="font-size: 0.8125rem; color: var(--admin-text-muted); margin: 0 0 0.5rem 0;">First address is shown on the invoice; all are saved on the client when you link or save.</p>
+          <div id="client-emails-rows"></div>
+          <button type="button" class="admin-btn admin-btn-secondary" id="add-client-email" style="margin-top: 0.25rem;">+ Add email</button>
         </div>
         <div class="admin-form-group">
           <label class="admin-form-label">Client phone</label>
@@ -130,6 +132,49 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
   const headers = { 'x-api-key': API_KEY };
 
+  const clientEmailsRows = document.getElementById('client-emails-rows')!;
+
+  function gatherClientEmails(): string[] {
+    return Array.from(document.querySelectorAll('#client-emails-rows .client-email-input'))
+      .map((el) => (el as HTMLInputElement).value.trim())
+      .filter(Boolean);
+  }
+
+  function renderClientEmailRows(emails: string[]) {
+    const list = emails.length ? emails : [''];
+    clientEmailsRows.innerHTML = '';
+    list.forEach((em, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;';
+      const inp = document.createElement('input');
+      inp.type = 'email';
+      inp.className = 'admin-form-input client-email-input';
+      inp.placeholder = i === 0 ? 'billing@acme.com' : 'Additional email';
+      inp.value = em;
+      inp.style.flex = '1';
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'admin-btn admin-btn-ghost';
+      rm.textContent = 'Remove';
+      rm.style.fontSize = '0.8125rem';
+      rm.disabled = list.length <= 1;
+      rm.addEventListener('click', () => {
+        const cur = gatherClientEmails();
+        cur.splice(i, 1);
+        renderClientEmailRows(cur.length ? cur : ['']);
+      });
+      row.appendChild(inp);
+      row.appendChild(rm);
+      clientEmailsRows.appendChild(row);
+    });
+  }
+
+  renderClientEmailRows(['']);
+
+  document.getElementById('add-client-email')?.addEventListener('click', () => {
+    renderClientEmailRows([...gatherClientEmails(), '']);
+  });
+
   (document.getElementById('invoice-date-input') as HTMLInputElement).value = new Date().toISOString().slice(0, 10);
 
   document.getElementById('invoice-type-select')?.addEventListener('change', () => {
@@ -157,12 +202,14 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     if (clientRes.ok) {
       const { clients } = await clientRes.json();
       const sel = document.getElementById('client-select') as HTMLSelectElement;
-      clients?.forEach((c: { id: number; name: string; email: string; phone?: string; address?: string }) => {
+      clients?.forEach((c: { id: number; name: string; email: string; emails?: string[]; phone?: string; address?: string }) => {
         const opt = document.createElement('option');
         opt.value = String(c.id);
-        opt.textContent = `${c.name} (${c.email})`;
+        const emList = c.emails?.length ? c.emails : [c.email];
+        opt.textContent = `${c.name} (${emList.join(', ')})`;
         opt.dataset.name = c.name;
         opt.dataset.email = c.email;
+        opt.dataset.emailsJson = JSON.stringify(emList);
         opt.dataset.phone = c.phone || '';
         opt.dataset.address = c.address || '';
         sel?.appendChild(opt);
@@ -172,13 +219,33 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         const o = sel.options[sel.selectedIndex];
         if (saveClientWrap) saveClientWrap.style.display = o?.value ? 'none' : 'block';
       };
-      sel?.addEventListener('change', () => {
+      sel?.addEventListener('change', async () => {
         const o = sel.options[sel.selectedIndex];
         if (o?.value) {
           (document.querySelector('[name="client_name"]') as HTMLInputElement).value = o.dataset.name || '';
-          (document.querySelector('[name="client_email"]') as HTMLInputElement).value = o.dataset.email || '';
           (document.querySelector('[name="client_phone"]') as HTMLInputElement).value = o.dataset.phone || '';
           (document.querySelector('[name="client_address"]') as HTMLInputElement).value = o.dataset.address || '';
+          try {
+            const cr = await fetch(`/api/clients/${o.value}`, { headers });
+            if (cr.ok) {
+              const d = await cr.json();
+              const em: string[] =
+                d.client?.emails?.length ? d.client.emails.map((x: string) => String(x).trim()).filter(Boolean) : [];
+              renderClientEmailRows(em.length ? em : [d.client?.email || o.dataset.email || '']);
+            } else {
+              let fallback: string[] = [];
+              try {
+                fallback = JSON.parse(o.dataset.emailsJson || '[]') as string[];
+              } catch {
+                fallback = [];
+              }
+              renderClientEmailRows(fallback.length ? fallback : [o.dataset.email || '']);
+            }
+          } catch {
+            renderClientEmailRows([o.dataset.email || '']);
+          }
+        } else {
+          renderClientEmailRows(['']);
         }
         toggleSaveClient();
       });
@@ -276,10 +343,12 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     const clientId = (form.querySelector('[name="client_id"]') as HTMLSelectElement).value;
     const invoiceType = (form.querySelector('[name="invoice_type"]') as HTMLSelectElement).value;
     const recurringNextRun = (form.querySelector('[name="recurring_next_run"]') as HTMLInputElement)?.value;
+    const emailList = gatherClientEmails();
     const payload: Record<string, unknown> = {
       client_id: clientId ? Number(clientId) : undefined,
       client_name: (form.querySelector('[name="client_name"]') as HTMLInputElement).value.trim(),
-      client_email: (form.querySelector('[name="client_email"]') as HTMLInputElement).value.trim(),
+      client_email: emailList[0] ?? '',
+      client_emails: emailList,
       client_phone: (form.querySelector('[name="client_phone"]') as HTMLInputElement).value.trim() || undefined,
       client_address: (form.querySelector('[name="client_address"]') as HTMLInputElement).value.trim() || undefined,
       items,

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { updateInvoice } from '@zyntel/db';
+import { updateInvoice, updateClient } from '@zyntel/db';
 
 export const PATCH: APIRoute = async ({ params, request }) => {
   const id = Number(params.id);
@@ -16,7 +16,23 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   }
   try {
     const body = await request.json();
-    const { client_id, client_name, client_email, client_phone, client_address, items, tax_rate, currency, due_date, invoice_date, invoice_type, recurring_config, notes, payment_account_id } = body ?? {};
+    const {
+      client_id,
+      client_name,
+      client_email,
+      client_emails: rawClientEmails,
+      client_phone,
+      client_address,
+      items,
+      tax_rate,
+      currency,
+      due_date,
+      invoice_date,
+      invoice_type,
+      recurring_config,
+      notes,
+      payment_account_id,
+    } = body ?? {};
     if (!client_name?.trim() || !Array.isArray(items) || items.length === 0) {
       return new Response(JSON.stringify({ error: 'client_name and items (array) required' }), { status: 400 });
     }
@@ -25,10 +41,16 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       const unitPrice = Number(i.unitPrice) || 0;
       return { description: String(i.description ?? ''), quantity: qty, unitPrice, amount: qty * unitPrice };
     });
+    const fromList = Array.isArray(rawClientEmails)
+      ? rawClientEmails.map((e: unknown) => String(e).trim()).filter(Boolean)
+      : [];
+    const primaryEmail =
+      fromList[0] ?? (client_email != null ? String(client_email).trim() || null : null);
+    const cid = client_id != null ? Number(client_id) : null;
     const invoice = await updateInvoice(id, {
-      client_id: client_id != null ? Number(client_id) : null,
+      client_id: cid,
       client_name: String(client_name).trim(),
-      client_email: client_email != null ? String(client_email).trim() || null : null,
+      client_email: primaryEmail,
       client_phone: client_phone ? String(client_phone).trim() : null,
       client_address: client_address ? String(client_address).trim() : null,
       items: invoiceItems,
@@ -43,6 +65,9 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     });
     if (!invoice) {
       return new Response(JSON.stringify({ error: 'Invoice not found or not a draft' }), { status: 400 });
+    }
+    if (cid && fromList.length > 0) {
+      await updateClient(cid, { emails: fromList });
     }
     return new Response(JSON.stringify({ ok: true, invoice }), {
       status: 200,

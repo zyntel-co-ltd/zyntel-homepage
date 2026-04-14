@@ -9,7 +9,7 @@ export const prerender = false;
     <p class="admin-subtitle" id="edit-subtitle">Loading...</p>
   </header>
 
-  <div class="admin-card" style="max-width: 480px;">
+  <div class="admin-card" style="max-width: 520px;">
     <div class="admin-modal-body">
       <form id="edit-client-form">
         <input type="hidden" name="client_id" id="client-id" />
@@ -18,8 +18,10 @@ export const prerender = false;
           <input type="text" name="name" class="admin-form-input" required placeholder="Acme Ltd" />
         </div>
         <div class="admin-form-group">
-          <label class="admin-form-label">Email *</label>
-          <input type="email" name="email" class="admin-form-input" required placeholder="billing@acme.com" />
+          <label class="admin-form-label">Emails *</label>
+          <p class="admin-form-hint" style="font-size: 0.8125rem; color: var(--admin-text-muted); margin: 0 0 0.5rem 0;">First address is the primary record; add as many as you need.</p>
+          <div id="client-emails-rows"></div>
+          <button type="button" class="admin-btn admin-btn-secondary" id="add-client-email" style="margin-top: 0.25rem;">+ Add email</button>
         </div>
         <div class="admin-form-group">
           <label class="admin-form-label">Phone</label>
@@ -37,7 +39,7 @@ export const prerender = false;
 
 <script>
   const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
-  const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '/admin';
+  const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '';
   if (!API_KEY) window.location.href = B + '/login';
 
   const parts = window.location.pathname.split('/').filter(Boolean);
@@ -45,11 +47,60 @@ export const prerender = false;
   const id = clientsIdx >= 0 && parts[clientsIdx + 1] ? parts[clientsIdx + 1] : null;
   if (!id) window.location.href = B + '/clients';
 
+  const clientEmailsRows = document.getElementById('client-emails-rows')!;
+
+  function gatherClientEmails(): string[] {
+    return Array.from(document.querySelectorAll('#client-emails-rows .client-email-input'))
+      .map((el) => (el as HTMLInputElement).value.trim())
+      .filter(Boolean);
+  }
+
+  function renderClientEmailRows(emails: string[]) {
+    const list = emails.length ? emails : [''];
+    clientEmailsRows.innerHTML = '';
+    list.forEach((em, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;';
+      const inp = document.createElement('input');
+      inp.type = 'email';
+      inp.className = 'admin-form-input client-email-input';
+      inp.placeholder = i === 0 ? 'billing@acme.com' : 'Additional email';
+      inp.required = i === 0;
+      inp.value = em;
+      inp.style.flex = '1';
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'admin-btn admin-btn-ghost';
+      rm.textContent = 'Remove';
+      rm.style.fontSize = '0.8125rem';
+      rm.disabled = list.length <= 1;
+      rm.addEventListener('click', () => {
+        const cur = gatherClientEmails();
+        cur.splice(i, 1);
+        renderClientEmailRows(cur.length ? cur : ['']);
+      });
+      row.appendChild(inp);
+      row.appendChild(rm);
+      clientEmailsRows.appendChild(row);
+    });
+  }
+
+  document.getElementById('add-client-email')?.addEventListener('click', () => {
+    renderClientEmailRows([...gatherClientEmails(), '']);
+  });
+
   async function load() {
-    const res = await fetch(`/api/clients/list`, { headers: { 'x-api-key': API_KEY } });
-    if (res.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = B + '/login'; return; }
-    const { clients } = await res.json();
-    const client = (clients ?? []).find((c: { id: number }) => String(c.id) === id);
+    const res = await fetch(`/api/clients/${id}`, { headers: { 'x-api-key': API_KEY! } });
+    if (res.status === 401) {
+      sessionStorage.removeItem('zyntel_invoice_api_key');
+      window.location.href = B + '/login';
+      return;
+    }
+    if (!res.ok) {
+      document.getElementById('edit-subtitle')!.textContent = 'Client not found';
+      return;
+    }
+    const { client } = await res.json();
     if (!client) {
       document.getElementById('edit-subtitle')!.textContent = 'Client not found';
       return;
@@ -57,15 +108,22 @@ export const prerender = false;
     document.getElementById('edit-subtitle')!.textContent = client.name;
     (document.getElementById('client-id') as HTMLInputElement).value = String(client.id);
     (document.querySelector('[name="name"]') as HTMLInputElement).value = client.name || '';
-    (document.querySelector('[name="email"]') as HTMLInputElement).value = client.email || '';
     (document.querySelector('[name="phone"]') as HTMLInputElement).value = client.phone || '';
     (document.querySelector('[name="address"]') as HTMLInputElement).value = client.address || '';
+    const em: string[] =
+      client.emails?.length ? client.emails.map((x: string) => String(x).trim()).filter(Boolean) : [];
+    renderClientEmailRows(em.length ? em : [client.email || ''].filter(Boolean));
   }
 
   document.getElementById('edit-client-form')!.addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
+    const emails = gatherClientEmails();
+    if (emails.length === 0) {
+      alert('Add at least one email.');
+      return;
+    }
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving...';
     try {
@@ -74,7 +132,7 @@ export const prerender = false;
         headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
         body: JSON.stringify({
           name: (form.querySelector('[name="name"]') as HTMLInputElement).value.trim(),
-          email: (form.querySelector('[name="email"]') as HTMLInputElement).value.trim(),
+          emails,
           phone: (form.querySelector('[name="phone"]') as HTMLInputElement).value.trim() || null,
           address: (form.querySelector('[name="address"]') as HTMLInputElement).value.trim() || null,
         }),
