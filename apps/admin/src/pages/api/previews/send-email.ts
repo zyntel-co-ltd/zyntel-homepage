@@ -3,56 +3,101 @@ import { getPreviewClientById } from '../../../lib/previews.ts';
 import { Resend } from 'resend';
 
 export const POST: APIRoute = async ({ request }) => {
-  const { clientId } = await request.json();
-  if (!clientId) return new Response(JSON.stringify({ error: 'clientId required' }), { status: 400 });
+  try {
+    const { clientId } = await request.json();
+    if (!clientId) {
+      return new Response(JSON.stringify({ error: 'clientId required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
-  const client = await getPreviewClientById(clientId);
-  if (!client) return new Response(JSON.stringify({ error: 'Client not found' }), { status: 404 });
+    const client = await getPreviewClientById(clientId);
+    if (!client) {
+      return new Response(JSON.stringify({ error: 'Client not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
-  const SITE = import.meta.env.SITE_URL ?? 'https://admin.zyntel.net';
-  const previewUrl = `${SITE}/p/${client.token}`;
-  const expiryFormatted = new Date(client.expiryDate).toLocaleDateString('en-GB', {
-    day: 'numeric', month: 'long', year: 'numeric'
-  });
+    const SITE = import.meta.env.SITE_URL ?? 'https://admin.zyntel.net';
+    const previewUrl = `${SITE}/p/${client.token}`;
+    const expiryFormatted = new Date(client.expiryDate).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
 
-  const apiKey = String(import.meta.env.RESEND_API_KEY ?? '').trim();
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'RESEND_API_KEY must be set' }), { status: 500 });
-  }
-  const from = String(import.meta.env.EMAIL_FROM ?? '').trim() || 'Zyntel <billing@zyntel.net>';
-  const resend = new Resend(apiKey);
+    const resend = new Resend(import.meta.env.RESEND_API_KEY);
 
-  const { error } = await resend.emails.send({
-    from,
-    to: client.email,
-    subject: `Your design preview is ready — ${client.name}`,
-    html: `<!DOCTYPE html>
+    const { error } = await resend.emails.send({
+      from: import.meta.env.RESEND_FROM_EMAIL,
+      to: client.email,
+      subject: `Your design preview is ready — ${client.name}`,
+      html: `<!DOCTYPE html>
 <html>
-<body style="font-family:-apple-system,sans-serif;background:#f9f9f9;margin:0;padding:40px 20px;">
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9f9f9;margin:0;padding:40px 20px;">
   <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:36px;border:1px solid #e5e7eb;">
     <p style="font-size:13px;font-weight:800;color:#111;margin:0 0 20px;">Zyntel</p>
     <h1 style="font-size:20px;font-weight:700;color:#111;margin:0 0 8px;">Your design preview is ready</h1>
+    <p style="color:#555;font-size:14px;line-height:1.6;margin:0 0 16px;">
+      Hi, we have prepared your website design options for <strong>${client.name}</strong>.
+    </p>
     <p style="color:#555;font-size:14px;line-height:1.6;margin:0 0 24px;">
-      We've prepared your design options for <strong>${client.name}</strong>.
-      Click the button below to review them at your own pace.
+      Click the button below to view all three design options. Each one is complete and ready to build — scroll through them, use the comparison table, and answer the three questions at the bottom to find the best fit. Then send us your choice and we will begin building immediately.
     </p>
-    <a href="${previewUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;
-       padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;">
-      View your designs →
+    <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:14px 16px;margin:0 0 20px;">
+      <p style="font-size:13px;font-weight:700;color:#92400e;margin:0 0 4px;">
+        📺 Best viewed on a computer
+      </p>
+      <p style="font-size:13px;color:#78350f;line-height:1.6;margin:0;">
+        The design presentation is built for a desktop or laptop screen so you can
+        see the full detail of each option. If you are reading this on your phone,
+        please forward this email to yourself and open it on a computer before clicking
+        the button below.
+      </p>
+    </div>
+    <a href="${previewUrl}"
+       style="display:inline-block;background:#C63527;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;letter-spacing:.01em;">
+      View your design options →
     </a>
-    <p style="color:#999;font-size:12px;margin:20px 0 0;">
-      This link is private to you and expires ${expiryFormatted}. Do not share it.
+    <div style="margin:28px 0 0;padding:16px;background:#f9f9f9;border-radius:8px;border:1px solid #e5e7eb;">
+      <p style="font-size:12px;font-weight:700;color:#333;margin:0 0 6px;">How to review your designs</p>
+      <p style="font-size:12px;color:#666;line-height:1.6;margin:0;">
+        1. Open the link above<br>
+        2. Review the comparison table — it shows exactly how the three options differ<br>
+        3. Click "Explore Option X in full" to scroll through each complete design<br>
+        4. Answer the three questions at the bottom to get our recommendation<br>
+        5. Click "I've made my choice — let's build it" to send us your decision
+      </p>
+    </div>
+    <p style="color:#999;font-size:12px;margin:20px 0 4px;">
+      This link is private to you and expires on ${expiryFormatted}.
     </p>
-    <p style="color:#999;font-size:12px;margin:4px 0 0;">
-      Questions? Reply to this email or contact us at hello@zyntel.net
+    <p style="color:#999;font-size:12px;margin:0 0 20px;">
+      Questions? Reply to this email or reach us at hello@zyntel.net
     </p>
-    <hr style="border:none;border-top:1px solid #f0f0f0;margin:20px 0;"/>
-    <p style="color:#ccc;font-size:11px;margin:0;">Zyntel Limited · Kampala, Uganda · zyntel.net</p>
+    <hr style="border:none;border-top:1px solid #f0f0f0;margin:0 0 16px;">
+    <p style="color:#bbb;font-size:11px;margin:0;">Zyntel Limited · Kampala, Uganda · zyntel.net</p>
   </div>
 </body>
-</html>`
-  });
+</html>`,
+    });
 
-  if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  return new Response(JSON.stringify({ sent: true }), { headers: { 'Content-Type': 'application/json' } });
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ sent: true, to: client.email }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message ?? 'Unknown error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 };

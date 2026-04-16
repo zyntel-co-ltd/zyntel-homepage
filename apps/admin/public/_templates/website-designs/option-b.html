@@ -211,6 +211,16 @@ footer{background:#111;padding:56px 5% 36px}
 .fi.v{opacity:1;transform:translateY(0)}
 .zyn-back-btn{position:fixed;top:16px;left:16px;z-index:9999;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(0,0,0,.13);border-radius:100px;padding:8px 14px 8px 10px;font-size:12px;font-weight:600;color:#111;text-decoration:none;box-shadow:0 2px 12px rgba(0,0,0,.10);transition:box-shadow .15s,background .15s;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
 .zyn-back-btn:hover{background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+.mobile-warning{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.7);align-items:center;justify-content:center;padding:20px;}
+.mw-inner{background:#fff;border-radius:14px;padding:28px 24px;max-width:420px;width:100%;}
+.mw-icon{font-size:2rem;margin-bottom:12px;display:block;text-align:center;}
+.mw-body strong{font-size:15px;font-weight:700;color:#1A1A1A;display:block;margin-bottom:10px;line-height:1.4;}
+.mw-body p{font-size:13px;color:#555;line-height:1.65;margin:0 0 10px;}
+.mw-actions{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
+.mw-btn{display:block;width:100%;padding:12px;border-radius:8px;font-size:13px;font-weight:700;text-align:center;cursor:pointer;border:none;font-family:'Plus Jakarta Sans',sans-serif;text-decoration:none;}
+.mw-btn-copy{background:#C63527;color:#fff;}
+.mw-btn-dismiss{background:#F7F5F1;color:#555;border:1px solid rgba(0,0,0,.1);}
+@media(max-width:768px){.mobile-warning{display:flex;}}
 </style>
 </head>
 <body>
@@ -220,6 +230,21 @@ footer{background:#111;padding:56px 5% 36px}
   </svg>
   All options
 </a>
+
+<div class="mobile-warning" id="mobile-warning">
+  <div class="mw-inner">
+    <div class="mw-icon">📺</div>
+    <div class="mw-body">
+      <strong>This presentation is designed for a computer screen.</strong>
+      <p>You appear to be on a phone or tablet. For the best experience — and to properly evaluate the design options — please open this link on a laptop or desktop computer.</p>
+      <p>You can email the link to yourself or copy it to open later on a bigger screen.</p>
+      <div class="mw-actions">
+        <a class="mw-btn mw-btn-copy" onclick="copyLinkToClipboard()" href="#">Copy link to open on computer</a>
+        <button class="mw-btn mw-btn-dismiss" onclick="dismissWarning()">Continue anyway on this device</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <nav>
   <div class="nav-brand-seg">
@@ -410,6 +435,37 @@ so.observe(document.getElementById('statsBar'));
 const fo=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('v')})},{threshold:.07});
 document.querySelectorAll('.fi').forEach(el=>fo.observe(el));
 window.addEventListener('scroll',()=>{document.querySelector('nav').style.boxShadow=window.scrollY>20?'0 2px 14px rgba(0,0,0,0.06)':'none'});
+
+function dismissWarning() {
+  document.getElementById('mobile-warning').style.display = 'none';
+  sessionStorage.setItem('mw_dismissed', '1');
+}
+
+function copyLinkToClipboard() {
+  var url = window.location.href;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      var btn = document.querySelector('.mw-btn-copy');
+      if (btn) { btn.textContent = '✓ Link copied — open on your computer'; }
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = window.location.href;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    var btn = document.querySelector('.mw-btn-copy');
+    if (btn) { btn.textContent = '✓ Link copied — open on your computer'; }
+  }
+}
+
+(function() {
+  if (window.innerWidth <= 768 && !sessionStorage.getItem('mw_dismissed')) {
+    var el = document.getElementById('mobile-warning');
+    if (el) el.style.display = 'flex';
+  }
+})();
 </script>
 </body>
 </html>
