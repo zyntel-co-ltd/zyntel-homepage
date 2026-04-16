@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ace Cleaning & Homecare — Website Design Presentation</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F5F1;color:#1A1A1A;overflow-x:hidden}
+
+/* COVER */
+.cover{min-height:100vh;background:#fff;display:grid;grid-template-columns:1fr 1fr;position:relative;overflow:hidden}
+.cover-left{padding:80px 5% 60px 6%;display:flex;flex-direction:column;justify-content:space-between;background:#fff;position:relative;z-index:2}
+.cover-left::after{content:'';position:absolute;right:0;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent,rgba(0,0,0,.08) 20%,rgba(0,0,0,.08) 80%,transparent)}
+.cover-from{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#888;margin-bottom:60px;display:flex;align-items:center;gap:10px}
+.cover-from::before{content:'';width:24px;height:1px;background:#888;display:block}
+.cover-logo-row{display:flex;align-items:center;gap:12px;margin-bottom:48px}
+.cover-ace-mark{width:44px;height:44px;background:#C63527;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff}
+.cover-ace-name{font-size:15px;font-weight:700;color:#1A1A1A;line-height:1.25}
+.cover-ace-name small{display:block;font-size:11px;font-weight:400;color:#888}
+.cover-title{font-size:clamp(40px,5vw,62px);font-weight:800;line-height:1.05;letter-spacing:-.03em;color:#1A1A1A;margin-bottom:24px}
+.cover-title span{color:#C63527}
+.cover-desc{font-size:15px;font-weight:300;line-height:1.8;color:#666;max-width:440px;margin-bottom:40px}
+.cover-steps{display:flex;flex-direction:column;gap:14px;margin-bottom:48px}
+.cs{display:flex;align-items:flex-start;gap:14px}
+.cs-num{width:28px;height:28px;border-radius:50%;background:#C63527;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.cs-text strong{font-size:13px;font-weight:600;color:#1A1A1A;display:block;margin-bottom:2px}
+.cs-text span{font-size:12px;font-weight:300;color:#888}
+.cover-footer{display:flex;align-items:center;justify-content:space-between;padding-top:24px;border-top:1px solid rgba(0,0,0,.08)}
+.cover-by{font-size:11px;color:#aaa}
+.cover-by strong{color:#C63527;font-weight:600}
+.cover-date{font-size:11px;color:#aaa}
+.scroll-cta{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#C63527;text-decoration:none;padding:12px 0;transition:gap .2s}
+.scroll-cta:hover{gap:12px}
+
+.cover-right{background:#F7F5F1;display:flex;align-items:center;justify-content:center;padding:60px 40px;position:relative}
+.cover-preview-stack{position:relative;width:100%;max-width:420px}
+.cp-card{background:#fff;border-radius:12px;border:1px solid rgba(0,0,0,.08);overflow:hidden;position:absolute;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+.cp-card-main{position:relative;width:85%;left:7.5%;top:0;z-index:3;box-shadow:0 16px 48px rgba(0,0,0,.12)}
+.cp-card-back1{width:80%;left:10%;top:-20px;z-index:2;transform:rotate(-3deg)}
+.cp-card-back2{width:80%;left:10%;top:-30px;z-index:1;transform:rotate(3deg)}
+.cp-hero-strip{height:120px;display:flex}
+.cp-left{flex:1;background:#FDFAF6;padding:16px;display:flex;flex-direction:column;justify-content:flex-end}
+.cp-right{width:100px;background:linear-gradient(145deg,#e8e0d4,#d4ccc0);position:relative;display:flex;align-items:center;justify-content:center}
+.cp-right span{font-size:28px;opacity:.2}
+.cp-h1{font-size:14px;font-weight:700;color:#1A1A1A;line-height:1.2;margin-bottom:4px}
+.cp-sub{font-size:8px;color:#888;margin-bottom:8px;line-height:1.4}
+.cp-btn{background:#C63527;color:#fff;font-size:8px;font-weight:700;padding:5px 10px;border-radius:4px;display:inline-block}
+.cp-marquee{background:#fff;border-top:1px solid rgba(0,0,0,.08);padding:8px 16px;font-size:8px;color:#ccc;font-weight:600;letter-spacing:.04em;white-space:nowrap;overflow:hidden}
+.cp-stats{display:grid;grid-template-columns:repeat(4,1fr);background:#C63527;padding:8px 0}
+.cp-stat{text-align:center}
+.cp-stat-n{font-size:12px;font-weight:800;color:#fff;display:block}
+.cp-stat-l{font-size:6px;color:rgba(255,255,255,.6);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.cp-label{position:absolute;top:-12px;right:20px;background:#C63527;color:#fff;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:3px;z-index:10}
+.cover-right-note{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);font-size:11px;color:#aaa;white-space:nowrap;text-align:center}
+
+/* SECTION INTRO */
+.section-intro{padding:72px 6% 40px;background:#fff;border-bottom:1px solid rgba(0,0,0,.07)}
+.si-tag{display:inline-block;background:#FEF3F2;border:1px solid rgba(198,53,39,.2);border-radius:100px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#C63527;padding:5px 14px;margin-bottom:20px}
+.si-title{font-size:clamp(24px,3vw,38px);font-weight:800;letter-spacing:-.02em;color:#1A1A1A;margin-bottom:12px}
+.si-sub{font-size:14px;font-weight:300;line-height:1.75;color:#666;max-width:600px}
+
+/* COMPARISON TABLE */
+.comp-wrap{padding:0 6% 48px;background:#fff}
+.ctable{border:1px solid rgba(0,0,0,.08);border-radius:12px;overflow:hidden}
+.ct-head{display:grid;grid-template-columns:200px 1fr 1fr 1fr;background:#FAFAF8;border-bottom:1px solid rgba(0,0,0,.08)}
+.cth-empty{padding:18px 16px;border-right:1px solid rgba(0,0,0,.06)}
+.cth-v{padding:18px 20px;border-right:1px solid rgba(0,0,0,.06)}
+.cth-v:last-child{border:none}
+.cth-tag{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888;margin-bottom:4px}
+.cth-name{font-size:13px;font-weight:700;color:#1A1A1A;margin-bottom:2px}
+.cth-desc{font-size:11px;color:#888;font-weight:300;line-height:1.4}
+.cth-link{display:block;text-decoration:none;color:inherit;border-radius:6px;padding:2px;transition:background .15s;}
+.cth-link:hover{background:rgba(37,99,235,.05);}
+.cth-view-cta{display:block;font-size:10px;font-weight:700;color:#2563eb;margin-top:8px;letter-spacing:.02em;}
+.ct-row{display:grid;grid-template-columns:200px 1fr 1fr 1fr;border-bottom:1px solid rgba(0,0,0,.05)}
+.ct-row:last-child{border:none}
+.ct-label{padding:14px 16px;font-size:11px;font-weight:600;color:#888;border-right:1px solid rgba(0,0,0,.05);display:flex;align-items:center;background:#FDFDFB}
+.ct-val{padding:14px 18px;font-size:12px;font-weight:400;color:#333;border-right:1px solid rgba(0,0,0,.05);display:flex;align-items:center;gap:6px;line-height:1.5}
+.ct-val:last-child{border:none}
+.yes{color:#C63527;font-weight:700;font-size:12px}
+.no{color:#ccc;font-size:12px}
+.pal{display:flex;gap:5px;align-items:center}
+.psw{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.1)}
+
+/* OPTION CARDS */
+.options-section{padding:0 6% 80px;background:#F7F5F1}
+.options-header{padding:48px 0 32px}
+.options-header h2{font-size:clamp(22px,2.8vw,34px);font-weight:800;letter-spacing:-.02em;color:#1A1A1A;margin-bottom:8px}
+.options-header p{font-size:13px;font-weight:300;color:#888}
+.options-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+
+.opt-card{background:#fff;border-radius:14px;border:1px solid rgba(0,0,0,.08);overflow:hidden;transition:transform .2s,box-shadow .2s}
+.opt-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.1)}
+.opt-card-header{padding:18px 20px;border-bottom:1px solid rgba(0,0,0,.07);display:flex;align-items:center;justify-content:space-between}
+.opt-letter{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0}
+.opt-meta{flex:1;padding-left:12px}
+.opt-tag{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888;margin-bottom:2px}
+.opt-name{font-size:13px;font-weight:700;color:#1A1A1A}
+
+/* HERO MOCKUP */
+.opt-hero{height:220px;overflow:hidden;position:relative}
+
+/* Version A — red/cream split */
+.oh-a{display:grid;grid-template-columns:1fr 1fr;height:100%}
+.oha-left{background:#FDFAF6;padding:20px 16px;display:flex;flex-direction:column;justify-content:flex-end}
+.oha-right{background:linear-gradient(145deg,#ede8df,#d8d4c8);position:relative;display:flex;align-items:center;justify-content:center}
+.oha-right span{font-size:40px;opacity:.2}
+.oha-right-badge{position:absolute;bottom:14px;right:12px;background:#fff;border-radius:8px;padding:8px 10px;text-align:center;border:1px solid rgba(0,0,0,.08)}
+.oha-right-badge .bn{font-size:16px;font-weight:800;color:#C63527;display:block;line-height:1}
+.oha-right-badge .bl{font-size:6px;text-transform:uppercase;color:#aaa;letter-spacing:.06em;font-weight:600}
+.oh-eyebrow{font-size:6px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.oh-eyebrow::before{content:'';width:10px;height:1.5px;display:block}
+.oh-h1{font-weight:700;line-height:1.1;margin-bottom:4px}
+.oh-sub{font-size:7px;font-weight:300;line-height:1.5;margin-bottom:8px}
+.oh-btn{font-size:7px;font-weight:700;padding:5px 10px;border-radius:4px;display:inline-block}
+
+/* Version B — editorial green */
+.oh-b{background:#fff;height:100%;display:grid;grid-template-columns:1fr 220px;border-top:2px solid #2A6B4A}
+.ohb-left{padding:18px 14px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid rgba(0,0,0,.08)}
+.ohb-form{background:#EEF6F1;padding:14px;display:flex;flex-direction:column;gap:6px}
+.ohb-kicker{font-size:6px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2A6B4A;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.ohb-kicker::before{content:'';width:10px;height:1.5px;background:#2A6B4A;display:block}
+.ohb-h1{font-weight:700;line-height:1.1;margin-bottom:6px}
+.ohb-quote{border-left:2.5px solid #2A6B4A;padding-left:8px;font-size:7px;color:#666;line-height:1.5;margin-bottom:8px}
+.ohb-btns{display:flex;gap:5px}
+.ohb-fl{font-size:7px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.form-lbl{font-size:6px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#888}
+.form-inp{background:#fff;border:1px solid rgba(0,0,0,.12);height:14px;border-radius:3px;width:100%}
+.form-btn{background:#2A6B4A;color:#fff;border:none;font-size:7px;font-weight:700;padding:6px;width:100%;letter-spacing:.06em;text-transform:uppercase;border-radius:3px}
+
+/* Version C — sky blue mosaic */
+.oh-c{background:#fff;height:100%;display:grid;grid-template-columns:1fr 1fr}
+.ohc-left{padding:18px 14px;display:flex;flex-direction:column;justify-content:flex-end;background:#FAFCFF}
+.ohc-right{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px}
+.ohc-cell{background:linear-gradient(145deg,#d8eef8,#b8d8ee);display:flex;align-items:center;justify-content:center;font-size:22px;opacity:.9}
+.ohc-cell2{background:linear-gradient(145deg,#d0e8d0,#b0cdb0)}
+.ohc-cell3{background:linear-gradient(145deg,#1A7AAF,#2A9AD8)}
+.ohc-cell4{background:linear-gradient(145deg,#ede8e0,#d8d0c4)}
+.ohc-eyebrow{display:inline-flex;background:#EBF5FB;border:1px solid rgba(26,122,175,.2);border-radius:50px;padding:4px 10px;font-size:6px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#1A7AAF;margin-bottom:8px;width:fit-content}
+
+/* SECTION LIST */
+.opt-sections{padding:14px 20px;border-top:1px solid rgba(0,0,0,.07)}
+.opt-sec-label{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#aaa;margin-bottom:8px}
+.opt-sec-list{display:flex;flex-direction:column;gap:4px}
+.osl-item{display:flex;align-items:center;gap:7px;font-size:11px;color:#444;line-height:1.4}
+.osl-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.osl-item.unique{color:#777;font-style:italic}
+.osl-item.unique .osl-dot{background:#bbb}
+
+/* PICK BUTTON AREA */
+.opt-footer{padding:16px 20px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:8px}
+.opt-pick-btn{width:100%;padding:12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;letter-spacing:.01em}
+.opt-note{font-size:10px;color:#aaa;text-align:center}
+
+/* DECISION */
+.decision-section{padding:0 6% 80px;background:#fff}
+.dec-inner{border:1px solid rgba(0,0,0,.08);border-radius:14px;display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
+.dec-left{padding:44px;background:#FEF3F2}
+.dec-left h2{font-size:24px;font-weight:800;color:#1A1A1A;letter-spacing:-.02em;margin-bottom:10px}
+.dec-left p{font-size:14px;font-weight:300;color:#666;line-height:1.75;margin-bottom:28px}
+.dec-qs{display:flex;flex-direction:column;gap:14px}
+.dq{background:#fff;border-radius:8px;padding:16px;border:1px solid rgba(0,0,0,.07)}
+.dq-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#C63527;margin-bottom:6px}
+.dq-text{font-size:13px;color:#333;line-height:1.55}
+.dec-right{padding:44px;background:#fff;border-left:1px solid rgba(0,0,0,.08)}
+.dr-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:20px}
+.dr-opt{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.07)}
+.dr-opt:last-of-type{border:none;margin-bottom:20px}
+.dr-circle{width:34px;height:34px;border-radius:50%;background:#C63527;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dr-circle.b{background:#2A6B4A}
+.dr-circle.c{background:#1A7AAF}
+.dr-text strong{font-size:12px;font-weight:700;color:#1A1A1A;display:block;margin-bottom:2px}
+.dr-text span{font-size:11px;color:#888;font-weight:300;line-height:1.5}
+.dr-cta{display:flex;flex-direction:column;gap:10px}
+.dcta{width:100%;padding:13px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'Plus Jakarta Sans',sans-serif;transition:background .2s;text-align:center;text-decoration:none;display:block}
+.dcta-p{background:#C63527;color:#fff}
+.dcta-p:hover{background:#A82D21}
+.dcta-s{background:#F7F5F1;color:#333;border:1px solid rgba(0,0,0,.1)}
+.dcta-s:hover{background:#EDE8DF}
+
+/* FOOTER */
+.page-footer{background:#1A1A1A;padding:32px 6%;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.pf-text{font-size:12px;color:rgba(255,255,255,.3)}
+.pf-text strong{color:rgba(255,255,255,.6);font-weight:600}
+.pf-conf{font-size:10px;color:rgba(255,255,255,.2);text-align:right}
+
+/* MODAL */
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
+.modal-box{background:#fff;border-radius:16px;padding:40px;max-width:440px;width:90%;text-align:center;animation:mIn .3s ease}
+@keyframes mIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal-icon{width:60px;height:60px;border-radius:50%;background:#C63527;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:24px;color:#fff}
+.modal-title{font-size:20px;font-weight:800;color:#1A1A1A;margin-bottom:8px;letter-spacing:-.02em}
+.modal-body{font-size:14px;font-weight:300;color:#666;line-height:1.7;margin-bottom:24px}
+.modal-email{display:block;padding:13px 24px;background:#C63527;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;margin-bottom:10px;transition:background .2s}
+.modal-email:hover{background:#A82D21}
+.modal-close{width:100%;padding:11px;background:#F7F5F1;color:#666;border:1px solid rgba(0,0,0,.1);border-radius:8px;font-size:13px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif}
+.zyn-topbar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid rgba(0,0,0,.08);}
+.zyn-topbar-inner{display:flex;align-items:center;gap:8px;height:44px;padding:0 5%;font-size:12px;color:#666;overflow:hidden;}
+.zyn-topbar-brand{font-weight:800;color:#111;font-size:13px;white-space:nowrap;}
+.zyn-topbar-sep{color:#ddd;}
+.zyn-topbar-context{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.zyn-topbar-step{font-size:11px;color:#aaa;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="zyn-topbar">
+  <div class="zyn-topbar-inner">
+    <span class="zyn-topbar-brand">Zyntel</span>
+    <span class="zyn-topbar-sep">·</span>
+    <span class="zyn-topbar-context">Design Presentation — ACE Cleaning &amp; Homecare</span>
+    <span class="zyn-topbar-step">Choose your design</span>
+  </div>
+</div>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <div class="cover-left">
+    <div>
+      <div class="cover-from">Prepared by Zyntel Limited · Confidential</div>
+      <div class="cover-logo-row">
+        <div class="cover-ace-mark">A</div>
+        <div>
+          <div class="cover-ace-name">Ace Cleaning & Homecare Ltd<small>Mutungo-Biina · Kampala, Uganda</small></div>
+        </div>
+      </div>
+      <div class="cover-title">Your website.<br>Three <span>directions.</span><br>One choice.</div>
+      <p class="cover-desc">We have designed three distinct, production-ready versions of your new website. Each one is complete — not a sketch. Scroll through each, then tell us which one best represents how you want Ace to be seen.</p>
+      <div class="cover-steps">
+        <div class="cs"><div class="cs-num">1</div><div class="cs-text"><strong>Review the comparison below</strong><span>See how the three versions differ at a glance</span></div></div>
+        <div class="cs"><div class="cs-num">2</div><div class="cs-text"><strong>Open each full version file</strong><span>Scroll through the complete design, not just the preview</span></div></div>
+        <div class="cs"><div class="cs-num">3</div><div class="cs-text"><strong>Click your choice and confirm</strong><span>We build it exactly as shown — no further delays</span></div></div>
+      </div>
+    </div>
+    <div class="cover-footer">
+      <div class="cover-by">Prepared by <strong>Zyntel Limited</strong> · zyntel.net</div>
+      <div class="cover-date">April 2025</div>
+    </div>
+  </div>
+  <div class="cover-right">
+    <div class="cover-preview-stack" style="height:300px;display:flex;align-items:center;justify-content:center">
+      <div style="position:relative;width:100%">
+        <div class="cp-card" style="width:80%;left:10%;top:30px;z-index:1;transform:rotate(4deg)">
+          <div style="height:80px;background:linear-gradient(135deg,#EEF6F1,#d8ecd8)"></div>
+          <div style="height:4px;background:#2A6B4A"></div>
+          <div style="height:30px;background:#fff"></div>
+        </div>
+        <div class="cp-card" style="width:80%;left:10%;top:20px;z-index:2;transform:rotate(-3deg)">
+          <div style="height:80px;background:linear-gradient(135deg,#EBF5FB,#c8ddf0)"></div>
+          <div style="height:4px;background:#1A7AAF"></div>
+          <div style="height:30px;background:#fff"></div>
+        </div>
+        <div class="cp-card" style="width:85%;left:7.5%;top:0;z-index:3">
+          <div class="cp-label">3 design options</div>
+          <div class="cp-hero-strip">
+            <div class="cp-left">
+              <div class="cp-h1">Cleaner Spaces.<br>Better Business.</div>
+              <div class="cp-sub">Serving corporate, commercial and residential clients across Kampala.</div>
+              <div class="cp-btn">Get a Quote</div>
+            </div>
+            <div class="cp-right"><span>🏢</span></div>
+          </div>
+          <div class="cp-marquee">Uganda Revenue Authority · Speke Hotel · New Vision · Meera Investments ···</div>
+          <div class="cp-stats">
+            <div class="cp-stat"><span class="cp-stat-n">3+</span><span class="cp-stat-l">Years</span></div>
+            <div class="cp-stat"><span class="cp-stat-n">50+</span><span class="cp-stat-l">Clients</span></div>
+            <div class="cp-stat"><span class="cp-stat-n">6</span><span class="cp-stat-l">Services</span></div>
+            <div class="cp-stat"><span class="cp-stat-n">100%</span><span class="cp-stat-l">Satisfaction</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cover-right-note">Scroll down to see all three versions ↓</div>
+  </div>
+</div>
+
+<!-- COMPARISON TABLE -->
+<div class="section-intro">
+  <div class="si-tag">Side by side</div>
+  <div class="si-title">How the three versions compare</div>
+  <p class="si-sub">Every version is complete and ready to build. The differences below are the choices you are making for your brand.</p>
+</div>
+<div class="comp-wrap" style="padding-top:24px">
+  <div class="ctable">
+    <div class="ct-head">
+      <div class="cth-empty"></div>
+      <div class="cth-v">
+        <a href="ace-option-A-warm-professional.html" class="cth-link" target="_self">
+          <div class="cth-tag">Option A</div>
+          <div class="cth-name">Warm & Professional</div>
+          <div class="cth-desc">Red/cream palette · serif headings · split hero with photo</div>
+          <span class="cth-view-cta">View full design →</span>
+        </a>
+      </div>
+      <div class="cth-v">
+        <a href="ace-option-B-light-green.html" class="cth-link" target="_self">
+          <div class="cth-tag">Option B</div>
+          <div class="cth-name">Fresh & Direct</div>
+          <div class="cth-desc">Green/cream palette · editorial layout · quote form in hero</div>
+          <span class="cth-view-cta">View full design →</span>
+        </a>
+      </div>
+      <div class="cth-v">
+        <a href="ace-option-C-blue.html" class="cth-link" target="_self">
+          <div class="cth-tag">Option C</div>
+          <div class="cth-name">Light & Airy</div>
+          <div class="cth-desc">Sky blue/white · Molly Maids feel · photo mosaic hero</div>
+          <span class="cth-view-cta">View full design →</span>
+        </a>
+      </div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-label">Accent colour</div>
+      <div class="ct-val"><div class="pal"><div class="psw" style="background:#C63527"></div></div>Red</div>
+      <div class="ct-val"><div class="pal"><div class="psw" style="background:#2A6B4A"></div></div>Forest green</div>
+      <div class="ct-val"><div class="pal"><div class="psw" style="background:#1A7AAF"></div></div>Sky blue</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-label">Hero style</div>
+      <div class="ct-val">Split — text left, single photo right</div>
+      <div class="ct-val">Editorial text + quote form sidebar</div>
+      <div class="ct-val">Split — text left, 4-image mosaic right</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-label">Quote form on homepage</div>
+      <div class="ct-val"><span class="no">✗ Contact page only</span></div>
+      <div class="ct-val"><span class="yes">✓ Embedded on the homepage</span></div>
+      <div class="ct-val"><span class="no">✗ Contact page only</span></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-label">Testimonials section</div>
+      <div class="ct-val"><span class="no">✗ Not featured</span></div>
+      <div class="ct-val"><span class="yes">✓ Prominent — near the top</span></div>
+      <div class="ct-val"><span class="no">✗ Not featured</span></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-label">Team section</div>
+      <div class="ct-val"><span class="yes">✓ Founders + staff</span></div>
+      <div class="ct-val"><span class="no">✗ Not included</span></div>
+      <div class="ct-val"><span class="yes">✓ Founders + staff</span></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-label">HouseHelpers teaser</div>
+      <div class="ct-val"><span class="yes">✓ Included</span></div>
+      <div class="ct-val"><span class="no">✗ Not included</span></div>
+      <div class="ct-val"><span class="yes">✓ Included</span></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-label">Unique section</div>
+      <div class="ct-val">None — classic structure</div>
+      <div class="ct-val">Certifications & Compliance · How It Works</div>
+      <div class="ct-val">Image gallery strip (5 hover panels)</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-label">Best if you want…</div>
+      <div class="ct-val">A warm, trusted, brand-forward feel</div>
+      <div class="ct-val">Clients to book on first visit</div>
+      <div class="ct-val">A bright, modern, image-rich look</div>
+    </div>
+  </div>
+</div>
+
+<!-- OPTION CARDS -->
+<div class="options-section" id="options">
+  <div class="options-header">
+    <h2>The three options</h2>
+    <p>Preview each hero section below. Open the full version files to scroll through every page.</p>
+  </div>
+  <div class="options-grid">
+
+    <!-- OPTION A -->
+    <div class="opt-card">
+      <div class="opt-card-header">
+        <div class="opt-letter" style="background:#C63527">A</div>
+        <div class="opt-meta">
+          <div class="opt-tag">Option A</div>
+          <div class="opt-name">Warm & Professional</div>
+        </div>
+      </div>
+      <div class="opt-hero">
+        <div class="oh-a">
+          <div class="oha-left">
+            <div class="oh-eyebrow" style="color:#C63527"><span style="width:10px;height:1.5px;background:#C63527;display:block"></span>Uganda's cleaning partner since 2021</div>
+            <div class="oh-h1" style="font-size:16px;color:#1E1A16;font-family:Georgia,serif;margin-bottom:5px">Cleaner Spaces.<br><em style="color:#C63527">Better Business.</em></div>
+            <div class="oh-sub" style="color:#7A7268;max-width:160px">Serving Kampala's most demanding organisations.</div>
+            <div class="oh-btn" style="background:#C63527;color:#fff;border-radius:4px">Get a Quote →</div>
+          </div>
+          <div class="oha-right">
+            <span>🏢</span>
+            <div class="oha-right-badge"><span class="bn">100%</span><span class="bl">Satisfaction</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="opt-sections">
+        <div class="opt-sec-label">All page sections</div>
+        <div class="opt-sec-list">
+          <div class="osl-item"><div class="osl-dot" style="background:#C63527"></div>Split hero with photo + stats</div>
+          <div class="osl-item"><div class="osl-dot" style="background:#C63527"></div>Logo marquee · Animated stats bar</div>
+          <div class="osl-item"><div class="osl-dot" style="background:#C63527"></div>About 50/50 · Services grid · Video gallery</div>
+          <div class="osl-item"><div class="osl-dot" style="background:#C63527"></div>Team section (founders + staff)</div>
+          <div class="osl-item"><div class="osl-dot" style="background:#C63527"></div>Blog preview · HouseHelpers teaser</div>
+        </div>
+      </div>
+      <div class="opt-footer">
+        <a class="opt-pick-btn" style="background:#C63527;color:#fff;display:block;text-align:center;text-decoration:none" href="ace-option-A-warm-professional.html" target="_self">I choose Option A →</a>
+        <span class="opt-note">Classic · Warm · Brand-forward</span>
+      </div>
+    </div>
+
+    <!-- OPTION B -->
+    <div class="opt-card">
+      <div class="opt-card-header">
+        <div class="opt-letter" style="background:#2A6B4A">B</div>
+        <div class="opt-meta">
+          <div class="opt-tag">Option B</div>
+          <div class="opt-name">Fresh & Direct</div>
+        </div>
+      </div>
+      <div class="opt-hero">
+        <div class="oh-b">
+          <div class="ohb-left">
+            <div class="ohb-kicker">Kampala's cleaning partner since 2021</div>
+            <div class="ohb-h1" style="font-size:16px;color:#1A1A1A;font-family:Georgia,serif">Cleaner Spaces.<br><em style="color:#2A6B4A">Better Business.</em></div>
+            <div class="ohb-quote">URA. Speke Hotel. New Vision. They trust Ace.</div>
+            <div class="ohb-btns">
+              <div class="ohb-fl" style="background:#2A6B4A;color:#fff;padding:5px 10px;border-radius:4px">Request Quote</div>
+              <div class="ohb-fl" style="background:transparent;color:#2A6B4A;border:1.5px solid #2A6B4A;padding:5px 10px;border-radius:4px">Services</div>
+            </div>
+          </div>
+          <div class="ohb-form">
+            <div style="font-size:8px;font-weight:700;color:#2A6B4A;margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid rgba(42,107,74,.15)">Quick quote</div>
+            <div class="form-lbl">Name</div><div class="form-inp"></div>
+            <div class="form-lbl">Service</div><div class="form-inp"></div>
+            <div class="form-lbl">Phone</div><div class="form-inp"></div>
+            <button class="form-btn">Send →</button>
+          </div>
+        </div>
+      </div>
+      <div class="opt-sections">
+        <div class="opt-sec-label">All page sections</div>
+        <div class="opt-sec-list">
+          <div class="osl-item"><div class="osl-dot" style="background:#2A6B4A"></div>Editorial hero with embedded quote form</div>
+          <div class="osl-item"><div class="osl-dot" style="background:#2A6B4A"></div>Logo marquee · Green stats bar</div>
+          <div class="osl-item"><div class="osl-dot" style="background:#2A6B4A"></div>Testimonials (prominent · near top)</div>
+          <div class="osl-item"><div class="osl-dot" style="background:#2A6B4A"></div>Services list · Video gallery · Blog</div>
+          <div class="osl-item unique"><div class="osl-dot" style="background:#2A6B4A"></div>Certifications & compliance ✦ unique</div>
+          <div class="osl-item unique"><div class="osl-dot" style="background:#2A6B4A"></div>How It Works (4-step process) ✦ unique</div>
+        </div>
+      </div>
+      <div class="opt-footer">
+        <a class="opt-pick-btn" style="background:#2A6B4A;color:#fff;display:block;text-align:center;text-decoration:none" href="ace-option-B-light-green.html" target="_self">I choose Option B →</a>
+        <span class="opt-note">Fresh · Action-first · Trustworthy</span>
+      </div>
+    </div>
+
+    <!-- OPTION C -->
+    <div class="opt-card">
+      <div class="opt-card-header">
+        <div class="opt-letter" style="background:#1A7AAF">C</div>
+        <div class="opt-meta">
+          <div class="opt-tag">Option C</div>
+          <div class="opt-name">Light & Airy</div>
+        </div>
+      </div>
+      <div class="opt-hero">
+        <div class="oh-c">
+          <div class="ohc-left">
+            <div class="ohc-eyebrow">Est. 2021 · Kampala</div>
+            <div style="font-size:16px;font-weight:800;color:#1A2A36;line-height:1.1;margin-bottom:5px">Spotless Spaces.<br><span style="color:#1A7AAF">Happy Clients.</span></div>
+            <div style="font-size:7px;font-weight:300;color:#7A8A96;line-height:1.5;margin-bottom:8px;max-width:150px">Uganda's trusted cleaning and homecare partner.</div>
+            <div style="display:flex;gap:5px">
+              <div style="font-size:7px;font-weight:700;padding:5px 10px;background:#1A7AAF;color:#fff;border-radius:50px">Get Quote</div>
+              <div style="font-size:7px;font-weight:600;padding:5px 10px;border:1.5px solid #1A7AAF;color:#1A7AAF;border-radius:50px">Services</div>
+            </div>
+          </div>
+          <div class="ohc-right">
+            <div class="ohc-cell">🏢</div>
+            <div class="ohc-cell ohc-cell2">🌿</div>
+            <div class="ohc-cell ohc-cell3" style="opacity:.9">✨</div>
+            <div class="ohc-cell ohc-cell4">🧴</div>
+          </div>
+        </div>
+      </div>
+      <div class="opt-sections">
+        <div class="opt-sec-label">All page sections</div>
+        <div class="opt-sec-list">
+          <div class="osl-item"><div class="osl-dot" style="background:#1A7AAF"></div>Split hero with 4-photo mosaic</div>
+          <div class="osl-item"><div class="osl-dot" style="background:#1A7AAF"></div>Logo marquee · Blue stats bar</div>
+          <div class="osl-item"><div class="osl-dot" style="background:#1A7AAF"></div>About 50/50 · Services grid · Video gallery</div>
+          <div class="osl-item unique"><div class="osl-dot" style="background:#1A7AAF"></div>Image gallery strip (5 hover panels) ✦ unique</div>
+          <div class="osl-item"><div class="osl-dot" style="background:#1A7AAF"></div>Team section (founders + staff)</div>
+          <div class="osl-item"><div class="osl-dot" style="background:#1A7AAF"></div>Blog preview · HouseHelpers teaser</div>
+        </div>
+      </div>
+      <div class="opt-footer">
+        <a class="opt-pick-btn" style="background:#1A7AAF;color:#fff;display:block;text-align:center;text-decoration:none" href="ace-option-C-blue.html" target="_self">I choose Option C →</a>
+        <span class="opt-note">Bright · Modern · Image-forward</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DECISION GUIDE -->
+<div class="decision-section">
+  <div class="dec-inner">
+    <div class="dec-left">
+      <h2>Not sure yet?</h2>
+      <p>Three questions. Your answers will point clearly to one version without second-guessing.</p>
+      <div class="dec-qs">
+        <div class="dq"><div class="dq-lbl">Question 1 — Tone</div><div class="dq-text">Should the first impression feel warm and trusted, business-ready and direct, or bright and welcoming?</div></div>
+        <div class="dq"><div class="dq-lbl">Question 2 — Founders visible?</div><div class="dq-text">Do you want Nahurira and Nalutaaya shown as the face of the company on the homepage? (A and C only)</div></div>
+        <div class="dq"><div class="dq-lbl">Question 3 — Immediate quotes?</div><div class="dq-text">Should visitors be able to request a quote without leaving the homepage? (B only)</div></div>
+      </div>
+    </div>
+    <div class="dec-right">
+      <div class="dr-label">Your choice determines this</div>
+      <div class="dr-opt"><div class="dr-circle">A</div><div class="dr-text"><strong>Option A — Warm & Professional</strong><span>Red/cream palette · Split hero · Team section · HouseHelpers teaser · Classic structure</span></div></div>
+      <div class="dr-opt"><div class="dr-circle b">B</div><div class="dr-text"><strong>Option B — Fresh & Direct</strong><span>Green/cream · Quote form on homepage · Testimonials near top · Certifications section</span></div></div>
+      <div class="dr-opt"><div class="dr-circle c">C</div><div class="dr-text"><strong>Option C — Light & Airy</strong><span>Sky blue/white · Photo mosaic hero · Gallery strip · Team section · HouseHelpers teaser</span></div></div>
+      <div class="dr-cta">
+        <a href="mailto:ntale@zyntel.net?subject=Ace Website - Design Choice&body=Hi Ntale,%0A%0AI have reviewed all three design options for the Ace Cleaning website.%0A%0AMy choice is: Option __ — [Name]%0A%0APlease proceed with the build." class="dcta dcta-p">Send choice by email →</a>
+        <a href="#options" class="dcta dcta-s">Review option files below</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-footer">
+  <div class="pf-text">Prepared exclusively for <strong>Ace Cleaning & Homecare Ltd</strong> · Nahurira Benson & Nalutaaya Lucky</div>
+  <div class="pf-conf">Confidential · Zyntel Limited · zyntel.net · April 2025</div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box">
+    <div class="modal-icon">✓</div>
+    <div class="modal-title" id="mTitle">Excellent choice!</div>
+    <div class="modal-body" id="mBody">Let Ntale know so we can begin building.</div>
+    <a id="mEmail" href="#" class="modal-email">Confirm by email →</a>
+    <button class="modal-close" onclick="document.getElementById('modal').style.display='none'">Close</button>
+  </div>
+</div>
+
+<script src="/clients/preview-nav.js"></script>
+<script>
+function pick(v,name,note){
+  document.getElementById('mTitle').textContent='You chose Option '+v+' — '+name;
+  document.getElementById('mBody').textContent=note;
+  document.getElementById('mEmail').href='mailto:ntale@zyntel.net?subject=Ace Website Design — Option '+v+'&body=Hi Ntale,%0A%0AI have reviewed all three design options.%0A%0AMy choice is: Option '+v+' — '+name+'.%0A%0APlease proceed with the build.';
+  document.getElementById('modal').style.display='flex';
+}
+
+const token = new URLSearchParams(window.location.search).get('preview');
+if (token) {
+  document.querySelectorAll('a.preview-link').forEach((anchor) => {
+    const next = new URL(anchor.getAttribute('href'), window.location.href);
+    next.searchParams.set('preview', token);
+    anchor.setAttribute('href', next.pathname + next.search);
+  });
+}
+</script>
+</body>
+</html>

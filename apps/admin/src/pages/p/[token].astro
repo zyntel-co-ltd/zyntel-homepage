@@ -1,0 +1,86 @@
+---
+// DEPLOYMENT NOTE:
+// Two Cloudflare Zero Trust Bypass applications are required for this to work:
+// 1. admin.zyntel.net/p   → Bypass → Everyone  (already created)
+// 2. admin.zyntel.net/clients → Bypass → Everyone  (already created)
+// Without these, clients hit the Zero Trust login screen instead of their preview.
+
+import { getPreviewClientByToken, displayStatus } from '../../lib/previews.ts';
+
+const { token } = Astro.params;
+
+let failReason: 'not-found' | 'disabled' | 'expired' | null = null;
+let expiryFormatted = '';
+
+if (!token) {
+  failReason = 'not-found';
+} else {
+  const client = await getPreviewClientByToken(token);
+  if (!client) {
+    failReason = 'not-found';
+  } else {
+    const status = displayStatus(client);
+    if (status === 'disabled') {
+      failReason = 'disabled';
+    } else if (status === 'expired') {
+      failReason = 'expired';
+      expiryFormatted = new Date(client.expiryDate).toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      });
+    } else {
+      return Astro.redirect(
+        `/clients/${client.clientFolder}/${client.presentationFile}?token=${token}`,
+        302
+      );
+    }
+  }
+}
+
+const messages = {
+  'not-found': {
+    heading: 'Preview not found',
+    body: 'This link is invalid or has been removed. Please use the exact link provided by Zyntel.'
+  },
+  'disabled': {
+    heading: 'Preview unavailable',
+    body: 'This preview has been disabled. Contact Zyntel to request access.'
+  },
+  'expired': {
+    heading: 'Preview link expired',
+    body: `This preview link expired on ${expiryFormatted}. Contact Zyntel to reactivate it.`
+  }
+};
+
+const msg = messages[failReason!];
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Access Denied | Zyntel</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;
+         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+         background:#0f0f12;color:#e4e4e7;padding:2rem;}
+    .card{max-width:400px;width:100%;text-align:center;}
+    .icon{font-size:2rem;margin-bottom:1.25rem;}
+    h1{font-size:1.1rem;font-weight:700;color:#f4f4f5;margin-bottom:.5rem;}
+    p{color:#a1a1aa;font-size:.875rem;line-height:1.6;margin-bottom:1.5rem;}
+    a{color:#60a5fa;font-size:.8rem;text-decoration:none;}
+    a:hover{text-decoration:underline;}
+    .brand{font-size:.75rem;color:#52525b;margin-top:2rem;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🔒</div>
+    <h1>{msg.heading}</h1>
+    <p>{msg.body}</p>
+    <a href="mailto:hello@zyntel.net">Contact Zyntel →</a>
+    <p class="brand">Zyntel Limited · zyntel.net</p>
+  </div>
+</body>
+</html>

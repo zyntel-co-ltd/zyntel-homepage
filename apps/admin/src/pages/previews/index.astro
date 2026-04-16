@@ -1,0 +1,366 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAllPreviewClients, displayStatus } from '../../lib/previews.ts';
+
+const clients = await getAllPreviewClients();
+const SITE = import.meta.env.SITE_URL ?? 'https://admin.zyntel.net';
+const clientsWithMeta = clients.map((c) => ({
+  ...c,
+  previewLink: `${SITE}/p/${c.token}`,
+  displayStatus: displayStatus(c),
+  expiryFormatted: new Date(c.expiryDate).toLocaleDateString('en-GB', {
+    day: 'numeric', month: 'short', year: 'numeric'
+  }),
+  isExpiringSoon: (() => {
+    const diff = new Date(c.expiryDate).getTime() - Date.now();
+    return diff > 0 && diff < 7 * 24 * 60 * 60 * 1000;
+  })(),
+}));
+
+const stats = {
+  total: clients.length,
+  active: clientsWithMeta.filter((c) => c.displayStatus === 'active').length,
+  expiringSoon: clientsWithMeta.filter((c) => c.isExpiringSoon).length,
+  expired: clientsWithMeta.filter((c) => c.displayStatus === 'expired').length,
+};
+---
+<AdminLayout title="Client Previews">
+  <header class="admin-header previews-header">
+    <h1 class="admin-title">Client Previews</h1>
+    <button id="btn-new-client" class="admin-btn admin-btn-primary" type="button">New Client</button>
+  </header>
+
+  <div class="admin-stats">
+    <div class="admin-stat-card"><div class="admin-stat-label">Total</div><div class="admin-stat-value" id="stat-total">{stats.total}</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Active</div><div class="admin-stat-value" id="stat-active">{stats.active}</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Expiring soon</div><div class="admin-stat-value" id="stat-expiring">{stats.expiringSoon}</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Expired</div><div class="admin-stat-value" id="stat-expired">{stats.expired}</div></div>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-card-header previews-toolbar">
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="tab active" data-filter="all" type="button">All</button>
+        <button class="tab" data-filter="active" type="button">Active</button>
+        <button class="tab" data-filter="expiring" type="button">Expiring</button>
+        <button class="tab" data-filter="expired" type="button">Expired</button>
+        <button class="tab" data-filter="disabled" type="button">Disabled</button>
+      </div>
+      <input id="search-input" class="admin-form-input" placeholder="Search client..." />
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Expiry</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="previews-tbody">
+          {clientsWithMeta.map((client) => (
+            <tr
+              data-client-id={client.clientId}
+              data-status={client.displayStatus}
+              data-search={`${client.name} ${client.clientId} ${client.projectType}`.toLowerCase()}
+              data-expiring={client.isExpiringSoon ? 'true' : 'false'}
+              data-expiry={new Date(client.expiryDate).toISOString()}
+            >
+              <td>
+                <div class="preview-client-name">
+                  {client.name}
+                  {client.intake
+                    ? <span class="brief-dot brief-dot--set" title="Design brief on file">●</span>
+                    : <span class="brief-dot brief-dot--empty" title="No design brief">○</span>}
+                </div>
+                <div class="preview-client-slug">{client.clientId}</div>
+              </td>
+              <td><span class="admin-badge admin-badge-ghost">{client.projectType}</span></td>
+              <td><span class={`admin-badge status-${client.displayStatus}`}>{client.displayStatus}</span></td>
+              <td class={client.isExpiringSoon ? 'expiry-warning' : ''}>{client.isExpiringSoon ? '⚠ ' : ''}{client.expiryFormatted}</td>
+              <td class="preview-actions">
+                <button class="act-btn" data-action="copy" data-link={client.previewLink} title="Copy preview link" type="button">Copy</button>
+                <button class="act-btn" data-action="send" data-client-id={client.clientId} data-email={client.email} title="Send preview email" type="button">Send</button>
+                <button class="act-btn" data-action="edit" data-client={JSON.stringify({
+                  clientId: client.clientId,
+                  name: client.name,
+                  email: client.email,
+                  projectType: client.projectType,
+                  clientFolder: client.clientFolder,
+                  presentationFile: client.presentationFile,
+                  expiryDate: client.expiryDate,
+                  intake: client.intake
+                })} title="Edit client" type="button">Edit</button>
+                {client.displayStatus !== 'disabled'
+                  ? <button class="act-btn act-btn--warn" data-action="disable" data-client-id={client.clientId} data-name={client.name} type="button">Disable</button>
+                  : <button class="act-btn act-btn--ok" data-action="activate" data-client-id={client.clientId} type="button">Activate</button>}
+                <button class="act-btn" data-action="extend" data-client-id={client.clientId} data-expiry={new Date(client.expiryDate).toISOString()} type="button">Extend</button>
+                {client.intake && <button class="act-btn" data-action="view-brief" data-brief={JSON.stringify(client.intake)} type="button">Brief</button>}
+                <button class="act-btn act-btn--warn" data-action="refresh-token" data-client-id={client.clientId} data-name={client.name} type="button">New link</button>
+                <button class="act-btn act-btn--danger" data-action="delete" data-client-id={client.clientId} data-name={client.name} type="button">Delete</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="modal-new-client" class="modal-backdrop" hidden><div class="modal"><h3>New Client</h3><form id="form-new-client" class="grid-form"></form></div></div>
+  <div id="modal-edit-client" class="modal-backdrop" hidden><div class="modal"><h3>Edit Client</h3><form id="form-edit-client" class="grid-form"></form></div></div>
+  <div id="modal-extend" class="modal-backdrop" hidden><div class="modal"><h3>Extend Expiry</h3><form id="form-extend" class="grid-form"><p id="extend-current"></p><label><input type="radio" name="extend-mode" value="date" checked /> New date</label><input id="extend-date" type="date" class="admin-form-input" /><label><input type="radio" name="extend-mode" value="days" /> Add days</label><input id="extend-days" type="number" class="admin-form-input" min="1" placeholder="30" /><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-extend">Cancel</button><button class="admin-btn admin-btn-primary">Save</button></div></form></div></div>
+  <div id="modal-brief-view" class="modal-backdrop" hidden><div class="modal"><h3>Design Brief</h3><div id="brief-content" class="brief-grid"></div><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-brief-view">Close</button></div></div></div>
+  <div id="modal-confirm" class="modal-backdrop" hidden><div class="modal"><h3 id="confirm-title"></h3><p id="confirm-message"></p><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-confirm">Cancel</button><button id="confirm-btn" type="button" class="admin-btn admin-btn-primary">Confirm</button></div></div></div>
+
+  <div id="toast-root"></div>
+
+  <style>
+    .previews-header{display:flex;justify-content:space-between;align-items:center;}
+    .previews-toolbar{gap:1rem;flex-wrap:wrap;}
+    .filter-tabs{display:flex;gap:.5rem;flex-wrap:wrap;}
+    .tab{border:1px solid var(--admin-border);background:#fff;border-radius:999px;padding:.35rem .7rem;font-size:12px;cursor:pointer;}
+    .tab.active{background:rgba(99,91,255,.12);border-color:#635bff;color:#635bff;}
+    .preview-client-name{font-weight:700;display:flex;gap:6px;align-items:center;}
+    .preview-client-slug{font-size:12px;color:var(--admin-text-muted);}
+    .brief-dot--set{color:#16a34a}.brief-dot--empty{color:#9ca3af}
+    .status-active{background:rgba(13,148,136,.15);color:#0d9488}
+    .status-expired{background:rgba(245,158,11,.2);color:#b45309}
+    .status-disabled{background:rgba(107,114,128,.2);color:#374151}
+    .expiry-warning{color:#b45309;font-weight:600}
+    .preview-actions{display:flex;flex-wrap:wrap;gap:6px}
+    .act-btn{font-size:11px;padding:4px 8px;border:1px solid var(--admin-border);background:#fff;border-radius:6px;cursor:pointer}
+    .act-btn--warn{color:#b45309}.act-btn--ok{color:#15803d}.act-btn--danger{color:#b91c1c}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:1200;padding:16px}
+    .modal{width:min(760px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:12px;padding:18px}
+    .grid-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .grid-form .full{grid-column:1/-1}
+    .muted{font-size:11px;color:#6b7280}
+    .modal-actions{display:flex;justify-content:flex-end;gap:8px;grid-column:1/-1;margin-top:6px}
+    .step-nav{display:flex;gap:8px;margin-bottom:8px;font-size:12px}
+    .step-nav strong{color:#111}
+    .chip-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+    .chip{position:relative;}
+    .chip input[type=checkbox]{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;}
+    .chip label{display:inline-block;padding:5px 12px;border-radius:100px;border:1px solid #e5e7eb;font-size:11px;font-weight:600;color:#666;cursor:pointer;transition:all .12s;user-select:none;}
+    .chip input:checked + label{background:#2563eb;border-color:#2563eb;color:#fff;}
+    .brief-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .brief-grid p{margin:0;border:1px solid #e5e7eb;border-radius:8px;padding:8px;font-size:12px}
+    #toast-root{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:2000}
+    .toast{background:#111;color:#fff;border-radius:8px;padding:10px 12px;font-size:12px;min-width:260px}
+    .toast.error{background:#7f1d1d}
+    .toast-actions{display:flex;gap:6px;margin-top:8px}
+  </style>
+
+  <script>
+    let activeFilter = 'all';
+    let activeSearch = '';
+    let extendClientId = '';
+    let confirmCallback = null;
+    let currentEditClientId = null;
+    const tbody = document.getElementById('previews-tbody');
+
+    function slugify(v){return (v||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
+    function formatDate(d){return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+    function computeStatus(status, expiryIso){if(status==='disabled')return'disabled';return new Date(expiryIso)<new Date()?'expired':'active';}
+    function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,(m)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+    function updateStats(){
+      const rows=[...tbody.querySelectorAll('tr')];
+      document.getElementById('stat-total').textContent=String(rows.length);
+      document.getElementById('stat-active').textContent=String(rows.filter(r=>r.dataset.status==='active').length);
+      document.getElementById('stat-expiring').textContent=String(rows.filter(r=>r.dataset.status==='active'&&r.dataset.expiring==='true').length);
+      document.getElementById('stat-expired').textContent=String(rows.filter(r=>r.dataset.status==='expired').length);
+    }
+    function applyFilters(){
+      [...tbody.querySelectorAll('tr')].forEach((row)=>{
+        const status=row.dataset.status;
+        const expiring=row.dataset.expiring==='true';
+        const search=(row.dataset.search||'');
+        const passTab=activeFilter==='all' || (activeFilter==='expiring'?status==='active'&&expiring:status===activeFilter);
+        const passSearch=!activeSearch||search.includes(activeSearch);
+        row.hidden=!(passTab&&passSearch);
+      });
+    }
+    document.getElementById('filter-tabs').addEventListener('click',(e)=>{
+      const btn=e.target.closest('[data-filter]'); if(!btn) return;
+      activeFilter=btn.dataset.filter;
+      document.querySelectorAll('#filter-tabs .tab').forEach((t)=>t.classList.remove('active'));
+      btn.classList.add('active');
+      applyFilters();
+    });
+    document.getElementById('search-input').addEventListener('input',(e)=>{activeSearch=e.target.value.toLowerCase().trim();applyFilters();});
+
+    function showToast(message,type='success',actions=[]){
+      const toast=document.createElement('div'); toast.className=`toast ${type==='error'?'error':''}`;
+      const actionHtml=actions.length?`<div class="toast-actions">${actions.map((a,i)=>`<button data-toast-action="${i}" class="act-btn">${a.label}</button>`).join('')}</div>`:'';
+      toast.innerHTML=`<div>${message}</div>${actionHtml}`;
+      document.getElementById('toast-root').appendChild(toast);
+      toast.querySelectorAll('[data-toast-action]').forEach((b)=>b.addEventListener('click',()=>{actions[Number(b.dataset.toastAction)].onClick?.();toast.remove();}));
+      setTimeout(()=>toast.remove(),actions.length?8000:5000);
+    }
+    function showModal(id){document.getElementById(id).hidden=false;}
+    function closeModal(id){document.getElementById(id).hidden=true;}
+    document.addEventListener('click',(e)=>{
+      const c=e.target.closest('[data-close]'); if(c) closeModal(c.dataset.close);
+      const bd=e.target.classList.contains('modal-backdrop')?e.target:null; if(bd) bd.hidden=true;
+    });
+    document.addEventListener('keydown',(e)=>{if(e.key==='Escape'){const open=[...document.querySelectorAll('.modal-backdrop')].filter(m=>!m.hidden);if(open.length)open[open.length-1].hidden=true;}});
+
+    function openConfirm(opts){
+      document.getElementById('confirm-title').textContent=opts.title;
+      document.getElementById('confirm-message').textContent=opts.message;
+      const btn=document.getElementById('confirm-btn');
+      btn.textContent=opts.label||'Confirm';
+      btn.className=`admin-btn ${opts.confirmClass==='danger'?'act-btn--danger':'admin-btn-primary'}`;
+      confirmCallback=opts.onConfirm;
+      showModal('modal-confirm');
+    }
+    document.getElementById('confirm-btn').addEventListener('click',async()=>{if(confirmCallback) await confirmCallback();closeModal('modal-confirm');});
+
+    function createFormHtml(prefix){
+      return `
+        <div class="full step-nav"><strong id="${prefix}-step-label">1 Client Details</strong><span>→</span><span>2 Design Brief</span></div>
+        <div class="full"><label>Name</label><input id="${prefix}-name" class="admin-form-input" required /></div>
+        <div><label>Client ID</label><input id="${prefix}-clientId" class="admin-form-input" required /></div>
+        <div><label>Email</label><input id="${prefix}-email" type="email" class="admin-form-input" required /></div>
+        <div><label>Project type</label><select id="${prefix}-projectType" class="admin-form-input"><option value="website-design">Website Design</option><option value="web-app">Web App</option><option value="marketplace">Marketplace</option><option value="other">Other</option></select></div>
+        <div><label>Client folder</label><input id="${prefix}-clientFolder" class="admin-form-input" required /><p class="muted">Must match the folder name in <code>public/clients/</code> exactly.</p></div>
+        <div><label>Presentation file</label><input id="${prefix}-presentationFile" class="admin-form-input" value="presentation.html" required /><p class="muted">Exact filename of the entry HTML file in the client folder.</p></div>
+        <div><label>Expiry (days)</label><input id="${prefix}-expiryDays" class="admin-form-input" type="number" value="30" min="1" required /><p class="muted" id="${prefix}-expiry-text"></p></div>
+        <div class="full"><button type="button" class="admin-btn admin-btn-secondary" data-step="2" data-prefix="${prefix}">Next: Design Brief →</button> <a href="#" data-skip="${prefix}">Submit (skip brief)</a></div>
+        <div class="full" data-step2 hidden>
+          <label>Industry</label><input id="${prefix}-industry" class="admin-form-input" />
+          <label>What they do / sell</label><input id="${prefix}-description" class="admin-form-input" />
+          <label>Target customers</label><input id="${prefix}-targetCustomers" class="admin-form-input" />
+          <div><span>Tone & feel</span><div class="chip-group">${['Professional','Warm','Modern','Bold','Minimal','Playful'].map(v=>`<span class="chip"><input id="${prefix}-tone-${v}" type="checkbox" value="${v}"><label for="${prefix}-tone-${v}">${v}</label></span>`).join('')}</div></div>
+          <label>Colours they like</label><input id="${prefix}-coloursLike" class="admin-form-input" />
+          <label>Colours to avoid</label><input id="${prefix}-coloursAvoid" class="admin-form-input" />
+          <label>Competitors / sites they admire</label><textarea id="${prefix}-competitors" class="admin-form-input"></textarea>
+          <div><span>Must-have sections</span><div class="chip-group">${['Hero','Services','About','Gallery','Contact','Testimonials','Pricing','FAQ','Blog'].map(v=>`<span class="chip"><input id="${prefix}-section-${v}" type="checkbox" value="${v}"><label for="${prefix}-section-${v}">${v}</label></span>`).join('')}</div></div>
+          <label>Special requirements</label><textarea id="${prefix}-specialRequirements" class="admin-form-input"></textarea>
+          <label>Design deadline</label><input id="${prefix}-deadline" type="date" class="admin-form-input" />
+          <div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-step="1" data-prefix="${prefix}">← Back</button><a href="#" data-skip="${prefix}">Skip brief</a><button class="admin-btn admin-btn-primary">Create Client</button></div>
+        </div>
+      `;
+    }
+    const newForm=document.getElementById('form-new-client'); newForm.innerHTML=createFormHtml('new');
+    const editForm=document.getElementById('form-edit-client'); editForm.innerHTML=createFormHtml('edit');
+    function toggleStep(prefix,step){
+      const form=prefix==='new'?newForm:editForm;
+      const step2=form.querySelector('[data-step2]'); step2.hidden=step!=='2';
+      form.querySelector(`#${prefix}-step-label`).textContent=step==='1'?'1 Client Details':'2 Design Brief';
+    }
+    function updateExpiryPreview(prefix){
+      const days=Number(document.getElementById(`${prefix}-expiryDays`).value||30);
+      const date=new Date(); date.setDate(date.getDate()+days);
+      document.getElementById(`${prefix}-expiry-text`).textContent=`Expires: ${formatDate(date)}`;
+    }
+    function bindAutoSlug(prefix){
+      const name=document.getElementById(`${prefix}-name`), id=document.getElementById(`${prefix}-clientId`), folder=document.getElementById(`${prefix}-clientFolder`);
+      name.addEventListener('input',()=>{const s=slugify(name.value); id.value=s; folder.value=s;});
+      id.addEventListener('input',()=>{folder.value=slugify(id.value);});
+      document.getElementById(`${prefix}-expiryDays`).addEventListener('input',()=>updateExpiryPreview(prefix));
+      updateExpiryPreview(prefix);
+    }
+    bindAutoSlug('new'); bindAutoSlug('edit');
+    document.addEventListener('click',(e)=>{
+      const stepBtn=e.target.closest('[data-step]'); if(stepBtn){toggleStep(stepBtn.dataset.prefix,stepBtn.dataset.step);}
+    });
+
+    function collectForm(prefix){
+      const get=(id)=>document.getElementById(`${prefix}-${id}`).value?.trim()||'';
+      const tones=[...document.querySelectorAll(`input[id^="${prefix}-tone-"]:checked`)].map(i=>i.value);
+      const sections=[...document.querySelectorAll(`input[id^="${prefix}-section-"]:checked`)].map(i=>i.value);
+      const intake={industry:get('industry'),description:get('description'),targetCustomers:get('targetCustomers'),tone:tones,coloursLike:get('coloursLike'),coloursAvoid:get('coloursAvoid'),competitors:get('competitors'),mustHaveSections:sections,specialRequirements:get('specialRequirements'),deadline:get('deadline')};
+      const hasIntake=Object.values(intake).some((v)=>Array.isArray(v)?v.length:Boolean(v));
+      return {clientId:get('clientId'),name:get('name'),email:get('email'),projectType:get('projectType')||'website-design',clientFolder:get('clientFolder'),presentationFile:get('presentationFile'),expiryDays:Number(get('expiryDays')||30),intake:hasIntake?intake:undefined};
+    }
+    async function sendEmail(clientId,email){
+      const r=await fetch('/api/previews/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId})});
+      if(!r.ok){showToast('Failed to send email','error');return;}
+      showToast(`Email sent to ${email}`);
+    }
+
+    newForm.addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      const payload=collectForm('new');
+      const r=await fetch('/api/previews/clients',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      if(!r.ok){showToast('Failed to create client','error');return;}
+      const c=await r.json(); closeModal('modal-new-client'); location.reload();
+      showToast('Client created', 'success', [{label:'Send email now',onClick:()=>sendEmail(c.clientId,c.email)}]);
+    });
+    editForm.addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      const payload=collectForm('edit');
+      payload.clientId=currentEditClientId||payload.clientId;
+      const r=await fetch('/api/previews/clients',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      if(!r.ok){showToast('Failed to update client','error');return;}
+      closeModal('modal-edit-client'); location.reload();
+    });
+
+    document.getElementById('btn-new-client').addEventListener('click',()=>{newForm.reset();toggleStep('new','1');updateExpiryPreview('new');showModal('modal-new-client');});
+
+    tbody.addEventListener('click',async(e)=>{
+      const btn=e.target.closest('[data-action]'); if(!btn) return;
+      const action=btn.dataset.action;
+      const row=btn.closest('tr');
+      const clientId=btn.dataset.clientId||row?.dataset.clientId;
+      const name=btn.dataset.name||row?.querySelector('.preview-client-name')?.childNodes[0]?.textContent?.trim()||'this client';
+      if(action==='copy'){
+        await navigator.clipboard.writeText(btn.dataset.link); const old=btn.textContent; btn.textContent='✓ Copied'; setTimeout(()=>btn.textContent=old,2000);
+      } else if(action==='send'){
+        await sendEmail(clientId, btn.dataset.email);
+      } else if(action==='edit'){
+        const c=JSON.parse(btn.dataset.client||'{}'); currentEditClientId=c.clientId;
+        ['name','clientId','email','projectType','clientFolder','presentationFile'].forEach((k)=>{const el=document.getElementById(`edit-${k}`); if(el) el.value=c[k]||'';});
+        document.getElementById('edit-expiryDays').value='30'; updateExpiryPreview('edit');
+        const intake=c.intake||{};
+        ['industry','description','targetCustomers','coloursLike','coloursAvoid','competitors','specialRequirements','deadline'].forEach((k)=>{const el=document.getElementById(`edit-${k}`); if(el) el.value=intake[k]||'';});
+        [...document.querySelectorAll('input[id^="edit-tone-"],input[id^="edit-section-"]')].forEach((el)=>el.checked=false);
+        (intake.tone||[]).forEach((v)=>{const el=document.getElementById(`edit-tone-${v}`); if(el) el.checked=true;});
+        (intake.mustHaveSections||[]).forEach((v)=>{const el=document.getElementById(`edit-section-${v}`); if(el) el.checked=true;});
+        toggleStep('edit','1'); showModal('modal-edit-client');
+      } else if(action==='disable'){
+        openConfirm({title:'Disable preview?',message:`Disable preview for ${name}? Their link will stop working immediately.`,onConfirm:async()=>{const r=await fetch('/api/previews/clients',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId,status:'disabled'})}); if(!r.ok) return showToast('Failed to disable','error'); row.dataset.status='disabled'; row.querySelector('.admin-badge').className='admin-badge status-disabled'; row.querySelector('.admin-badge').textContent='disabled'; btn.outerHTML=`<button class="act-btn act-btn--ok" data-action="activate" data-client-id="${clientId}" type="button">Activate</button>`; updateStats(); applyFilters(); showToast('Preview disabled');}});
+      } else if(action==='activate'){
+        const r=await fetch('/api/previews/clients',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId,status:'active'})});
+        if(!r.ok) return showToast('Failed to reactivate','error');
+        row.dataset.status=computeStatus('active',row.dataset.expiry);
+        row.querySelector('.admin-badge').className=`admin-badge status-${row.dataset.status}`;
+        row.querySelector('.admin-badge').textContent=row.dataset.status;
+        btn.outerHTML=`<button class="act-btn act-btn--warn" data-action="disable" data-client-id="${clientId}" data-name="${escapeHtml(name)}" type="button">Disable</button>`;
+        updateStats(); applyFilters(); showToast('Preview reactivated');
+        if(new Date(row.dataset.expiry)<new Date()){showToast('This link is already expired. Extend expiry to make it usable.'); document.getElementById('extend-current').textContent=`Current expiry: ${formatDate(row.dataset.expiry)}`; extendClientId=clientId; showModal('modal-extend');}
+      } else if(action==='extend'){
+        extendClientId=clientId;
+        document.getElementById('extend-current').textContent=`Current expiry: ${formatDate(btn.dataset.expiry||row.dataset.expiry)}`;
+        document.getElementById('extend-date').value=''; document.getElementById('extend-days').value='30';
+        showModal('modal-extend');
+      } else if(action==='view-brief'){
+        const brief=JSON.parse(btn.dataset.brief||'{}');
+        const fields=[['Industry','industry'],['What they do / sell','description'],['Target customers','targetCustomers'],['Tone & feel','tone'],['Colours they like','coloursLike'],['Colours to avoid','coloursAvoid'],['Competitors / sites they admire','competitors'],['Must-have sections','mustHaveSections'],['Special requirements','specialRequirements'],['Design deadline','deadline']];
+        document.getElementById('brief-content').innerHTML=fields.map(([label,key])=>`<p><strong>${label}</strong><br>${escapeHtml(Array.isArray(brief[key])?brief[key].join(', '):(brief[key]||'—'))}</p>`).join('');
+        showModal('modal-brief-view');
+      } else if(action==='refresh-token'){
+        openConfirm({title:'Generate new link?',message:`Generate a new link for ${name}? Their current link will permanently stop working. You must resend the new link to them.`,label:'Generate new link',onConfirm:async()=>{const r=await fetch('/api/previews/refresh-token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId})}); if(!r.ok) return showToast('Failed to refresh link','error'); const d=await r.json(); row.querySelector('[data-action="copy"]').dataset.link=d.previewLink; showToast('New link generated', 'success', [{label:'Send email now', onClick:()=>sendEmail(clientId, row.querySelector('[data-action="send"]').dataset.email)}]);}});
+      } else if(action==='delete'){
+        openConfirm({title:'Delete client?',message:`Delete ${name}? This cannot be undone.`,label:'Delete',confirmClass:'danger',onConfirm:async()=>{const r=await fetch(`/api/previews/clients?clientId=${encodeURIComponent(clientId)}`,{method:'DELETE'}); if(!r.ok) return showToast('Failed to delete client','error'); row.remove(); updateStats(); applyFilters(); showToast('Client deleted');}});
+      }
+    });
+
+    document.getElementById('form-extend').addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      const mode=document.querySelector('input[name="extend-mode"]:checked').value;
+      let expiryDate='';
+      if(mode==='date'){expiryDate=document.getElementById('extend-date').value;}
+      else{const days=Number(document.getElementById('extend-days').value||0);const d=new Date();d.setDate(d.getDate()+days);expiryDate=d.toISOString();}
+      const r=await fetch('/api/previews/clients',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId:extendClientId,expiryDate})});
+      if(!r.ok) return showToast('Failed to extend expiry','error');
+      const c=await r.json(); const row=tbody.querySelector(`tr[data-client-id="${extendClientId}"]`);
+      if(row){row.dataset.expiry=new Date(c.expiryDate).toISOString(); row.dataset.expiring=(new Date(c.expiryDate)-new Date()>0 && new Date(c.expiryDate)-new Date()<7*24*60*60*1000)?'true':'false'; row.children[3].className=row.dataset.expiring==='true'?'expiry-warning':''; row.children[3].textContent=(row.dataset.expiring==='true'?'⚠ ':'')+formatDate(c.expiryDate); row.dataset.status=computeStatus('active',row.dataset.expiry); const badge=row.querySelector('.admin-badge'); badge.className=`admin-badge status-${row.dataset.status}`; badge.textContent=row.dataset.status;}
+      closeModal('modal-extend'); updateStats(); applyFilters(); showToast('Expiry updated');
+    });
+  </script>
+</AdminLayout>

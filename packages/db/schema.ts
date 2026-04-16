@@ -82,3 +82,32 @@ export interface Client {
   address: string | null;
   created_at: string;
 }
+
+export interface PreviewClient {
+  id: string;
+  clientId: string;
+  name: string;
+  email: string;
+  projectType: 'website-design' | 'web-app' | 'marketplace' | 'other';
+  clientFolder: string;
+  presentationFile: string;
+  token: string;
+  status: 'active' | 'disabled';
+  expiryDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  intake?: PreviewClientIntake | null;
+}
+
+export interface PreviewClientIntake {
+  industry: string;
+  description: string;
+  targetCustomers: string;
+  tone: string[];
+  coloursLike: string;
+  coloursAvoid: string;
+  competitors: string;
+  mustHaveSections: string[];
+  specialRequirements: string;
+  deadline: string;
+}
