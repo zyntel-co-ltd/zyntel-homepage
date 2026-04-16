@@ -301,6 +301,33 @@ const stats = {
       const hasIntake=Object.values(intake).some((v)=>Array.isArray(v)?v.length:Boolean(v));
       return {clientId:get('clientId'),name:get('name'),email:get('email'),projectType:get('projectType')||'website-design',clientFolder:get('clientFolder'),presentationFile:get('presentationFile'),expiryDays:Number(get('expiryDays')||30),intake:hasIntake?intake:undefined};
     }
+
+    function collectStep1(prefix){
+      const get=(id)=>document.getElementById(`${prefix}-${id}`).value?.trim()||'';
+      return {clientId:get('clientId'),name:get('name'),email:get('email'),projectType:get('projectType')||'website-design',clientFolder:get('clientFolder'),presentationFile:get('presentationFile'),expiryDays:Number(get('expiryDays')||30)};
+    }
+    function collectIntake(prefix){
+      const get=(id)=>document.getElementById(`${prefix}-${id}`).value?.trim()||'';
+      const tones=[...document.querySelectorAll(`input[id^="${prefix}-tone-"]:checked`)].map(i=>i.value);
+      const sections=[...document.querySelectorAll(`input[id^="${prefix}-section-"]:checked`)].map(i=>i.value);
+      const intake={industry:get('industry'),description:get('description'),targetCustomers:get('targetCustomers'),tone:tones,coloursLike:get('coloursLike'),coloursAvoid:get('coloursAvoid'),competitors:get('competitors'),mustHaveSections:sections,specialRequirements:get('specialRequirements'),deadline:get('deadline')};
+      const hasIntake=Object.values(intake).some((v)=>Array.isArray(v)?v.length:Boolean(v));
+      return { intake, hasIntake };
+    }
+
+    async function submitNewClient(includeIntake){
+      const payload=collectStep1('new');
+      if(includeIntake){
+        const r=collectIntake('new');
+        payload.intake=r.hasIntake ? r.intake : null;
+      } else {
+        payload.intake=null;
+      }
+      const res=await fetch('/api/previews/clients',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      if(!res.ok){showToast('Failed to create client','error');return;}
+      const c=await res.json(); closeModal('modal-new-client'); location.reload();
+      showToast('Client created', 'success', [{label:'Send email now',onClick:()=>sendEmail(c.clientId,c.email)}]);
+    }
     async function sendEmail(clientId,email){
       const r=await fetch('/api/previews/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId})});
       if(!r.ok){showToast('Failed to send email','error');return;}
@@ -309,11 +336,7 @@ const stats = {
 
     newForm.addEventListener('submit',async(e)=>{
       e.preventDefault();
-      const payload=collectForm('new');
-      const r=await fetch('/api/previews/clients',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-      if(!r.ok){showToast('Failed to create client','error');return;}
-      const c=await r.json(); closeModal('modal-new-client'); location.reload();
-      showToast('Client created', 'success', [{label:'Send email now',onClick:()=>sendEmail(c.clientId,c.email)}]);
+      await submitNewClient(true);
     });
     editForm.addEventListener('submit',async(e)=>{
       e.preventDefault();
@@ -325,6 +348,13 @@ const stats = {
     });
 
     document.getElementById('btn-new-client').addEventListener('click',()=>{newForm.reset();toggleStep('new','1');updateExpiryPreview('new');showModal('modal-new-client');});
+
+    document.addEventListener('click',(e)=>{
+      const skip=e.target.closest('[data-skip]'); if(!skip) return;
+      e.preventDefault();
+      if(skip.dataset.skip!=='new') return;
+      submitNewClient(false);
+    });
 
     tbody.addEventListener('click',async(e)=>{
       const btn=e.target.closest('[data-action]'); if(!btn) return;

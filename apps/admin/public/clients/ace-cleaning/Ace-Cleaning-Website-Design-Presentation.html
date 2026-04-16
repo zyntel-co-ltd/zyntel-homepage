@@ -203,6 +203,12 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F5F1;color:#1A1A1A
 .zyn-topbar-sep{color:#ddd;}
 .zyn-topbar-context{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .zyn-topbar-step{font-size:11px;color:#aaa;white-space:nowrap;}
+.dq-options{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.dq-opt{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid rgba(0,0,0,.1);border-radius:8px;cursor:pointer;transition:border-color .15s,background .15s;font-size:13px;color:#333;line-height:1.5;}
+.dq-opt:hover{border-color:#C63527;background:#FEF9F8;}
+.dq-opt input[type=radio]{margin-top:3px;accent-color:#C63527;flex-shrink:0;}
+.dq-opt input[type=radio]:checked + span{font-weight:600;color:#1A1A1A;}
+.dq-opt:has(input:checked){border-color:#C63527;background:#FEF9F8;}
 </style>
 </head>
 <body>
@@ -404,7 +410,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F5F1;color:#1A1A1A
         </div>
       </div>
       <div class="opt-footer">
-        <a class="opt-pick-btn" style="background:#C63527;color:#fff;display:block;text-align:center;text-decoration:none" href="ace-option-A-warm-professional.html" target="_self">I choose Option A →</a>
+        <a class="opt-pick-btn" style="background:#C63527;color:#fff;display:block;text-align:center;text-decoration:none" href="ace-option-A-warm-professional.html" target="_self">Explore Option A in full →</a>
         <span class="opt-note">Classic · Warm · Brand-forward</span>
       </div>
     </div>
@@ -450,7 +456,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F5F1;color:#1A1A1A
         </div>
       </div>
       <div class="opt-footer">
-        <a class="opt-pick-btn" style="background:#2A6B4A;color:#fff;display:block;text-align:center;text-decoration:none" href="ace-option-B-light-green.html" target="_self">I choose Option B →</a>
+        <a class="opt-pick-btn" style="background:#2A6B4A;color:#fff;display:block;text-align:center;text-decoration:none" href="ace-option-B-light-green.html" target="_self">Explore Option B in full →</a>
         <span class="opt-note">Fresh · Action-first · Trustworthy</span>
       </div>
     </div>
@@ -495,7 +501,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F5F1;color:#1A1A1A
         </div>
       </div>
       <div class="opt-footer">
-        <a class="opt-pick-btn" style="background:#1A7AAF;color:#fff;display:block;text-align:center;text-decoration:none" href="ace-option-C-blue.html" target="_self">I choose Option C →</a>
+        <a class="opt-pick-btn" style="background:#1A7AAF;color:#fff;display:block;text-align:center;text-decoration:none" href="ace-option-C-blue.html" target="_self">Explore Option C in full →</a>
         <span class="opt-note">Bright · Modern · Image-forward</span>
       </div>
     </div>
@@ -508,11 +514,39 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F5F1;color:#1A1A1A
   <div class="dec-inner">
     <div class="dec-left">
       <h2>Not sure yet?</h2>
-      <p>Three questions. Your answers will point clearly to one version without second-guessing.</p>
+      <p>Answer these three questions. Your answers will point clearly to one option.</p>
       <div class="dec-qs">
-        <div class="dq"><div class="dq-lbl">Question 1 — Tone</div><div class="dq-text">Should the first impression feel warm and trusted, business-ready and direct, or bright and welcoming?</div></div>
-        <div class="dq"><div class="dq-lbl">Question 2 — Founders visible?</div><div class="dq-text">Do you want Nahurira and Nalutaaya shown as the face of the company on the homepage? (A and C only)</div></div>
-        <div class="dq"><div class="dq-lbl">Question 3 — Immediate quotes?</div><div class="dq-text">Should visitors be able to request a quote without leaving the homepage? (B only)</div></div>
+
+        <div class="dq">
+          <div class="dq-lbl">Question 1 — What feeling should your website give?</div>
+          <div class="dq-options">
+            <label class="dq-opt"><input type="radio" name="q1" value="A"> <span>Warm and trusted — like a company people already know</span></label>
+            <label class="dq-opt"><input type="radio" name="q1" value="B"> <span>Straight to business — clients can book a quote right on the homepage</span></label>
+            <label class="dq-opt"><input type="radio" name="q1" value="C"> <span>Bright and modern — clean, image-rich, feels like a big company</span></label>
+          </div>
+        </div>
+
+        <div class="dq">
+          <div class="dq-lbl">Question 2 — Should the founders appear on the website?</div>
+          <div class="dq-options">
+            <label class="dq-opt"><input type="radio" name="q2" value="AC"> <span>Yes — show Nahurira and Nalutaaya as the face of the business</span></label>
+            <label class="dq-opt"><input type="radio" name="q2" value="B"> <span>No — keep focus on the services, not the founders</span></label>
+          </div>
+        </div>
+
+        <div class="dq">
+          <div class="dq-lbl">Question 3 — Where should clients request a quote?</div>
+          <div class="dq-options">
+            <label class="dq-opt"><input type="radio" name="q3" value="B"> <span>Directly on the homepage — I want it as easy as possible</span></label>
+            <label class="dq-opt"><input type="radio" name="q3" value="AC"> <span>On a separate contact page — keep the homepage clean</span></label>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="dec-result" style="display:none;margin-top:20px;padding:16px;border-radius:10px;border:2px solid #C63527;background:#FEF3F2;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#C63527;margin-bottom:6px">Our recommendation</div>
+        <div id="dec-result-text" style="font-size:14px;font-weight:600;color:#1A1A1A;line-height:1.5"></div>
       </div>
     </div>
     <div class="dec-right">
@@ -521,8 +555,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F5F1;color:#1A1A1A
       <div class="dr-opt"><div class="dr-circle b">B</div><div class="dr-text"><strong>Option B — Fresh & Direct</strong><span>Green/cream · Quote form on homepage · Testimonials near top · Certifications section</span></div></div>
       <div class="dr-opt"><div class="dr-circle c">C</div><div class="dr-text"><strong>Option C — Light & Airy</strong><span>Sky blue/white · Photo mosaic hero · Gallery strip · Team section · HouseHelpers teaser</span></div></div>
       <div class="dr-cta">
-        <a href="mailto:ntale@zyntel.net?subject=Ace Website - Design Choice&body=Hi Ntale,%0A%0AI have reviewed all three design options for the Ace Cleaning website.%0A%0AMy choice is: Option __ — [Name]%0A%0APlease proceed with the build." class="dcta dcta-p">Send choice by email →</a>
-        <a href="#options" class="dcta dcta-s">Review option files below</a>
+        <a href="mailto:ntale@zyntel.net?subject=Ace Website - Design Choice&body=Hi Ntale,%0A%0AI have reviewed all three design options for the Ace Cleaning website.%0A%0AMy choice is: Option __ — [Name]%0A%0APlease proceed with the build." class="dcta dcta-p">I've made my choice — let's build it →</a>
+        <a href="#options" class="dcta dcta-s">See all three options again ↑</a>
       </div>
     </div>
   </div>
@@ -561,6 +595,44 @@ if (token) {
     anchor.setAttribute('href', next.pathname + next.search);
   });
 }
+
+// Decision guide — live recommendation
+function updateDecResult() {
+  var q1 = document.querySelector('input[name="q1"]:checked');
+  var q2 = document.querySelector('input[name="q2"]:checked');
+  var q3 = document.querySelector('input[name="q3"]:checked');
+  if (!q1 && !q2 && !q3) return;
+
+  var scores = {A:0, B:0, C:0};
+  if (q1) scores[q1.value] = (scores[q1.value] || 0) + 2;
+  if (q2) { q2.value.split('').forEach(function(v){ scores[v] = (scores[v]||0)+1; }); }
+  if (q3) { q3.value.split('').forEach(function(v){ scores[v] = (scores[v]||0)+1; }); }
+
+  var winner = Object.keys(scores).reduce(function(a,b){ return scores[a]>=scores[b]?a:b; });
+  var names = {A:'Option A — Warm & Professional', B:'Option B — Fresh & Direct', C:'Option C — Light & Airy'};
+  var notes = {
+    A:'Based on your answers, Option A fits your brand best. It feels trusted, shows your founders, and keeps things professional.',
+    B:'Based on your answers, Option B fits best. It puts the quote form front and centre — built to convert first-time visitors into leads.',
+    C:'Based on your answers, Option C fits best. It has the modern, image-rich look with your team featured prominently.'
+  };
+
+  document.getElementById('dec-result-text').textContent = names[winner] + '. ' + notes[winner];
+  document.getElementById('dec-result').style.display = 'block';
+
+  // Scroll highlight to recommended option card
+  var cards = document.querySelectorAll('.opt-card');
+  var idx = {A:0,B:1,C:2}[winner];
+  if (cards[idx]) {
+    cards[idx].style.outline = '3px solid #C63527';
+    cards[idx].style.outlineOffset = '4px';
+  }
+  // Remove highlight from others
+  cards.forEach(function(c,i){ if(i!==idx) c.style.outline='none'; });
+}
+
+document.querySelectorAll('.dq-opt input[type=radio]').forEach(function(radio){
+  radio.addEventListener('change', updateDecResult);
+});
 </script>
 </body>
 </html>
