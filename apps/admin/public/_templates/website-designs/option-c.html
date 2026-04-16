@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{CLIENT_NAME}} — Version C</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Nunito+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+/*
+  TEMPLATE: option-c — Light & Airy
+  Accent colour: #1A7AAF (sky blue)
+  Background tones: #EBF5FB, #F0F8FF
+  To change palette: find-and-replace these hex values throughout this file.
+*/
+:root{
+  --blue:#1A7AAF;--blue-light:#2A9AD8;--blue-pale:#EBF5FB;--blue-deep:#125A84;
+  --sky:#E8F4FD;--white:#FFFFFF;--warm:#FAFCFF;--soft:#F0F7FD;
+  --ink:#1A2A36;--body:#3A4A56;--mid:#7A8A96;--muted:#AABBCC;
+  --border:rgba(26,122,175,0.1);--border-soft:rgba(0,0,0,0.07);
+  --font-d:'Nunito',sans-serif;--font-b:'Nunito Sans',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{font-family:var(--font-b);background:var(--white);color:var(--body);overflow-x:hidden}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:66px;background:rgba(255,255,255,0.97);border-bottom:1px solid var(--border-soft);backdrop-filter:blur(10px)}
+.nav-logo{display:flex;align-items:center;gap:12px}
+.nav-icon{width:38px;height:38px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:16px;font-weight:800;color:#fff}
+.nav-brand{font-size:14px;font-weight:700;color:var(--ink);line-height:1.25}
+.nav-brand small{display:block;font-size:10px;font-weight:400;color:var(--muted)}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{font-size:13px;font-weight:600;color:var(--body);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--blue)}
+.nav-cta{font-size:13px;font-weight:700;padding:10px 24px;background:var(--blue);color:#fff;border-radius:50px;text-decoration:none;transition:background .2s,transform .15s}
+.nav-cta:hover{background:var(--blue-light);transform:translateY(-1px)}
+
+/* HERO — Molly Maids style: full bleed with multiple image panels */
+.hero{min-height:100vh;padding-top:66px;position:relative;overflow:hidden;background:var(--white)}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 66px)}
+.hero-left{display:flex;flex-direction:column;justify-content:center;padding:60px 5% 60px 5%;position:relative;z-index:2;background:var(--white)}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;margin-bottom:22px;background:var(--blue-pale);border:1px solid rgba(26,122,175,.2);border-radius:50px;padding:6px 16px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);width:fit-content}
+h1.hero-h1{font-family:var(--font-d);font-size:clamp(36px,4.5vw,60px);font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:20px;letter-spacing:-.02em}
+h1.hero-h1 span{color:var(--blue)}
+.hero-sub{font-size:16px;font-weight:300;line-height:1.75;color:var(--mid);max-width:440px;margin-bottom:36px}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:48px}
+.btn-blue{font-size:13px;font-weight:700;padding:13px 28px;background:var(--blue);color:#fff;border-radius:50px;text-decoration:none;transition:background .2s,transform .15s;display:inline-block}
+.btn-blue:hover{background:var(--blue-light);transform:translateY(-1px)}
+.btn-blue-ghost{font-size:13px;font-weight:600;padding:13px 28px;background:transparent;color:var(--blue);border:2px solid var(--blue);border-radius:50px;text-decoration:none;transition:background .2s;display:inline-block}
+.btn-blue-ghost:hover{background:var(--blue-pale)}
+.hero-trust{display:flex;align-items:center;gap:16px}
+.ht-label{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.04em}
+.ht-logos{display:flex;gap:8px;flex-wrap:wrap}
+.ht-chip{font-size:10px;font-weight:700;color:var(--mid);background:var(--soft);border:1px solid var(--border);border-radius:4px;padding:4px 10px;white-space:nowrap}
+
+/* HERO RIGHT — image mosaic, Molly Maids style */
+.hero-right{position:relative;overflow:hidden}
+.hero-mosaic{display:grid;grid-template-rows:1fr 1fr;height:100%;gap:3px}
+.hm-top{display:grid;grid-template-columns:2fr 1fr;gap:3px}
+.hm-bot{display:grid;grid-template-columns:1fr 2fr;gap:3px}
+.hm-cell{background:linear-gradient(145deg,#d8eef8,#b8d8ee);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:160px}
+.hm-cell span{font-size:40px;opacity:.2}
+.hm-cell p{font-size:10px;color:#7A9AAE;font-weight:600;position:absolute;bottom:10px;left:12px}
+.hm-cell.accent{background:var(--blue)}
+.hm-cell.accent span{opacity:.3;filter:brightness(10)}
+.hm-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(26,42,54,.15),transparent)}
+.hero-badge{position:absolute;bottom:40px;left:40px;z-index:3;background:var(--white);border-radius:16px;padding:18px 22px;box-shadow:0 8px 32px rgba(26,122,175,.18);border:1px solid var(--border)}
+.hb-num{font-family:var(--font-d);font-size:36px;font-weight:800;color:var(--blue);line-height:1;display:block}
+.hb-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+
+/* MARQUEE */
+.mq{background:var(--sky);border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden}
+.mq-lbl{text-align:center;padding:16px 5% 0;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.mq-wrap{padding:12px 0 18px;mask-image:linear-gradient(to right,transparent,black 8%,black 92%,transparent);-webkit-mask-image:linear-gradient(to right,transparent,black 8%,black 92%,transparent)}
+.mq-track{display:flex;width:max-content;animation:mqani 28s linear infinite}
+.mq-track:hover{animation-play-state:paused}
+@keyframes mqani{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.mi{padding:10px 36px;border-right:1px solid var(--border);font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--muted);white-space:nowrap;transition:color .2s}
+.mi:hover{color:var(--blue)}
+
+/* STATS */
+.stats{background:var(--blue);display:grid;grid-template-columns:repeat(4,1fr)}
+.si{padding:44px 20px;text-align:center;border-right:1px solid rgba(255,255,255,.15)}
+.si:last-child{border:none}
+.sn{font-family:var(--font-d);font-size:52px;font-weight:800;color:#fff;display:block;line-height:1;margin-bottom:8px}
+.ss{color:rgba(255,255,255,.55);font-size:36px}
+.sl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+
+/* SHARED */
+section{padding:88px 5%}
+.ey{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.ey::before{content:'';width:20px;height:2px;background:var(--blue);display:block}
+h2.tt{font-family:var(--font-d);font-size:clamp(26px,3.2vw,44px);font-weight:800;line-height:1.1;letter-spacing:-.02em;color:var(--ink);margin-bottom:14px}
+.sb{font-size:15px;font-weight:300;line-height:1.75;color:var(--mid);max-width:520px}
+.tl{font-size:13px;font-weight:700;color:var(--blue);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.tl::after{content:'→';transition:transform .2s}
+.tl:hover::after{transform:translateX(4px)}
+
+/* FOOTER */
+footer{background:#0E1E2A;padding:56px 5% 36px}
+.fg{display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr;gap:36px;margin-bottom:44px}
+.fm{width:36px;height:36px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:16px;font-weight:800;color:#fff;margin-bottom:14px}
+.fb p{font-size:12px;color:rgba(255,255,255,.35);line-height:1.7;max-width:220px;margin-bottom:18px}
+.fct{font-size:11px;color:rgba(255,255,255,.35);margin-bottom:6px;display:flex;gap:8px;align-items:flex-start}
+.fco h4{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.88);margin-bottom:16px}
+.fco a{display:block;font-size:12px;color:rgba(255,255,255,.35);text-decoration:none;margin-bottom:9px;transition:color .2s}
+.fco a:hover{color:rgba(255,255,255,.8)}
+.fco a.bl{color:rgba(26,122,175,.7)}
+.fco a.bl:hover{color:#7AC4E8}
+.fbot{border-top:1px solid rgba(255,255,255,.07);padding-top:22px;display:flex;justify-content:space-between;align-items:center}
+.fbot p,.fbot span{font-size:11px;color:rgba(255,255,255,.2)}
+.fzy{color:rgba(26,122,175,.7)}
+.fi{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+.fi.v{opacity:1;transform:translateY(0)}
+.zyn-back-btn{position:fixed;top:16px;left:16px;z-index:9999;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(0,0,0,.13);border-radius:100px;padding:8px 14px 8px 10px;font-size:12px;font-weight:600;color:#111;text-decoration:none;box-shadow:0 2px 12px rgba(0,0,0,.10);transition:box-shadow .15s,background .15s;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+.zyn-back-btn:hover{background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.15);}
+</style>
+</head>
+<body>
+<a class="zyn-back-btn" href="presentation.html" target="_self">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  All options
+</a>
+
+<nav>
+  <div class="nav-logo">
+    <div class="nav-icon">A</div>
+    <div class="nav-brand">{{CLIENT_NAME}}<small>{{CLIENT_TAGLINE}} · Kampala</small></div>
+  </div>
+  <div class="nav-links">
+    <a href="#services">Services</a>
+    <a href="#about">About</a>
+    <a href="#team">Team</a>
+    <a href="#blog">Blog</a>
+    <a href="#contact" class="nav-cta">Get a Quote</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-grid">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Est. 2021 · {{CLIENT_LOCATION}}</div>
+      <h1 class="hero-h1">Spotless Spaces.<br><span>Happy Clients.</span></h1>
+      <p class="hero-sub">{{CLIENT_TAGLINE}}</p>
+      <div class="hero-btns">
+        <a href="#contact" class="btn-blue">Get a Free Quote</a>
+        <a href="#services" class="btn-blue-ghost">Our Services</a>
+      </div>
+      <div class="hero-trust">
+        <span class="ht-label">Trusted by:</span>
+        <div class="ht-logos">
+          <span class="ht-chip">URA</span>
+          <span class="ht-chip">Speke Hotel</span>
+          <span class="ht-chip">New Vision</span>
+          <span class="ht-chip">Meera Investments</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-mosaic">
+        <div class="hm-top">
+          <div class="hm-cell"><span>🏢</span><div class="hm-overlay"></div><p>Office cleaning</p></div>
+          <div class="hm-cell blue-tint accent"><span>✨</span><div class="hm-overlay"></div><p>After clean</p></div>
+        </div>
+        <div class="hm-bot">
+          <div class="hm-cell warm-tint"><span>🌿</span><div class="hm-overlay"></div><p>Grounds care</p></div>
+          <div class="hm-cell green-tint"><span>🧴</span><div class="hm-overlay"></div><p>Deep cleaning</p></div>
+        </div>
+      </div>
+      <div class="hero-badge">
+        <span class="hb-num">100%</span>
+        <div class="hb-label">Client satisfaction</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer id="contact">
+  <div class="fg">
+    <div class="fb"><div class="fm">A</div><p>{{CLIENT_TAGLINE}}</p><div class="fct">📍 <span>{{CLIENT_LOCATION}}</span></div><div class="fct">📞 <span>{{CLIENT_PHONE}}</span></div><div class="fct">✉️ <span>{{CLIENT_EMAIL}}</span></div></div>
+    <div class="fco"><h4>Services</h4><a href="#">Office Cleaning</a><a href="#">Grounds Maintenance</a><a href="#">Fumigation</a><a href="#">Waste Management</a><a href="#">Laundry</a></div>
+    <div class="fco"><h4>Company</h4><a href="#">About Us</a><a href="#">Our Team</a><a href="#">Blog</a><a href="#">Contact</a><a href="#" class="bl">HouseHelpers ↗</a></div>
+    <div class="fco"><h4>Get in Touch</h4><a href="#">Request a Quote</a><a href="#">Book a Service</a><a href="#">Careers</a><a href="#">Partnerships</a></div>
+  </div>
+  <div class="fbot"><p>© 2025 {{CLIENT_NAME}} Ltd. All rights reserved.</p><span>Built by <span class="fzy">Zyntel Limited</span></span></div>
+</footer>
+
+<script src="/clients/preview-nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{CLIENT_NAME}} — Web App Preview</title>
+  <style>
+    /*
+      TEMPLATE: web-apps/presentation.html
+      Accent colour: #2563eb (Zyntel blue)
+      Replace {{PLACEHOLDER}} values before sending to client.
+    */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+           background: #f9fafb; color: #111; }
+
+    /* Top bar */
+    .zyn-topbar { position: sticky; top: 0; z-index: 200; background: rgba(255,255,255,.96);
+                  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+                  border-bottom: 1px solid rgba(0,0,0,.08); }
+    .zyn-topbar-inner { display: flex; align-items: center; gap: 8px; height: 44px;
+                        padding: 0 5%; font-size: 12px; color: #666; overflow: hidden; }
+    .zyn-topbar-brand { font-weight: 800; color: #111; font-size: 13px; white-space: nowrap; }
+    .zyn-topbar-sep { color: #ddd; }
+    .zyn-topbar-context { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .zyn-topbar-step { font-size: 11px; color: #aaa; white-space: nowrap; }
+
+    /* Back button */
+    .zyn-back-btn { position: fixed; top: 16px; left: 16px; z-index: 9999;
+                    display: inline-flex; align-items: center; gap: 6px;
+                    background: rgba(255,255,255,.92); backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border: 1px solid rgba(0,0,0,.13); border-radius: 100px;
+                    padding: 8px 14px 8px 10px; font-size: 12px; font-weight: 600;
+                    color: #111; text-decoration: none;
+                    box-shadow: 0 2px 12px rgba(0,0,0,.10);
+                    transition: box-shadow .15s, background .15s;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .zyn-back-btn:hover { background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,.15); }
+
+    /* Cover */
+    .cover { padding: 64px 6% 48px; background: #fff; border-bottom: 1px solid #f0f0f0; }
+    .cover-tag { display: inline-block; background: #eff6ff; border: 1px solid #bfdbfe;
+                 border-radius: 100px; font-size: 10px; font-weight: 700;
+                 letter-spacing: .1em; text-transform: uppercase; color: #2563eb;
+                 padding: 4px 12px; margin-bottom: 16px; }
+    .cover h1 { font-size: clamp(24px, 3vw, 40px); font-weight: 800;
+                letter-spacing: -.02em; margin-bottom: 12px; }
+    .cover-sub { font-size: 15px; color: #555; line-height: 1.7;
+                 max-width: 560px; margin-bottom: 0; }
+
+    /* Section */
+    .section { padding: 48px 6%; }
+    .section-title { font-size: 18px; font-weight: 700; color: #111;
+                     margin-bottom: 8px; }
+    .section-sub { font-size: 14px; color: #666; line-height: 1.6;
+                   max-width: 560px; margin-bottom: 28px; }
+
+    /* Screens grid */
+    .screens-grid { display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                    gap: 20px; }
+    .screen-card { background: #fff; border: 1px solid #e5e7eb;
+                   border-radius: 10px; overflow: hidden; }
+    .screen-placeholder { background: #f0f4ff; border-bottom: 2px dashed #c7d7fe;
+                           height: 180px; display: flex; align-items: center;
+                           justify-content: center; font-size: 12px;
+                           color: #6b7280; font-weight: 500; }
+    .screen-card-body { padding: 14px; }
+    .screen-card-title { font-size: 13px; font-weight: 700; color: #111; margin-bottom: 4px; }
+    .screen-card-desc { font-size: 12px; color: #666; line-height: 1.5; }
+
+    /* Next steps */
+    .steps { display: flex; flex-direction: column; gap: 16px; max-width: 480px; }
+    .step { display: flex; align-items: flex-start; gap: 14px; }
+    .step-num { flex-shrink: 0; width: 28px; height: 28px; background: #2563eb;
+                color: #fff; border-radius: 50%; display: flex; align-items: center;
+                justify-content: center; font-size: 12px; font-weight: 700; }
+    .step-text { font-size: 14px; color: #333; line-height: 1.5; padding-top: 4px; }
+
+    /* Footer */
+    .footer { padding: 32px 6%; border-top: 1px solid #f0f0f0;
+              font-size: 12px; color: #aaa; }
+  </style>
+</head>
+<body>
+
+  <a class="zyn-back-btn" href="{{PARENT_URL}}" target="_self">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Back
+  </a>
+
+  <div class="zyn-topbar">
+    <div class="zyn-topbar-inner">
+      <span class="zyn-topbar-brand">Zyntel</span>
+      <span class="zyn-topbar-sep">·</span>
+      <span class="zyn-topbar-context">Web App Preview — {{CLIENT_NAME}}</span>
+      <span class="zyn-topbar-step">Review screens</span>
+    </div>
+  </div>
+
+  <div class="cover">
+    <div class="cover-tag">Web Application Preview</div>
+    <h1>{{CLIENT_NAME}}</h1>
+    <p class="cover-sub">{{PROJECT_DESCRIPTION}}</p>
+  </div>
+
+  <div class="section" style="background:#fff;">
+    <p class="section-title">Screens &amp; flows</p>
+    <p class="section-sub">
+      These are the key screens we will build. Each one is shown as a placeholder —
+      replace with actual wireframes or screenshots as they are produced.
+    </p>
+    <div class="screens-grid">
+      <div class="screen-card">
+        <div class="screen-placeholder">Dashboard</div>
+        <div class="screen-card-body">
+          <p class="screen-card-title">Dashboard</p>
+          <p class="screen-card-desc">{{DASHBOARD_DESCRIPTION}}</p>
+        </div>
+      </div>
+      <div class="screen-card">
+        <div class="screen-placeholder">Main list view</div>
+        <div class="screen-card-body">
+          <p class="screen-card-title">Main list view</p>
+          <p class="screen-card-desc">{{LIST_VIEW_DESCRIPTION}}</p>
+        </div>
+      </div>
+      <div class="screen-card">
+        <div class="screen-placeholder">Detail / form view</div>
+        <div class="screen-card-body">
+          <p class="screen-card-title">Detail / form view</p>
+          <p class="screen-card-desc">{{DETAIL_VIEW_DESCRIPTION}}</p>
+        </div>
+      </div>
+      <div class="screen-card">
+        <div class="screen-placeholder">Settings</div>
+        <div class="screen-card-body">
+          <p class="screen-card-title">Settings</p>
+          <p class="screen-card-desc">{{SETTINGS_DESCRIPTION}}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="section-title">Next steps</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <p class="step-text">Review these screens and note anything you would like to change or add.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <p class="step-text">Send us your feedback — reply to the email or contact hello@zyntel.net</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <p class="step-text">Once approved, we begin development. You will receive updates at each milestone.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Prepared by <strong>Zyntel Limited</strong> · zyntel.net · {{MONTH_YEAR}}
+  </div>
+
+  <script src="/clients/preview-nav.js"></script>
+</body>
+</html>
