@@ -108,11 +108,11 @@ const stats = {
     </div>
   </div>
 
-  <div id="modal-new-client" class="modal-backdrop" hidden><div class="modal"><h3>New Client</h3><form id="form-new-client" class="grid-form"></form></div></div>
-  <div id="modal-edit-client" class="modal-backdrop" hidden><div class="modal"><h3>Edit Client</h3><form id="form-edit-client" class="grid-form"></form></div></div>
-  <div id="modal-extend" class="modal-backdrop" hidden><div class="modal"><h3>Extend Expiry</h3><form id="form-extend" class="grid-form"><p id="extend-current"></p><label><input type="radio" name="extend-mode" value="date" checked /> New date</label><input id="extend-date" type="date" class="admin-form-input" /><label><input type="radio" name="extend-mode" value="days" /> Add days</label><input id="extend-days" type="number" class="admin-form-input" min="1" placeholder="30" /><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-extend">Cancel</button><button class="admin-btn admin-btn-primary">Save</button></div></form></div></div>
-  <div id="modal-brief-view" class="modal-backdrop" hidden><div class="modal"><h3>Design Brief</h3><div id="brief-content" class="brief-grid"></div><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-brief-view">Close</button></div></div></div>
-  <div id="modal-confirm" class="modal-backdrop" hidden><div class="modal"><h3 id="confirm-title"></h3><p id="confirm-message"></p><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-confirm">Cancel</button><button id="confirm-btn" type="button" class="admin-btn admin-btn-primary">Confirm</button></div></div></div>
+  <div id="modal-new-client" class="preview-modal-overlay" style="display:none"><div class="modal"><h3>New Client</h3><form id="form-new-client" class="grid-form"></form></div></div>
+  <div id="modal-edit-client" class="preview-modal-overlay" style="display:none"><div class="modal"><h3>Edit Client</h3><form id="form-edit-client" class="grid-form"></form></div></div>
+  <div id="modal-extend" class="preview-modal-overlay" style="display:none"><div class="modal"><h3>Extend Expiry</h3><form id="form-extend" class="grid-form"><p id="extend-current"></p><label><input type="radio" name="extend-mode" value="date" checked /> New date</label><input id="extend-date" type="date" class="admin-form-input" /><label><input type="radio" name="extend-mode" value="days" /> Add days</label><input id="extend-days" type="number" class="admin-form-input" min="1" placeholder="30" /><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-extend">Cancel</button><button class="admin-btn admin-btn-primary">Save</button></div></form></div></div>
+  <div id="modal-brief-view" class="preview-modal-overlay" style="display:none"><div class="modal"><h3>Design Brief</h3><div id="brief-content" class="brief-grid"></div><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-brief-view">Close</button></div></div></div>
+  <div id="modal-confirm" class="preview-modal-overlay" style="display:none"><div class="modal"><h3 id="confirm-title"></h3><p id="confirm-message"></p><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-confirm">Cancel</button><button id="confirm-btn" type="button" class="admin-btn admin-btn-primary">Confirm</button></div></div></div>
 
   <div id="toast-root"></div>
 
@@ -132,7 +132,7 @@ const stats = {
     .preview-actions{display:flex;flex-wrap:wrap;gap:6px}
     .act-btn{font-size:11px;padding:4px 8px;border:1px solid var(--admin-border);background:#fff;border-radius:6px;cursor:pointer}
     .act-btn--warn{color:#b45309}.act-btn--ok{color:#15803d}.act-btn--danger{color:#b91c1c}
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:1200;padding:16px}
+    .preview-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;z-index:1200;padding:16px}
     .modal{width:min(760px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:12px;padding:18px}
     .grid-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .grid-form .full{grid-column:1/-1}
@@ -200,13 +200,37 @@ const stats = {
       toast.querySelectorAll('[data-toast-action]').forEach((b)=>b.addEventListener('click',()=>{actions[Number(b.dataset.toastAction)].onClick?.();toast.remove();}));
       setTimeout(()=>toast.remove(),actions.length?8000:5000);
     }
-    function showModal(id){document.getElementById(id).hidden=false;}
-    function closeModal(id){document.getElementById(id).hidden=true;}
+    function showModal(id){
+      var el=document.getElementById(id);
+      if(!el) return;
+      el.style.display='flex';
+    }
+    function closeModal(id){
+      var el=document.getElementById(id);
+      if(!el) return;
+      el.style.display='none';
+    }
+    // Close button handler
     document.addEventListener('click',(e)=>{
       const c=e.target.closest('[data-close]'); if(c) closeModal(c.dataset.close);
-      const bd=e.target.classList.contains('modal-backdrop')?e.target:null; if(bd) bd.hidden=true;
     });
-    document.addEventListener('keydown',(e)=>{if(e.key==='Escape'){const open=[...document.querySelectorAll('.modal-backdrop')].filter(m=>!m.hidden);if(open.length)open[open.length-1].hidden=true;}});
+    // Backdrop click handler
+    document.querySelectorAll('.preview-modal-overlay').forEach(function(overlay){
+      overlay.addEventListener('click', function(e){
+        if(e.target===overlay) closeModal(overlay.id);
+      });
+    });
+    // Escape key handler (close topmost visible modal)
+    document.addEventListener('keydown', function(e){
+      if(e.key!=='Escape') return;
+      var modals=document.querySelectorAll('.preview-modal-overlay');
+      for(var i=modals.length-1;i>=0;i--){
+        if(modals[i].style.display!=='none'){
+          closeModal(modals[i].id);
+          break;
+        }
+      }
+    });
 
     function openConfirm(opts){
       document.getElementById('confirm-title').textContent=opts.title;
