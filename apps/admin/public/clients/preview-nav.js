@@ -4,6 +4,34 @@
 (function () {
   var token = new URLSearchParams(window.location.search).get('token');
   if (!token) return;
+
+  // --- Tracking (public /p/* bypass) ---
+  // Records view + time on page in Neon for admin panel tracking.
+  // Best-effort only: failures are ignored.
+  var start = Date.now();
+  function sendEvent(payload) {
+    try {
+      payload = payload || {};
+      payload.token = token;
+      payload.page = payload.page || (location.pathname + location.search);
+      var body = JSON.stringify(payload);
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/p/event', new Blob([body], { type: 'application/json' }));
+      } else {
+        fetch('/p/event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function(){});
+      }
+    } catch (e) {}
+  }
+
+  // page opened
+  sendEvent({ eventType: 'page_open' });
+
+  // page closed (duration)
+  window.addEventListener('pagehide', function () {
+    var dur = Math.max(0, Math.round((Date.now() - start) / 1000));
+    sendEvent({ eventType: 'page_close', durationSeconds: dur });
+  });
+
   function patchLinks() {
     document.querySelectorAll('a[href]').forEach(function (a) {
       var href = a.getAttribute('href');

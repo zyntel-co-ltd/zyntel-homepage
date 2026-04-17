@@ -664,6 +664,28 @@ function updateDecResult() {
   document.getElementById('dec-result-text').textContent = names[winner] + '. ' + notes[winner];
   document.getElementById('dec-result').style.display = 'block';
 
+  // Track decision guide state (best-effort)
+  try {
+    var tokenForTrack = new URLSearchParams(window.location.search).get('token');
+    if (tokenForTrack) {
+      fetch('/p/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: tokenForTrack,
+          eventType: 'decision_guide_update',
+          meta: {
+            q1: q1 ? q1.value : null,
+            q2: q2 ? q2.value : null,
+            q3: q3 ? q3.value : null,
+            recommended: winner
+          }
+        }),
+        keepalive: true
+      }).catch(function(){});
+    }
+  } catch (e) {}
+
   // Scroll highlight to recommended option card
   var cards = document.querySelectorAll('.opt-card');
   var idx = {A:0,B:1,C:2}[winner];

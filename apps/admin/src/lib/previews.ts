@@ -162,6 +162,60 @@ export async function submitPreviewChoiceByToken(data: {
   return rowToClient(row);
 }
 
+export async function logPreviewEventByToken(data: {
+  token: string;
+  eventType: string;
+  page?: string | null;
+  userAgent?: string | null;
+  durationSeconds?: number | null;
+  meta?: Record<string, unknown> | null;
+}): Promise<void> {
+  if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
+  const clientRows = await sql`SELECT id FROM preview_clients WHERE token = ${data.token}`;
+  const clientRow = clientRows[0] as { id: string } | undefined;
+  if (!clientRow?.id) throw new Error('Preview client not found');
+  await sql`
+    INSERT INTO preview_events (preview_client_id, event_type, page, user_agent, duration_seconds, data)
+    VALUES (
+      ${clientRow.id},
+      ${data.eventType},
+      ${data.page ?? null},
+      ${data.userAgent ?? null},
+      ${data.durationSeconds ?? null},
+      ${data.meta ? JSON.stringify(data.meta) : null}
+    )
+  `;
+}
+
+export async function getPreviewEventHistory(clientId: string): Promise<Array<{
+  id: string;
+  occurredAt: Date;
+  eventType: string;
+  page: string | null;
+  userAgent: string | null;
+  durationSeconds: number | null;
+  data: any;
+}>> {
+  if (!import.meta.env.DATABASE_URL) return [];
+  const rows = await sql`
+    SELECT e.*
+    FROM preview_events e
+    JOIN preview_clients c ON c.id = e.preview_client_id
+    WHERE c.client_id = ${clientId}
+    ORDER BY e.occurred_at DESC
+    LIMIT 200
+  `;
+  return (rows as Record<string, any>[]).map((r) => ({
+    id: String(r.id),
+    occurredAt: new Date(r.occurred_at),
+    eventType: String(r.event_type),
+    page: (r.page ?? null) as string | null,
+    userAgent: (r.user_agent ?? null) as string | null,
+    durationSeconds: (r.duration_seconds ?? null) as number | null,
+    data: (r.data ?? null) as any,
+  }));
+}
+
 export async function refreshPreviewToken(clientId: string): Promise<PreviewClient> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
   const rows = await sql`

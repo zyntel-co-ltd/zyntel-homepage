@@ -106,6 +106,7 @@ const stats = {
                   comments: client.choiceComments,
                   submittedAt: client.choiceSubmittedAt
                 })} type="button">Feedback</button>}
+                <button class="act-btn" data-action="history" data-client-id={client.clientId} type="button">History</button>
                 <button class="act-btn act-btn--warn" data-action="refresh-token" data-client-id={client.clientId} data-name={client.name} type="button">New link</button>
                 <button class="act-btn act-btn--danger" data-action="delete" data-client-id={client.clientId} data-name={client.name} type="button">Delete</button>
               </td>
@@ -121,6 +122,7 @@ const stats = {
   <div id="modal-extend" class="preview-modal-overlay" style="display:none"><div class="modal"><h3>Extend Expiry</h3><form id="form-extend" class="grid-form"><p id="extend-current"></p><label><input type="radio" name="extend-mode" value="date" checked /> New date</label><input id="extend-date" type="date" class="admin-form-input" /><label><input type="radio" name="extend-mode" value="days" /> Add days</label><input id="extend-days" type="number" class="admin-form-input" min="1" placeholder="30" /><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-extend">Cancel</button><button class="admin-btn admin-btn-primary">Save</button></div></form></div></div>
   <div id="modal-brief-view" class="preview-modal-overlay" style="display:none"><div class="modal"><h3>Design Brief</h3><div id="brief-content" class="brief-grid"></div><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-brief-view">Close</button></div></div></div>
   <div id="modal-feedback-view" class="preview-modal-overlay" style="display:none"><div class="modal"><h3>Client Feedback</h3><div id="feedback-content" class="brief-grid"></div><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-feedback-view">Close</button></div></div></div>
+  <div id="modal-history-view" class="preview-modal-overlay" style="display:none"><div class="modal"><h3>Preview History</h3><div id="history-content" style="margin-top:10px"></div><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-history-view">Close</button></div></div></div>
   <div id="modal-confirm" class="preview-modal-overlay" style="display:none"><div class="modal"><h3 id="confirm-title"></h3><p id="confirm-message"></p><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-confirm">Cancel</button><button id="confirm-btn" type="button" class="admin-btn admin-btn-primary">Confirm</button></div></div></div>
 
   <div id="toast-root"></div>
@@ -415,6 +417,26 @@ const stats = {
           `<p class="full"><strong>Comments</strong><br>${escapeHtml(fb.comments||'—')}</p>`
         ].join('');
         showModal('modal-feedback-view');
+      } else if(action==='history'){
+        const box=document.getElementById('history-content');
+        box.innerHTML='<p style="color:#6b7280;font-size:12px">Loading…</p>';
+        showModal('modal-history-view');
+        try{
+          const r=await fetch(`/api/previews/events?clientId=${encodeURIComponent(clientId)}`);
+          const d=await r.json().catch(()=>({}));
+          if(!r.ok) throw new Error(d.error||'Failed to load');
+          if(!Array.isArray(d)||!d.length){box.innerHTML='<p style="color:#6b7280;font-size:12px">No events yet.</p>';return;}
+          box.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' + d.map((ev)=>{
+            const dt=new Date(ev.occurredAt);
+            const ts=dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+            const dur = ev.durationSeconds==null ? '' : ` · ${Math.floor(ev.durationSeconds/60)}m ${String(ev.durationSeconds%60).padStart(2,'0')}s`;
+            const page = ev.page ? ` · ${escapeHtml(ev.page)}` : '';
+            const extra = ev.data ? `<div style="margin-top:6px;color:#6b7280">${escapeHtml(JSON.stringify(ev.data))}</div>` : '';
+            return `<div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:12px"><strong>${escapeHtml(ev.eventType)}</strong> · ${ts}${dur}${page}${extra}</div>`;
+          }).join('') + '</div>';
+        } catch(err){
+          box.innerHTML = `<p style="color:#b91c1c;font-size:12px">Failed to load history.</p>`;
+        }
       } else if(action==='refresh-token'){
         openConfirm({title:'Generate new link?',message:`Generate a new link for ${name}? Their current link will permanently stop working. You must resend the new link to them.`,label:'Generate new link',onConfirm:async()=>{const r=await fetch('/api/previews/refresh-token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId})}); if(!r.ok) return showToast('Failed to refresh link','error'); const d=await r.json(); row.querySelector('[data-action="copy"]').dataset.link=d.previewLink; showToast('New link generated', 'success', [{label:'Send email now', onClick:()=>sendEmail(clientId, row.querySelector('[data-action="send"]').dataset.email)}]);}});
       } else if(action==='delete'){
