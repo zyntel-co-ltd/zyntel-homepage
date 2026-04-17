@@ -37,6 +37,13 @@ export const POST: APIRoute = async ({ request }) => {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err: any) {
+    const msg = String(err?.message ?? 'Unknown error');
+    if (msg.toLowerCase().includes('already submitted')) {
+      return new Response(JSON.stringify({ error: 'Choice already submitted' }), {
+        status: 409,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
     return new Response(JSON.stringify({ error: err?.message ?? 'Unknown error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

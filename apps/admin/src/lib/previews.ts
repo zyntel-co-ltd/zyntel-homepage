@@ -154,11 +154,20 @@ export async function submitPreviewChoiceByToken(data: {
       choice_comments = ${data.choiceComments},
       choice_submitted_at = now(),
       updated_at = now()
-    WHERE token = ${data.token} AND status = 'active'
+    WHERE token = ${data.token}
+      AND status = 'active'
+      AND choice_submitted_at IS NULL
     RETURNING *
   `;
   const row = rows[0] as Record<string, any> | undefined;
-  if (!row) throw new Error('Preview client not found or inactive');
+  if (!row) {
+    const existing = await sql`SELECT id, status, choice_submitted_at FROM preview_clients WHERE token = ${data.token}`;
+    const ex = existing[0] as { status?: string; choice_submitted_at?: string | null } | undefined;
+    if (!ex) throw new Error('Preview client not found');
+    if (String(ex.status) !== 'active') throw new Error('Preview is not active');
+    if (ex.choice_submitted_at) throw new Error('Choice already submitted');
+    throw new Error('Could not submit choice');
+  }
   return rowToClient(row);
 }
 
