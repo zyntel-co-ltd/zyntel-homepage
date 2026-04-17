@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { submitPreviewChoiceByToken } from '../../lib/previews.ts';
 import { sendEmail } from '../../lib/email.ts';
+import { logPreviewEventByToken } from '../../lib/previews.ts';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -12,6 +13,7 @@ export const POST: APIRoute = async ({ request }) => {
     const q2 = body?.q2 != null ? String(body.q2).trim() : null;
     const q3 = body?.q3 != null ? String(body.q3).trim() : null;
     const recommended = body?.recommended != null ? String(body.recommended).trim().toUpperCase() : null;
+    const sessionId = body?.sessionId != null ? String(body.sessionId).trim() : null;
 
     if (!token) {
       return new Response(JSON.stringify({ error: 'token required' }), {
@@ -38,6 +40,22 @@ export const POST: APIRoute = async ({ request }) => {
       choiceComments,
       choiceAnswers: { q1, q2, q3, recommended },
     });
+
+    // Log a concise feedback event for the admin "History" view.
+    try {
+      await logPreviewEventByToken({
+        token,
+        eventType: 'feedback_submitted',
+        sessionId,
+        userAgent: request.headers.get('user-agent'),
+        meta: {
+          choiceOption: client.choiceOption ?? choiceOption,
+          recommended: recommended ?? null,
+        },
+      });
+    } catch (e) {
+      console.error('Failed to log feedback_submitted event:', e);
+    }
 
     // Notify ops inbox (best-effort; don't fail the client submission on email errors).
     try {

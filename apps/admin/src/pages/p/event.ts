@@ -7,6 +7,7 @@ export const POST: APIRoute = async ({ request }) => {
     const token = String(body?.token ?? '').trim();
     const eventType = String(body?.eventType ?? '').trim();
     const page = body?.page != null ? String(body.page).trim() : null;
+    const sessionId = body?.sessionId != null ? String(body.sessionId).trim() : null;
     const durationSecondsRaw = body?.durationSeconds;
     const durationSeconds =
       durationSecondsRaw === undefined || durationSecondsRaw === null
@@ -27,6 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
       page,
       userAgent: request.headers.get('user-agent'),
       durationSeconds: Number.isFinite(durationSeconds) ? durationSeconds : null,
+      sessionId,
       meta,
     });
 

@@ -180,6 +180,7 @@ export async function logPreviewEventByToken(data: {
   page?: string | null;
   userAgent?: string | null;
   durationSeconds?: number | null;
+  sessionId?: string | null;
   meta?: Record<string, unknown> | null;
 }): Promise<void> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
@@ -187,13 +188,14 @@ export async function logPreviewEventByToken(data: {
   const clientRow = clientRows[0] as { id: string } | undefined;
   if (!clientRow?.id) throw new Error('Preview client not found');
   await sql`
-    INSERT INTO preview_events (preview_client_id, event_type, page, user_agent, duration_seconds, data)
+    INSERT INTO preview_events (preview_client_id, event_type, page, user_agent, duration_seconds, session_id, data)
     VALUES (
       ${clientRow.id},
       ${data.eventType},
       ${data.page ?? null},
       ${data.userAgent ?? null},
       ${data.durationSeconds ?? null},
+      ${data.sessionId ?? null},
       ${data.meta ? JSON.stringify(data.meta) : null}
     )
   `;
@@ -206,6 +208,7 @@ export async function getPreviewEventHistory(clientId: string): Promise<Array<{
   page: string | null;
   userAgent: string | null;
   durationSeconds: number | null;
+  sessionId: string | null;
   data: any;
 }>> {
   if (!import.meta.env.DATABASE_URL) return [];
@@ -224,6 +227,7 @@ export async function getPreviewEventHistory(clientId: string): Promise<Array<{
     page: (r.page ?? null) as string | null,
     userAgent: (r.user_agent ?? null) as string | null,
     durationSeconds: (r.duration_seconds ?? null) as number | null,
+    sessionId: (r.session_id ?? null) as string | null,
     data: (r.data ?? null) as any,
   }));
 }

@@ -352,7 +352,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F5F1;color:#1A1A1A
           </div>
           <textarea id="choice-comments" class="choice-text" placeholder="Write any comments or changes you want (required). Example: “We prefer Option B, but move testimonials slightly lower and make the hero button more prominent.”"></textarea>
           <button id="choice-submit" class="dcta dcta-p" type="submit">Submit feedback →</button>
-          <div class="choice-help">After submitting, you can still email if you want — but this ensures your feedback is recorded inside the admin panel.</div>
           <div class="choice-success" id="choice-success">✓ Feedback received. Thank you — Zyntel will begin building based on your choice.</div>
         </form>
         <a href="#options" class="dcta dcta-s">See all three options again ↑</a>
@@ -468,6 +467,13 @@ document.querySelectorAll('.dq-opt input[type=radio]').forEach(function(radio){
     var comments = (document.getElementById('choice-comments').value || '').trim();
     var btn = document.getElementById('choice-submit');
     var success = document.getElementById('choice-success');
+    var sessionId = null;
+    try {
+      if (token) {
+        var k = 'zyntel_preview_session_id_' + token;
+        sessionId = localStorage.getItem(k) || null;
+      }
+    } catch (e) {}
     var q1 = document.querySelector('input[name="q1"]:checked');
     var q2 = document.querySelector('input[name="q2"]:checked');
     var q3 = document.querySelector('input[name="q3"]:checked');
@@ -492,6 +498,7 @@ document.querySelectorAll('.dq-opt input[type=radio]').forEach(function(radio){
           token: token,
           choiceOption: selected,
           choiceComments: comments,
+          sessionId: sessionId,
           q1: q1 ? q1.value : null,
           q2: q2 ? q2.value : null,
           q3: q3 ? q3.value : null,

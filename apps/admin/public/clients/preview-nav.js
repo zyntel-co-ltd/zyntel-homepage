@@ -9,10 +9,24 @@
   // Records view + time on page in Neon for admin panel tracking.
   // Best-effort only: failures are ignored.
   var start = Date.now();
+  function getSessionId() {
+    try {
+      var key = 'zyntel_preview_session_id_' + token;
+      var existing = localStorage.getItem(key);
+      if (existing) return existing;
+      var sid = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+      localStorage.setItem(key, sid);
+      return sid;
+    } catch (e) {
+      return null;
+    }
+  }
+  var sessionId = getSessionId();
   function sendEvent(payload) {
     try {
       payload = payload || {};
       payload.token = token;
+      payload.sessionId = payload.sessionId || sessionId;
       payload.page = payload.page || (location.pathname + location.search);
       var body = JSON.stringify(payload);
       if (navigator.sendBeacon) {

@@ -436,15 +436,70 @@ const stats = {
           const r=await fetch(`/api/previews/events?clientId=${encodeURIComponent(clientId)}`);
           const d=await r.json().catch(()=>({}));
           if(!r.ok) throw new Error(d.error||'Failed to load');
-          if(!Array.isArray(d)||!d.length){box.innerHTML='<p style="color:#6b7280;font-size:12px">No events yet.</p>';return;}
-          box.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' + d.map((ev)=>{
-            const dt=new Date(ev.occurredAt);
-            const ts=dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-            const dur = ev.durationSeconds==null ? '' : ` · ${Math.floor(ev.durationSeconds/60)}m ${String(ev.durationSeconds%60).padStart(2,'0')}s`;
-            const page = ev.page ? ` · ${escapeHtml(ev.page)}` : '';
-            const extra = ev.data ? `<div style="margin-top:6px;color:#6b7280">${escapeHtml(JSON.stringify(ev.data))}</div>` : '';
-            return `<div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:12px"><strong>${escapeHtml(ev.eventType)}</strong> · ${ts}${dur}${page}${extra}</div>`;
-          }).join('') + '</div>';
+          if(!Array.isArray(d)||!d.length){box.innerHTML='<p style="color:#6b7280;font-size:12px">No history yet.</p>';return;}
+
+          const events = d
+            .filter((ev)=>['page_open','feedback_submitted'].includes(String(ev.eventType||'')))
+            .map((ev)=>({
+              ...ev,
+              sessionId: ev.sessionId || (ev.data && ev.data.sessionId) || null
+            }));
+
+          const opens = events.filter((e)=>e.eventType==='page_open');
+          const feedbacks = events.filter((e)=>e.eventType==='feedback_submitted');
+
+          const bySession = new Map();
+          opens.forEach((o)=>{
+            const sid = o.sessionId || 'unknown';
+            const dt = new Date(o.occurredAt);
+            const cur = bySession.get(sid) || { sid, opens: 0, first: dt, last: dt, userAgent: o.userAgent || null };
+            cur.opens += 1;
+            if (dt < cur.first) cur.first = dt;
+            if (dt > cur.last) cur.last = dt;
+            if (!cur.userAgent && o.userAgent) cur.userAgent = o.userAgent;
+            bySession.set(sid, cur);
+          });
+
+          const sessions = Array.from(bySession.values()).sort((a,b)=>b.last - a.last);
+          const uniqueSessions = sessions.length;
+          const totalOpens = opens.length;
+          const lastOpenAt = sessions[0]?.last || null;
+
+          const fmt = (dt)=> dt ? (dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})) : '—';
+
+          const summaryHtml = `
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
+              <div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:12px;">
+                <div style="font-size:11px;color:#6b7280;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">Total opens</div>
+                <div style="font-size:18px;font-weight:800;color:#111;margin-top:2px;">${totalOpens}</div>
+              </div>
+              <div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:12px;">
+                <div style="font-size:11px;color:#6b7280;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">Unique sessions</div>
+                <div style="font-size:18px;font-weight:800;color:#111;margin-top:2px;">${uniqueSessions}</div>
+              </div>
+              <div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:12px;">
+                <div style="font-size:11px;color:#6b7280;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">Last opened</div>
+                <div style="font-size:12px;font-weight:700;color:#111;margin-top:6px;">${escapeHtml(fmt(lastOpenAt))}</div>
+              </div>
+            </div>
+          `;
+
+          const feedbackHtml = feedbacks.length ? `
+            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:10px;">
+              <strong>Feedback submitted</strong> · ${escapeHtml(fmt(new Date(feedbacks[0].occurredAt)))}
+            </div>
+          ` : '';
+
+          const sessionRows = sessions.length ? sessions.map((s, idx)=>{
+            const label = s.sid === 'unknown' ? 'Session (unknown)' : `Session ${idx+1}`;
+            const uaHint = s.userAgent ? ` · ${escapeHtml(String(s.userAgent).slice(0, 60))}${String(s.userAgent).length>60?'…':''}` : '';
+            return `<div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:12px">
+              <div><strong>${label}</strong> · ${s.opens} open(s)</div>
+              <div style="color:#6b7280;margin-top:4px">First: ${escapeHtml(fmt(s.first))} · Last: ${escapeHtml(fmt(s.last))}${uaHint}</div>
+            </div>`;
+          }).join('') : '<p style="color:#6b7280;font-size:12px">No opens recorded yet.</p>';
+
+          box.innerHTML = summaryHtml + feedbackHtml + `<div style="display:flex;flex-direction:column;gap:8px">${sessionRows}</div>`;
         } catch(err){
           box.innerHTML = `<p style="color:#b91c1c;font-size:12px">Failed to load history.</p>`;
         }
