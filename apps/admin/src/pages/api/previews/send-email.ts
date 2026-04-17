@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { getAdminClientEmailCc } from '../../../lib/email.ts';
 import { getPreviewClientById } from '../../../lib/previews.ts';
 import { Resend } from 'resend';
 
@@ -29,10 +30,16 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     const resend = new Resend(import.meta.env.RESEND_API_KEY);
+    const recordCc = getAdminClientEmailCc();
+    const cc =
+      recordCc && String(client.email).trim().toLowerCase() !== recordCc.toLowerCase()
+        ? [recordCc]
+        : [];
 
     const { error } = await resend.emails.send({
       from: import.meta.env.RESEND_FROM_EMAIL,
       to: client.email,
+      ...(cc.length ? { cc } : {}),
       subject: `Your design preview is ready — ${client.name}`,
       html: `<!DOCTYPE html>
 <html>

@@ -1,5 +1,18 @@
 import { Resend } from 'resend';
 
+/** CC on outbound client emails for a sent-record in the ops inbox. Override with ADMIN_CLIENT_EMAIL_CC. */
+export function getAdminClientEmailCc(): string {
+  return String(import.meta.env.ADMIN_CLIENT_EMAIL_CC ?? 'admin@zyntel.net').trim();
+}
+
+function ccListForTo(to: string): string[] {
+  const cc = getAdminClientEmailCc();
+  if (!cc) return [];
+  const toNorm = String(to).trim().toLowerCase();
+  if (toNorm === cc.toLowerCase()) return [];
+  return [cc];
+}
+
 export interface SendEmailOptions {
   to: string;
   subject: string;
@@ -15,10 +28,12 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ ok: boolea
   const from =
     String(import.meta.env.EMAIL_FROM ?? '').trim() || 'Zyntel <billing@zyntel.net>';
   const resend = new Resend(apiKey);
+  const cc = ccListForTo(options.to);
   try {
     const { data, error } = await resend.emails.send({
       from,
       to: options.to,
+      ...(cc.length ? { cc } : {}),
       subject: options.subject,
       html: options.html,
       attachments: options.attachments?.map((a) => ({
