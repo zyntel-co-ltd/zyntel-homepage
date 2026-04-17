@@ -29,7 +29,25 @@ export const POST: APIRoute = async ({ request }) => {
       year: 'numeric',
     });
 
-    const resend = new Resend(import.meta.env.RESEND_API_KEY);
+    const resendApiKey = String(import.meta.env.RESEND_API_KEY ?? '').trim();
+    const fromEmail = String(import.meta.env.RESEND_FROM_EMAIL ?? '').trim();
+    if (!resendApiKey) {
+      return new Response(
+        JSON.stringify({ error: 'RESEND_API_KEY must be configured (Vercel env var)' }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!fromEmail) {
+      return new Response(
+        JSON.stringify({
+          error:
+            'RESEND_FROM_EMAIL must be configured (and verified in Resend). Example: "Zyntel <hello@zyntel.net>"',
+        }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const resend = new Resend(resendApiKey);
     const recordCc = getAdminClientEmailCc();
     const cc =
       recordCc && String(client.email).trim().toLowerCase() !== recordCc.toLowerCase()
@@ -37,7 +55,7 @@ export const POST: APIRoute = async ({ request }) => {
         : [];
 
     const { error } = await resend.emails.send({
-      from: import.meta.env.RESEND_FROM_EMAIL,
+      from: fromEmail,
       to: client.email,
       ...(cc.length ? { cc } : {}),
       subject: `Your design preview is ready — ${client.name}`,
@@ -92,8 +110,16 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
+      // Resend commonly returns 422 for invalid/unverified `from`
+      const msg = String(error.message ?? 'Resend error');
+      const isValidation = /422|validation|from/i.test(msg);
+      return new Response(JSON.stringify({
+        error: msg,
+        hint: isValidation
+          ? 'Resend rejected the request (often: RESEND_FROM_EMAIL not verified / invalid). Check Resend Domains + Sender and update Vercel env vars.'
+          : undefined
+      }), {
+        status: 502,
         headers: { 'Content-Type': 'application/json' },
       });
     }
