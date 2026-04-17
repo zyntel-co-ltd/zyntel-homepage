@@ -1,0 +1,205 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { sql } from '@zyntel/db';
+
+// Fetch all service clients with their latest health check result and 7-day uptime
+let healthData: Array<{
+  id: string;
+  name: string;
+  productName: string;
+  healthCheckUrl: string | null;
+  currentStatus: string | null;
+  lastChecked: Date | null;
+  responseTimeMs: number | null;
+  uptimePct7d: number | null;
+}> = [];
+
+try {
+  if (import.meta.env.DATABASE_URL) {
+    const rows = await sql`
+      SELECT
+        sc.id,
+        sc.name,
+        sc.product_name,
+        sc.health_check_url,
+        latest.status        AS current_status,
+        latest.checked_at    AS last_checked,
+        latest.response_time_ms,
+        stats.uptime_pct
+      FROM service_clients sc
+      LEFT JOIN LATERAL (
+        SELECT status, checked_at, response_time_ms
+        FROM health_check_results
+        WHERE service_client_id = sc.id
+        ORDER BY checked_at DESC
+        LIMIT 1
+      ) latest ON true
+      LEFT JOIN LATERAL (
+        SELECT
+          ROUND(
+            100.0 * COUNT(*) FILTER (WHERE status = 'up') / NULLIF(COUNT(*), 0),
+            1
+          ) AS uptime_pct
+        FROM health_check_results
+        WHERE service_client_id = sc.id
+          AND checked_at >= now() - interval '7 days'
+      ) stats ON true
+      ORDER BY sc.name ASC
+    `;
+    healthData = (rows as any[]).map((r) => ({
+      id: String(r.id),
+      name: String(r.name),
+      productName: String(r.product_name),
+      healthCheckUrl: r.health_check_url ?? null,
+      currentStatus: r.current_status ?? null,
+      lastChecked: r.last_checked ? new Date(r.last_checked) : null,
+      responseTimeMs: r.response_time_ms != null ? Number(r.response_time_ms) : null,
+      uptimePct7d: r.uptime_pct != null ? Number(r.uptime_pct) : null,
+    }));
+  }
+} catch {
+  // Graceful fallback if table doesn't exist yet
+}
+
+function statusColor(status: string | null) {
+  if (status === 'up') return '#16a34a';
+  if (status === 'degraded') return '#d97706';
+  if (status === 'down') return '#dc2626';
+  return '#9ca3af';
+}
+
+function statusLabel(status: string | null) {
+  if (!status) return 'No data';
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+---
+<AdminLayout title="Health Monitor">
+  <header class="admin-header health-header">
+    <h1 class="admin-title">Product Health Monitor</h1>
+    <span class="health-refresh-note">Auto-refreshes every 60 seconds</span>
+  </header>
+
+  {healthData.length === 0 ? (
+    <div class="admin-card" style="padding:32px;text-align:center;color:#6b7280;">
+      <p>No service clients with health check URLs configured yet.</p>
+      <p style="font-size:13px;">Add a service client in the <a href="/maintenance">Maintenance</a> page and set a health check URL.</p>
+    </div>
+  ) : (
+    <div class="health-grid">
+      {healthData.map((h) => (
+        <div
+          class={`health-card health-card--${h.currentStatus ?? 'unknown'}`}
+          data-client-id={h.id}
+          style={`border-left-color:${statusColor(h.currentStatus)}`}
+        >
+          <div class="health-card-top">
+            <span class="health-status-dot" style={`background:${statusColor(h.currentStatus)}`}></span>
+            <span class="health-status-label" style={`color:${statusColor(h.currentStatus)}`}>
+              {statusLabel(h.currentStatus)}
+            </span>
+          </div>
+          <div class="health-product-name">{h.productName}</div>
+          <div class="health-client-name">{h.name}</div>
+          <div class="health-meta">
+            {h.lastChecked
+              ? `Last checked: ${h.lastChecked.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+              : 'Never checked'}
+          </div>
+          {h.responseTimeMs != null && (
+            <div class="health-meta">Response time: {h.responseTimeMs}ms</div>
+          )}
+          {h.uptimePct7d != null && (
+            <div class="health-uptime">
+              <span>7-day uptime</span>
+              <strong style={`color:${h.uptimePct7d >= 99 ? '#16a34a' : h.uptimePct7d >= 95 ? '#d97706' : '#dc2626'}`}>
+                {h.uptimePct7d}%
+              </strong>
+            </div>
+          )}
+          {h.healthCheckUrl && (
+            <div class="health-url">
+              <a href={h.healthCheckUrl} target="_blank" rel="noopener noreferrer">{h.healthCheckUrl}</a>
+            </div>
+          )}
+          <button class="act-btn health-history-btn" data-history={h.id} type="button">View 24h history</button>
+        </div>
+      ))}
+    </div>
+  )}
+
+  <!-- History Modal -->
+  <div id="modal-history" class="preview-modal-overlay" style="display:none">
+    <div class="modal modal--wide">
+      <h3>24-hour Health History</h3>
+      <div id="history-content" style="margin-top:12px;"></div>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-history">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .health-header{display:flex;justify-content:space-between;align-items:center;}
+    .health-refresh-note{font-size:12px;color:#9ca3af;}
+    .health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+    .health-card{background:#fff;border:1px solid #e5e7eb;border-left:4px solid #e5e7eb;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:6px;}
+    .health-card-top{display:flex;align-items:center;gap:8px;}
+    .health-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    .health-status-label{font-size:13px;font-weight:700;}
+    .health-product-name{font-size:16px;font-weight:800;color:#111;}
+    .health-client-name{font-size:12px;color:#6b7280;}
+    .health-meta{font-size:11px;color:#9ca3af;}
+    .health-uptime{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#374151;margin-top:4px;}
+    .health-url{font-size:11px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .health-url a{color:#635bff;text-decoration:none;}
+    .health-history-btn{margin-top:6px;font-size:11px;padding:4px 8px;border:1px solid #e5e7eb;background:#fff;border-radius:6px;cursor:pointer;}
+    .act-btn{font-size:11px;padding:4px 8px;border:1px solid var(--admin-border);background:#fff;border-radius:6px;cursor:pointer;}
+    .preview-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;z-index:1200;padding:16px;}
+    .modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:12px;padding:24px;}
+    .modal--wide{width:min(800px,100%);}
+    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+    .timeline{display:flex;flex-direction:column;gap:6px;}
+    .timeline-item{display:flex;gap:12px;align-items:center;padding:6px 10px;border-radius:6px;font-size:12px;}
+    .timeline-item--up{background:rgba(22,163,74,.08);}
+    .timeline-item--degraded{background:rgba(217,119,6,.08);}
+    .timeline-item--down{background:rgba(220,38,38,.08);}
+    .timeline-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .dot-up{background:#16a34a}.dot-degraded{background:#d97706}.dot-down{background:#dc2626}
+  </style>
+
+  <script>
+    // Auto-refresh every 60 seconds
+    setTimeout(() => location.reload(), 60_000);
+
+    function showModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'flex'; }
+    function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+    document.addEventListener('click', (e) => { const c = e.target.closest('[data-close]'); if (c) closeModal(c.dataset.close); });
+    document.querySelectorAll('.preview-modal-overlay').forEach((o) => o.addEventListener('click', (e) => { if (e.target === o) closeModal(o.id); }));
+
+    document.querySelectorAll('[data-history]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const clientId = btn.dataset.history;
+        const box = document.getElementById('history-content');
+        box.innerHTML = '<p style="color:#6b7280;font-size:13px;">Loading…</p>';
+        showModal('modal-history');
+        try {
+          const res = await fetch(`/api/health/history?clientId=${encodeURIComponent(clientId)}`);
+          const data = await res.json().catch(() => []);
+          if (!data.length) { box.innerHTML = '<p style="color:#6b7280;font-size:13px;">No health checks recorded yet.</p>'; return; }
+          const items = data.map((h) => {
+            const dt = new Date(h.checkedAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+            const rtStr = h.responseTimeMs != null ? ` · ${h.responseTimeMs}ms` : '';
+            const errStr = h.errorMessage ? ` · ${h.errorMessage}` : '';
+            return `<div class="timeline-item timeline-item--${h.status}">
+              <span class="timeline-dot dot-${h.status}"></span>
+              <span style="flex:1">${dt} — <strong>${h.status}</strong>${rtStr}${errStr}</span>
+            </div>`;
+          }).join('');
+          box.innerHTML = `<div class="timeline">${items}</div>`;
+        } catch {
+          box.innerHTML = '<p style="color:#b91c1c;font-size:13px;">Failed to load history.</p>';
+        }
+      });
+    });
+  </script>
+</AdminLayout>

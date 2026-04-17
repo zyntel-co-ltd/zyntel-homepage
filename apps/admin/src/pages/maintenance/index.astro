@@ -1,0 +1,569 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAllServiceClients } from '../../lib/maintenance.ts';
+
+const serviceClients = await getAllServiceClients();
+---
+<AdminLayout title="Maintenance">
+  <header class="admin-header maint-header">
+    <h1 class="admin-title">Maintenance</h1>
+    <button id="btn-new-client" class="admin-btn admin-btn-primary" type="button">New Service Client</button>
+  </header>
+
+  <!-- Client Selector -->
+  <div class="admin-card maint-selector-card">
+    <label class="maint-selector-label">Service Client</label>
+    <select id="client-select" class="admin-form-input maint-client-select">
+      <option value="">— Select a client to view maintenance logs —</option>
+      {serviceClients.map((c) => (
+        <option value={c.id} data-product={c.productName} data-contact={c.contactName}>{c.name} — {c.productName}</option>
+      ))}
+    </select>
+  </div>
+
+  <!-- Stats bar (hidden until client selected) -->
+  <div id="stats-bar" class="admin-stats" style="display:none">
+    <div class="admin-stat-card"><div class="admin-stat-label">Total Logs (QTR)</div><div class="admin-stat-value" id="stat-total">0</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Incidents</div><div class="admin-stat-value" id="stat-incidents">0</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Preventive</div><div class="admin-stat-value" id="stat-preventive">0</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Support</div><div class="admin-stat-value" id="stat-support">0</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Open WOs</div><div class="admin-stat-value" id="stat-open-wo">0</div></div>
+  </div>
+
+  <!-- Quick Log Entry Form -->
+  <div id="log-panel" class="admin-card" style="display:none">
+    <h2 class="maint-section-title">Log Entry</h2>
+    <form id="form-log" class="log-form">
+      <div class="log-form-row">
+        <div>
+          <label>Date</label>
+          <input id="log-date" type="date" class="admin-form-input" />
+        </div>
+        <div>
+          <label>Area</label>
+          <input id="log-area" class="admin-form-input" placeholder="e.g. Backend, Database, Frontend" required />
+        </div>
+        <div>
+          <label>Logged by</label>
+          <input id="log-by" class="admin-form-input" value="Wycliff" />
+        </div>
+      </div>
+      <div class="type-chips">
+        <button type="button" class="type-chip type-chip--incident" data-type="incident">Incident</button>
+        <button type="button" class="type-chip type-chip--preventive" data-type="preventive">Preventive</button>
+        <button type="button" class="type-chip type-chip--support" data-type="support">Support</button>
+      </div>
+      <input type="hidden" id="log-type" required />
+      <div class="log-form-row log-form-row--full">
+        <label>Summary <span class="char-counter" id="summary-counter">0 / 200</span></label>
+        <input id="log-summary" class="admin-form-input" maxlength="200" placeholder="Brief description (max 200 chars)" required />
+      </div>
+      <div class="log-form-row">
+        <div>
+          <label>Action Taken</label>
+          <textarea id="log-action" class="admin-form-input" rows="2" placeholder="What was done?"></textarea>
+        </div>
+        <div>
+          <label>Outcome</label>
+          <textarea id="log-outcome" class="admin-form-input" rows="2" placeholder="Result / resolution"></textarea>
+        </div>
+      </div>
+      <button class="admin-btn admin-btn-primary" type="submit">Save Log Entry</button>
+    </form>
+  </div>
+
+  <!-- Logs Table -->
+  <div id="logs-panel" class="admin-card" style="display:none">
+    <div class="admin-card-header">
+      <h2 class="maint-section-title">Maintenance Logs</h2>
+      <div class="filter-tabs" id="log-filter-tabs">
+        <button class="tab active" data-filter="all">All</button>
+        <button class="tab" data-filter="incident">Incidents</button>
+        <button class="tab" data-filter="preventive">Preventive</button>
+        <button class="tab" data-filter="support">Support</button>
+      </div>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Area</th>
+            <th>Summary</th>
+            <th>Action Taken</th>
+            <th>Logged By</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="logs-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Work Orders Panel -->
+  <div id="wo-panel" class="admin-card" style="display:none">
+    <div class="admin-card-header">
+      <h2 class="maint-section-title">Work Orders</h2>
+      <button id="btn-new-wo" class="admin-btn admin-btn-secondary" type="button">+ New Work Order</button>
+    </div>
+    <div id="wo-list" class="wo-list"></div>
+  </div>
+
+  <!-- ROI Metrics Panel -->
+  <div id="roi-panel" class="admin-card" style="display:none">
+    <div class="admin-card-header">
+      <h2 class="maint-section-title">Before vs Now — ROI Metrics</h2>
+      <button id="btn-log-metrics" class="admin-btn admin-btn-secondary" type="button">Log Metrics</button>
+    </div>
+    <div id="roi-comparison" class="roi-comparison"></div>
+  </div>
+
+  <!-- New Service Client Modal -->
+  <div id="modal-new-client" class="preview-modal-overlay" style="display:none">
+    <div class="modal">
+      <h3>New Service Client</h3>
+      <form id="form-new-client" class="grid-form">
+        <div class="full"><label>Client / Company Name</label><input id="nc-name" class="admin-form-input" required /></div>
+        <div><label>Product Name</label><input id="nc-product-name" class="admin-form-input" required /></div>
+        <div>
+          <label>Product Type</label>
+          <select id="nc-product-type" class="admin-form-input">
+            <option value="dashboard">Dashboard</option>
+            <option value="web-app">Web App</option>
+            <option value="saas">SaaS</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div><label>Contact Name</label><input id="nc-contact-name" class="admin-form-input" required /></div>
+        <div><label>Contact Email</label><input id="nc-contact-email" type="email" class="admin-form-input" required /></div>
+        <div class="full"><label>Health Check URL (optional)</label><input id="nc-health-url" class="admin-form-input" placeholder="https://..." /></div>
+        <div class="full"><label>API URL (optional)</label><input id="nc-api-url" class="admin-form-input" placeholder="https://..." /></div>
+        <div class="full"><label>Notes</label><textarea id="nc-notes" class="admin-form-input" rows="2"></textarea></div>
+        <div class="modal-actions full">
+          <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-new-client">Cancel</button>
+          <button class="admin-btn admin-btn-primary">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- New Work Order Modal -->
+  <div id="modal-new-wo" class="preview-modal-overlay" style="display:none">
+    <div class="modal">
+      <h3>New Work Order</h3>
+      <form id="form-new-wo" class="grid-form">
+        <div class="full"><label>Title</label><input id="wo-title" class="admin-form-input" required /></div>
+        <div class="full"><label>Description</label><textarea id="wo-description" class="admin-form-input" rows="3"></textarea></div>
+        <div class="full"><label>Scope Items (one per line)</label><textarea id="wo-scope" class="admin-form-input" rows="4" placeholder="- Item 1&#10;- Item 2"></textarea></div>
+        <div><label>Estimated Cost</label><input id="wo-cost" class="admin-form-input" type="number" min="0" /></div>
+        <div>
+          <label>Currency</label>
+          <select id="wo-currency" class="admin-form-input">
+            <option value="UGX">UGX</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+          </select>
+        </div>
+        <div class="full"><label>Notes</label><textarea id="wo-notes" class="admin-form-input" rows="2"></textarea></div>
+        <div class="modal-actions full">
+          <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-new-wo">Cancel</button>
+          <button class="admin-btn admin-btn-primary">Create Work Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Log Metrics Modal -->
+  <div id="modal-log-metrics" class="preview-modal-overlay" style="display:none">
+    <div class="modal">
+      <h3>Log Metrics</h3>
+      <form id="form-log-metrics" class="grid-form">
+        <div class="full"><label>Date</label><input id="metrics-date" type="date" class="admin-form-input" /></div>
+        <div class="full" style="font-size:12px;color:#6b7280;font-weight:600;">Enter values below (leave blank to skip)</div>
+        <div><label>Avg TAT (minutes)</label><input id="m-avg-tat" class="admin-form-input" type="number" step="0.01" /></div>
+        <div><label>Total Tests</label><input id="m-total-tests" class="admin-form-input" type="number" /></div>
+        <div><label>Delay Rate (%)</label><input id="m-delay-rate" class="admin-form-input" type="number" step="0.01" /></div>
+        <div><label>Revenue (UGX)</label><input id="m-revenue" class="admin-form-input" type="number" /></div>
+        <div class="modal-actions full">
+          <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-log-metrics">Cancel</button>
+          <button class="admin-btn admin-btn-primary">Save Metrics</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div id="modal-confirm" class="preview-modal-overlay" style="display:none">
+    <div class="modal">
+      <h3 id="confirm-title"></h3>
+      <p id="confirm-message"></p>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-confirm">Cancel</button>
+        <button id="confirm-btn" type="button" class="admin-btn admin-btn-primary">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-root"></div>
+
+  <style>
+    .maint-header{display:flex;justify-content:space-between;align-items:center;}
+    .maint-selector-card{padding:16px;}
+    .maint-selector-label{font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:6px;}
+    .maint-client-select{max-width:480px;}
+    .maint-section-title{font-size:14px;font-weight:700;color:#111;margin:0;}
+    .log-form{display:flex;flex-direction:column;gap:12px;}
+    .log-form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+    .log-form-row--full{grid-template-columns:1fr;}
+    .log-form-row label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;}
+    .type-chips{display:flex;gap:10px;}
+    .type-chip{padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;border:2px solid transparent;cursor:pointer;transition:all .12s;}
+    .type-chip--incident{background:rgba(239,68,68,.1);color:#b91c1c;border-color:#fca5a5;}
+    .type-chip--preventive{background:rgba(22,163,74,.1);color:#166534;border-color:#86efac;}
+    .type-chip--support{background:rgba(59,130,246,.1);color:#1d4ed8;border-color:#93c5fd;}
+    .type-chip.active{box-shadow:0 0 0 3px rgba(0,0,0,.15);}
+    .type-chip--incident.active{background:#b91c1c;color:#fff;}
+    .type-chip--preventive.active{background:#166534;color:#fff;}
+    .type-chip--support.active{background:#1d4ed8;color:#fff;}
+    .char-counter{font-size:11px;color:#9ca3af;font-weight:400;float:right;}
+    .filter-tabs{display:flex;gap:.5rem;flex-wrap:wrap;}
+    .tab{border:1px solid var(--admin-border);background:#fff;border-radius:999px;padding:.3rem .65rem;font-size:12px;cursor:pointer;}
+    .tab.active{background:rgba(99,91,255,.12);border-color:#635bff;color:#635bff;}
+    .act-btn{font-size:11px;padding:4px 8px;border:1px solid var(--admin-border);background:#fff;border-radius:6px;cursor:pointer;}
+    .act-btn--danger{color:#b91c1c;}
+    .badge-incident{background:rgba(239,68,68,.15);color:#b91c1c;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
+    .badge-preventive{background:rgba(22,163,74,.15);color:#166534;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
+    .badge-support{background:rgba(59,130,246,.15);color:#1d4ed8;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
+    .wo-list{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+    .wo-card{border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+    .wo-card-info{flex:1;}
+    .wo-title{font-weight:700;font-size:13px;}
+    .wo-meta{font-size:11px;color:#6b7280;margin-top:2px;}
+    .wo-actions{display:flex;gap:6px;flex-wrap:wrap;}
+    .roi-comparison{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:8px;}
+    .roi-metric-card{border:1px solid #e5e7eb;border-radius:8px;padding:12px;}
+    .roi-metric-label{font-size:11px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+    .roi-metric-vals{display:flex;gap:8px;align-items:baseline;margin-top:4px;}
+    .roi-val-old{font-size:11px;color:#6b7280;text-decoration:line-through;}
+    .roi-val-new{font-size:16px;font-weight:800;color:#111;}
+    .roi-change{font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;}
+    .roi-change--good{background:rgba(22,163,74,.15);color:#166534;}
+    .roi-change--bad{background:rgba(239,68,68,.15);color:#b91c1c;}
+    .preview-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;z-index:1200;padding:16px;}
+    .modal{width:min(640px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:12px;padding:24px;}
+    .grid-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .grid-form .full{grid-column:1/-1;}
+    .grid-form label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:3px;}
+    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
+    #toast-root{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:2000;}
+    .toast{background:#111;color:#fff;border-radius:8px;padding:10px 12px;font-size:12px;min-width:260px;}
+    .toast.error{background:#7f1d1d;}
+  </style>
+
+  <script>
+    let selectedClientId = '';
+    let logFilter = 'all';
+    let allLogs = [];
+    let confirmCallback = null;
+
+    function showToast(msg, type = 'success') {
+      const t = document.createElement('div'); t.className = `toast ${type === 'error' ? 'error' : ''}`;
+      t.textContent = msg;
+      document.getElementById('toast-root').appendChild(t);
+      setTimeout(() => t.remove(), 5000);
+    }
+    function showModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'flex'; }
+    function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+    document.addEventListener('click', (e) => { const c = e.target.closest('[data-close]'); if (c) closeModal(c.dataset.close); });
+    document.querySelectorAll('.preview-modal-overlay').forEach((o) => o.addEventListener('click', (e) => { if (e.target === o) closeModal(o.id); }));
+    document.getElementById('confirm-btn').addEventListener('click', async () => { if (confirmCallback) await confirmCallback(); closeModal('modal-confirm'); });
+
+    function openConfirm(opts) {
+      document.getElementById('confirm-title').textContent = opts.title;
+      document.getElementById('confirm-message').textContent = opts.message;
+      document.getElementById('confirm-btn').textContent = opts.label || 'Confirm';
+      confirmCallback = opts.onConfirm;
+      showModal('modal-confirm');
+    }
+
+    // Set today's date defaults
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById('log-date').value = today;
+    document.getElementById('metrics-date').value = today;
+
+    // Summary counter
+    document.getElementById('log-summary').addEventListener('input', (e) => {
+      document.getElementById('summary-counter').textContent = `${e.target.value.length} / 200`;
+    });
+
+    // Type chips
+    let selectedType = '';
+    document.querySelectorAll('.type-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.type-chip').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedType = btn.dataset.type;
+        document.getElementById('log-type').value = selectedType;
+      });
+    });
+
+    // Log filter tabs
+    document.getElementById('log-filter-tabs').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-filter]'); if (!btn) return;
+      logFilter = btn.dataset.filter;
+      document.querySelectorAll('#log-filter-tabs .tab').forEach((t) => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderLogs();
+    });
+
+    function renderLogs() {
+      const tbody = document.getElementById('logs-tbody');
+      const filtered = logFilter === 'all' ? allLogs : allLogs.filter((l) => l.type === logFilter);
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6b7280;padding:24px;font-size:13px;">No logs yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map((log) => `
+        <tr data-id="${log.id}">
+          <td style="white-space:nowrap;font-size:12px;">${log.logDate}</td>
+          <td><span class="badge-${log.type}">${log.type}</span></td>
+          <td style="font-size:12px;">${log.area}</td>
+          <td style="font-size:12px;max-width:200px;">${log.summary}</td>
+          <td style="font-size:12px;max-width:180px;color:#6b7280;">${log.actionTaken || '—'}</td>
+          <td style="font-size:12px;">${log.loggedBy}</td>
+          <td><button class="act-btn act-btn--danger" data-del-log="${log.id}" type="button">Delete</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderWorkOrders(wos) {
+      const list = document.getElementById('wo-list');
+      if (!wos.length) {
+        list.innerHTML = '<p style="color:#6b7280;font-size:13px;padding:8px 0;">No work orders yet.</p>';
+        return;
+      }
+      list.innerHTML = wos.map((wo) => `
+        <div class="wo-card">
+          <div class="wo-card-info">
+            <div class="wo-title">${wo.woNumber} — ${wo.title}</div>
+            <div class="wo-meta">Status: <strong>${wo.status}</strong> · Est. Cost: ${wo.currency} ${wo.estimatedCost ? Number(wo.estimatedCost).toLocaleString() : 'TBD'}</div>
+            ${wo.description ? `<div class="wo-meta" style="margin-top:4px;color:#374151;">${wo.description}</div>` : ''}
+          </div>
+          <div class="wo-actions">
+            ${wo.status !== 'approved' ? `<button class="act-btn" data-wo-approve="${wo.id}" type="button">Approve</button>` : ''}
+            ${wo.status !== 'completed' && wo.status !== 'invoiced' ? `<button class="act-btn" data-wo-complete="${wo.id}" type="button">Mark Complete</button>` : ''}
+            <button class="act-btn act-btn--danger" data-wo-delete="${wo.id}" data-wo-number="${wo.woNumber}" type="button">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function loadClientData(clientId) {
+      if (!clientId) return;
+      selectedClientId = clientId;
+      document.getElementById('stats-bar').style.display = '';
+      document.getElementById('log-panel').style.display = '';
+      document.getElementById('logs-panel').style.display = '';
+      document.getElementById('wo-panel').style.display = '';
+      document.getElementById('roi-panel').style.display = '';
+
+      const [logsRes, woRes] = await Promise.all([
+        fetch(`/api/maintenance/logs?serviceClientId=${encodeURIComponent(clientId)}`),
+        fetch(`/api/maintenance/work-orders?serviceClientId=${encodeURIComponent(clientId)}`),
+      ]);
+      allLogs = await logsRes.json().catch(() => []);
+      const wos = await woRes.json().catch(() => []);
+      renderLogs();
+      renderWorkOrders(wos);
+
+      // Quarter stats
+      const now = new Date();
+      const q = Math.floor(now.getMonth() / 3);
+      const qStart = new Date(now.getFullYear(), q * 3, 1);
+      const qEnd = new Date(now.getFullYear(), q * 3 + 3, 0);
+      const qLogs = allLogs.filter((l) => l.logDate >= qStart.toISOString().slice(0, 10) && l.logDate <= qEnd.toISOString().slice(0, 10));
+      document.getElementById('stat-total').textContent = String(qLogs.length);
+      document.getElementById('stat-incidents').textContent = String(qLogs.filter((l) => l.type === 'incident').length);
+      document.getElementById('stat-preventive').textContent = String(qLogs.filter((l) => l.type === 'preventive').length);
+      document.getElementById('stat-support').textContent = String(qLogs.filter((l) => l.type === 'support').length);
+      document.getElementById('stat-open-wo').textContent = String(wos.filter((w) => !['completed','invoiced'].includes(w.status)).length);
+
+      // Load ROI comparison
+      loadROI(clientId);
+    }
+
+    async function loadROI(clientId) {
+      const res = await fetch(`/api/roi/comparison?serviceClientId=${encodeURIComponent(clientId)}`);
+      if (!res.ok) return;
+      const data = await res.json().catch(() => null);
+      if (!data) return;
+      const container = document.getElementById('roi-comparison');
+      const metricLabels = { 'avg_tat_minutes': 'Avg TAT (min)', 'total_tests': 'Total Tests', 'delay_rate_pct': 'Delay Rate (%)', 'revenue_ugx': 'Revenue (UGX)' };
+      const lowerIsBetter = ['avg_tat_minutes', 'delay_rate_pct'];
+      const entries = Object.entries(data);
+      if (!entries.length) {
+        container.innerHTML = '<p style="color:#6b7280;font-size:13px;">No metric data yet. Click "Log Metrics" to add baseline values.</p>';
+        return;
+      }
+      container.innerHTML = entries.map(([key, val]) => {
+        const v = val;
+        const label = metricLabels[key] || key;
+        if (!v.baseline && !v.current) return '';
+        const hasChange = v.baseline != null && v.current != null;
+        const pct = hasChange ? ((v.current - v.baseline) / Math.abs(v.baseline) * 100).toFixed(1) : null;
+        const improved = lowerIsBetter.includes(key) ? (v.current < v.baseline) : (v.current > v.baseline);
+        return `
+          <div class="roi-metric-card">
+            <div class="roi-metric-label">${label}</div>
+            <div class="roi-metric-vals">
+              ${v.baseline != null ? `<span class="roi-val-old">${Number(v.baseline).toLocaleString()}</span>` : ''}
+              <span class="roi-val-new">${v.current != null ? Number(v.current).toLocaleString() : '—'}</span>
+              ${pct !== null ? `<span class="roi-change ${improved ? 'roi-change--good' : 'roi-change--bad'}">${improved ? '▲' : '▼'} ${Math.abs(Number(pct))}%</span>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    document.getElementById('client-select').addEventListener('change', (e) => {
+      loadClientData(e.target.value);
+    });
+
+    // Log form submit
+    document.getElementById('form-log').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!selectedClientId) { showToast('Select a service client first', 'error'); return; }
+      if (!selectedType) { showToast('Select a log type (Incident / Preventive / Support)', 'error'); return; }
+      const payload = {
+        serviceClientId: selectedClientId,
+        logDate: document.getElementById('log-date').value,
+        type: selectedType,
+        area: document.getElementById('log-area').value.trim(),
+        summary: document.getElementById('log-summary').value.trim(),
+        actionTaken: document.getElementById('log-action').value.trim(),
+        outcome: document.getElementById('log-outcome').value.trim(),
+        loggedBy: document.getElementById('log-by').value.trim() || 'Wycliff',
+      };
+      const res = await fetch('/api/maintenance/logs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) { const d = await res.json().catch(()=>({})); showToast(d.error || 'Failed to save log', 'error'); return; }
+      const newLog = await res.json();
+      allLogs.unshift(newLog);
+      renderLogs();
+      document.getElementById('form-log').reset();
+      document.getElementById('log-date').value = today;
+      document.querySelectorAll('.type-chip').forEach((b) => b.classList.remove('active'));
+      selectedType = '';
+      document.getElementById('log-type').value = '';
+      document.getElementById('summary-counter').textContent = '0 / 200';
+      showToast('Log entry saved');
+    });
+
+    // Delete log
+    document.getElementById('logs-tbody').addEventListener('click', async (e) => {
+      const delBtn = e.target.closest('[data-del-log]'); if (!delBtn) return;
+      const id = delBtn.dataset.delLog;
+      openConfirm({ title: 'Delete log entry?', message: 'This cannot be undone.', label: 'Delete', onConfirm: async () => {
+        const res = await fetch(`/api/maintenance/logs?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!res.ok) { showToast('Failed to delete', 'error'); return; }
+        allLogs = allLogs.filter((l) => l.id !== id);
+        renderLogs();
+        showToast('Log deleted');
+      }});
+    });
+
+    // New service client
+    document.getElementById('btn-new-client').addEventListener('click', () => showModal('modal-new-client'));
+    document.getElementById('form-new-client').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('nc-name').value.trim(),
+        productName: document.getElementById('nc-product-name').value.trim(),
+        productType: document.getElementById('nc-product-type').value,
+        contactName: document.getElementById('nc-contact-name').value.trim(),
+        contactEmail: document.getElementById('nc-contact-email').value.trim(),
+        healthCheckUrl: document.getElementById('nc-health-url').value.trim() || null,
+        apiUrl: document.getElementById('nc-api-url').value.trim() || null,
+        notes: document.getElementById('nc-notes').value.trim() || null,
+      };
+      const res = await fetch('/api/maintenance/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) { showToast('Failed to create client', 'error'); return; }
+      closeModal('modal-new-client'); location.reload();
+    });
+
+    // New work order
+    document.getElementById('btn-new-wo').addEventListener('click', () => showModal('modal-new-wo'));
+    document.getElementById('form-new-wo').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!selectedClientId) return;
+      const scopeRaw = document.getElementById('wo-scope').value.trim();
+      const scopeItems = scopeRaw ? scopeRaw.split('\n').map((s) => s.replace(/^[-*]\s*/, '').trim()).filter(Boolean) : [];
+      const payload = {
+        serviceClientId: selectedClientId,
+        title: document.getElementById('wo-title').value.trim(),
+        description: document.getElementById('wo-description').value.trim(),
+        scopeItems,
+        estimatedCost: document.getElementById('wo-cost').value ? Number(document.getElementById('wo-cost').value) : null,
+        currency: document.getElementById('wo-currency').value,
+        notes: document.getElementById('wo-notes').value.trim() || null,
+      };
+      const res = await fetch('/api/maintenance/work-orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) { showToast('Failed to create work order', 'error'); return; }
+      const wo = await res.json();
+      closeModal('modal-new-wo');
+      showToast(`Work order ${wo.woNumber} created`);
+      await loadClientData(selectedClientId);
+    });
+
+    // WO actions (approve/complete/delete)
+    document.getElementById('wo-list').addEventListener('click', async (e) => {
+      const approveBtn = e.target.closest('[data-wo-approve]');
+      const completeBtn = e.target.closest('[data-wo-complete]');
+      const deleteBtn = e.target.closest('[data-wo-delete]');
+      if (approveBtn) {
+        const id = approveBtn.dataset.woApprove;
+        const res = await fetch('/api/maintenance/work-orders', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: 'approved' }) });
+        if (!res.ok) { showToast('Failed to update', 'error'); return; }
+        showToast('Work order approved');
+        await loadClientData(selectedClientId);
+      } else if (completeBtn) {
+        const id = completeBtn.dataset.woComplete;
+        const res = await fetch('/api/maintenance/work-orders', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: 'completed', completedAt: new Date().toISOString() }) });
+        if (!res.ok) { showToast('Failed to update', 'error'); return; }
+        showToast('Work order marked complete');
+        await loadClientData(selectedClientId);
+      } else if (deleteBtn) {
+        const id = deleteBtn.dataset.woDelete;
+        const wn = deleteBtn.dataset.woNumber;
+        openConfirm({ title: 'Delete work order?', message: `Delete ${wn}? This cannot be undone.`, label: 'Delete', onConfirm: async () => {
+          const res = await fetch(`/api/maintenance/work-orders?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+          if (!res.ok) { showToast('Failed to delete', 'error'); return; }
+          showToast('Work order deleted');
+          await loadClientData(selectedClientId);
+        }});
+      }
+    });
+
+    // Log metrics
+    document.getElementById('btn-log-metrics').addEventListener('click', () => showModal('modal-log-metrics'));
+    document.getElementById('form-log-metrics').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!selectedClientId) return;
+      const date = document.getElementById('metrics-date').value || today;
+      const metrics = [
+        { key: 'avg_tat_minutes', el: 'm-avg-tat' },
+        { key: 'total_tests', el: 'm-total-tests' },
+        { key: 'delay_rate_pct', el: 'm-delay-rate' },
+        { key: 'revenue_ugx', el: 'm-revenue' },
+      ];
+      const payloads = metrics
+        .filter(({ el }) => document.getElementById(el).value !== '')
+        .map(({ key, el }) => ({ serviceClientId: selectedClientId, snapshotDate: date, metricKey: key, metricValue: Number(document.getElementById(el).value) }));
+      for (const p of payloads) {
+        await fetch('/api/roi/snapshots', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) });
+      }
+      closeModal('modal-log-metrics');
+      showToast('Metrics saved');
+      loadROI(selectedClientId);
+    });
+  </script>
+</AdminLayout>

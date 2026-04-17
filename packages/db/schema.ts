@@ -122,6 +122,119 @@ export interface PreviewClient {
   productionSentAt?: Date | null;
 }
 
+// --- Quotes ---
+
+export interface QuoteLineItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  amount: number;
+}
+
+export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'declined' | 'converted';
+
+export interface Quote {
+  id: string;
+  quoteNumber: string;
+  clientId: number | null;
+  title: string;
+  lineItems: QuoteLineItem[];
+  subtotal: number;
+  taxRate: number;
+  total: number;
+  currency: string;
+  status: QuoteStatus;
+  validUntil: string | null;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  /** Joined client name — populated by lib queries that JOIN clients */
+  clientName?: string | null;
+  /** Joined client email */
+  clientEmail?: string | null;
+}
+
+// --- Maintenance ---
+
+export type ProductType = 'dashboard' | 'web-app' | 'saas' | 'other';
+export type MaintenanceLogType = 'incident' | 'preventive' | 'support';
+export type WorkOrderStatus = 'pending' | 'approved' | 'in-progress' | 'completed' | 'invoiced';
+
+export interface ServiceClient {
+  id: string;
+  name: string;
+  productName: string;
+  productType: ProductType;
+  contactName: string;
+  contactEmail: string;
+  healthCheckUrl: string | null;
+  apiUrl: string | null;
+  apiKeyHash: string | null;
+  notes: string | null;
+  createdAt: Date;
+}
+
+export interface MaintenanceLog {
+  id: string;
+  serviceClientId: string;
+  logDate: string;
+  type: MaintenanceLogType;
+  area: string;
+  summary: string;
+  actionTaken: string;
+  outcome: string;
+  workOrderId: string | null;
+  loggedBy: string;
+  createdAt: Date;
+}
+
+export interface WorkOrder {
+  id: string;
+  serviceClientId: string;
+  woNumber: string;
+  title: string;
+  description: string;
+  scopeItems: string[];
+  estimatedCost: number | null;
+  currency: string;
+  status: WorkOrderStatus;
+  approvedBy: string | null;
+  approvedAt: Date | null;
+  completedAt: Date | null;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// --- Health checks ---
+
+export type HealthStatus = 'up' | 'down' | 'degraded';
+
+export interface HealthCheckResult {
+  id: string;
+  serviceClientId: string;
+  checkedAt: Date;
+  status: HealthStatus;
+  responseTimeMs: number | null;
+  statusCode: number | null;
+  errorMessage: string | null;
+}
+
+// --- ROI snapshots ---
+
+export type ROISource = 'api_pull' | 'manual_entry';
+
+export interface ROISnapshot {
+  id: string;
+  serviceClientId: string;
+  snapshotDate: string;
+  metricKey: string;
+  metricValue: number;
+  source: ROISource;
+  notes: string | null;
+  createdAt: Date;
+}
+
 export interface PreviewClientIntake {
   industry: string;
   description: string;

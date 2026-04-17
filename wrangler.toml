@@ -1,0 +1,33 @@
+# Cloudflare Workers configuration for zyntel-homepage
+# Secrets are set via: wrangler secret put DATABASE_URL
+#                      wrangler secret put RESEND_API_KEY
+
+# --- Health Pinger Worker ---
+# Pings all service client health check URLs every 5 minutes.
+# Writes results to Neon, sends email alert on up→down transitions.
+[[workers]]
+name = "zyntel-health-pinger"
+main = "workers/health-pinger.js"
+compatibility_date = "2025-01-01"
+
+[workers.triggers]
+crons = ["*/5 * * * *"]
+
+# Secrets required:
+# - DATABASE_URL
+# - RESEND_API_KEY
+
+# --- ROI Snapshot Cron Worker ---
+# Calls /zyntel/v1/snapshot on each service client API daily at midnight UTC.
+# Writes metrics to roi_snapshots table in Neon.
+[[workers]]
+name = "zyntel-roi-snapshot"
+main = "workers/roi-snapshot-cron.js"
+compatibility_date = "2025-01-01"
+
+[workers.triggers]
+crons = ["0 0 * * *"]
+
+# Secrets required:
+# - DATABASE_URL
+# - RESEND_API_KEY

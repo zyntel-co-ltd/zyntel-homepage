@@ -1,0 +1,403 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+
+// Fetch scored issues from our Linear API helper
+let data: any = null;
+let fetchError: string | null = null;
+
+try {
+  const url = new URL('/api/performance/linear', Astro.url.origin);
+  const res = await fetch(url.toString(), {
+    headers: { cookie: Astro.request.headers.get('cookie') ?? '' },
+  });
+  if (res.ok) {
+    data = await res.json();
+  } else {
+    const body = await res.json().catch(() => ({}));
+    fetchError = body.error ?? `HTTP ${res.status}`;
+  }
+} catch (e: any) {
+  fetchError = e.message ?? 'Failed to fetch Linear data';
+}
+
+const LEVEL_COLORS: Record<number, string> = {
+  0: '#ef4444',
+  1: '#f59e0b',
+  2: '#3b82f6',
+  3: '#10b981',
+};
+const LEVEL_BG: Record<number, string> = {
+  0: '#fef2f2',
+  1: '#fffbeb',
+  2: '#eff6ff',
+  3: '#ecfdf5',
+};
+---
+
+<AdminLayout title="Performance">
+  <div class="perf-root">
+    <header class="perf-header">
+      <div class="perf-header-left">
+        <h1 class="perf-title">Performance</h1>
+        <span class="perf-subtitle">Engineering · 90-day rolling window</span>
+      </div>
+      <button class="perf-refresh-btn" id="perf-refresh">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M13 1.5v4h-4M1 12.5v-4h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M11.36 5.5A5 5 0 1 0 12 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        Refresh
+      </button>
+    </header>
+
+    {fetchError && (
+      <div class="perf-error">
+        <strong>Could not load Linear data.</strong> {fetchError}
+        {fetchError.includes('LINEAR_API_TOKEN') && (
+          <p class="perf-error-hint">Add <code>LINEAR_API_TOKEN=lin_api_…</code> to your <code>.env</code> file and restart the dev server.</p>
+        )}
+      </div>
+    )}
+
+    {data && (
+      <>
+        <!-- Level card -->
+        <div class="perf-level-card" style={`border-color: ${LEVEL_COLORS[data.level.level]}; background: ${LEVEL_BG[data.level.level]}`}>
+          <div class="perf-level-main">
+            <div class="perf-level-badge" style={`background: ${LEVEL_COLORS[data.level.level]}`}>
+              Level {data.level.level}
+            </div>
+            <div class="perf-level-info">
+              <span class="perf-level-name">{data.level.name}</span>
+              <span class="perf-level-role">CTO · Engineering</span>
+            </div>
+          </div>
+          <div class="perf-level-stats">
+            <div class="perf-stat">
+              <span class="perf-stat-value">{data.totalPoints.toLocaleString()}</span>
+              <span class="perf-stat-label">points this window</span>
+            </div>
+            <div class="perf-stat">
+              <span class="perf-stat-value">{data.issueCount}</span>
+              <span class="perf-stat-label">issues scored</span>
+            </div>
+            {data.nextLevel && (
+              <div class="perf-stat">
+                <span class="perf-stat-value">{data.pointsToNext.toLocaleString()}</span>
+                <span class="perf-stat-label">pts to Level {data.nextLevel.level}</span>
+              </div>
+            )}
+            {!data.nextLevel && (
+              <div class="perf-stat">
+                <span class="perf-stat-value perf-stat-top">MAX</span>
+                <span class="perf-stat-label">Level 3 — Core</span>
+              </div>
+            )}
+          </div>
+          {data.nextLevel && (
+            <div class="perf-progress-bar-wrap">
+              <div class="perf-progress-bar-track">
+                <div
+                  class="perf-progress-bar-fill"
+                  style={`width: ${Math.min(100, Math.round((data.totalPoints - data.level.min) / (data.nextLevel.min - data.level.min) * 100))}%; background: ${LEVEL_COLORS[data.level.level]}`}
+                ></div>
+              </div>
+              <span class="perf-progress-label">
+                {data.totalPoints.toLocaleString()} / {data.nextLevel.min.toLocaleString()} pts for Level {data.nextLevel.level} ({data.nextLevel.name})
+              </span>
+            </div>
+          )}
+        </div>
+
+        <!-- Level thresholds reference -->
+        <div class="perf-levels-row">
+          {[
+            { level: 0, name: 'Inactive', range: '< 150', color: '#ef4444' },
+            { level: 1, name: 'Active', range: '150–499', color: '#f59e0b' },
+            { level: 2, name: 'Contributing', range: '500–1,499', color: '#3b82f6' },
+            { level: 3, name: 'Core', range: '1,500+', color: '#10b981' },
+          ].map(l => (
+            <div class={`perf-level-pill ${data.level.level === l.level ? 'is-current' : ''}`} style={`border-color: ${l.color}`}>
+              <span class="perf-level-pill-dot" style={`background: ${l.color}`}></span>
+              <span class="perf-level-pill-name">L{l.level} {l.name}</span>
+              <span class="perf-level-pill-range">{l.range}</span>
+            </div>
+          ))}
+        </div>
+
+        <!-- Issues table -->
+        <div class="perf-issues-wrap">
+          <h2 class="perf-section-title">Completed issues — last 90 days</h2>
+          {data.issues.length === 0 && (
+            <p class="perf-empty">No scored issues found in this window. Make sure issues have scoring labels applied in Linear.</p>
+          )}
+          {data.issues.length > 0 && (
+            <div class="perf-table-wrap">
+              <table class="perf-table">
+                <thead>
+                  <tr>
+                    <th>Issue</th>
+                    <th>Title</th>
+                    <th>Labels</th>
+                    <th class="perf-th-right">Points</th>
+                    <th>Completed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.issues.map((issue: any) => (
+                    <tr>
+                      <td>
+                        <a href={issue.url} target="_blank" rel="noopener" class="perf-issue-id">
+                          {issue.identifier}
+                        </a>
+                      </td>
+                      <td class="perf-issue-title">{issue.title}</td>
+                      <td>
+                        <div class="perf-labels">
+                          {issue.labels.map((label: string) => (
+                            <span class="perf-label">{label}</span>
+                          ))}
+                        </div>
+                      </td>
+                      <td class="perf-pts-cell">
+                        <span class="perf-pts-badge">{issue.points}</span>
+                      </td>
+                      <td class="perf-date-cell">
+                        {new Date(issue.completedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" class="perf-total-label">Total</td>
+                    <td class="perf-pts-cell">
+                      <span class="perf-pts-badge perf-pts-total">{data.totalPoints}</span>
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <!-- Label key reference -->
+        <div class="perf-labelkey-wrap">
+          <h2 class="perf-section-title">Engineering label key</h2>
+          <div class="perf-labelkey-grid">
+            {[
+              { label: 'ui-fix', pts: 1 }, { label: 'copy-change', pts: 1 },
+              { label: 'bug-minor', pts: 2 }, { label: 'chore', pts: 2 }, { label: 'docs', pts: 2 },
+              { label: 'feature-small', pts: 3 },
+              { label: 'bug-major', pts: 5 }, { label: 'feature-medium', pts: 5 }, { label: 'performance', pts: 5 },
+              { label: 'infra', pts: 6 }, { label: 'refactor', pts: 6 },
+              { label: 'migration', pts: 7 },
+              { label: 'feature-large', pts: 8 }, { label: 'security', pts: 8 },
+            ].map(({ label, pts }) => (
+              <div class="perf-labelkey-row">
+                <span class="perf-label">{label}</span>
+                <span class="perf-pts-badge">{pts}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+</AdminLayout>
+
+<style>
+  .perf-root {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .perf-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .perf-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+    line-height: 1.2;
+  }
+  .perf-subtitle {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    display: block;
+    margin-top: 0.25rem;
+  }
+  .perf-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .perf-refresh-btn:hover { color: var(--color-text); border-color: var(--color-text); }
+
+  /* Error */
+  .perf-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    color: #b91c1c;
+    font-size: 0.875rem;
+  }
+  .perf-error-hint { margin: 0.5rem 0 0; color: #7f1d1d; }
+  .perf-error code { background: #fee2e2; padding: 0.1em 0.3em; border-radius: 3px; font-family: monospace; }
+
+  /* Level card */
+  .perf-level-card {
+    border: 2px solid;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .perf-level-main { display: flex; align-items: center; gap: 1rem; }
+  .perf-level-badge {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-align: center;
+    line-height: 1.2;
+    flex-shrink: 0;
+  }
+  .perf-level-name { font-size: 1.25rem; font-weight: 700; color: var(--color-text); display: block; }
+  .perf-level-role { font-size: 0.78rem; color: var(--color-muted); }
+
+  .perf-level-stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+  .perf-stat { display: flex; flex-direction: column; }
+  .perf-stat-value { font-size: 1.5rem; font-weight: 700; color: var(--color-text); line-height: 1.1; }
+  .perf-stat-top { color: #10b981; }
+  .perf-stat-label { font-size: 0.75rem; color: var(--color-muted); margin-top: 0.15rem; }
+
+  .perf-progress-bar-wrap { display: flex; flex-direction: column; gap: 0.35rem; }
+  .perf-progress-bar-track { height: 8px; background: rgba(0,0,0,0.08); border-radius: 99px; overflow: hidden; }
+  .perf-progress-bar-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+  .perf-progress-label { font-size: 0.75rem; color: var(--color-muted); }
+
+  /* Level pills row */
+  .perf-levels-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .perf-level-pill {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    border: 1.5px solid;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    opacity: 0.55;
+    transition: opacity 0.15s;
+  }
+  .perf-level-pill.is-current { opacity: 1; font-weight: 600; }
+  .perf-level-pill-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .perf-level-pill-name { color: var(--color-text); }
+  .perf-level-pill-range { color: var(--color-muted); font-size: 0.72rem; }
+
+  /* Section titles */
+  .perf-section-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.75rem;
+  }
+
+  /* Issues table */
+  .perf-issues-wrap { display: flex; flex-direction: column; }
+  .perf-empty { color: var(--color-muted); font-size: 0.875rem; }
+  .perf-table-wrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: 10px; }
+  .perf-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .perf-table th {
+    padding: 0.6rem 0.9rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-alt, #f8f9fa);
+  }
+  .perf-th-right { text-align: right; }
+  .perf-table td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+  .perf-table tbody tr:last-child td { border-bottom: none; }
+  .perf-table tfoot td { border-top: 1px solid var(--color-border); border-bottom: none; }
+  .perf-table tbody tr:hover { background: var(--color-surface-alt, #f8f9fa); }
+  .perf-issue-id { color: var(--color-accent); font-family: monospace; font-size: 0.8rem; text-decoration: none; white-space: nowrap; }
+  .perf-issue-id:hover { text-decoration: underline; }
+  .perf-issue-title { max-width: 360px; }
+  .perf-date-cell { color: var(--color-muted); font-size: 0.8rem; white-space: nowrap; }
+  .perf-total-label { text-align: right; font-weight: 600; color: var(--color-muted); font-size: 0.8rem; }
+  .perf-pts-cell { text-align: right; }
+
+  .perf-labels { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .perf-label {
+    display: inline-block;
+    padding: 0.1rem 0.45rem;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    background: var(--color-surface-alt, #f1f5f9);
+    color: var(--color-muted);
+    white-space: nowrap;
+  }
+  .perf-pts-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    padding: 0.15rem 0.4rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--color-accent-light, #eff6ff);
+    color: var(--color-accent, #3b82f6);
+    white-space: nowrap;
+  }
+  .perf-pts-total {
+    font-size: 0.875rem;
+    min-width: 36px;
+  }
+
+  /* Label key */
+  .perf-labelkey-wrap { display: flex; flex-direction: column; }
+  .perf-labelkey-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.4rem;
+  }
+  .perf-labelkey-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    gap: 0.5rem;
+  }
+</style>
+
+<script>
+  document.getElementById('perf-refresh')?.addEventListener('click', () => {
+    window.location.reload();
+  });
+</script>
