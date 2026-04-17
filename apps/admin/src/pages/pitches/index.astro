@@ -1,34 +1,10 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
-import { getAllPitchSessions } from '../../lib/pitches.ts';
-import { sql } from '@zyntel/db';
+import { loadPitchSessionsPageData } from '../../lib/pitches.ts';
 
-const sessions = await getAllPitchSessions();
 const SITE = import.meta.env.SITE_URL ?? 'https://admin.zyntel.net';
 
-const ids = sessions.map((s) => s.id);
-const viewStats = ids.length
-  ? await sql(
-      `
-        SELECT
-          session_id,
-          COUNT(*)::int AS views_count,
-          MAX(viewed_at) AS last_viewed_at
-        FROM pitch_views
-        WHERE session_id = ANY($1::uuid[])
-        GROUP BY session_id
-      `,
-      [ids]
-    )
-  : [];
-
-const statsById = new Map<string, { viewsCount: number; lastViewedAt: Date | null }>();
-for (const row of viewStats as any[]) {
-  statsById.set(String(row.session_id), {
-    viewsCount: Number(row.views_count ?? 0),
-    lastViewedAt: row.last_viewed_at ? new Date(row.last_viewed_at) : null,
-  });
-}
+const { sessions, viewStatsById: statsById, error: pitchesLoadError } = await loadPitchSessionsPageData();
 
 const sessionsWithMeta = sessions.map((s) => {
   const vs = statsById.get(s.id) ?? { viewsCount: 0, lastViewedAt: null };
@@ -54,8 +30,18 @@ const sessionsWithMeta = sessions.map((s) => {
 <AdminLayout title="Pitches">
   <header class="admin-header previews-header">
     <h1 class="admin-title">Pitches</h1>
-    <button id="btn-new-session" class="admin-btn admin-btn-primary" type="button">New Pitch Session</button>
+    <button id="btn-new-session" class="admin-btn admin-btn-primary" type="button" disabled={!!pitchesLoadError}>New Pitch Session</button>
   </header>
+
+  {pitchesLoadError && (
+    <div class="admin-card" style="border-color:#f59e0b;background:#fffbeb;margin-bottom:1rem;">
+      <p style="margin:0 0 8px;font-weight:700;color:#92400e;">Pitches database not ready</p>
+      <p style="margin:0;font-size:13px;color:#78350f;line-height:1.55;">
+        Run <code style="background:#fef3c7;padding:2px 6px;border-radius:4px;">apps/admin/migrations/002_pitch_sessions.sql</code> in the Neon SQL Editor, then redeploy or refresh this page.
+      </p>
+      <p style="margin:8px 0 0;font-size:12px;color:#a16207;font-family:ui-monospace,monospace;word-break:break-all;">{pitchesLoadError}</p>
+    </div>
+  )}
 
   <div class="admin-card">
     <div class="admin-card-header previews-toolbar">

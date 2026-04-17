@@ -56,6 +56,58 @@ export async function getAllPitchSessions(): Promise<PitchSession[]> {
   return (rows as Record<string, any>[]).map(rowToSession);
 }
 
+export type PitchViewStats = { viewsCount: number; lastViewedAt: Date | null };
+
+/** View counts + last opened time for table columns (safe if pitch_views is missing). */
+export async function getPitchViewStatsBySessionIds(
+  sessionIds: string[]
+): Promise<Map<string, PitchViewStats>> {
+  const map = new Map<string, PitchViewStats>();
+  if (!import.meta.env.DATABASE_URL || !sessionIds.length) return map;
+  try {
+    const rows = await sql`
+      SELECT
+        session_id,
+        COUNT(*)::int AS views_count,
+        MAX(viewed_at) AS last_viewed_at
+      FROM pitch_views
+      WHERE session_id = ANY(${sessionIds})
+      GROUP BY session_id
+    `;
+    for (const row of rows as Record<string, any>[]) {
+      map.set(String(row.session_id), {
+        viewsCount: Number(row.views_count ?? 0),
+        lastViewedAt: row.last_viewed_at ? new Date(row.last_viewed_at) : null,
+      });
+    }
+  } catch {
+    /* pitch_views missing or incompatible — show zero views */
+  }
+  return map;
+}
+
+/**
+ * SSR-safe bundle for /pitches: never throws (avoids 500 if migration 002 not applied yet).
+ */
+export async function loadPitchSessionsPageData(): Promise<{
+  sessions: PitchSession[];
+  viewStatsById: Map<string, PitchViewStats>;
+  error: string | null;
+}> {
+  const emptyStats = new Map<string, PitchViewStats>();
+  if (!import.meta.env.DATABASE_URL) {
+    return { sessions: [], viewStatsById: emptyStats, error: null };
+  }
+  try {
+    const sessions = await getAllPitchSessions();
+    const viewStatsById = await getPitchViewStatsBySessionIds(sessions.map((s) => s.id));
+    return { sessions, viewStatsById, error: null };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Database error';
+    return { sessions: [], viewStatsById: emptyStats, error: msg };
+  }
+}
+
 export async function getPitchSessionByToken(token: string): Promise<PitchSession | null> {
   if (!import.meta.env.DATABASE_URL) return null;
   const rows = await sql`SELECT * FROM pitch_sessions WHERE token = ${token}`;
