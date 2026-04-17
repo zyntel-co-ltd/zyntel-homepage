@@ -106,6 +106,20 @@ export interface PreviewClient {
     q3?: string | null;
     recommended?: string | null;
   } | null;
+  decisionAnswers?: {
+    q1?: string | null;
+    q2?: string | null;
+    q3?: string | null;
+    recommended?: string | null;
+  } | null;
+  decisionUpdatedAt?: Date | null;
+  decisionSessionId?: string | null;
+  stagingUrl?: string | null;
+  stagingEnabled?: boolean | null;
+  stagingSentAt?: Date | null;
+  productionUrl?: string | null;
+  productionEnabled?: boolean | null;
+  productionSentAt?: Date | null;
 }
 
 export interface PreviewClientIntake {

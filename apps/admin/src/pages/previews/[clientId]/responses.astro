@@ -1,0 +1,124 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getPreviewClientById, getPreviewEventHistory } from '../../../lib/previews.ts';
+
+const clientId = String(Astro.params.clientId ?? '').trim();
+const client = clientId ? await getPreviewClientById(clientId) : null;
+const events = clientId ? await getPreviewEventHistory(clientId) : [];
+
+const opens = events.filter((e) => e.eventType === 'page_open');
+const feedbacks = events.filter((e) => e.eventType === 'feedback_submitted');
+
+type SessionAgg = {
+  sessionId: string;
+  opens: number;
+  firstAt: Date;
+  lastAt: Date;
+  userAgent: string | null;
+};
+
+const bySession = new Map<string, SessionAgg>();
+for (const o of opens) {
+  const sid = o.sessionId ?? 'unknown';
+  const dt = o.occurredAt;
+  const cur = bySession.get(sid) ?? { sessionId: sid, opens: 0, firstAt: dt, lastAt: dt, userAgent: o.userAgent ?? null };
+  cur.opens += 1;
+  if (dt < cur.firstAt) cur.firstAt = dt;
+  if (dt > cur.lastAt) cur.lastAt = dt;
+  if (!cur.userAgent && o.userAgent) cur.userAgent = o.userAgent;
+  bySession.set(sid, cur);
+}
+
+const sessions = Array.from(bySession.values()).sort((a, b) => b.lastAt.getTime() - a.lastAt.getTime());
+
+function fmt(dt: Date | null | undefined) {
+  if (!dt) return '—';
+  return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) +
+    ' ' +
+    dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+const decision = client?.decisionAnswers ?? null;
+const finalAnswers = client?.choiceAnswers ?? null;
+
+const decisionBlock = `Decision guide (Not sure yet?)\n` +
+  `- Q1: ${decision?.q1 ?? '—'}\n` +
+  `- Q2: ${decision?.q2 ?? '—'}\n` +
+  `- Q3: ${decision?.q3 ?? '—'}\n` +
+  `- Recommended: ${decision?.recommended ?? '—'}\n` +
+  `- Updated: ${client?.decisionUpdatedAt ? fmt(client.decisionUpdatedAt) : '—'}\n`;
+
+const finalBlock = `Final feedback submission\n` +
+  `- Option: ${client?.choiceOption ?? '—'}\n` +
+  `- Submitted: ${client?.choiceSubmittedAt ? fmt(client.choiceSubmittedAt) : '—'}\n` +
+  `- Q1: ${finalAnswers?.q1 ?? '—'}\n` +
+  `- Q2: ${finalAnswers?.q2 ?? '—'}\n` +
+  `- Q3: ${finalAnswers?.q3 ?? '—'}\n` +
+  `- Recommended: ${finalAnswers?.recommended ?? '—'}\n` +
+  `- Comments:\n${client?.choiceComments ? client.choiceComments.trim() : '—'}\n`;
+
+const sessionsBlock = `Link opens\n` +
+  `- Total opens: ${opens.length}\n` +
+  `- Unique sessions: ${sessions.length}\n` +
+  `- Last opened: ${sessions[0]?.lastAt ? fmt(sessions[0].lastAt) : '—'}\n` +
+  (sessions.length
+    ? `\nSessions:\n` + sessions.map((s, i) => {
+      const label = s.sessionId === 'unknown' ? 'Session (unknown)' : `Session ${i + 1}`;
+      const ua = s.userAgent ? ` UA: ${s.userAgent}` : '';
+      return `- ${label}: ${s.opens} open(s), first ${fmt(s.firstAt)}, last ${fmt(s.lastAt)}${ua}`;
+    }).join('\n') + '\n'
+    : '');
+
+const feedbackEventBlock = `Feedback event log\n` +
+  (feedbacks.length
+    ? feedbacks.map((f) => `- ${fmt(f.occurredAt)} session=${f.sessionId ?? 'unknown'} meta=${f.data ? JSON.stringify(f.data) : '{}'}`).join('\n') + '\n'
+    : '- —\n');
+
+const copyText = client
+  ? `Client\n- Name: ${client.name}\n- ID: ${client.clientId}\n- Email: ${client.email}\n\n${decisionBlock}\n${finalBlock}\n${sessionsBlock}\n${feedbackEventBlock}`.trim()
+  : `Client not found.\nClient ID param: ${clientId}`;
+---
+
+<AdminLayout title={`Responses · ${clientId || 'client'}`}>
+  <header class="admin-header previews-header">
+    <div>
+      <h1 class="admin-title">Client responses</h1>
+      <p class="admin-subtitle">{client ? `${client.name} · ${client.clientId}` : 'Not found'}</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <a href="/previews" class="admin-btn admin-btn-secondary">Back</a>
+      {client && <a href={`/p/${client.token}`} class="admin-btn admin-btn-secondary" target="_blank" rel="noopener">Open preview</a>}
+      <button id="copy-btn" class="admin-btn admin-btn-primary" type="button">Copy all</button>
+    </div>
+  </header>
+
+  <div class="admin-card">
+    <div class="admin-card-header">
+      <h2 class="admin-card-title">Copy-ready summary</h2>
+      <span class="admin-badge admin-badge-ghost" id="copy-status">Ready</span>
+    </div>
+    <textarea id="copy-area" class="admin-form-input" readonly rows={24} style="width:100%;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:12px; line-height:1.5;">{copyText}</textarea>
+  </div>
+
+  <script is:inline>
+    (function(){
+      const btn = document.getElementById('copy-btn');
+      const area = document.getElementById('copy-area');
+      const status = document.getElementById('copy-status');
+      async function copyAll(){
+        const text = area?.value ?? '';
+        try {
+          await navigator.clipboard.writeText(text);
+          if (status) status.textContent = 'Copied';
+          setTimeout(()=>{ if(status) status.textContent='Ready'; }, 1500);
+        } catch {
+          if (status) status.textContent = 'Copy failed';
+          area?.focus?.();
+          area?.select?.();
+        }
+      }
+      btn?.addEventListener('click', copyAll);
+    })();
+  </script>
+</AdminLayout>
+

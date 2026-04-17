@@ -420,11 +420,17 @@ function updateDecResult() {
   try {
     var tokenForTrack = new URLSearchParams(window.location.search).get('token');
     if (tokenForTrack) {
+      var sid = null;
+      try {
+        var k = 'zyntel_preview_session_id_' + tokenForTrack;
+        sid = localStorage.getItem(k) || null;
+      } catch (e) {}
       fetch('/p/event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token: tokenForTrack,
+          sessionId: sid,
           eventType: 'decision_guide_update',
           meta: {
             q1: q1 ? q1.value : null,

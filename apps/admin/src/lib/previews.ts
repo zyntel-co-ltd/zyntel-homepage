@@ -20,7 +20,33 @@ function rowToClient(row: Record<string, any>): PreviewClient {
     choiceComments: (row.choice_comments ?? null) as string | null,
     choiceSubmittedAt: row.choice_submitted_at ? new Date(row.choice_submitted_at) : null,
     choiceAnswers: (row.choice_answers ?? null) as PreviewClient['choiceAnswers'],
+    decisionAnswers: (row.decision_answers ?? null) as PreviewClient['decisionAnswers'],
+    decisionUpdatedAt: row.decision_updated_at ? new Date(row.decision_updated_at) : null,
+    decisionSessionId: (row.decision_session_id ?? null) as string | null,
+    stagingUrl: (row.staging_url ?? null) as string | null,
+    stagingEnabled: (row.staging_enabled ?? null) as boolean | null,
+    stagingSentAt: row.staging_sent_at ? new Date(row.staging_sent_at) : null,
+    productionUrl: (row.production_url ?? null) as string | null,
+    productionEnabled: (row.production_enabled ?? null) as boolean | null,
+    productionSentAt: row.production_sent_at ? new Date(row.production_sent_at) : null,
   };
+}
+
+export async function patchPreviewDecisionByToken(data: {
+  token: string;
+  decisionAnswers: PreviewClient['decisionAnswers'];
+  sessionId?: string | null;
+}): Promise<void> {
+  if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
+  await sql`
+    UPDATE preview_clients
+    SET
+      decision_answers = ${data.decisionAnswers ? JSON.stringify(data.decisionAnswers) : null},
+      decision_updated_at = now(),
+      decision_session_id = ${data.sessionId ?? null},
+      updated_at = now()
+    WHERE token = ${data.token}
+  `;
 }
 
 export async function getAllPreviewClients(): Promise<PreviewClient[]> {
@@ -84,6 +110,12 @@ export async function updatePreviewClient(
     choiceOption: string | null;
     choiceComments: string | null;
     choiceSubmittedAt: Date | null;
+    stagingUrl: string | null;
+    stagingEnabled: boolean | null;
+    stagingSentAt: Date | null;
+    productionUrl: string | null;
+    productionEnabled: boolean | null;
+    productionSentAt: Date | null;
   }>
 ): Promise<PreviewClient> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
@@ -121,6 +153,30 @@ export async function updatePreviewClient(
   if (data.choiceSubmittedAt !== undefined) {
     updates.push(`choice_submitted_at = $${values.length + 1}`);
     values.push(data.choiceSubmittedAt);
+  }
+  if (data.stagingUrl !== undefined) {
+    updates.push(`staging_url = $${values.length + 1}`);
+    values.push(data.stagingUrl);
+  }
+  if (data.stagingEnabled !== undefined) {
+    updates.push(`staging_enabled = $${values.length + 1}`);
+    values.push(data.stagingEnabled as any);
+  }
+  if (data.stagingSentAt !== undefined) {
+    updates.push(`staging_sent_at = $${values.length + 1}`);
+    values.push(data.stagingSentAt);
+  }
+  if (data.productionUrl !== undefined) {
+    updates.push(`production_url = $${values.length + 1}`);
+    values.push(data.productionUrl);
+  }
+  if (data.productionEnabled !== undefined) {
+    updates.push(`production_enabled = $${values.length + 1}`);
+    values.push(data.productionEnabled as any);
+  }
+  if (data.productionSentAt !== undefined) {
+    updates.push(`production_sent_at = $${values.length + 1}`);
+    values.push(data.productionSentAt);
   }
 
   if (!updates.length) {

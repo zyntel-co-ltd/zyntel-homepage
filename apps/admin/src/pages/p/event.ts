@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { logPreviewEventByToken } from '../../lib/previews.ts';
+import { logPreviewEventByToken, patchPreviewDecisionByToken } from '../../lib/previews.ts';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -20,6 +20,20 @@ export const POST: APIRoute = async ({ request }) => {
     }
     if (!eventType) {
       return new Response(JSON.stringify({ error: 'eventType required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Persist decision-guide answers even if the client never submits final feedback.
+    if (eventType === 'decision_guide_update') {
+      const q1 = (meta as any)?.q1 != null ? String((meta as any).q1).trim() : null;
+      const q2 = (meta as any)?.q2 != null ? String((meta as any).q2).trim() : null;
+      const q3 = (meta as any)?.q3 != null ? String((meta as any).q3).trim() : null;
+      const recommended = (meta as any)?.recommended != null ? String((meta as any).recommended).trim().toUpperCase() : null;
+      // Best-effort: do not fail tracking if the DB update fails.
+      patchPreviewDecisionByToken({
+        token,
+        decisionAnswers: { q1, q2, q3, recommended },
+        sessionId,
+      }).catch((e) => console.error('Failed to persist decision answers:', e));
     }
 
     await logPreviewEventByToken({

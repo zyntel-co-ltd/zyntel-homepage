@@ -86,6 +86,9 @@ const stats = {
               <td class="preview-actions">
                 <button class="act-btn" data-action="copy" data-link={client.previewLink} title="Copy preview link" type="button">Copy</button>
                 <button class="act-btn" data-action="send" data-client-id={client.clientId} data-email={client.email} title="Send preview email" type="button">Send</button>
+                <button class="act-btn" data-action="send-staging" data-client-id={client.clientId} data-email={client.email} title="Send staging link" type="button">Staging</button>
+                <button class="act-btn" data-action="send-production" data-client-id={client.clientId} data-email={client.email} title="Send production link" type="button">Production</button>
+                <a class="act-btn" href={`/previews/${client.clientId}/responses`} title="Copy all responses" type="button">Copy all</a>
                 <button class="act-btn" data-action="edit" data-client={JSON.stringify({
                   clientId: client.clientId,
                   name: client.name,
@@ -350,6 +353,13 @@ const stats = {
       if(!r.ok){showToast('Failed to send email','error');return;}
       showToast(`Email sent to ${email}`);
     }
+    async function sendStep(kind, clientId, email){
+      const path = kind==='staging' ? '/api/previews/send-staging' : '/api/previews/send-production';
+      const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId})});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok){showToast(d.error||`Failed to send ${kind} link`,'error');return;}
+      showToast(`${kind==='staging'?'Staging':'Production'} link sent to ${email}`);
+    }
 
     newForm.addEventListener('submit',async(e)=>{
       e.preventDefault();
@@ -383,6 +393,10 @@ const stats = {
         await navigator.clipboard.writeText(btn.dataset.link); const old=btn.textContent; btn.textContent='✓ Copied'; setTimeout(()=>btn.textContent=old,2000);
       } else if(action==='send'){
         await sendEmail(clientId, btn.dataset.email);
+      } else if(action==='send-staging'){
+        await sendStep('staging', clientId, btn.dataset.email);
+      } else if(action==='send-production'){
+        await sendStep('production', clientId, btn.dataset.email);
       } else if(action==='edit'){
         const c=JSON.parse(btn.dataset.client||'{}'); currentEditClientId=c.clientId;
         ['name','clientId','email','projectType','clientFolder','presentationFile'].forEach((k)=>{const el=document.getElementById(`edit-${k}`); if(el) el.value=c[k]||'';});
