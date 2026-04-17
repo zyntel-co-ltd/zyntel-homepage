@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { submitPreviewChoiceByToken } from '../../lib/previews.ts';
 import { sendEmail } from '../../lib/email.ts';
 import { logPreviewEventByToken } from '../../lib/previews.ts';
+import { insertPreviewFeedbackSubmissionByToken } from '../../lib/previews.ts';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -40,6 +41,15 @@ export const POST: APIRoute = async ({ request }) => {
       choiceComments,
       choiceAnswers: { q1, q2, q3, recommended },
     });
+
+    // Store an append-only submission record (best-effort).
+    insertPreviewFeedbackSubmissionByToken({
+      token,
+      sessionId,
+      choiceOption: choiceOption as 'A' | 'B' | 'C',
+      choiceComments,
+      choiceAnswers: { q1, q2, q3, recommended },
+    }).catch(() => {});
 
     // Log a concise feedback event for the admin "History" view.
     try {
@@ -119,12 +129,6 @@ export const POST: APIRoute = async ({ request }) => {
     });
   } catch (err: any) {
     const msg = String(err?.message ?? 'Unknown error');
-    if (msg.toLowerCase().includes('already submitted')) {
-      return new Response(JSON.stringify({ error: 'Choice already submitted' }), {
-        status: 409,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
     return new Response(JSON.stringify({ error: err?.message ?? 'Unknown error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

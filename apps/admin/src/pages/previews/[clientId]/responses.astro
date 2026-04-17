@@ -1,10 +1,11 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
-import { getPreviewClientById, getPreviewEventHistory } from '../../../lib/previews.ts';
+import { getPreviewClientById, getPreviewEventHistory, listPreviewFeedbackSubmissions } from '../../../lib/previews.ts';
 
 const clientId = String(Astro.params.clientId ?? '').trim();
 const client = clientId ? await getPreviewClientById(clientId) : null;
 const events = clientId ? await getPreviewEventHistory(clientId) : [];
+const submissions = clientId ? await listPreviewFeedbackSubmissions(clientId) : [];
 
 const opens = events.filter((e) => e.eventType === 'page_open');
 const feedbacks = events.filter((e) => e.eventType === 'feedback_submitted');
@@ -57,6 +58,18 @@ const finalBlock = `Final feedback submission\n` +
   `- Recommended: ${finalAnswers?.recommended ?? '—'}\n` +
   `- Comments:\n${client?.choiceComments ? client.choiceComments.trim() : '—'}\n`;
 
+const allSubmissionsBlock = `All submissions (latest first)\n` +
+  (submissions.length
+    ? submissions.map((s, i) => {
+      const a = s.choiceAnswers || {};
+      const when = fmt(s.occurredAt);
+      const sid = s.sessionId ?? 'unknown';
+      const opt = s.choiceOption ?? '—';
+      const comm = s.choiceComments ? String(s.choiceComments).trim() : '—';
+      return `#${i + 1} ${when} session=${sid}\n- Option: ${opt}\n- Q1: ${a.q1 ?? '—'}\n- Q2: ${a.q2 ?? '—'}\n- Q3: ${a.q3 ?? '—'}\n- Recommended: ${a.recommended ?? '—'}\n- Comments:\n${comm}\n`;
+    }).join('\n')
+    : '- —\n');
+
 const sessionsBlock = `Link opens\n` +
   `- Total opens: ${opens.length}\n` +
   `- Unique sessions: ${sessions.length}\n` +
@@ -75,7 +88,7 @@ const feedbackEventBlock = `Feedback event log\n` +
     : '- —\n');
 
 const copyText = client
-  ? `Client\n- Name: ${client.name}\n- ID: ${client.clientId}\n- Email: ${client.email}\n\n${decisionBlock}\n${finalBlock}\n${sessionsBlock}\n${feedbackEventBlock}`.trim()
+  ? `Client\n- Name: ${client.name}\n- ID: ${client.clientId}\n- Email: ${client.email}\n\n${decisionBlock}\n${finalBlock}\n${allSubmissionsBlock}\n${sessionsBlock}\n${feedbackEventBlock}`.trim()
   : `Client not found.\nClient ID param: ${clientId}`;
 ---
 

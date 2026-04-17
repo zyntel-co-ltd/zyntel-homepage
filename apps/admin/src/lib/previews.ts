@@ -215,7 +215,6 @@ export async function submitPreviewChoiceByToken(data: {
       updated_at = now()
     WHERE token = ${data.token}
       AND status = 'active'
-      AND choice_submitted_at IS NULL
     RETURNING *
   `;
   const row = rows[0] as Record<string, any> | undefined;
@@ -224,7 +223,6 @@ export async function submitPreviewChoiceByToken(data: {
     const ex = existing[0] as { status?: string; choice_submitted_at?: string | null } | undefined;
     if (!ex) throw new Error('Preview client not found');
     if (String(ex.status) !== 'active') throw new Error('Preview is not active');
-    if (ex.choice_submitted_at) throw new Error('Choice already submitted');
     throw new Error('Could not submit choice');
   }
   return rowToClient(row);
@@ -243,18 +241,97 @@ export async function logPreviewEventByToken(data: {
   const clientRows = await sql`SELECT id FROM preview_clients WHERE token = ${data.token}`;
   const clientRow = clientRows[0] as { id: string } | undefined;
   if (!clientRow?.id) throw new Error('Preview client not found');
-  await sql`
-    INSERT INTO preview_events (preview_client_id, event_type, page, user_agent, duration_seconds, session_id, data)
-    VALUES (
-      ${clientRow.id},
-      ${data.eventType},
-      ${data.page ?? null},
-      ${data.userAgent ?? null},
-      ${data.durationSeconds ?? null},
-      ${data.sessionId ?? null},
-      ${data.meta ? JSON.stringify(data.meta) : null}
-    )
-  `;
+  try {
+    await sql`
+      INSERT INTO preview_events (preview_client_id, event_type, page, user_agent, duration_seconds, session_id, data)
+      VALUES (
+        ${clientRow.id},
+        ${data.eventType},
+        ${data.page ?? null},
+        ${data.userAgent ?? null},
+        ${data.durationSeconds ?? null},
+        ${data.sessionId ?? null},
+        ${data.meta ? JSON.stringify(data.meta) : null}
+      )
+    `;
+  } catch (e: unknown) {
+    // Backwards-compat: if migration adding session_id hasn't been run yet, retry without it.
+    const err = e as { code?: string; message?: string };
+    if (err?.code === '42703' || String(err?.message ?? '').toLowerCase().includes('session_id')) {
+      await sql`
+        INSERT INTO preview_events (preview_client_id, event_type, page, user_agent, duration_seconds, data)
+        VALUES (
+          ${clientRow.id},
+          ${data.eventType},
+          ${data.page ?? null},
+          ${data.userAgent ?? null},
+          ${data.durationSeconds ?? null},
+          ${data.meta ? JSON.stringify(data.meta) : null}
+        )
+      `;
+      return;
+    }
+    throw e;
+  }
+}
+
+export async function insertPreviewFeedbackSubmissionByToken(data: {
+  token: string;
+  sessionId?: string | null;
+  choiceOption: 'A' | 'B' | 'C';
+  choiceComments: string;
+  choiceAnswers?: PreviewClient['choiceAnswers'];
+}): Promise<void> {
+  if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
+  const clientRows = await sql`SELECT id FROM preview_clients WHERE token = ${data.token}`;
+  const clientRow = clientRows[0] as { id: string } | undefined;
+  if (!clientRow?.id) throw new Error('Preview client not found');
+  // Best-effort: if table isn't migrated yet, don't fail choice submissions.
+  try {
+    await sql`
+      INSERT INTO preview_feedback_submissions (preview_client_id, session_id, choice_option, choice_comments, choice_answers)
+      VALUES (
+        ${clientRow.id},
+        ${data.sessionId ?? null},
+        ${data.choiceOption},
+        ${data.choiceComments},
+        ${data.choiceAnswers ? JSON.stringify(data.choiceAnswers) : null}
+      )
+    `;
+  } catch (e) {
+    console.error('Failed to insert preview_feedback_submissions row:', e);
+  }
+}
+
+export async function listPreviewFeedbackSubmissions(clientId: string): Promise<Array<{
+  id: string;
+  occurredAt: Date;
+  sessionId: string | null;
+  choiceOption: string | null;
+  choiceComments: string | null;
+  choiceAnswers: any;
+}>> {
+  if (!import.meta.env.DATABASE_URL) return [];
+  try {
+    const rows = await sql`
+      SELECT s.*
+      FROM preview_feedback_submissions s
+      JOIN preview_clients c ON c.id = s.preview_client_id
+      WHERE c.client_id = ${clientId}
+      ORDER BY s.occurred_at DESC
+      LIMIT 200
+    `;
+    return (rows as Record<string, any>[]).map((r) => ({
+      id: String(r.id),
+      occurredAt: new Date(r.occurred_at),
+      sessionId: (r.session_id ?? null) as string | null,
+      choiceOption: (r.choice_option ?? null) as string | null,
+      choiceComments: (r.choice_comments ?? null) as string | null,
+      choiceAnswers: (r.choice_answers ?? null) as any,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function getPreviewEventHistory(clientId: string): Promise<Array<{
