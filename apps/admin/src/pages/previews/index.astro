@@ -71,6 +71,9 @@ const stats = {
               <td>
                 <div class="preview-client-name">
                   {client.name}
+                  {client.choiceSubmittedAt
+                    ? <span class="feedback-pill" title="Client feedback submitted">Feedback</span>
+                    : <span class="feedback-pill feedback-pill--empty" title="No feedback yet">No feedback</span>}
                   {client.intake
                     ? <span class="brief-dot brief-dot--set" title="Design brief on file">●</span>
                     : <span class="brief-dot brief-dot--empty" title="No design brief">○</span>}
@@ -104,7 +107,8 @@ const stats = {
                 {client.choiceComments && <button class="act-btn" data-action="view-feedback" data-feedback={JSON.stringify({
                   option: client.choiceOption,
                   comments: client.choiceComments,
-                  submittedAt: client.choiceSubmittedAt
+                  submittedAt: client.choiceSubmittedAt,
+                  answers: client.choiceAnswers
                 })} type="button">Feedback</button>}
                 <button class="act-btn" data-action="history" data-client-id={client.clientId} type="button">History</button>
                 <button class="act-btn act-btn--warn" data-action="refresh-token" data-client-id={client.clientId} data-name={client.name} type="button">New link</button>
@@ -136,6 +140,8 @@ const stats = {
     .preview-client-name{font-weight:700;display:flex;gap:6px;align-items:center;}
     .preview-client-slug{font-size:12px;color:var(--admin-text-muted);}
     .brief-dot--set{color:#16a34a}.brief-dot--empty{color:#9ca3af}
+    .feedback-pill{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border:1px solid #e5e7eb;border-radius:999px;padding:2px 8px;background:rgba(22,163,74,.10);color:#166534}
+    .feedback-pill--empty{background:rgba(107,114,128,.10);color:#374151}
     .status-active{background:rgba(13,148,136,.15);color:#0d9488}
     .status-expired{background:rgba(245,158,11,.2);color:#b45309}
     .status-disabled{background:rgba(107,114,128,.2);color:#374151}
@@ -411,9 +417,14 @@ const stats = {
       } else if(action==='view-feedback'){
         const fb=JSON.parse(btn.dataset.feedback||'{}');
         const submittedAt = fb.submittedAt ? new Date(fb.submittedAt).toLocaleString('en-GB') : '—';
+        const answers = fb.answers || {};
         document.getElementById('feedback-content').innerHTML=[
           `<p><strong>Option</strong><br>${escapeHtml(fb.option||'—')}</p>`,
           `<p><strong>Submitted at</strong><br>${escapeHtml(submittedAt)}</p>`,
+          `<p><strong>Q1</strong><br>${escapeHtml(answers.q1||'—')}</p>`,
+          `<p><strong>Q2</strong><br>${escapeHtml(answers.q2||'—')}</p>`,
+          `<p><strong>Q3</strong><br>${escapeHtml(answers.q3||'—')}</p>`,
+          `<p><strong>Recommended</strong><br>${escapeHtml(answers.recommended||'—')}</p>`,
           `<p class="full"><strong>Comments</strong><br>${escapeHtml(fb.comments||'—')}</p>`
         ].join('');
         showModal('modal-feedback-view');

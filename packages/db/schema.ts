@@ -100,6 +100,12 @@ export interface PreviewClient {
   choiceOption?: string | null;
   choiceComments?: string | null;
   choiceSubmittedAt?: Date | null;
+  choiceAnswers?: {
+    q1?: string | null;
+    q2?: string | null;
+    q3?: string | null;
+    recommended?: string | null;
+  } | null;
 }
 
 export interface PreviewClientIntake {

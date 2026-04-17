@@ -309,16 +309,16 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F5F1;color:#1A1A1A
           <div class="dq-lbl">Question 1 — What feeling should your website give?</div>
           <div class="dq-options">
             <label class="dq-opt"><input type="radio" name="q1" value="A"> <span>Warm and trusted — like a company people already know</span></label>
-            <label class="dq-opt"><input type="radio" name="q1" value="B"> <span>Straight to business — clients can book a quote quickly</span></label>
+            <label class="dq-opt"><input type="radio" name="q1" value="B"> <span>Straight to business — clients can book a quote right on the homepage</span></label>
             <label class="dq-opt"><input type="radio" name="q1" value="C"> <span>Bright and modern — clean, image-rich, feels like a big brand</span></label>
           </div>
         </div>
 
         <div class="dq">
-          <div class="dq-lbl">Question 2 — Should your team appear on the website?</div>
+          <div class="dq-lbl">Question 2 — Should the founders appear on the website?</div>
           <div class="dq-options">
-            <label class="dq-opt"><input type="radio" name="q2" value="AC"> <span>Yes — show the people behind the business</span></label>
-            <label class="dq-opt"><input type="radio" name="q2" value="B"> <span>No — keep focus on services and proof</span></label>
+            <label class="dq-opt"><input type="radio" name="q2" value="AC"> <span>Yes — show Nahurira and Nalutaaya as the face of the business</span></label>
+            <label class="dq-opt"><input type="radio" name="q2" value="B"> <span>No — keep focus on the services, not the founders</span></label>
           </div>
         </div>
 
@@ -468,6 +468,17 @@ document.querySelectorAll('.dq-opt input[type=radio]').forEach(function(radio){
     var comments = (document.getElementById('choice-comments').value || '').trim();
     var btn = document.getElementById('choice-submit');
     var success = document.getElementById('choice-success');
+    var q1 = document.querySelector('input[name="q1"]:checked');
+    var q2 = document.querySelector('input[name="q2"]:checked');
+    var q3 = document.querySelector('input[name="q3"]:checked');
+    var recText = document.getElementById('dec-result-text');
+    var recommended = null;
+    try {
+      if (recText && recText.textContent) {
+        var m = recText.textContent.trim().match(/^Option\s+([ABC])\b/i);
+        recommended = m ? m[1].toUpperCase() : null;
+      }
+    } catch (e) {}
     if (!token) { alert('Missing token in link. Please open the original link from Zyntel.'); return; }
     if (!selected) { alert('Please select Option A, B, or C.'); return; }
     if (!comments) { alert('Please write a short comment before submitting.'); return; }
@@ -477,7 +488,15 @@ document.querySelectorAll('.dq-opt input[type=radio]').forEach(function(radio){
       var r = await fetch('/p/choice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: token, choiceOption: selected, choiceComments: comments })
+        body: JSON.stringify({
+          token: token,
+          choiceOption: selected,
+          choiceComments: comments,
+          q1: q1 ? q1.value : null,
+          q2: q2 ? q2.value : null,
+          q3: q3 ? q3.value : null,
+          recommended: recommended
+        })
       });
       var d = await r.json().catch(function(){ return {}; });
       if (!r.ok) throw new Error(d.error || 'Failed to submit');

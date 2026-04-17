@@ -19,6 +19,7 @@ function rowToClient(row: Record<string, any>): PreviewClient {
     choiceOption: (row.choice_option ?? null) as string | null,
     choiceComments: (row.choice_comments ?? null) as string | null,
     choiceSubmittedAt: row.choice_submitted_at ? new Date(row.choice_submitted_at) : null,
+    choiceAnswers: (row.choice_answers ?? null) as PreviewClient['choiceAnswers'],
   };
 }
 
@@ -145,6 +146,7 @@ export async function submitPreviewChoiceByToken(data: {
   token: string;
   choiceOption: 'A' | 'B' | 'C';
   choiceComments: string;
+  choiceAnswers?: PreviewClient['choiceAnswers'];
 }): Promise<PreviewClient> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
   const rows = await sql`
@@ -152,6 +154,7 @@ export async function submitPreviewChoiceByToken(data: {
     SET
       choice_option = ${data.choiceOption},
       choice_comments = ${data.choiceComments},
+      choice_answers = ${data.choiceAnswers ? JSON.stringify(data.choiceAnswers) : null},
       choice_submitted_at = now(),
       updated_at = now()
     WHERE token = ${data.token}
