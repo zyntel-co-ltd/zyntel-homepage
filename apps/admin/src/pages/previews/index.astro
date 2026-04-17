@@ -91,13 +91,21 @@ const stats = {
                   clientFolder: client.clientFolder,
                   presentationFile: client.presentationFile,
                   expiryDate: client.expiryDate,
-                  intake: client.intake
+                  intake: client.intake,
+                  choiceOption: client.choiceOption,
+                  choiceComments: client.choiceComments,
+                  choiceSubmittedAt: client.choiceSubmittedAt
                 })} title="Edit client" type="button">Edit</button>
                 {client.displayStatus !== 'disabled'
                   ? <button class="act-btn act-btn--warn" data-action="disable" data-client-id={client.clientId} data-name={client.name} type="button">Disable</button>
                   : <button class="act-btn act-btn--ok" data-action="activate" data-client-id={client.clientId} type="button">Activate</button>}
                 <button class="act-btn" data-action="extend" data-client-id={client.clientId} data-expiry={new Date(client.expiryDate).toISOString()} type="button">Extend</button>
                 {client.intake && <button class="act-btn" data-action="view-brief" data-brief={JSON.stringify(client.intake)} type="button">Brief</button>}
+                {client.choiceComments && <button class="act-btn" data-action="view-feedback" data-feedback={JSON.stringify({
+                  option: client.choiceOption,
+                  comments: client.choiceComments,
+                  submittedAt: client.choiceSubmittedAt
+                })} type="button">Feedback</button>}
                 <button class="act-btn act-btn--warn" data-action="refresh-token" data-client-id={client.clientId} data-name={client.name} type="button">New link</button>
                 <button class="act-btn act-btn--danger" data-action="delete" data-client-id={client.clientId} data-name={client.name} type="button">Delete</button>
               </td>
@@ -112,6 +120,7 @@ const stats = {
   <div id="modal-edit-client" class="preview-modal-overlay" style="display:none"><div class="modal"><h3>Edit Client</h3><form id="form-edit-client" class="grid-form"></form></div></div>
   <div id="modal-extend" class="preview-modal-overlay" style="display:none"><div class="modal"><h3>Extend Expiry</h3><form id="form-extend" class="grid-form"><p id="extend-current"></p><label><input type="radio" name="extend-mode" value="date" checked /> New date</label><input id="extend-date" type="date" class="admin-form-input" /><label><input type="radio" name="extend-mode" value="days" /> Add days</label><input id="extend-days" type="number" class="admin-form-input" min="1" placeholder="30" /><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-extend">Cancel</button><button class="admin-btn admin-btn-primary">Save</button></div></form></div></div>
   <div id="modal-brief-view" class="preview-modal-overlay" style="display:none"><div class="modal"><h3>Design Brief</h3><div id="brief-content" class="brief-grid"></div><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-brief-view">Close</button></div></div></div>
+  <div id="modal-feedback-view" class="preview-modal-overlay" style="display:none"><div class="modal"><h3>Client Feedback</h3><div id="feedback-content" class="brief-grid"></div><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-feedback-view">Close</button></div></div></div>
   <div id="modal-confirm" class="preview-modal-overlay" style="display:none"><div class="modal"><h3 id="confirm-title"></h3><p id="confirm-message"></p><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-confirm">Cancel</button><button id="confirm-btn" type="button" class="admin-btn admin-btn-primary">Confirm</button></div></div></div>
 
   <div id="toast-root"></div>
@@ -397,6 +406,15 @@ const stats = {
         const fields=[['Industry','industry'],['What they do / sell','description'],['Target customers','targetCustomers'],['Tone & feel','tone'],['Colours they like','coloursLike'],['Colours to avoid','coloursAvoid'],['Competitors / sites they admire','competitors'],['Must-have sections','mustHaveSections'],['Special requirements','specialRequirements'],['Design deadline','deadline']];
         document.getElementById('brief-content').innerHTML=fields.map(([label,key])=>`<p><strong>${label}</strong><br>${escapeHtml(Array.isArray(brief[key])?brief[key].join(', '):(brief[key]||'—'))}</p>`).join('');
         showModal('modal-brief-view');
+      } else if(action==='view-feedback'){
+        const fb=JSON.parse(btn.dataset.feedback||'{}');
+        const submittedAt = fb.submittedAt ? new Date(fb.submittedAt).toLocaleString('en-GB') : '—';
+        document.getElementById('feedback-content').innerHTML=[
+          `<p><strong>Option</strong><br>${escapeHtml(fb.option||'—')}</p>`,
+          `<p><strong>Submitted at</strong><br>${escapeHtml(submittedAt)}</p>`,
+          `<p class="full"><strong>Comments</strong><br>${escapeHtml(fb.comments||'—')}</p>`
+        ].join('');
+        showModal('modal-feedback-view');
       } else if(action==='refresh-token'){
         openConfirm({title:'Generate new link?',message:`Generate a new link for ${name}? Their current link will permanently stop working. You must resend the new link to them.`,label:'Generate new link',onConfirm:async()=>{const r=await fetch('/api/previews/refresh-token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId})}); if(!r.ok) return showToast('Failed to refresh link','error'); const d=await r.json(); row.querySelector('[data-action="copy"]').dataset.link=d.previewLink; showToast('New link generated', 'success', [{label:'Send email now', onClick:()=>sendEmail(clientId, row.querySelector('[data-action="send"]').dataset.email)}]);}});
       } else if(action==='delete'){

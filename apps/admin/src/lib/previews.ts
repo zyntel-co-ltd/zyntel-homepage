@@ -16,6 +16,9 @@ function rowToClient(row: Record<string, any>): PreviewClient {
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     intake: (row.intake ?? null) as PreviewClientIntake | null,
+    choiceOption: (row.choice_option ?? null) as string | null,
+    choiceComments: (row.choice_comments ?? null) as string | null,
+    choiceSubmittedAt: row.choice_submitted_at ? new Date(row.choice_submitted_at) : null,
   };
 }
 
@@ -77,6 +80,9 @@ export async function updatePreviewClient(
     status: string;
     expiryDate: Date;
     intake: PreviewClientIntake;
+    choiceOption: string | null;
+    choiceComments: string | null;
+    choiceSubmittedAt: Date | null;
   }>
 ): Promise<PreviewClient> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
@@ -103,6 +109,18 @@ export async function updatePreviewClient(
     updates.push(`intake = $${values.length + 1}`);
     values.push(data.intake ? JSON.stringify(data.intake) : null);
   }
+  if (data.choiceOption !== undefined) {
+    updates.push(`choice_option = $${values.length + 1}`);
+    values.push(data.choiceOption);
+  }
+  if (data.choiceComments !== undefined) {
+    updates.push(`choice_comments = $${values.length + 1}`);
+    values.push(data.choiceComments);
+  }
+  if (data.choiceSubmittedAt !== undefined) {
+    updates.push(`choice_submitted_at = $${values.length + 1}`);
+    values.push(data.choiceSubmittedAt);
+  }
 
   if (!updates.length) {
     const existing = await getPreviewClientById(clientId);
@@ -120,6 +138,27 @@ export async function updatePreviewClient(
   const rows = await sql(query, values);
   const row = rows[0] as Record<string, any> | undefined;
   if (!row) throw new Error('Preview client not found');
+  return rowToClient(row);
+}
+
+export async function submitPreviewChoiceByToken(data: {
+  token: string;
+  choiceOption: 'A' | 'B' | 'C';
+  choiceComments: string;
+}): Promise<PreviewClient> {
+  if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
+  const rows = await sql`
+    UPDATE preview_clients
+    SET
+      choice_option = ${data.choiceOption},
+      choice_comments = ${data.choiceComments},
+      choice_submitted_at = now(),
+      updated_at = now()
+    WHERE token = ${data.token} AND status = 'active'
+    RETURNING *
+  `;
+  const row = rows[0] as Record<string, any> | undefined;
+  if (!row) throw new Error('Preview client not found or inactive');
   return rowToClient(row);
 }
 

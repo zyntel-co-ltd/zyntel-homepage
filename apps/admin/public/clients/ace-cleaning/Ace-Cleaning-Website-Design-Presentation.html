@@ -180,6 +180,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F5F1;color:#1A1A1A
 .dcta-p:hover{background:#A82D21}
 .dcta-s{background:#F7F5F1;color:#333;border:1px solid rgba(0,0,0,.1)}
 .dcta-s:hover{background:#EDE8DF}
+.choice-form{margin-top:12px;padding:14px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff}
+.choice-form label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#aaa;display:block;margin-bottom:8px}
+.choice-form .choice-row{display:flex;gap:8px;margin-bottom:10px}
+.choice-pill{flex:1;border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:10px 12px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;text-align:center}
+.choice-pill.is-active{border-color:#C63527;background:#FEF3F2;color:#C63527}
+.choice-text{width:100%;min-height:90px;border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.55;font-family:'Plus Jakarta Sans',sans-serif;resize:vertical}
+.choice-help{font-size:11px;color:#888;line-height:1.5;margin-top:8px}
+.choice-success{display:none;margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(22,163,74,.25);background:rgba(22,163,74,.08);color:#166534;font-size:12px;font-weight:600}
 
 /* FOOTER */
 .page-footer{background:#1A1A1A;padding:32px 6%;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
@@ -581,7 +589,18 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F5F1;color:#1A1A1A
       <div class="dr-opt"><div class="dr-circle b">B</div><div class="dr-text"><strong>Option B — Fresh & Direct</strong><span>Green/cream · Quote form on homepage · Testimonials near top · Certifications section</span></div></div>
       <div class="dr-opt"><div class="dr-circle c">C</div><div class="dr-text"><strong>Option C — Light & Airy</strong><span>Sky blue/white · Photo mosaic hero · Gallery strip · Team section · HouseHelpers teaser</span></div></div>
       <div class="dr-cta">
-        <a href="mailto:ntale@zyntel.net?subject=Ace Website - Design Choice&body=Hi Ntale,%0A%0AI have reviewed all three design options for the Ace Cleaning website.%0A%0AMy choice is: Option __ — [Name]%0A%0APlease proceed with the build." class="dcta dcta-p">I've made my choice — let's build it →</a>
+        <form id="choice-form" class="choice-form">
+          <label>Your choice + comments (this sends to Zyntel automatically)</label>
+          <div class="choice-row">
+            <button type="button" class="choice-pill" data-choice="A">Option A</button>
+            <button type="button" class="choice-pill" data-choice="B">Option B</button>
+            <button type="button" class="choice-pill" data-choice="C">Option C</button>
+          </div>
+          <textarea id="choice-comments" class="choice-text" placeholder="Write any comments or changes you want (required). Example: “We prefer Option B, but move testimonials slightly lower and make the hero button more prominent.”"></textarea>
+          <button id="choice-submit" class="dcta dcta-p" type="submit">Submit feedback →</button>
+          <div class="choice-help">After submitting, you can still email if you want — but this ensures your feedback is recorded inside the admin panel.</div>
+          <div class="choice-success" id="choice-success">✓ Feedback received. Thank you — Zyntel will begin building based on your choice.</div>
+        </form>
         <a href="#options" class="dcta dcta-s">See all three options again ↑</a>
       </div>
     </div>
@@ -659,6 +678,68 @@ function updateDecResult() {
 document.querySelectorAll('.dq-opt input[type=radio]').forEach(function(radio){
   radio.addEventListener('change', updateDecResult);
 });
+
+// Choice comments submission (records in admin panel via /p/* bypass)
+(function(){
+  var form = document.getElementById('choice-form');
+  if (!form) return;
+  var selected = null;
+  var pills = Array.prototype.slice.call(form.querySelectorAll('.choice-pill'));
+  function setChoice(v){
+    selected = v;
+    pills.forEach(function(p){
+      p.classList.toggle('is-active', p.getAttribute('data-choice') === v);
+    });
+  }
+  pills.forEach(function(p){
+    p.addEventListener('click', function(){
+      setChoice(p.getAttribute('data-choice'));
+    });
+  });
+  // Default to recommended winner if available
+  setTimeout(function(){
+    try {
+      var q1 = document.querySelector('input[name="q1"]:checked');
+      var q2 = document.querySelector('input[name="q2"]:checked');
+      var q3 = document.querySelector('input[name="q3"]:checked');
+      if (!q1 && !q2 && !q3) return;
+      var scores = {A:0, B:0, C:0};
+      if (q1) scores[q1.value] = (scores[q1.value] || 0) + 2;
+      if (q2) { q2.value.split('').forEach(function(v){ scores[v] = (scores[v]||0)+1; }); }
+      if (q3) { q3.value.split('').forEach(function(v){ scores[v] = (scores[v]||0)+1; }); }
+      var winner = Object.keys(scores).reduce(function(a,b){ return scores[a]>=scores[b]?a:b; });
+      if (winner) setChoice(winner);
+    } catch {}
+  }, 0);
+
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    var token = new URLSearchParams(window.location.search).get('token');
+    var comments = (document.getElementById('choice-comments').value || '').trim();
+    var btn = document.getElementById('choice-submit');
+    var success = document.getElementById('choice-success');
+    if (!token) { alert('Missing token in link. Please open the original link from Zyntel.'); return; }
+    if (!selected) { alert('Please select Option A, B, or C.'); return; }
+    if (!comments) { alert('Please write a short comment before submitting.'); return; }
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+    try {
+      var r = await fetch('/p/choice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token, choiceOption: selected, choiceComments: comments })
+      });
+      var d = await r.json().catch(function(){ return {}; });
+      if (!r.ok) throw new Error(d.error || 'Failed to submit');
+      if (success) success.style.display = 'block';
+      btn.textContent = 'Submitted ✓';
+    } catch (err) {
+      alert('Could not submit feedback. Please try again or email Zyntel.\n\n' + (err && err.message ? err.message : 'Unknown error'));
+      btn.disabled = false;
+      btn.textContent = 'Submit feedback →';
+    }
+  });
+})();
 
 function dismissWarning() {
   document.getElementById('mobile-warning').style.display = 'none';

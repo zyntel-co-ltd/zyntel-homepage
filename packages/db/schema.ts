@@ -97,6 +97,9 @@ export interface PreviewClient {
   createdAt: Date;
   updatedAt: Date;
   intake?: PreviewClientIntake | null;
+  choiceOption?: string | null;
+  choiceComments?: string | null;
+  choiceSubmittedAt?: Date | null;
 }
 
 export interface PreviewClientIntake {
