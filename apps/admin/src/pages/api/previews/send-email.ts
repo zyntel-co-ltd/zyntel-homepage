@@ -30,22 +30,19 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     const resendApiKey = String(import.meta.env.RESEND_API_KEY ?? '').trim();
-    const fromEmail = String(import.meta.env.RESEND_FROM_EMAIL ?? '').trim();
+    // Prefer RESEND_FROM_EMAIL, but fall back to EMAIL_FROM (used by invoices/receipts),
+    // and finally a safe default that matches existing verified sender patterns.
+    const fromEmail =
+      String(import.meta.env.RESEND_FROM_EMAIL ?? '').trim() ||
+      String(import.meta.env.EMAIL_FROM ?? '').trim() ||
+      'Zyntel <billing@zyntel.net>';
     if (!resendApiKey) {
       return new Response(
         JSON.stringify({ error: 'RESEND_API_KEY must be configured (Vercel env var)' }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       );
     }
-    if (!fromEmail) {
-      return new Response(
-        JSON.stringify({
-          error:
-            'RESEND_FROM_EMAIL must be configured (and verified in Resend). Example: "Zyntel <hello@zyntel.net>"',
-        }),
-        { status: 503, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    // fromEmail always has a default; keep request path resilient and let Resend validate it.
 
     const resend = new Resend(resendApiKey);
     const recordCc = getAdminClientEmailCc();
