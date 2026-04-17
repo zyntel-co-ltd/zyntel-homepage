@@ -1,0 +1,38 @@
+---
+import { getPitchSessionByToken, logPitchView } from '../../../lib/pitches.ts';
+
+const { token } = Astro.params;
+
+function text(status: number, body: string) {
+  return new Response(body, { status, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+}
+
+if (!token) {
+  return text(404, 'Pitch not found');
+}
+
+try {
+  const session = await getPitchSessionByToken(token);
+  if (!session) {
+    return text(404, 'Pitch not found');
+  }
+
+  if (session.status !== 'active') {
+    return text(403, 'This pitch link has been disabled.');
+  }
+
+  if (session.expiryDate && session.expiryDate.getTime() < Date.now()) {
+    return text(410, 'This pitch link has expired.');
+  }
+
+  // Log view on successful validation (duration is unknown here; capture UA)
+  await logPitchView(session.id, Astro.request.headers.get('user-agent'), null);
+
+  return Astro.redirect(
+    `/pitches/${session.deckFolder}/${session.deckFile}?token=${token}`,
+    302
+  );
+} catch {
+  return text(500, 'Internal server error');
+}
+---
