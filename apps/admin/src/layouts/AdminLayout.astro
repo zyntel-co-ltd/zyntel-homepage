@@ -39,7 +39,7 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" />
     <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet" />
@@ -175,17 +175,17 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
         window.addEventListener('beforeunload',function(e){
           if(window.__adminUnsavedChanges){e.preventDefault();e.returnValue='';}
         });
+        function adminShouldTrackUnsaved(t){
+          if(!t)return false;
+          if(t.closest('[data-admin-skip-unsaved]'))return false;
+          if(t.tagName!=='INPUT'&&t.tagName!=='SELECT'&&t.tagName!=='TEXTAREA')return false;
+          return !!t.closest('form');
+        }
         document.addEventListener('change',function(e){
-          var t=e.target;
-          if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')&&t.closest('form')){
-            window.__adminUnsavedChanges=true;
-          }
+          if(adminShouldTrackUnsaved(e.target))window.__adminUnsavedChanges=true;
         },true);
         document.addEventListener('input',function(e){
-          var t=e.target;
-          if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')&&t.closest('form')){
-            window.__adminUnsavedChanges=true;
-          }
+          if(adminShouldTrackUnsaved(e.target))window.__adminUnsavedChanges=true;
         },true);
       })();
       document.getElementById('admin-logout')?.addEventListener('click', () => {
