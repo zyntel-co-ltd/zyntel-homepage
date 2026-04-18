@@ -122,6 +122,52 @@ export interface PreviewClient {
   productionSentAt?: Date | null;
 }
 
+export type MaintenanceStatus = 'active' | 'paused' | 'churned';
+
+export interface MaintenanceClient {
+  id: number;
+  name: string;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  app_name: string;
+  app_url: string | null;
+  app_description: string | null;
+  tech_stack: string | null;
+  status: MaintenanceStatus;
+  monthly_retainer: number;
+  currency: string;
+  start_date: string | null;
+  original_dev_cost: number | null;
+  client_id: number | null;
+  metrics_api_url: string | null;
+  metrics_api_key: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AppMetric {
+  id: number;
+  maintenance_client_id: number;
+  period: string; // YYYY-MM-DD (first of month)
+  active_users: number | null;
+  active_tenants: number | null;
+  total_properties: number | null;
+  total_landlords: number | null;
+  payments_recorded: number | null;
+  revenue_tracked: number | null;
+  cumulative_revenue_tracked: number | null;
+  hours_saved: number | null;
+  hourly_value: number | null;
+  zyntel_retainer_earned: number | null;
+  custom: Record<string, unknown> | null;
+  notes: string | null;
+  recorded_by: string | null;
+  auto_synced: boolean;
+  created_at: string;
+}
+
 export interface PreviewClientIntake {
   industry: string;
   description: string;

@@ -1,0 +1,230 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro';
+---
+<AdminLayout title="Help & Onboarding">
+<style>
+  .help-section { margin-bottom: 2rem; }
+  .help-h2 { font-size: 1.125rem; font-weight: 700; margin: 0 0 0.75rem; }
+  .help-h3 { font-size: 0.9375rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: var(--admin-accent); }
+  .help-p { font-size: 0.9rem; line-height: 1.6; color: var(--admin-text); margin: 0 0 0.75rem; }
+  .step { display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-start; }
+  .step-num { background: var(--admin-accent); color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 0.8125rem; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .step-body { flex: 1; }
+  .step-title { font-weight: 600; font-size: 0.9rem; margin: 0 0 0.25rem; }
+  .step-desc { font-size: 0.8375rem; color: var(--admin-text-muted); line-height: 1.5; margin: 0; }
+  code { background: var(--admin-bg); border: 1px solid var(--admin-border); border-radius: 4px; padding: 1px 6px; font-size: 0.8125rem; font-family: monospace; }
+  .code-block { background: var(--admin-bg); border: 1px solid var(--admin-border); border-radius: 8px; padding: 1rem; font-family: monospace; font-size: 0.8125rem; line-height: 1.6; white-space: pre-wrap; margin: 0.75rem 0; }
+  .tag { display: inline-block; background: var(--admin-accent)15; color: var(--admin-accent); border-radius: 4px; padding: 1px 8px; font-size: 0.75rem; font-weight: 600; margin-right: 4px; }
+  .callout { background: var(--admin-warning)15; border-left: 3px solid var(--admin-warning); padding: 0.75rem 1rem; border-radius: 0 6px 6px 0; font-size: 0.875rem; margin: 0.75rem 0; }
+  .callout.tip { background: var(--admin-success)15; border-color: var(--admin-success); }
+  .nav-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .nav-tab { padding: 0.4rem 1rem; border-radius: 6px; border: 1px solid var(--admin-border); background: none; cursor: pointer; font-size: 0.875rem; color: var(--admin-text-muted); }
+  .nav-tab.active { background: var(--admin-accent); color: #fff; border-color: var(--admin-accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+
+<header class="admin-header">
+  <div>
+    <h1 class="admin-title">Help & Onboarding Guide</h1>
+    <p class="admin-subtitle">How to onboard maintenance clients, set up the metrics API, and use this admin panel.</p>
+  </div>
+</header>
+
+<div class="nav-tabs">
+  <button class="nav-tab active" data-tab="onboarding">Onboarding a client</button>
+  <button class="nav-tab" data-tab="metrics-api">Metrics API setup</button>
+  <button class="nav-tab" data-tab="maintenance-tab">Maintenance tracker</button>
+  <button class="nav-tab" data-tab="invoicing">Invoicing & billing</button>
+</div>
+
+<!-- TAB: Onboarding -->
+<div id="tab-onboarding" class="tab-content active">
+  <div class="admin-card" style="padding:1.5rem;">
+    <div class="help-section">
+      <p class="help-h2">Onboarding a new maintenance client</p>
+      <p class="help-p">A "maintenance client" is a business for whom Zyntel built an app and continues to support it — whether under a paid retainer or goodwill. This is how you register them in the admin panel and start tracking their app's impact.</p>
+    </div>
+
+    <div class="help-h3">Step 1 — Agree on scope</div>
+    <div class="step"><div class="step-num">1</div><div class="step-body">
+      <p class="step-title">Define what "maintenance" means for this client</p>
+      <p class="step-desc">Is it a paid retainer? A support agreement? Goodwill? Document it. Typical items: bug fixes, feature additions, hosting management, data backups, access control, security updates.</p>
+    </div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body">
+      <p class="step-title">Agree on a monthly retainer (or note it's free)</p>
+      <p class="step-desc">Even if charging nothing, record <code>monthly_retainer = 0</code> so the ROI comparison is honest. The original dev cost + ongoing retainer is what Zyntel earns vs. what the client's business handles through the app.</p>
+    </div></div>
+
+    <div class="help-h3">Step 2 — Add the client in this panel</div>
+    <div class="step"><div class="step-num">3</div><div class="step-body">
+      <p class="step-title">Go to Maintenance → Add client</p>
+      <p class="step-desc">Fill in: client name, app name, app URL, tech stack, start date, original dev cost, monthly retainer. Add the primary contact and their email/phone.</p>
+    </div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body">
+      <p class="step-title">Link to the invoicing client (optional)</p>
+      <p class="step-desc">If the client already exists in <strong>Clients</strong> (from invoicing), note their client ID. You can cross-reference invoices from the Invoices section filtered by client name.</p>
+    </div></div>
+
+    <div class="help-h3">Step 3 — Set up metrics tracking</div>
+    <div class="step"><div class="step-num">5</div><div class="step-body">
+      <p class="step-title">Choose: manual snapshots or API-connected</p>
+      <p class="step-desc"><strong>Manual:</strong> Each month, click "Log metrics" on the client page and fill in the numbers from the app. Takes 2 minutes.<br/><strong>API:</strong> If the app has a <code>/api/zyntel-metrics/</code> endpoint, enter the URL and API key. Future: one-click sync.</p>
+    </div></div>
+    <div class="step"><div class="step-num">6</div><div class="step-body">
+      <p class="step-title">Log the first snapshot</p>
+      <p class="step-desc">Click "Log metrics" and enter the current numbers: active tenants, properties, landlords, payments recorded this month, revenue tracked. Do this at the end of every month.</p>
+    </div></div>
+
+    <div class="callout tip">
+      💡 <strong>Tip:</strong> The ROI section on each client page automatically calculates how much rent/revenue the client manages through the app vs. what they paid Zyntel. This is the clearest way to show a client their return on investment.
+    </div>
+  </div>
+</div>
+
+<!-- TAB: Metrics API -->
+<div id="tab-metrics-api" class="tab-content">
+  <div class="admin-card" style="padding:1.5rem;">
+    <p class="help-h2">Setting up the Metrics API on a client app</p>
+    <p class="help-p">For Django-based apps (like the Five S property system), add a protected API endpoint that returns a JSON snapshot of key metrics. The Zyntel admin panel can then pull this automatically.</p>
+
+    <div class="help-h3">1. Add the endpoint in the Django app</div>
+    <p class="help-p">In <code>apps/revenue/views.py</code> (or an <code>api_metrics</code> view):</p>
+    <div class="code-block">from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from apps.tenants.models import Tenant
+from apps.landlords.models import Landlord, LandlordProperty
+from apps.revenue.models import Payment
+from datetime import date
+
+ZYNTEL_METRICS_KEY = os.environ.get('ZYNTEL_METRICS_KEY', '')
+
+@require_GET
+def zyntel_metrics(request):
+    # Validate API key
+    key = request.headers.get('x-api-key', '')
+    if ZYNTEL_METRICS_KEY and key != ZYNTEL_METRICS_KEY:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    today = date.today()
+    month_start = today.replace(day=1)
+
+    return JsonResponse({
+        'active_tenants': Tenant.objects.filter(is_active=True).count(),
+        'total_properties': LandlordProperty.objects.count(),
+        'total_landlords': Landlord.objects.filter(status='active').count(),
+        'payments_recorded': Payment.objects.filter(payment_date__gte=month_start).count(),
+        'revenue_tracked': float(
+            Payment.objects.filter(payment_date__gte=month_start)
+            .aggregate(t=Sum('amount'))['t'] or 0
+        ),
+    })</div>
+
+    <div class="help-h3">2. Add the URL</div>
+    <div class="code-block">path('api/zyntel-metrics/', views.zyntel_metrics, name='zyntel_metrics'),</div>
+
+    <div class="help-h3">3. Set the environment variable</div>
+    <p class="help-p">In your hosting platform (Railway, etc.), add:</p>
+    <div class="code-block">ZYNTEL_METRICS_KEY=your-secret-key-here</div>
+
+    <div class="help-h3">4. Configure in this admin panel</div>
+    <div class="step"><div class="step-num">1</div><div class="step-body">
+      <p class="step-title">Go to Maintenance → client → Edit details</p>
+      <p class="step-desc">Enter the Metrics API URL: <code>https://yourapp.com/api/zyntel-metrics/</code> and the same API key.</p>
+    </div></div>
+
+    <div class="callout">
+      ⚠️ The metrics API key should be different from the Django SECRET_KEY. Generate a random string: <code>python -c "import secrets; print(secrets.token_urlsafe(32))"</code>
+    </div>
+
+    <div class="help-h3">Five S property app — current status</div>
+    <p class="help-p">The endpoint is implemented at <code>/api/zyntel-metrics/</code> on <code>https://fives.zyntel.net</code>. To activate:</p>
+    <div class="step"><div class="step-num">1</div><div class="step-body">
+      <p class="step-title">Add <code>ZYNTEL_METRICS_KEY</code> to Railway environment</p>
+      <p class="step-desc">Railway → Project → Variables → add <code>ZYNTEL_METRICS_KEY</code> with a random value.</p>
+    </div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body">
+      <p class="step-title">Add same key to the Five S maintenance client in this panel</p>
+      <p class="step-desc">Maintenance → Five S Investments → Edit → Metrics API Key field.</p>
+    </div></div>
+  </div>
+</div>
+
+<!-- TAB: Maintenance tracker -->
+<div id="tab-maintenance-tab" class="tab-content">
+  <div class="admin-card" style="padding:1.5rem;">
+    <p class="help-h2">Using the Maintenance tracker</p>
+
+    <div class="help-h3">What the tracker shows</div>
+    <p class="help-p">For each maintenance client you'll see:</p>
+    <ul style="font-size:0.9rem;line-height:1.8;color:var(--admin-text);padding-left:1.25rem;">
+      <li><strong>KPI cards</strong> — latest snapshot: tenants, properties, payments, revenue tracked</li>
+      <li><strong>ROI summary</strong> — dev cost + retainer vs. total rent managed (the "return" for the client)</li>
+      <li><strong>Metrics history</strong> — month-by-month table of all logged snapshots</li>
+      <li><strong>Client info</strong> — contact, tech stack, app URL, start date</li>
+    </ul>
+
+    <div class="help-h3">Monthly workflow (2 minutes)</div>
+    <div class="step"><div class="step-num">1</div><div class="step-body">
+      <p class="step-title">At end of month, open client page</p>
+      <p class="step-desc">Maintenance → click on client name.</p>
+    </div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body">
+      <p class="step-title">Click "Log metrics" and fill in the numbers</p>
+      <p class="step-desc">Log in to the client's app, check the dashboard stats, and copy them in. Takes about 2 minutes. For Five S: active tenants, properties, payments that month, total rent collected.</p>
+    </div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body">
+      <p class="step-title">Note anything unusual</p>
+      <p class="step-desc">Add a note if there was an outage, a feature launch, or a major change. Useful for spotting trends.</p>
+    </div></div>
+
+    <div class="help-h3">What "ROI" means here</div>
+    <p class="help-p">We're tracking the <em>client's</em> ROI — how much value they get from the app — not Zyntel's profit margin. The calculation is:</p>
+    <div class="code-block">Rent managed cumulatively ÷ Total paid to Zyntel = client's leverage ratio
+
+Example: UGX 150,000,000 managed ÷ UGX 1,500,000 paid = 100×
+→ "The client manages 100× more rent than they paid for the app"</div>
+    <p class="help-p">This is the number you show a client when discussing renewal or upgrades.</p>
+  </div>
+</div>
+
+<!-- TAB: Invoicing -->
+<div id="tab-invoicing" class="tab-content">
+  <div class="admin-card" style="padding:1.5rem;">
+    <p class="help-h2">Invoicing & billing for maintenance clients</p>
+
+    <div class="help-h3">Creating a maintenance invoice</div>
+    <div class="step"><div class="step-num">1</div><div class="step-body">
+      <p class="step-title">Go to Invoices → New invoice</p>
+      <p class="step-desc">Select the client, set invoice type to <strong>Subscription</strong>, and configure the recurring frequency (monthly).</p>
+    </div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body">
+      <p class="step-title">Add the maintenance line item</p>
+      <p class="step-desc">Description: "Monthly maintenance — [App Name] — [Month Year]". Use the retainer amount from the maintenance client record.</p>
+    </div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body">
+      <p class="step-title">Send and track payment</p>
+      <p class="step-desc">Use the "Send" button to email the invoice. When payment is received, record it under the invoice. This builds the revenue history automatically.</p>
+    </div></div>
+
+    <div class="help-h3">For the Five S property app</div>
+    <p class="help-p">Currently no monthly retainer — the UGX 1,500,000 was a one-off development payment (fully received). When a maintenance contract is agreed, create a subscription invoice for the agreed monthly amount and link it to the "Five S Investments" client record.</p>
+
+    <div class="callout tip">
+      💡 <strong>Tip:</strong> Even without a retainer, log zero-retainer months in the Maintenance tracker. The cumulative rent managed figure still grows, showing the increasing value of the original investment.
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.nav-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      const id = 'tab-' + btn.dataset.tab;
+      document.getElementById(id)?.classList.add('active');
+    });
+  });
+</script>
+</AdminLayout>

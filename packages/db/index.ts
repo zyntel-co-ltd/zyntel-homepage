@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless';
-import type { InvoiceItem, Invoice, PaymentMethod, PaymentRecord, Client, PaymentAccount, SavedItem, RecurringConfig } from './schema';
+import type { InvoiceItem, Invoice, PaymentMethod, PaymentRecord, Client, PaymentAccount, SavedItem, RecurringConfig, MaintenanceClient, AppMetric } from './schema';
 
 export * from './schema';
 
@@ -474,4 +474,150 @@ export async function processRecurringInvoice(source: Invoice): Promise<Invoice 
     `;
   }
   return newInvoice;
+}
+
+// --- Maintenance clients ---
+
+export async function listMaintenanceClients(): Promise<MaintenanceClient[]> {
+  if (!import.meta.env.DATABASE_URL) return [];
+  const rows = await sql`SELECT * FROM maintenance_clients ORDER BY created_at DESC`;
+  return rows as MaintenanceClient[];
+}
+
+export async function getMaintenanceClient(id: number): Promise<MaintenanceClient | null> {
+  if (!import.meta.env.DATABASE_URL) return null;
+  const rows = await sql`SELECT * FROM maintenance_clients WHERE id = ${id}`;
+  return (rows[0] as MaintenanceClient) ?? null;
+}
+
+export async function createMaintenanceClient(data: {
+  name: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  app_name: string;
+  app_url?: string;
+  app_description?: string;
+  tech_stack?: string;
+  status?: string;
+  monthly_retainer?: number;
+  currency?: string;
+  start_date?: string;
+  original_dev_cost?: number;
+  client_id?: number;
+  metrics_api_url?: string;
+  metrics_api_key?: string;
+  notes?: string;
+}): Promise<MaintenanceClient | null> {
+  if (!import.meta.env.DATABASE_URL) return null;
+  const rows = await sql`
+    INSERT INTO maintenance_clients
+      (name, contact_name, contact_email, contact_phone, app_name, app_url,
+       app_description, tech_stack, status, monthly_retainer, currency,
+       start_date, original_dev_cost, client_id, metrics_api_url, metrics_api_key, notes)
+    VALUES
+      (${data.name}, ${data.contact_name ?? null}, ${data.contact_email ?? null},
+       ${data.contact_phone ?? null}, ${data.app_name}, ${data.app_url ?? null},
+       ${data.app_description ?? null}, ${data.tech_stack ?? null},
+       ${data.status ?? 'active'}, ${data.monthly_retainer ?? 0},
+       ${data.currency ?? 'UGX'}, ${data.start_date ?? null},
+       ${data.original_dev_cost ?? null}, ${data.client_id ?? null},
+       ${data.metrics_api_url ?? null}, ${data.metrics_api_key ?? null},
+       ${data.notes ?? null})
+    RETURNING *
+  `;
+  return (rows[0] as MaintenanceClient) ?? null;
+}
+
+export async function updateMaintenanceClient(id: number, data: Partial<Omit<MaintenanceClient, 'id' | 'created_at' | 'updated_at'>>): Promise<MaintenanceClient | null> {
+  if (!import.meta.env.DATABASE_URL) return null;
+  const rows = await sql`
+    UPDATE maintenance_clients SET
+      name              = COALESCE(${data.name ?? null}, name),
+      contact_name      = ${data.contact_name ?? null},
+      contact_email     = ${data.contact_email ?? null},
+      contact_phone     = ${data.contact_phone ?? null},
+      app_name          = COALESCE(${data.app_name ?? null}, app_name),
+      app_url           = ${data.app_url ?? null},
+      app_description   = ${data.app_description ?? null},
+      tech_stack        = ${data.tech_stack ?? null},
+      status            = COALESCE(${data.status ?? null}, status),
+      monthly_retainer  = COALESCE(${data.monthly_retainer ?? null}, monthly_retainer),
+      currency          = COALESCE(${data.currency ?? null}, currency),
+      start_date        = ${data.start_date ?? null},
+      original_dev_cost = ${data.original_dev_cost ?? null},
+      client_id         = ${data.client_id ?? null},
+      metrics_api_url   = ${data.metrics_api_url ?? null},
+      metrics_api_key   = ${data.metrics_api_key ?? null},
+      notes             = ${data.notes ?? null},
+      updated_at        = NOW()
+    WHERE id = ${id}
+    RETURNING *
+  `;
+  return (rows[0] as MaintenanceClient) ?? null;
+}
+
+// --- App metrics ---
+
+export async function listAppMetrics(maintenanceClientId: number): Promise<AppMetric[]> {
+  if (!import.meta.env.DATABASE_URL) return [];
+  const rows = await sql`
+    SELECT * FROM app_metrics
+    WHERE maintenance_client_id = ${maintenanceClientId}
+    ORDER BY period DESC
+  `;
+  return rows as AppMetric[];
+}
+
+export async function upsertAppMetric(data: {
+  maintenance_client_id: number;
+  period: string; // YYYY-MM-01
+  active_users?: number;
+  active_tenants?: number;
+  total_properties?: number;
+  total_landlords?: number;
+  payments_recorded?: number;
+  revenue_tracked?: number;
+  cumulative_revenue_tracked?: number;
+  hours_saved?: number;
+  hourly_value?: number;
+  zyntel_retainer_earned?: number;
+  custom?: Record<string, unknown>;
+  notes?: string;
+  recorded_by?: string;
+  auto_synced?: boolean;
+}): Promise<AppMetric | null> {
+  if (!import.meta.env.DATABASE_URL) return null;
+  const rows = await sql`
+    INSERT INTO app_metrics
+      (maintenance_client_id, period, active_users, active_tenants, total_properties,
+       total_landlords, payments_recorded, revenue_tracked, cumulative_revenue_tracked,
+       hours_saved, hourly_value, zyntel_retainer_earned, custom, notes, recorded_by, auto_synced)
+    VALUES
+      (${data.maintenance_client_id}, ${data.period},
+       ${data.active_users ?? null}, ${data.active_tenants ?? null},
+       ${data.total_properties ?? null}, ${data.total_landlords ?? null},
+       ${data.payments_recorded ?? null}, ${data.revenue_tracked ?? null},
+       ${data.cumulative_revenue_tracked ?? null}, ${data.hours_saved ?? null},
+       ${data.hourly_value ?? null}, ${data.zyntel_retainer_earned ?? null},
+       ${data.custom ? JSON.stringify(data.custom) : null},
+       ${data.notes ?? null}, ${data.recorded_by ?? null}, ${data.auto_synced ?? false})
+    ON CONFLICT (maintenance_client_id, period) DO UPDATE SET
+      active_users               = EXCLUDED.active_users,
+      active_tenants             = EXCLUDED.active_tenants,
+      total_properties           = EXCLUDED.total_properties,
+      total_landlords            = EXCLUDED.total_landlords,
+      payments_recorded          = EXCLUDED.payments_recorded,
+      revenue_tracked            = EXCLUDED.revenue_tracked,
+      cumulative_revenue_tracked = EXCLUDED.cumulative_revenue_tracked,
+      hours_saved                = EXCLUDED.hours_saved,
+      hourly_value               = EXCLUDED.hourly_value,
+      zyntel_retainer_earned     = EXCLUDED.zyntel_retainer_earned,
+      custom                     = EXCLUDED.custom,
+      notes                      = EXCLUDED.notes,
+      recorded_by                = EXCLUDED.recorded_by,
+      auto_synced                = EXCLUDED.auto_synced
+    RETURNING *
+  `;
+  return (rows[0] as AppMetric) ?? null;
 }

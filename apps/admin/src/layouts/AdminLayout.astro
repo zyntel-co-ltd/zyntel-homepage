@@ -123,8 +123,20 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
               </svg>
               Pitches
             </a>
+            <a href="/maintenance" class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/maintenance') ? 'true' : undefined}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+              <span class="admin-nav-text">Maintenance</span>
+            </a>
           </nav>
           <div class="admin-sidebar-footer">
+            <a href="/help" class="admin-btn admin-btn-ghost" style="width:100%;text-align:left;margin-bottom:0.5rem;font-size:0.8125rem;display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;border-radius:6px;text-decoration:none;color:var(--admin-text-muted);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              Help & Onboarding guide
+            </a>
             <button type="button" class="admin-logout" id="admin-logout">Sign out</button>
           </div>
         </aside>

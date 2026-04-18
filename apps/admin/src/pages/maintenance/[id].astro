@@ -1,0 +1,327 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+const { id } = Astro.params;
+---
+<AdminLayout title="Maintenance Client">
+  <header class="admin-header">
+    <div>
+      <a href="/maintenance" style="font-size:0.875rem;color:var(--admin-text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-bottom:6px;">
+        ← Maintenance clients
+      </a>
+      <h1 class="admin-title" id="page-title">Loading…</h1>
+      <p class="admin-subtitle" id="page-subtitle"></p>
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center;">
+      <a id="app-link" href="#" target="_blank" class="admin-btn" style="display:none;">
+        Open app ↗
+      </a>
+      <button class="admin-btn admin-btn-primary" id="btn-log">+ Log metrics</button>
+    </div>
+  </header>
+
+  <!-- KPI cards -->
+  <div id="kpi-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem;"></div>
+
+  <!-- Client details + edit -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+    <div class="admin-card" style="padding:1.25rem;">
+      <h3 style="font-size:0.875rem;font-weight:600;color:var(--admin-text-muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 1rem;">Client info</h3>
+      <div id="client-info" style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.9rem;"></div>
+    </div>
+    <div class="admin-card" style="padding:1.25rem;">
+      <h3 style="font-size:0.875rem;font-weight:600;color:var(--admin-text-muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 1rem;">ROI summary</h3>
+      <div id="roi-summary" style="font-size:0.9rem;"></div>
+    </div>
+  </div>
+
+  <!-- Metrics history -->
+  <div class="admin-card">
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Active tenants</th>
+            <th>Properties</th>
+            <th>Payments</th>
+            <th>Revenue tracked</th>
+            <th>Hours saved</th>
+            <th>Est. value saved</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="metrics-tbody">
+          <tr><td colspan="8"><div class="admin-empty"><div class="admin-empty-icon">Loading…</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Edit client panel -->
+  <div id="edit-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;align-items:flex-start;justify-content:flex-end;">
+    <div style="background:var(--admin-card);width:min(520px,100%);height:100%;overflow-y:auto;padding:2rem;box-shadow:-4px 0 24px rgba(0,0,0,.15);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <h2 style="margin:0;font-size:1.125rem;">Edit Client</h2>
+        <button id="close-edit" style="background:none;border:none;cursor:pointer;font-size:1.25rem;color:var(--admin-text-muted);">✕</button>
+      </div>
+      <form id="edit-form" style="display:flex;flex-direction:column;gap:1rem;">
+        <div class="admin-field-group"><label class="admin-label">Client Name *</label><input class="admin-input" name="name" required /></div>
+        <div class="admin-field-group"><label class="admin-label">App Name *</label><input class="admin-input" name="app_name" required /></div>
+        <div class="admin-field-group"><label class="admin-label">App URL</label><input class="admin-input" name="app_url" type="url" /></div>
+        <div class="admin-field-group"><label class="admin-label">Tech Stack</label><input class="admin-input" name="tech_stack" /></div>
+        <div class="admin-field-group"><label class="admin-label">Status</label>
+          <select class="admin-input" name="status">
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="churned">Churned</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div class="admin-field-group"><label class="admin-label">Monthly Retainer</label><input class="admin-input" name="monthly_retainer" type="number" min="0" /></div>
+          <div class="admin-field-group"><label class="admin-label">Currency</label>
+            <select class="admin-input" name="currency"><option value="UGX">UGX</option><option value="USD">USD</option><option value="KES">KES</option></select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div class="admin-field-group"><label class="admin-label">Original Dev Cost</label><input class="admin-input" name="original_dev_cost" type="number" min="0" /></div>
+          <div class="admin-field-group"><label class="admin-label">Start Date</label><input class="admin-input" name="start_date" type="date" /></div>
+        </div>
+        <div class="admin-field-group"><label class="admin-label">Contact Name</label><input class="admin-input" name="contact_name" /></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div class="admin-field-group"><label class="admin-label">Contact Email</label><input class="admin-input" name="contact_email" type="email" /></div>
+          <div class="admin-field-group"><label class="admin-label">Contact Phone</label><input class="admin-input" name="contact_phone" /></div>
+        </div>
+        <div class="admin-field-group"><label class="admin-label">Metrics API URL</label><input class="admin-input" name="metrics_api_url" type="url" /></div>
+        <div class="admin-field-group"><label class="admin-label">Metrics API Key</label><input class="admin-input" name="metrics_api_key" type="password" placeholder="Leave blank to keep existing" /></div>
+        <div class="admin-field-group"><label class="admin-label">Notes</label><textarea class="admin-input" name="notes" rows="3"></textarea></div>
+        <div id="edit-err" style="color:var(--admin-danger);font-size:0.875rem;display:none;"></div>
+        <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+          <button type="button" class="admin-btn" id="cancel-edit">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Log metrics panel -->
+  <div id="log-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;align-items:flex-start;justify-content:flex-end;">
+    <div style="background:var(--admin-card);width:min(480px,100%);height:100%;overflow-y:auto;padding:2rem;box-shadow:-4px 0 24px rgba(0,0,0,.15);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <h2 style="margin:0;font-size:1.125rem;">Log Monthly Metrics</h2>
+        <button id="close-log" style="background:none;border:none;cursor:pointer;font-size:1.25rem;color:var(--admin-text-muted);">✕</button>
+      </div>
+      <form id="log-form" style="display:flex;flex-direction:column;gap:1rem;">
+        <div class="admin-field-group">
+          <label class="admin-label">Month *</label>
+          <input class="admin-input" name="period" type="month" required />
+        </div>
+        <p style="font-size:0.8125rem;color:var(--admin-text-muted);margin:0;">App usage metrics</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div class="admin-field-group"><label class="admin-label">Active tenants</label><input class="admin-input" name="active_tenants" type="number" min="0" /></div>
+          <div class="admin-field-group"><label class="admin-label">Total properties</label><input class="admin-input" name="total_properties" type="number" min="0" /></div>
+          <div class="admin-field-group"><label class="admin-label">Total landlords</label><input class="admin-input" name="total_landlords" type="number" min="0" /></div>
+          <div class="admin-field-group"><label class="admin-label">Payments recorded</label><input class="admin-input" name="payments_recorded" type="number" min="0" /></div>
+        </div>
+        <p style="font-size:0.8125rem;color:var(--admin-text-muted);margin:0;">Financial impact</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div class="admin-field-group"><label class="admin-label">Revenue tracked (this month)</label><input class="admin-input" name="revenue_tracked" type="number" min="0" placeholder="UGX" /></div>
+          <div class="admin-field-group"><label class="admin-label">Cumulative revenue tracked</label><input class="admin-input" name="cumulative_revenue_tracked" type="number" min="0" placeholder="UGX" /></div>
+          <div class="admin-field-group"><label class="admin-label">Hours saved</label><input class="admin-input" name="hours_saved" type="number" min="0" step="0.5" placeholder="e.g. 8" /></div>
+          <div class="admin-field-group"><label class="admin-label">Value per hour (UGX)</label><input class="admin-input" name="hourly_value" type="number" min="0" placeholder="e.g. 10000" /></div>
+        </div>
+        <div class="admin-field-group"><label class="admin-label">Notes</label><textarea class="admin-input" name="notes" rows="2" placeholder="Any observations about this month"></textarea></div>
+        <div id="log-err" style="color:var(--admin-danger);font-size:0.875rem;display:none;"></div>
+        <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+          <button type="button" class="admin-btn" id="cancel-log">Cancel</button>
+          <button type="submit" class="admin-btn admin-btn-primary">Save metrics</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<script define:vars={{ clientId: id }}>
+  const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key') ?? '';
+  const B = (window).__ADMIN_BASE__ ?? '';
+  const CID = parseInt(clientId);
+
+  function fmt(n, cur = 'UGX') {
+    if (!n && n !== 0) return '—';
+    if (cur === 'UGX') return 'UGX ' + Math.round(n).toLocaleString('en-UG');
+    return cur + ' ' + Number(n).toLocaleString();
+  }
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function fmtMonth(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  }
+
+  let clientData = null;
+
+  async function load() {
+    const r = await fetch(`/api/maintenance/${CID}`, { headers: { 'x-api-key': API_KEY } });
+    if (r.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = B + '/login'; return; }
+    if (r.status === 404) { document.getElementById('page-title').textContent = 'Client not found'; return; }
+    const { client, metrics } = await r.json();
+    clientData = client;
+    renderClient(client);
+    renderMetrics(client, metrics);
+    renderROI(client, metrics);
+  }
+
+  function renderClient(c) {
+    document.getElementById('page-title').textContent = c.name;
+    document.getElementById('page-subtitle').textContent = c.app_name + (c.tech_stack ? ' · ' + c.tech_stack : '');
+    if (c.app_url) {
+      const lnk = document.getElementById('app-link');
+      lnk.href = c.app_url;
+      lnk.style.display = '';
+    }
+    const statusColor = { active: '#0d9488', paused: '#f59e0b', churned: '#dc2626' }[c.status] ?? '#697386';
+    document.getElementById('client-info').innerHTML = [
+      ['Status', `<span style="color:${statusColor};font-weight:600;">${c.status}</span>`],
+      ['Contact', c.contact_name || '—'],
+      ['Email', c.contact_email ? `<a href="mailto:${c.contact_email}">${c.contact_email}</a>` : '—'],
+      ['Phone', c.contact_phone || '—'],
+      ['Started', fmtDate(c.start_date)],
+      ['Dev cost paid', c.original_dev_cost ? fmt(c.original_dev_cost, c.currency) : '—'],
+      ['Monthly retainer', c.monthly_retainer ? fmt(c.monthly_retainer, c.currency) : 'No retainer'],
+      ['Metrics API', c.metrics_api_url ? `<a href="${c.metrics_api_url}" target="_blank" style="font-size:0.8rem;">Configured ↗</a>` : 'Not configured'],
+    ].map(([k, v]) => `<div style="display:flex;gap:0.5rem;"><span style="color:var(--admin-text-muted);min-width:120px;">${k}</span><span>${v}</span></div>`).join('') +
+    `<div style="margin-top:1rem;"><button class="admin-btn admin-btn-ghost" id="edit-btn" style="font-size:0.8125rem;">Edit details</button></div>`;
+    document.getElementById('edit-btn').addEventListener('click', () => openEditPanel(c));
+  }
+
+  function renderMetrics(client, metrics) {
+    const tbody = document.getElementById('metrics-tbody');
+    // KPI cards from latest snapshot
+    const latest = metrics[0];
+    const kpiEl = document.getElementById('kpi-cards');
+    const kpis = [
+      { label: 'Active tenants', value: latest?.active_tenants ?? '—', color: '#635bff' },
+      { label: 'Properties', value: latest?.total_properties ?? '—', color: '#0d9488' },
+      { label: 'Revenue tracked (last month)', value: latest?.revenue_tracked ? fmt(latest.revenue_tracked, client.currency) : '—', color: '#10b981' },
+      { label: 'Payments recorded (last month)', value: latest?.payments_recorded ?? '—', color: '#f59e0b' },
+    ];
+    kpiEl.innerHTML = kpis.map(k => `<div class="admin-card" style="padding:1rem;border-top:3px solid ${k.color};">
+      <div style="font-size:1.375rem;font-weight:700;">${k.value}</div>
+      <div style="font-size:0.8rem;color:var(--admin-text-muted);margin-top:2px;">${k.label}</div>
+    </div>`).join('');
+
+    if (!metrics.length) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="admin-empty">
+        <div class="admin-empty-icon">📊</div>
+        <div class="admin-empty-title">No metrics logged yet</div>
+        <div class="admin-empty-desc">Click "Log metrics" to record the first monthly snapshot.</div>
+      </div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = metrics.map(m => {
+      const saved = m.hours_saved && m.hourly_value ? Math.round(m.hours_saved * m.hourly_value) : null;
+      return `<tr>
+        <td><strong>${fmtMonth(m.period)}</strong></td>
+        <td>${m.active_tenants ?? '—'}</td>
+        <td>${m.total_properties ?? '—'}</td>
+        <td>${m.payments_recorded ?? '—'}</td>
+        <td>${m.revenue_tracked ? fmt(m.revenue_tracked) : '—'}</td>
+        <td>${m.hours_saved ? m.hours_saved + ' hrs' : '—'}</td>
+        <td>${saved ? fmt(saved) : '—'}</td>
+        <td style="font-size:0.8rem;color:var(--admin-text-muted);">${m.notes ?? ''}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderROI(client, metrics) {
+    const el = document.getElementById('roi-summary');
+    const latest = metrics[0];
+    const devCost = client.original_dev_cost ?? 0;
+    const retainer = client.monthly_retainer ?? 0;
+    const monthsSince = client.start_date
+      ? Math.max(1, Math.round((Date.now() - new Date(client.start_date).getTime()) / (30 * 24 * 3600 * 1000)))
+      : null;
+    const totalEarned = monthsSince ? devCost + retainer * monthsSince : devCost;
+    const cumRev = latest?.cumulative_revenue_tracked ?? null;
+    const rows = [
+      ['Dev cost received', devCost ? fmt(devCost, client.currency) : '—'],
+      ['Monthly retainer', retainer ? fmt(retainer, client.currency) : 'None'],
+      ['Months active', monthsSince ? monthsSince + ' months' : '—'],
+      ['Total earned by Zyntel', totalEarned ? fmt(totalEarned, client.currency) : '—'],
+      ['Total rent managed', cumRev ? fmt(cumRev, client.currency) : 'Not tracked yet'],
+    ];
+    if (cumRev && totalEarned) {
+      const ratio = (cumRev / totalEarned).toFixed(0);
+      rows.push(['Rent managed vs. Zyntel cost', `${ratio}× — client manages ${ratio}x more rent than they paid Zyntel`]);
+    }
+    el.innerHTML = rows.map(([k, v]) => `<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;font-size:0.875rem;">
+      <span style="color:var(--admin-text-muted);min-width:160px;">${k}</span><span>${v}</span>
+    </div>`).join('');
+  }
+
+  // Panels
+  function openPanel(id) { document.getElementById(id).style.display = 'flex'; }
+  function closePanel(id) { document.getElementById(id).style.display = 'none'; }
+
+  document.getElementById('btn-log').addEventListener('click', () => {
+    const m = document.querySelector('[name="period"]');
+    if (m) { const now = new Date(); m.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`; }
+    openPanel('log-panel');
+  });
+  document.getElementById('close-log').addEventListener('click', () => closePanel('log-panel'));
+  document.getElementById('cancel-log').addEventListener('click', () => closePanel('log-panel'));
+
+  document.getElementById('close-edit').addEventListener('click', () => closePanel('edit-panel'));
+  document.getElementById('cancel-edit').addEventListener('click', () => closePanel('edit-panel'));
+
+  function openEditPanel(c) {
+    const f = document.getElementById('edit-form');
+    ['name','app_name','app_url','tech_stack','status','monthly_retainer','currency','original_dev_cost',
+     'start_date','contact_name','contact_email','contact_phone','metrics_api_url','notes'].forEach(k => {
+      const el = f.querySelector(`[name="${k}"]`);
+      if (el && c[k] != null) el.value = c[k];
+    });
+    openPanel('edit-panel');
+  }
+
+  document.getElementById('log-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const body = { maintenance_client_id: CID };
+    fd.forEach((v, k) => { if (v !== '') body[k] = k === 'period' ? v + '-01' : parseFloat(v) || v; });
+    const errEl = document.getElementById('log-err');
+    errEl.style.display = 'none';
+    const r = await fetch(`/api/maintenance/${CID}/metrics`, {
+      method: 'POST',
+      headers: { 'x-api-key': API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!d.ok) { errEl.textContent = d.error ?? 'Failed'; errEl.style.display = 'block'; return; }
+    closePanel('log-panel');
+    load();
+  });
+
+  document.getElementById('edit-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const body = {};
+    fd.forEach((v, k) => { if (v !== '') body[k] = v; });
+    if (body.monthly_retainer) body.monthly_retainer = parseFloat(body.monthly_retainer);
+    if (body.original_dev_cost) body.original_dev_cost = parseFloat(body.original_dev_cost);
+    const errEl = document.getElementById('edit-err');
+    errEl.style.display = 'none';
+    const r = await fetch(`/api/maintenance/${CID}/update`, {
+      method: 'PUT',
+      headers: { 'x-api-key': API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!d.ok) { errEl.textContent = d.error ?? 'Failed'; errEl.style.display = 'block'; return; }
+    closePanel('edit-panel');
+    load();
+  });
+
+  load();
+</script>
