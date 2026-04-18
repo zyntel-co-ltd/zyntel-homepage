@@ -9,6 +9,14 @@ export const prerender = false;
     <p class="admin-subtitle" id="edit-subtitle">Loading...</p>
   </header>
 
+  <div class="admin-card" id="links-card" style="max-width: 720px; margin-bottom: 1rem;">
+    <h2 style="font-size: 0.9375rem; margin: 0 0 0.5rem;">Connected products</h2>
+    <p class="admin-form-hint" style="margin: 0 0 0.75rem; font-size: 0.8125rem;">
+      Maintenance service products and property ROI profiles that reference this client ID — keep one billing identity everywhere.
+    </p>
+    <div id="links-body" style="font-size: 0.875rem; color: var(--admin-text-muted);">Loading…</div>
+  </div>
+
   <div class="admin-card" style="max-width: 520px;">
     <div class="admin-modal-body">
       <form id="edit-client-form">
@@ -90,7 +98,7 @@ export const prerender = false;
   });
 
   async function load() {
-    const res = await fetch(`/api/clients/${id}`, { headers: { 'x-api-key': API_KEY! } });
+    const res = await fetch(`/api/clients/${id}?links=1`, { headers: { 'x-api-key': API_KEY! } });
     if (res.status === 401) {
       sessionStorage.removeItem('zyntel_invoice_api_key');
       window.location.href = B + '/login';
@@ -100,7 +108,7 @@ export const prerender = false;
       document.getElementById('edit-subtitle')!.textContent = 'Client not found';
       return;
     }
-    const { client } = await res.json();
+    const { client, links } = await res.json();
     if (!client) {
       document.getElementById('edit-subtitle')!.textContent = 'Client not found';
       return;
@@ -113,6 +121,31 @@ export const prerender = false;
     const em: string[] =
       client.emails?.length ? client.emails.map((x: string) => String(x).trim()).filter(Boolean) : [];
     renderClientEmailRows(em.length ? em : [client.email || ''].filter(Boolean));
+
+    const lb = document.getElementById('links-body')!;
+    if (links) {
+      const sp = links.serviceProducts || [];
+      const rp = links.roiProfiles || [];
+      const parts = [];
+      if (sp.length) {
+        parts.push(
+          '<strong style="color:var(--admin-text)">Maintenance products:</strong> ' +
+            sp.map((p: { productName: string }) => p.productName).join(', ')
+        );
+      }
+      if (rp.length) {
+        parts.push(
+          '<strong style="color:var(--admin-text)">ROI profiles:</strong> ' +
+            rp.map((p: { appName: string }) => p.appName).join(', ')
+        );
+      }
+      lb.innerHTML =
+        parts.length > 0
+          ? parts.join('<br/><br/>')
+          : 'Nothing linked yet. In <a href="/maintenance">Maintenance</a> → New Service Client, choose this client under “Invoice client”. For property ROI metrics, set <code>client_id</code> when editing that ROI profile.';
+    } else {
+      lb.textContent = '';
+    }
   }
 
   document.getElementById('edit-client-form')!.addEventListener('submit', async (e) => {

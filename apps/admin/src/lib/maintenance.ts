@@ -18,6 +18,7 @@ function rowToServiceClient(row: Record<string, any>): ServiceClient {
     productType: String(row.product_type) as ProductType,
     contactName: String(row.contact_name),
     contactEmail: String(row.contact_email),
+    invoiceClientId: row.invoice_client_id != null ? Number(row.invoice_client_id) : null,
     healthCheckUrl: row.health_check_url != null ? String(row.health_check_url) : null,
     apiUrl: row.api_url != null ? String(row.api_url) : null,
     apiKeyHash: row.api_key_hash != null ? String(row.api_key_hash) : null,
@@ -90,19 +91,22 @@ export async function createServiceClient(data: {
   productType?: ProductType;
   contactName: string;
   contactEmail: string;
+  /** Invoicing clients.id — same legal entity as invoices */
+  invoiceClientId?: number | null;
   healthCheckUrl?: string | null;
   apiUrl?: string | null;
   notes?: string | null;
 }): Promise<ServiceClient> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
   const rows = await sql`
-    INSERT INTO service_clients (name, product_name, product_type, contact_name, contact_email, health_check_url, api_url, notes)
+    INSERT INTO service_clients (name, product_name, product_type, contact_name, contact_email, invoice_client_id, health_check_url, api_url, notes)
     VALUES (
       ${data.name},
       ${data.productName},
       ${data.productType ?? 'other'},
       ${data.contactName},
       ${data.contactEmail},
+      ${data.invoiceClientId ?? null},
       ${data.healthCheckUrl ?? null},
       ${data.apiUrl ?? null},
       ${data.notes ?? null}
@@ -120,6 +124,7 @@ export async function updateServiceClient(
     productType: ProductType;
     contactName: string;
     contactEmail: string;
+    invoiceClientId: number | null;
     healthCheckUrl: string | null;
     apiUrl: string | null;
     apiKeyHash: string | null;
@@ -136,6 +141,7 @@ export async function updateServiceClient(
     productType: 'product_type',
     contactName: 'contact_name',
     contactEmail: 'contact_email',
+    invoiceClientId: 'invoice_client_id',
     healthCheckUrl: 'health_check_url',
     apiUrl: 'api_url',
     apiKeyHash: 'api_key_hash',

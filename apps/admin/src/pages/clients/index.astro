@@ -2,9 +2,12 @@
 import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 <AdminLayout title="Clients">
-  <header class="admin-header">
-    <h1 class="admin-title">Clients</h1>
-    <p class="admin-subtitle">Saved clients for quick invoice creation</p>
+  <header class="admin-header" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:1rem;">
+    <div>
+      <h1 class="admin-title">Clients</h1>
+      <p class="admin-subtitle">Single directory for billing — link the same client to maintenance products and ROI tracking so you do not create duplicates per feature.</p>
+    </div>
+    <a href="/clients/new" class="admin-btn admin-btn-primary">+ Add client</a>
   </header>
 
   <div class="admin-card">
@@ -15,12 +18,13 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
             <th>Name</th>
             <th>Email</th>
             <th>Phone</th>
-            <th>Address</th>
+            <th>Maintenance products</th>
+            <th>ROI profiles</th>
             <th></th>
           </tr>
         </thead>
         <tbody id="clients-tbody">
-          <tr><td colspan="4"><div class="admin-empty"><div class="admin-empty-icon">Loading...</div></div></td></tr>
+          <tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-icon">Loading…</div></div></td></tr>
         </tbody>
       </table>
     </div>
@@ -29,28 +33,29 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
 <script>
   const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
-  const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '/admin';
+  const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '';
   if (!API_KEY) window.location.href = B + '/login';
 
   async function load() {
     const tbody = document.getElementById('clients-tbody')!;
-    const res = await fetch('/api/clients/list', { headers: { 'x-api-key': API_KEY } });
+    const res = await fetch('/api/clients/list?directory=1', { headers: { 'x-api-key': API_KEY } });
     if (res.status === 401) { sessionStorage.removeItem('zyntel_invoice_api_key'); window.location.href = B + '/login'; return; }
     const { clients } = await res.json();
     const list = clients ?? [];
     if (list.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5"><div class="admin-empty"><div class="admin-empty-icon">👤</div><div class="admin-empty-title">No clients yet</div><div class="admin-empty-desc">Clients are saved when you check "Save client" when creating an invoice.</div></div></td></tr>';
-    } else {
-      tbody.innerHTML = list.map((c: { id: number; name: string; email: string; phone?: string; address?: string }) => `
-        <tr>
-          <td><strong>${c.name}</strong></td>
-          <td>${c.email}</td>
-          <td>${c.phone || '—'}</td>
-          <td>${c.address || '—'}</td>
-          <td><a href="${B}/clients/${c.id}/edit" class="admin-btn admin-btn-ghost" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">Edit</a></td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = `<tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-icon">👤</div><div class="admin-empty-title">No clients yet</div><div class="admin-empty-desc"><a href="/clients/new">Add a client</a> or save from an invoice.</div></div></td></tr>`;
+      return;
     }
+    tbody.innerHTML = list.map((c: { id: number; name: string; email: string; phone?: string; serviceProductCount?: number; roiProfileCount?: number }) => `
+      <tr>
+        <td><strong>${c.name}</strong></td>
+        <td>${c.email}</td>
+        <td>${c.phone || '—'}</td>
+        <td style="font-size:0.875rem;">${(c.serviceProductCount ?? 0) > 0 ? `<span style="color:var(--admin-success);font-weight:600;">${c.serviceProductCount}</span> linked` : '<span style="color:var(--admin-text-muted)">—</span>'}</td>
+        <td style="font-size:0.875rem;">${(c.roiProfileCount ?? 0) > 0 ? `<span style="color:var(--admin-success);font-weight:600;">${c.roiProfileCount}</span> linked` : '<span style="color:var(--admin-text-muted)">—</span>'}</td>
+        <td><a href="${B}/clients/${c.id}/edit" class="admin-btn admin-btn-ghost" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">Edit</a></td>
+      </tr>
+    `).join('');
   }
   load();
 </script>

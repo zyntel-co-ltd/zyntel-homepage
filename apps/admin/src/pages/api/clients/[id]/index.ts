@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getClient } from '@zyntel/db';
+import { getClient, getClientProductLinks } from '@zyntel/db';
 
 export const GET: APIRoute = async ({ params, request }) => {
   const id = Number(params.id);
@@ -16,7 +16,10 @@ export const GET: APIRoute = async ({ params, request }) => {
     if (!client) {
       return new Response(JSON.stringify({ error: 'Client not found' }), { status: 404 });
     }
-    return new Response(JSON.stringify({ ok: true, client }), {
+    const url = new URL(request.url);
+    const links =
+      url.searchParams.get('links') === '1' ? await getClientProductLinks(id) : undefined;
+    return new Response(JSON.stringify({ ok: true, client, ...(links ? { links } : {}) }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

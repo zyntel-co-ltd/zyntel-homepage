@@ -1,0 +1,63 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="New client">
+  <header class="admin-header">
+    <a href="/clients" class="admin-btn admin-btn-ghost" style="margin-bottom: 1rem;">← Back</a>
+    <h1 class="admin-title">Add client</h1>
+    <p class="admin-subtitle">Create the billing identity once — invoices, maintenance, and ROI all reference this record.</p>
+  </header>
+
+  <div class="admin-card" style="max-width: 520px;">
+    <form id="new-client-form">
+      <div class="admin-form-group">
+        <label class="admin-form-label">Company / client name *</label>
+        <input type="text" name="name" class="admin-form-input" required placeholder="Five S Investments SMC Ltd" />
+      </div>
+      <div class="admin-form-group">
+        <label class="admin-form-label">Primary email *</label>
+        <input type="email" name="email" class="admin-form-input" required />
+      </div>
+      <div class="admin-form-group">
+        <label class="admin-form-label">Phone</label>
+        <input type="text" name="phone" class="admin-form-input" placeholder="+256…" />
+      </div>
+      <div class="admin-form-group">
+        <label class="admin-form-label">Address</label>
+        <input type="text" name="address" class="admin-form-input" />
+      </div>
+      <p id="form-err" style="color: var(--admin-danger); font-size: 0.875rem; display: none;"></p>
+      <button type="submit" class="admin-btn admin-btn-primary">Create client</button>
+    </form>
+  </div>
+</AdminLayout>
+
+<script>
+  const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key');
+  if (!API_KEY) window.location.href = '/login';
+
+  document.getElementById('new-client-form')!.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target as HTMLFormElement);
+    const body = {
+      name: String(fd.get('name') || '').trim(),
+      email: String(fd.get('email') || '').trim(),
+      phone: String(fd.get('phone') || '').trim() || undefined,
+      address: String(fd.get('address') || '').trim() || undefined,
+    };
+    const err = document.getElementById('form-err')!;
+    err.style.display = 'none';
+    const res = await fetch('/api/clients/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY! },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.client) {
+      err.textContent = data.error || 'Could not create';
+      err.style.display = 'block';
+      return;
+    }
+    window.location.href = `/clients/${data.client.id}/edit`;
+  });
+</script>

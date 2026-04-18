@@ -167,6 +167,8 @@ export interface ServiceClient {
   productType: ProductType;
   contactName: string;
   contactEmail: string;
+  /** Invoicing `clients.id` — one billing identity across Zyntel admin */
+  invoiceClientId: number | null;
   healthCheckUrl: string | null;
   apiUrl: string | null;
   apiKeyHash: string | null;

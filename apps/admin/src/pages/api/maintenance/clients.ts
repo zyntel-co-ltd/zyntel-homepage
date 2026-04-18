@@ -21,7 +21,20 @@ export const POST: APIRoute = async ({ request }) => {
     if (!body.name || !body.productName || !body.contactName || !body.contactEmail) {
       return new Response(JSON.stringify({ error: 'name, productName, contactName, contactEmail required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
-    const client = await createServiceClient(body);
+    const rawInv = body.invoiceClientId;
+    const invoiceClientId =
+      rawInv != null && rawInv !== '' ? Number(rawInv) : null;
+    const client = await createServiceClient({
+      name: String(body.name).trim(),
+      productName: String(body.productName).trim(),
+      productType: body.productType,
+      contactName: String(body.contactName).trim(),
+      contactEmail: String(body.contactEmail).trim(),
+      invoiceClientId: invoiceClientId != null && !isNaN(invoiceClientId) ? invoiceClientId : null,
+      healthCheckUrl: body.healthCheckUrl ?? null,
+      apiUrl: body.apiUrl ?? null,
+      notes: body.notes ?? null,
+    });
     return new Response(JSON.stringify(client), { status: 201, headers: { 'Content-Type': 'application/json' } });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message ?? 'Server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });

@@ -176,6 +176,74 @@ export async function listClients(): Promise<Client[]> {
   }
 }
 
+export type ClientDirectoryEntry = Client & {
+  serviceProductCount: number;
+  roiProfileCount: number;
+};
+
+/** Clients list with counts of linked maintenance products (requires migrations 011+014, 005). */
+export async function listClientsDirectory(): Promise<ClientDirectoryEntry[]> {
+  if (!import.meta.env.DATABASE_URL) return [];
+  try {
+    const rows = await sql`
+      SELECT c.*,
+        COALESCE(sc.cnt, 0)::int AS service_product_count,
+        COALESCE(mc.cnt, 0)::int AS roi_profile_count
+      FROM clients c
+      LEFT JOIN (
+        SELECT invoice_client_id, COUNT(*)::int AS cnt
+        FROM service_clients
+        WHERE invoice_client_id IS NOT NULL
+        GROUP BY invoice_client_id
+      ) sc ON sc.invoice_client_id = c.id
+      LEFT JOIN (
+        SELECT client_id, COUNT(*)::int AS cnt
+        FROM maintenance_clients
+        WHERE client_id IS NOT NULL
+        GROUP BY client_id
+      ) mc ON mc.client_id = c.id
+      ORDER BY c.name ASC
+    `;
+    return (rows as Record<string, unknown>[]).map((row) => ({
+      ...normalizeClientRow(row),
+      serviceProductCount: Number(row.service_product_count ?? 0),
+      roiProfileCount: Number(row.roi_profile_count ?? 0),
+    }));
+  } catch {
+    const base = await listClients();
+    return base.map((c) => ({ ...c, serviceProductCount: 0, roiProfileCount: 0 }));
+  }
+}
+
+export async function getClientProductLinks(clientId: number): Promise<{
+  serviceProducts: { id: string; productName: string }[];
+  roiProfiles: { id: number; appName: string }[];
+}> {
+  if (!import.meta.env.DATABASE_URL) {
+    return { serviceProducts: [], roiProfiles: [] };
+  }
+  try {
+    const scRows = await sql`
+      SELECT id, product_name FROM service_clients WHERE invoice_client_id = ${clientId} ORDER BY product_name
+    `;
+    const mcRows = await sql`
+      SELECT id, app_name FROM maintenance_clients WHERE client_id = ${clientId} ORDER BY app_name
+    `;
+    return {
+      serviceProducts: (scRows as { id: string; product_name: string }[]).map((r) => ({
+        id: String(r.id),
+        productName: String(r.product_name),
+      })),
+      roiProfiles: (mcRows as { id: number; app_name: string }[]).map((r) => ({
+        id: Number(r.id),
+        appName: String(r.app_name),
+      })),
+    };
+  } catch {
+    return { serviceProducts: [], roiProfiles: [] };
+  }
+}
+
 export async function getClient(id: number): Promise<Client | null> {
   if (!import.meta.env.DATABASE_URL) return null;
   const rows = await sql`SELECT * FROM clients WHERE id = ${id}`;

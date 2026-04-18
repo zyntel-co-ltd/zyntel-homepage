@@ -139,6 +139,13 @@ const serviceClients = await getAllServiceClients();
         <div><label>Contact Email</label><input id="nc-contact-email" type="email" class="admin-form-input" required /></div>
         <div class="full"><label>Health Check URL (optional)</label><input id="nc-health-url" class="admin-form-input" placeholder="https://..." /></div>
         <div class="full"><label>API URL (optional)</label><input id="nc-api-url" class="admin-form-input" placeholder="https://..." /></div>
+        <div class="full">
+          <label>Invoice client (same record as Clients &amp; invoices)</label>
+          <select id="nc-invoice-client" class="admin-form-input">
+            <option value="">— Loading… —</option>
+          </select>
+          <p style="font-size:11px;color:#6b7280;margin:4px 0 0;">Pick the company from <a href="/clients">Clients</a> so maintenance and billing stay one identity.</p>
+        </div>
         <div class="full"><label>Notes</label><textarea id="nc-notes" class="admin-form-input" rows="2"></textarea></div>
         <div class="modal-actions full">
           <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-new-client">Cancel</button>
@@ -471,16 +478,40 @@ const serviceClients = await getAllServiceClients();
       }});
     });
 
+    const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key') ?? '';
+    async function fillInvoiceClientSelect() {
+      const sel = document.getElementById('nc-invoice-client');
+      if (!sel || sel.dataset.ready === '1') return;
+      sel.innerHTML = '<option value="">— Optional: link to Clients directory —</option>';
+      try {
+        const r = await fetch('/api/clients/list', { headers: { 'x-api-key': API_KEY } });
+        if (!r.ok) return;
+        const { clients } = await r.json();
+        for (const c of clients || []) {
+          const o = document.createElement('option');
+          o.value = String(c.id);
+          o.textContent = `${c.name} (${c.email})`;
+          sel.appendChild(o);
+        }
+      } catch (_) {}
+      sel.dataset.ready = '1';
+    }
+
     // New service client
-    document.getElementById('btn-new-client').addEventListener('click', () => showModal('modal-new-client'));
+    document.getElementById('btn-new-client').addEventListener('click', async () => {
+      await fillInvoiceClientSelect();
+      showModal('modal-new-client');
+    });
     document.getElementById('form-new-client').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const inv = document.getElementById('nc-invoice-client').value;
       const payload = {
         name: document.getElementById('nc-name').value.trim(),
         productName: document.getElementById('nc-product-name').value.trim(),
         productType: document.getElementById('nc-product-type').value,
         contactName: document.getElementById('nc-contact-name').value.trim(),
         contactEmail: document.getElementById('nc-contact-email').value.trim(),
+        invoiceClientId: inv ? Number(inv) : null,
         healthCheckUrl: document.getElementById('nc-health-url').value.trim() || null,
         apiUrl: document.getElementById('nc-api-url').value.trim() || null,
         notes: document.getElementById('nc-notes').value.trim() || null,

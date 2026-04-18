@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { listClients } from '@zyntel/db';
+import { listClients, listClientsDirectory } from '@zyntel/db';
 
 export const GET: APIRoute = async ({ request }) => {
   const apiKey = request.headers.get('x-api-key') ?? request.headers.get('authorization')?.replace('Bearer ', '');
@@ -8,7 +8,9 @@ export const GET: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
   try {
-    const clients = await listClients();
+    const url = new URL(request.url);
+    const withLinks = url.searchParams.get('directory') === '1' || url.searchParams.get('links') === '1';
+    const clients = withLinks ? await listClientsDirectory() : await listClients();
     return new Response(JSON.stringify({ ok: true, clients: clients ?? [] }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
