@@ -1,5 +1,45 @@
 ---
 import AdminLayout from '../layouts/AdminLayout.astro';
+
+const djangoMetricsSnippet = `from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from django.db.models import Sum
+import os
+from apps.tenants.models import Tenant
+from apps.landlords.models import Landlord, LandlordProperty
+from apps.revenue.models import Payment
+from datetime import date
+
+ZYNTEL_METRICS_KEY = os.environ.get('ZYNTEL_METRICS_KEY', '')
+
+@require_GET
+def zyntel_metrics(request):
+    key = request.headers.get('x-api-key', '')
+    if ZYNTEL_METRICS_KEY and key != ZYNTEL_METRICS_KEY:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    today = date.today()
+    month_start = today.replace(day=1)
+
+    return JsonResponse({
+        'active_tenants': Tenant.objects.filter(is_active=True).count(),
+        'total_properties': LandlordProperty.objects.count(),
+        'total_landlords': Landlord.objects.filter(status='active').count(),
+        'payments_recorded': Payment.objects.filter(payment_date__gte=month_start).count(),
+        'revenue_tracked': float(
+            Payment.objects.filter(payment_date__gte=month_start)
+            .aggregate(t=Sum('amount'))['t'] or 0
+        ),
+    })`;
+
+const urlSnippet = `path('api/zyntel-metrics/', views.zyntel_metrics, name='zyntel_metrics'),`;
+
+const envSnippet = `ZYNTEL_METRICS_KEY=your-secret-key-here`;
+
+const roiExampleSnippet = `Rent managed cumulatively ÷ Total paid to Zyntel = client's leverage ratio
+
+Example: UGX 150,000,000 managed ÷ UGX 1,500,000 paid = 100×
+→ "The client manages 100× more rent than they paid for the app"`;
 ---
 <AdminLayout title="Help & Onboarding">
 <style>
@@ -13,10 +53,10 @@ import AdminLayout from '../layouts/AdminLayout.astro';
   .step-title { font-weight: 600; font-size: 0.9rem; margin: 0 0 0.25rem; }
   .step-desc { font-size: 0.8375rem; color: var(--admin-text-muted); line-height: 1.5; margin: 0; }
   code { background: var(--admin-bg); border: 1px solid var(--admin-border); border-radius: 4px; padding: 1px 6px; font-size: 0.8125rem; font-family: monospace; }
-  .code-block { background: var(--admin-bg); border: 1px solid var(--admin-border); border-radius: 8px; padding: 1rem; font-family: monospace; font-size: 0.8125rem; line-height: 1.6; white-space: pre-wrap; margin: 0.75rem 0; }
-  .tag { display: inline-block; background: var(--admin-accent)15; color: var(--admin-accent); border-radius: 4px; padding: 1px 8px; font-size: 0.75rem; font-weight: 600; margin-right: 4px; }
-  .callout { background: var(--admin-warning)15; border-left: 3px solid var(--admin-warning); padding: 0.75rem 1rem; border-radius: 0 6px 6px 0; font-size: 0.875rem; margin: 0.75rem 0; }
-  .callout.tip { background: var(--admin-success)15; border-color: var(--admin-success); }
+  .code-block { background: var(--admin-bg); border: 1px solid var(--admin-border); border-radius: 8px; padding: 1rem; font-family: ui-monospace, monospace; font-size: 0.8125rem; line-height: 1.6; white-space: pre-wrap; margin: 0.75rem 0; }
+  .tag { display: inline-block; background: rgba(99, 91, 255, 0.12); color: var(--admin-accent); border-radius: 4px; padding: 1px 8px; font-size: 0.75rem; font-weight: 600; margin-right: 4px; }
+  .callout { background: rgba(245, 158, 11, 0.12); border-left: 3px solid var(--admin-warning); padding: 0.75rem 1rem; border-radius: 0 6px 6px 0; font-size: 0.875rem; margin: 0.75rem 0; }
+  .callout.tip { background: rgba(13, 148, 136, 0.12); border-color: var(--admin-success); }
   .nav-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
   .nav-tab { padding: 0.4rem 1rem; border-radius: 6px; border: 1px solid var(--admin-border); background: none; cursor: pointer; font-size: 0.875rem; color: var(--admin-text-muted); }
   .nav-tab.active { background: var(--admin-accent); color: #fff; border-color: var(--admin-accent); }
@@ -38,7 +78,7 @@ import AdminLayout from '../layouts/AdminLayout.astro';
   <button class="nav-tab" data-tab="invoicing">Invoicing & billing</button>
 </div>
 
-<!-- TAB: Onboarding -->
+<!-- TAB onboarding -->
 <div id="tab-onboarding" class="tab-content active">
   <div class="admin-card" style="padding:1.5rem;">
     <div class="help-section">
@@ -69,7 +109,7 @@ import AdminLayout from '../layouts/AdminLayout.astro';
     <div class="help-h3">Step 3 — Set up metrics tracking</div>
     <div class="step"><div class="step-num">5</div><div class="step-body">
       <p class="step-title">Choose: manual snapshots or API-connected</p>
-      <p class="step-desc"><strong>Manual:</strong> Each month, click "Log metrics" on the client page and fill in the numbers from the app. Takes 2 minutes.<br/><strong>API:</strong> If the app has a <code>/api/zyntel-metrics/</code> endpoint, enter the URL and API key. Future: one-click sync.</p>
+      <p class="step-desc"><strong>Manual:</strong> Each month, click "Log metrics" on the client page and fill in the numbers from the app. Takes 2 minutes.<br/><strong>API:</strong> If the app has a <code>/api/zyntel-metrics/</code> endpoint, enter the URL and use <strong>Generate key</strong> in the form, then paste the same key into Railway as <code>ZYNTEL_METRICS_KEY</code>.</p>
     </div></div>
     <div class="step"><div class="step-num">6</div><div class="step-body">
       <p class="step-title">Log the first snapshot</p>
@@ -82,7 +122,7 @@ import AdminLayout from '../layouts/AdminLayout.astro';
   </div>
 </div>
 
-<!-- TAB: Metrics API -->
+<!-- TAB metrics API -->
 <div id="tab-metrics-api" class="tab-content">
   <div class="admin-card" style="padding:1.5rem;">
     <p class="help-h2">Setting up the Metrics API on a client app</p>
@@ -90,58 +130,31 @@ import AdminLayout from '../layouts/AdminLayout.astro';
 
     <div class="help-h3">1. Add the endpoint in the Django app</div>
     <p class="help-p">In <code>apps/revenue/views.py</code> (or an <code>api_metrics</code> view):</p>
-    <div class="code-block">from django.http import JsonResponse
-from django.views.decorators.http import require_GET
-from apps.tenants.models import Tenant
-from apps.landlords.models import Landlord, LandlordProperty
-from apps.revenue.models import Payment
-from datetime import date
-
-ZYNTEL_METRICS_KEY = os.environ.get('ZYNTEL_METRICS_KEY', '')
-
-@require_GET
-def zyntel_metrics(request):
-    # Validate API key
-    key = request.headers.get('x-api-key', '')
-    if ZYNTEL_METRICS_KEY and key != ZYNTEL_METRICS_KEY:
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
-
-    today = date.today()
-    month_start = today.replace(day=1)
-
-    return JsonResponse({
-        'active_tenants': Tenant.objects.filter(is_active=True).count(),
-        'total_properties': LandlordProperty.objects.count(),
-        'total_landlords': Landlord.objects.filter(status='active').count(),
-        'payments_recorded': Payment.objects.filter(payment_date__gte=month_start).count(),
-        'revenue_tracked': float(
-            Payment.objects.filter(payment_date__gte=month_start)
-            .aggregate(t=Sum('amount'))['t'] or 0
-        ),
-    })</div>
+    <pre class="code-block"><code>{djangoMetricsSnippet}</code></pre>
 
     <div class="help-h3">2. Add the URL</div>
-    <div class="code-block">path('api/zyntel-metrics/', views.zyntel_metrics, name='zyntel_metrics'),</div>
+    <pre class="code-block"><code>{urlSnippet}</code></pre>
 
     <div class="help-h3">3. Set the environment variable</div>
     <p class="help-p">In your hosting platform (Railway, etc.), add:</p>
-    <div class="code-block">ZYNTEL_METRICS_KEY=your-secret-key-here</div>
+    <pre class="code-block"><code>{envSnippet}</code></pre>
+    <p class="help-p">Use the same key you generated with <strong>Generate key</strong> in Maintenance → Add or Edit client (copy to clipboard, then paste into Railway).</p>
 
     <div class="help-h3">4. Configure in this admin panel</div>
     <div class="step"><div class="step-num">1</div><div class="step-body">
       <p class="step-title">Go to Maintenance → client → Edit details</p>
-      <p class="step-desc">Enter the Metrics API URL: <code>https://yourapp.com/api/zyntel-metrics/</code> and the same API key.</p>
+      <p class="step-desc">Enter the Metrics API URL: <code>https://yourapp.com/api/zyntel-metrics/</code> and paste the same API key.</p>
     </div></div>
 
     <div class="callout">
-      ⚠️ The metrics API key should be different from the Django SECRET_KEY. Generate a random string: <code>python -c "import secrets; print(secrets.token_urlsafe(32))"</code>
+      ⚠️ The metrics API key should be different from the Django <code>SECRET_KEY</code>. Generate it in this admin panel with <strong>Generate key</strong> (next to the Metrics API Key field).
     </div>
 
     <div class="help-h3">Five S property app — current status</div>
     <p class="help-p">The endpoint is implemented at <code>/api/zyntel-metrics/</code> on <code>https://fives.zyntel.net</code>. To activate:</p>
     <div class="step"><div class="step-num">1</div><div class="step-body">
       <p class="step-title">Add <code>ZYNTEL_METRICS_KEY</code> to Railway environment</p>
-      <p class="step-desc">Railway → Project → Variables → add <code>ZYNTEL_METRICS_KEY</code> with a random value.</p>
+      <p class="step-desc">Railway → Project → Variables → add <code>ZYNTEL_METRICS_KEY</code> with the key from this admin panel.</p>
     </div></div>
     <div class="step"><div class="step-num">2</div><div class="step-body">
       <p class="step-title">Add same key to the Five S maintenance client in this panel</p>
@@ -150,7 +163,7 @@ def zyntel_metrics(request):
   </div>
 </div>
 
-<!-- TAB: Maintenance tracker -->
+<!-- TAB maintenance tracker -->
 <div id="tab-maintenance-tab" class="tab-content">
   <div class="admin-card" style="padding:1.5rem;">
     <p class="help-h2">Using the Maintenance tracker</p>
@@ -180,15 +193,12 @@ def zyntel_metrics(request):
 
     <div class="help-h3">What "ROI" means here</div>
     <p class="help-p">We're tracking the <em>client's</em> ROI — how much value they get from the app — not Zyntel's profit margin. The calculation is:</p>
-    <div class="code-block">Rent managed cumulatively ÷ Total paid to Zyntel = client's leverage ratio
-
-Example: UGX 150,000,000 managed ÷ UGX 1,500,000 paid = 100×
-→ "The client manages 100× more rent than they paid for the app"</div>
+    <pre class="code-block"><code>{roiExampleSnippet}</code></pre>
     <p class="help-p">This is the number you show a client when discussing renewal or upgrades.</p>
   </div>
 </div>
 
-<!-- TAB: Invoicing -->
+<!-- TAB invoicing -->
 <div id="tab-invoicing" class="tab-content">
   <div class="admin-card" style="padding:1.5rem;">
     <p class="help-h2">Invoicing & billing for maintenance clients</p>

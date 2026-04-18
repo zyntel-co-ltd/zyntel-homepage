@@ -92,7 +92,13 @@ const { id } = Astro.params;
           <div class="admin-field-group"><label class="admin-label">Contact Phone</label><input class="admin-input" name="contact_phone" /></div>
         </div>
         <div class="admin-field-group"><label class="admin-label">Metrics API URL</label><input class="admin-input" name="metrics_api_url" type="url" /></div>
-        <div class="admin-field-group"><label class="admin-label">Metrics API Key</label><input class="admin-input" name="metrics_api_key" type="password" placeholder="Leave blank to keep existing" /></div>
+        <div class="admin-field-group">
+          <label class="admin-label">Metrics API Key</label>
+          <div style="display:flex;gap:0.5rem;align-items:stretch;">
+            <input class="admin-input" id="edit-metrics-api-key" name="metrics_api_key" type="password" placeholder="Leave blank to keep existing" style="flex:1;" autocomplete="off" />
+            <button type="button" class="admin-btn" id="btn-gen-key-edit" title="Generate a new key and copy to clipboard">Generate key</button>
+          </div>
+        </div>
         <div class="admin-field-group"><label class="admin-label">Notes</label><textarea class="admin-input" name="notes" rows="3"></textarea></div>
         <div id="edit-err" style="color:var(--admin-danger);font-size:0.875rem;display:none;"></div>
         <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
@@ -275,6 +281,19 @@ const { id } = Astro.params;
   document.getElementById('close-edit').addEventListener('click', () => closePanel('edit-panel'));
   document.getElementById('cancel-edit').addEventListener('click', () => closePanel('edit-panel'));
 
+  function genMetricsKey() {
+    const b = new Uint8Array(32);
+    crypto.getRandomValues(b);
+    return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+  }
+  document.getElementById('btn-gen-key-edit').addEventListener('click', () => {
+    const inp = document.getElementById('edit-metrics-api-key');
+    inp.type = 'text';
+    inp.value = genMetricsKey();
+    inp.select();
+    void navigator.clipboard?.writeText(inp.value);
+  });
+
   function openEditPanel(c) {
     const f = document.getElementById('edit-form');
     ['name','app_name','app_url','tech_stack','status','monthly_retainer','currency','original_dev_cost',
@@ -282,6 +301,9 @@ const { id } = Astro.params;
       const el = f.querySelector(`[name="${k}"]`);
       if (el && c[k] != null) el.value = c[k];
     });
+    const keyInp = document.getElementById('edit-metrics-api-key') as HTMLInputElement;
+    keyInp.value = '';
+    keyInp.type = 'password';
     openPanel('edit-panel');
   }
 

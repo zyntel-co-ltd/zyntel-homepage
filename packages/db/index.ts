@@ -531,6 +531,10 @@ export async function createMaintenanceClient(data: {
 
 export async function updateMaintenanceClient(id: number, data: Partial<Omit<MaintenanceClient, 'id' | 'created_at' | 'updated_at'>>): Promise<MaintenanceClient | null> {
   if (!import.meta.env.DATABASE_URL) return null;
+  const existing = await getMaintenanceClient(id);
+  if (!existing) return null;
+  // Preserve metrics_api_key when the client omits it (e.g. "leave blank to keep existing")
+  const metricsKey = data.metrics_api_key !== undefined ? data.metrics_api_key : existing.metrics_api_key;
   const rows = await sql`
     UPDATE maintenance_clients SET
       name              = COALESCE(${data.name ?? null}, name),
@@ -548,7 +552,7 @@ export async function updateMaintenanceClient(id: number, data: Partial<Omit<Mai
       original_dev_cost = ${data.original_dev_cost ?? null},
       client_id         = ${data.client_id ?? null},
       metrics_api_url   = ${data.metrics_api_url ?? null},
-      metrics_api_key   = ${data.metrics_api_key ?? null},
+      metrics_api_key   = ${metricsKey},
       notes             = ${data.notes ?? null},
       updated_at        = NOW()
     WHERE id = ${id}

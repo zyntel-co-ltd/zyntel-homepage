@@ -102,7 +102,11 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         </div>
         <div class="admin-field-group">
           <label class="admin-label">Metrics API Key <span style="color:var(--admin-text-muted);font-weight:400;">(optional)</span></label>
-          <input class="admin-input" name="metrics_api_key" type="password" placeholder="secret key" />
+          <div style="display:flex;gap:0.5rem;align-items:stretch;">
+            <input class="admin-input" id="new-metrics-api-key" name="metrics_api_key" type="password" placeholder="Click Generate key or paste from Railway" style="flex:1;" autocomplete="off" />
+            <button type="button" class="admin-btn" id="btn-gen-key-new" title="Generate a random 64-char hex key and copy to clipboard">Generate key</button>
+          </div>
+          <p style="font-size:0.75rem;color:var(--admin-text-muted);margin:0.35rem 0 0;">Paste the same value into <code>ZYNTEL_METRICS_KEY</code> on the client app host (e.g. Railway).</p>
         </div>
         <div class="admin-field-group">
           <label class="admin-label">App Description / Notes</label>
@@ -182,6 +186,19 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   document.getElementById('close-panel')!.addEventListener('click', closePanel);
   document.getElementById('cancel-btn')!.addEventListener('click', closePanel);
   panel.addEventListener('click', (e) => { if (e.target === panel) closePanel(); });
+
+  function genMetricsKey(): string {
+    const b = new Uint8Array(32);
+    crypto.getRandomValues(b);
+    return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+  }
+  document.getElementById('btn-gen-key-new')!.addEventListener('click', () => {
+    const inp = document.getElementById('new-metrics-api-key') as HTMLInputElement;
+    inp.type = 'text';
+    inp.value = genMetricsKey();
+    inp.select();
+    void navigator.clipboard?.writeText(inp.value);
+  });
 
   document.getElementById('new-form')!.addEventListener('submit', async (e) => {
     e.preventDefault();
