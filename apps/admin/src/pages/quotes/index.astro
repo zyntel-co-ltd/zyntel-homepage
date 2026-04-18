@@ -1,0 +1,506 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAllQuotes } from '../../lib/quotes.ts';
+import { listClients } from '@zyntel/db';
+
+const quotes = await getAllQuotes();
+const clients = await listClients();
+
+const stats = {
+  total: quotes.length,
+  draft: quotes.filter((q) => q.status === 'draft').length,
+  sent: quotes.filter((q) => q.status === 'sent').length,
+  accepted: quotes.filter((q) => q.status === 'accepted').length,
+  declined: quotes.filter((q) => q.status === 'declined').length,
+  converted: quotes.filter((q) => q.status === 'converted').length,
+};
+---
+<AdminLayout title="Quotes">
+  <header class="admin-header quotes-header">
+    <h1 class="admin-title">Quotes</h1>
+    <button id="btn-new-quote" class="admin-btn admin-btn-primary" type="button">New Quote</button>
+  </header>
+
+  <div class="admin-stats">
+    <div class="admin-stat-card"><div class="admin-stat-label">Total</div><div class="admin-stat-value" id="stat-total">{stats.total}</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Draft</div><div class="admin-stat-value" id="stat-draft">{stats.draft}</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Sent</div><div class="admin-stat-value" id="stat-sent">{stats.sent}</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Accepted</div><div class="admin-stat-value" id="stat-accepted">{stats.accepted}</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Declined</div><div class="admin-stat-value" id="stat-declined">{stats.declined}</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Converted</div><div class="admin-stat-value" id="stat-converted">{stats.converted}</div></div>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-card-header quotes-toolbar">
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="tab active" data-filter="all" type="button">All</button>
+        <button class="tab" data-filter="draft" type="button">Draft</button>
+        <button class="tab" data-filter="sent" type="button">Sent</button>
+        <button class="tab" data-filter="accepted" type="button">Accepted</button>
+        <button class="tab" data-filter="declined" type="button">Declined</button>
+        <button class="tab" data-filter="converted" type="button">Converted</button>
+      </div>
+      <input id="search-input" class="admin-form-input" placeholder="Search by client or quote no..." />
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Quote No</th>
+            <th>Client</th>
+            <th>Title</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Valid Until</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="quotes-tbody">
+          {quotes.map((q) => (
+            <tr
+              data-id={q.id}
+              data-status={q.status}
+              data-search={`${q.clientName ?? ''} ${q.quoteNumber} ${q.title}`.toLowerCase()}
+            >
+              <td class="quote-number">{q.quoteNumber}</td>
+              <td>{q.clientName ?? <span class="muted">No client</span>}</td>
+              <td>{q.title}</td>
+              <td class="quote-total">{q.currency} {Number(q.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+              <td><span class={`admin-badge status-${q.status}`}>{q.status}</span></td>
+              <td>{q.validUntil ? new Date(q.validUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
+              <td class="quote-actions">
+                <a class="act-btn" href={`/api/quotes/pdf?id=${q.id}`} target="_blank" title="View PDF">PDF</a>
+                <button class="act-btn" data-action="send" data-id={q.id} data-client-name={q.clientName} type="button">Send</button>
+                <button class="act-btn" data-action="edit" data-quote={JSON.stringify(q)} type="button">Edit</button>
+                {q.status !== 'accepted' && q.status !== 'converted' && (
+                  <button class="act-btn act-btn--ok" data-action="mark-accepted" data-id={q.id} type="button">Mark Accepted</button>
+                )}
+                {q.status !== 'declined' && q.status !== 'converted' && (
+                  <button class="act-btn act-btn--warn" data-action="mark-declined" data-id={q.id} type="button">Mark Declined</button>
+                )}
+                {q.status !== 'converted' && (
+                  <button class="act-btn" data-action="convert" data-id={q.id} data-quote-number={q.quoteNumber} type="button">Convert</button>
+                )}
+                <button class="act-btn act-btn--danger" data-action="delete" data-id={q.id} data-quote-number={q.quoteNumber} type="button">Delete</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- New Quote Modal -->
+  <div id="modal-new-quote" class="preview-modal-overlay" style="display:none">
+    <div class="modal modal--wide">
+      <h3>New Quote</h3>
+      <form id="form-new-quote" class="quote-form">
+        <div class="form-row">
+          <label>Client</label>
+          <select id="new-clientId" class="admin-form-input">
+            <option value="">— No client —</option>
+            {clients.map((c) => <option value={String(c.id)}>{c.name}</option>)}
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Title</label>
+          <input id="new-title" class="admin-form-input" required placeholder="e.g. Web Development — Phase 1" />
+        </div>
+        <div class="form-row form-row--half">
+          <div>
+            <label>Currency</label>
+            <select id="new-currency" class="admin-form-input">
+              <option value="UGX">UGX</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+            </select>
+          </div>
+          <div>
+            <label>Tax Rate (%)</label>
+            <input id="new-taxRate" class="admin-form-input" type="number" value="0" min="0" max="100" step="0.01" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Valid Until (default: 30 days)</label>
+          <input id="new-validUntil" class="admin-form-input" type="date" />
+        </div>
+        <div class="form-row">
+          <label>Line Items</label>
+          <table class="line-items-table">
+            <thead><tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th><th></th></tr></thead>
+            <tbody id="new-line-items"></tbody>
+          </table>
+          <button type="button" class="admin-btn admin-btn-secondary" id="new-add-item">+ Add item</button>
+          <div class="line-items-total">Total: <span id="new-total">0.00</span></div>
+        </div>
+        <div class="form-row">
+          <label>Notes</label>
+          <textarea id="new-notes" class="admin-form-input" rows="3"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-new-quote">Cancel</button>
+          <button class="admin-btn admin-btn-primary">Create Quote</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Quote Modal -->
+  <div id="modal-edit-quote" class="preview-modal-overlay" style="display:none">
+    <div class="modal modal--wide">
+      <h3>Edit Quote</h3>
+      <form id="form-edit-quote" class="quote-form">
+        <input type="hidden" id="edit-id" />
+        <div class="form-row">
+          <label>Client</label>
+          <select id="edit-clientId" class="admin-form-input">
+            <option value="">— No client —</option>
+            {clients.map((c) => <option value={String(c.id)}>{c.name}</option>)}
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Title</label>
+          <input id="edit-title" class="admin-form-input" required />
+        </div>
+        <div class="form-row form-row--half">
+          <div>
+            <label>Currency</label>
+            <select id="edit-currency" class="admin-form-input">
+              <option value="UGX">UGX</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+            </select>
+          </div>
+          <div>
+            <label>Tax Rate (%)</label>
+            <input id="edit-taxRate" class="admin-form-input" type="number" min="0" max="100" step="0.01" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Valid Until</label>
+          <input id="edit-validUntil" class="admin-form-input" type="date" />
+        </div>
+        <div class="form-row">
+          <label>Line Items</label>
+          <table class="line-items-table">
+            <thead><tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th><th></th></tr></thead>
+            <tbody id="edit-line-items"></tbody>
+          </table>
+          <button type="button" class="admin-btn admin-btn-secondary" id="edit-add-item">+ Add item</button>
+          <div class="line-items-total">Total: <span id="edit-total">0.00</span></div>
+        </div>
+        <div class="form-row">
+          <label>Notes</label>
+          <textarea id="edit-notes" class="admin-form-input" rows="3"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-edit-quote">Cancel</button>
+          <button class="admin-btn admin-btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div id="modal-confirm" class="preview-modal-overlay" style="display:none">
+    <div class="modal">
+      <h3 id="confirm-title"></h3>
+      <p id="confirm-message"></p>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-confirm">Cancel</button>
+        <button id="confirm-btn" type="button" class="admin-btn admin-btn-primary">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-root"></div>
+
+  <style>
+    .quotes-header{display:flex;justify-content:space-between;align-items:center;}
+    .quotes-toolbar{gap:1rem;flex-wrap:wrap;}
+    .filter-tabs{display:flex;gap:.5rem;flex-wrap:wrap;}
+    .tab{border:1px solid var(--admin-border);background:#fff;border-radius:999px;padding:.35rem .7rem;font-size:12px;cursor:pointer;}
+    .tab.active{background:rgba(99,91,255,.12);border-color:#635bff;color:#635bff;}
+    .quote-number{font-family:monospace;font-size:12px;font-weight:700;}
+    .quote-total{font-weight:600;}
+    .quote-actions{display:flex;flex-wrap:wrap;gap:6px;}
+    .act-btn{font-size:11px;padding:4px 8px;border:1px solid var(--admin-border);background:#fff;border-radius:6px;cursor:pointer;text-decoration:none;color:inherit;}
+    .act-btn--warn{color:#b45309}.act-btn--ok{color:#15803d}.act-btn--danger{color:#b91c1c}
+    .status-draft{background:rgba(107,114,128,.15);color:#374151}
+    .status-sent{background:rgba(59,130,246,.15);color:#1d4ed8}
+    .status-accepted{background:rgba(22,163,74,.15);color:#166534}
+    .status-declined{background:rgba(239,68,68,.15);color:#b91c1c}
+    .status-converted{background:rgba(139,92,246,.15);color:#6d28d9}
+    .muted{color:var(--admin-text-muted);font-size:12px;}
+    .preview-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;z-index:1200;padding:16px;}
+    .modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:12px;padding:24px;}
+    .modal--wide{width:min(800px,100%);}
+    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+    .quote-form{display:flex;flex-direction:column;gap:12px;}
+    .form-row{display:flex;flex-direction:column;gap:4px;}
+    .form-row label{font-size:12px;font-weight:600;color:#374151;}
+    .form-row--half{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .line-items-table{width:100%;border-collapse:collapse;font-size:12px;}
+    .line-items-table th,.line-items-table td{padding:4px 6px;border:1px solid #e5e7eb;text-align:left;}
+    .line-items-table th{background:#f9fafb;font-weight:600;}
+    .line-items-table input{width:100%;border:none;padding:2px 4px;font-size:12px;background:transparent;}
+    .line-items-total{text-align:right;font-weight:700;font-size:13px;margin-top:6px;}
+    #toast-root{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:2000;}
+    .toast{background:#111;color:#fff;border-radius:8px;padding:10px 12px;font-size:12px;min-width:260px;}
+    .toast.error{background:#7f1d1d;}
+    .toast-actions{display:flex;gap:6px;margin-top:8px;}
+  </style>
+
+  <script>
+    let activeFilter = 'all';
+    let activeSearch = '';
+    let confirmCallback = null;
+    const tbody = document.getElementById('quotes-tbody');
+
+    function applyFilters() {
+      [...tbody.querySelectorAll('tr')].forEach((row) => {
+        const passTab = activeFilter === 'all' || row.dataset.status === activeFilter;
+        const passSearch = !activeSearch || (row.dataset.search || '').includes(activeSearch);
+        row.hidden = !(passTab && passSearch);
+      });
+    }
+
+    document.getElementById('filter-tabs').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-filter]'); if (!btn) return;
+      activeFilter = btn.dataset.filter;
+      document.querySelectorAll('#filter-tabs .tab').forEach((t) => t.classList.remove('active'));
+      btn.classList.add('active');
+      applyFilters();
+    });
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      activeSearch = e.target.value.toLowerCase().trim();
+      applyFilters();
+    });
+
+    function showToast(message, type = 'success', actions = []) {
+      const toast = document.createElement('div'); toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+      const actionHtml = actions.length ? `<div class="toast-actions">${actions.map((a, i) => `<button data-toast-action="${i}" class="act-btn">${a.label}</button>`).join('')}</div>` : '';
+      toast.innerHTML = `<div>${message}</div>${actionHtml}`;
+      document.getElementById('toast-root').appendChild(toast);
+      toast.querySelectorAll('[data-toast-action]').forEach((b) => b.addEventListener('click', () => { actions[Number(b.dataset.toastAction)].onClick?.(); toast.remove(); }));
+      setTimeout(() => toast.remove(), actions.length ? 8000 : 5000);
+    }
+
+    function showModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'flex'; }
+    function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+
+    document.addEventListener('click', (e) => {
+      const c = e.target.closest('[data-close]'); if (c) closeModal(c.dataset.close);
+    });
+    document.querySelectorAll('.preview-modal-overlay').forEach((overlay) => {
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(overlay.id); });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const modals = document.querySelectorAll('.preview-modal-overlay');
+      for (let i = modals.length - 1; i >= 0; i--) {
+        if (modals[i].style.display !== 'none') { closeModal(modals[i].id); break; }
+      }
+    });
+
+    function openConfirm(opts) {
+      document.getElementById('confirm-title').textContent = opts.title;
+      document.getElementById('confirm-message').textContent = opts.message;
+      const btn = document.getElementById('confirm-btn');
+      btn.textContent = opts.label || 'Confirm';
+      btn.className = `admin-btn ${opts.confirmClass === 'danger' ? 'act-btn--danger' : 'admin-btn-primary'}`;
+      confirmCallback = opts.onConfirm;
+      showModal('modal-confirm');
+    }
+    document.getElementById('confirm-btn').addEventListener('click', async () => {
+      if (confirmCallback) await confirmCallback();
+      closeModal('modal-confirm');
+    });
+
+    // Line items management
+    function createItemRow(prefix, item = {}) {
+      const tr = document.createElement('tr');
+      const desc = item.description || '';
+      const qty = item.quantity || 1;
+      const price = item.unitPrice || 0;
+      const amount = item.amount || (qty * price);
+      tr.innerHTML = `
+        <td><input type="text" placeholder="Description" value="${desc}" class="li-desc" /></td>
+        <td><input type="number" value="${qty}" min="0.01" step="0.01" class="li-qty" style="width:60px" /></td>
+        <td><input type="number" value="${price}" min="0" step="0.01" class="li-price" style="width:90px" /></td>
+        <td class="li-amount">${Number(amount).toFixed(2)}</td>
+        <td><button type="button" class="act-btn act-btn--danger li-remove">✕</button></td>
+      `;
+      const inputs = tr.querySelectorAll('input');
+      inputs.forEach((inp) => inp.addEventListener('input', () => recalcItems(prefix)));
+      tr.querySelector('.li-remove').addEventListener('click', () => { tr.remove(); recalcItems(prefix); });
+      return tr;
+    }
+
+    function recalcItems(prefix) {
+      const tbody = document.getElementById(`${prefix}-line-items`);
+      let total = 0;
+      [...tbody.querySelectorAll('tr')].forEach((row) => {
+        const qty = Number(row.querySelector('.li-qty')?.value || 0);
+        const price = Number(row.querySelector('.li-price')?.value || 0);
+        const amount = qty * price;
+        const amtCell = row.querySelector('.li-amount');
+        if (amtCell) amtCell.textContent = amount.toFixed(2);
+        total += amount;
+      });
+      const taxRate = Number(document.getElementById(`${prefix}-taxRate`)?.value || 0);
+      const grandTotal = total + (total * taxRate / 100);
+      const el = document.getElementById(`${prefix}-total`);
+      if (el) el.textContent = grandTotal.toFixed(2);
+    }
+
+    function collectLineItems(prefix) {
+      const rows = [...document.getElementById(`${prefix}-line-items`).querySelectorAll('tr')];
+      return rows.map((row) => {
+        const qty = Number(row.querySelector('.li-qty')?.value || 0);
+        const price = Number(row.querySelector('.li-price')?.value || 0);
+        return { description: row.querySelector('.li-desc')?.value || '', quantity: qty, unitPrice: price, amount: qty * price };
+      }).filter((i) => i.description.trim());
+    }
+
+    // Default valid-until to 30 days from now
+    const thirtyDaysFromNow = new Date(); thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    const isoDate = thirtyDaysFromNow.toISOString().slice(0, 10);
+    document.getElementById('new-validUntil').value = isoDate;
+
+    document.getElementById('new-add-item').addEventListener('click', () => {
+      document.getElementById('new-line-items').appendChild(createItemRow('new'));
+      recalcItems('new');
+    });
+    document.getElementById('new-taxRate').addEventListener('input', () => recalcItems('new'));
+    document.getElementById('btn-new-quote').addEventListener('click', () => {
+      document.getElementById('form-new-quote').reset();
+      document.getElementById('new-line-items').innerHTML = '';
+      document.getElementById('new-validUntil').value = isoDate;
+      // Add a blank row to start
+      document.getElementById('new-line-items').appendChild(createItemRow('new'));
+      recalcItems('new');
+      showModal('modal-new-quote');
+    });
+
+    document.getElementById('edit-add-item').addEventListener('click', () => {
+      document.getElementById('edit-line-items').appendChild(createItemRow('edit'));
+      recalcItems('edit');
+    });
+    document.getElementById('edit-taxRate').addEventListener('input', () => recalcItems('edit'));
+
+    document.getElementById('form-new-quote').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const lineItems = collectLineItems('new');
+      const payload = {
+        clientId: document.getElementById('new-clientId').value ? Number(document.getElementById('new-clientId').value) : null,
+        title: document.getElementById('new-title').value.trim(),
+        lineItems,
+        taxRate: Number(document.getElementById('new-taxRate').value || 0),
+        currency: document.getElementById('new-currency').value,
+        validUntil: document.getElementById('new-validUntil').value || null,
+        notes: document.getElementById('new-notes').value.trim() || null,
+      };
+      const res = await fetch('/api/quotes/quotes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) { showToast('Failed to create quote', 'error'); return; }
+      closeModal('modal-new-quote'); location.reload();
+    });
+
+    document.getElementById('form-edit-quote').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+      const lineItems = collectLineItems('edit');
+      const payload = {
+        id,
+        clientId: document.getElementById('edit-clientId').value ? Number(document.getElementById('edit-clientId').value) : null,
+        title: document.getElementById('edit-title').value.trim(),
+        lineItems,
+        taxRate: Number(document.getElementById('edit-taxRate').value || 0),
+        currency: document.getElementById('edit-currency').value,
+        validUntil: document.getElementById('edit-validUntil').value || null,
+        notes: document.getElementById('edit-notes').value.trim() || null,
+      };
+      const res = await fetch('/api/quotes/quotes', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) { showToast('Failed to update quote', 'error'); return; }
+      closeModal('modal-edit-quote'); location.reload();
+    });
+
+    tbody.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-action]'); if (!btn) return;
+      const action = btn.dataset.action;
+      const row = btn.closest('tr');
+      const id = btn.dataset.id || row?.dataset.id;
+
+      if (action === 'send') {
+        const clientName = btn.dataset.clientName || 'client';
+        const res = await fetch('/api/quotes/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quoteId: id }) });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) { showToast(d.error || 'Failed to send email', 'error'); return; }
+        showToast(`Quote sent to ${clientName}`);
+      } else if (action === 'edit') {
+        const q = JSON.parse(btn.dataset.quote || '{}');
+        document.getElementById('edit-id').value = q.id;
+        document.getElementById('edit-title').value = q.title || '';
+        document.getElementById('edit-clientId').value = q.clientId ? String(q.clientId) : '';
+        document.getElementById('edit-currency').value = q.currency || 'UGX';
+        document.getElementById('edit-taxRate').value = String(q.taxRate || 0);
+        document.getElementById('edit-validUntil').value = q.validUntil ? String(q.validUntil).slice(0, 10) : '';
+        document.getElementById('edit-notes').value = q.notes || '';
+        const liTbody = document.getElementById('edit-line-items');
+        liTbody.innerHTML = '';
+        (q.lineItems || []).forEach((li) => liTbody.appendChild(createItemRow('edit', li)));
+        if (!q.lineItems?.length) liTbody.appendChild(createItemRow('edit'));
+        recalcItems('edit');
+        showModal('modal-edit-quote');
+      } else if (action === 'mark-accepted') {
+        const res = await fetch('/api/quotes/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quoteId: id, status: 'accepted' }) });
+        if (!res.ok) { showToast('Failed to update status', 'error'); return; }
+        row.dataset.status = 'accepted';
+        row.querySelector('.admin-badge').className = 'admin-badge status-accepted';
+        row.querySelector('.admin-badge').textContent = 'accepted';
+        showToast('Quote marked as accepted');
+      } else if (action === 'mark-declined') {
+        const res = await fetch('/api/quotes/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quoteId: id, status: 'declined' }) });
+        if (!res.ok) { showToast('Failed to update status', 'error'); return; }
+        row.dataset.status = 'declined';
+        row.querySelector('.admin-badge').className = 'admin-badge status-declined';
+        row.querySelector('.admin-badge').textContent = 'declined';
+        showToast('Quote marked as declined');
+      } else if (action === 'convert') {
+        const qn = btn.dataset.quoteNumber;
+        openConfirm({
+          title: 'Convert to Invoice?',
+          message: `This will create a new invoice from ${qn}. The quote will be marked as Converted.`,
+          label: 'Convert',
+          onConfirm: async () => {
+            const res = await fetch('/api/quotes/convert', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quoteId: id }) });
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok) { showToast(d.error || 'Failed to convert', 'error'); return; }
+            row.dataset.status = 'converted';
+            row.querySelector('.admin-badge').className = 'admin-badge status-converted';
+            row.querySelector('.admin-badge').textContent = 'converted';
+            showToast('Quote converted to invoice!', 'success', [
+              { label: 'View invoice', onClick: () => { window.location.href = '/invoices'; } }
+            ]);
+          },
+        });
+      } else if (action === 'delete') {
+        const qn = btn.dataset.quoteNumber;
+        openConfirm({
+          title: 'Delete Quote?',
+          message: `Delete ${qn}? This cannot be undone.`,
+          label: 'Delete',
+          confirmClass: 'danger',
+          onConfirm: async () => {
+            const res = await fetch(`/api/quotes/quotes?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+            if (!res.ok) { showToast('Failed to delete quote', 'error'); return; }
+            row.remove();
+            showToast('Quote deleted');
+          },
+        });
+      }
+    });
+  </script>
+</AdminLayout>

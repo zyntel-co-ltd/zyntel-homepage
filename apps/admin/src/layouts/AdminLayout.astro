@@ -109,6 +109,26 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
               </svg>
               <span class="admin-nav-text">Saved items</span>
             </a>
+            <a href="/health" class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/health') ? 'true' : undefined}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1.5 8h2.3l1.7-4 2.5 8 2-5.5 1.2 1.5H14.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Health
+            </a>
+            <a href="/maintenance" class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/maintenance') ? 'true' : undefined}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 2v2M8 12v2M2 8h2M12 8h2M4.1 4.1l1.4 1.4M10.5 10.5l1.4 1.4M4.1 11.9l1.4-1.4M10.5 5.5l1.4-1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+              </svg>
+              Maintenance
+            </a>
+            <a href="/quotes" class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/quotes') ? 'true' : undefined}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="1.5" width="12" height="13" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M5 5.5h6M5 8h4M5 10.5h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+              Quotes
+            </a>
             <a href="/previews" class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/previews') ? 'true' : undefined}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
@@ -123,11 +143,12 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
               </svg>
               Pitches
             </a>
-            <a href="/maintenance" class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/maintenance') ? 'true' : undefined}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            <a href="/performance" class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/performance') ? 'true' : undefined}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 12l3.5-4 3 2.5 3-5 2.5 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="13.5" cy="3.5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
               </svg>
-              <span class="admin-nav-text">Maintenance</span>
+              Performance
             </a>
           </nav>
           <div class="admin-sidebar-footer">
@@ -135,7 +156,7 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
               </svg>
-              Help & Onboarding guide
+              Help &amp; onboarding
             </a>
             <button type="button" class="admin-logout" id="admin-logout">Sign out</button>
           </div>
