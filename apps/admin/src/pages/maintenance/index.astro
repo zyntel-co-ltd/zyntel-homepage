@@ -5,6 +5,7 @@ import { getAllServiceClients } from '../../lib/maintenance.ts';
 const serviceClients = await getAllServiceClients();
 ---
 <AdminLayout title="Maintenance">
+  <div data-admin-skip-unsaved class="maint-root">
   <header class="admin-header maint-header">
     <h1 class="admin-title">Maintenance</h1>
     <button id="btn-new-client" class="admin-btn admin-btn-primary" type="button">New Service Client</button>
@@ -16,9 +17,35 @@ const serviceClients = await getAllServiceClients();
     <select id="client-select" class="admin-form-input maint-client-select">
       <option value="">— Select a client to view maintenance logs —</option>
       {serviceClients.map((c) => (
-        <option value={c.id} data-product={c.productName} data-contact={c.contactName}>{c.name} — {c.productName}</option>
+        <option
+          value={c.id}
+          data-product={c.productName}
+          data-contact={c.contactName}
+          data-health={c.healthCheckUrl ?? ''}
+          data-api={c.apiUrl ?? ''}
+        >{c.name} — {c.productName}</option>
       ))}
     </select>
+  </div>
+
+  <!-- Connection: health URLs + generate API key (hidden until client selected) -->
+  <div id="connection-panel" class="admin-card maint-connection-card" style="display:none">
+    <h2 class="maint-section-title">Connection &amp; API access</h2>
+    <p class="maint-help">Use the property app’s public base URL, then append <code>/health</code> or <code>/api/healthcheck</code> (plain <code>OK</code>). For JSON with DB status, use <code>/health/detailed</code>.</p>
+    <div class="maint-connection-grid">
+      <div>
+        <span class="maint-kicker">Health check URL</span>
+        <div id="conn-health-display" class="maint-connection-value">—</div>
+      </div>
+      <div>
+        <span class="maint-kicker">API base URL</span>
+        <div id="conn-api-display" class="maint-connection-value">—</div>
+      </div>
+    </div>
+    <div class="maint-connection-actions">
+      <button type="button" id="btn-gen-api-key" class="admin-btn admin-btn-primary">Generate / rotate API key</button>
+      <span class="maint-hint">Shown once — update <code>ZYNTEL_API_KEY</code> (or your app’s env name) on the client server.</span>
+    </div>
   </div>
 
   <!-- Stats bar (hidden until client selected) -->
@@ -45,7 +72,7 @@ const serviceClients = await getAllServiceClients();
         </div>
         <div>
           <label>Logged by</label>
-          <input id="log-by" class="admin-form-input" value="Wycliff" />
+          <input id="log-by" class="admin-form-input" placeholder="Your name" required autocomplete="name" />
         </div>
       </div>
       <div class="type-chips">
@@ -112,9 +139,12 @@ const serviceClients = await getAllServiceClients();
 
   <!-- ROI Metrics Panel -->
   <div id="roi-panel" class="admin-card" style="display:none">
-    <div class="admin-card-header">
-      <h2 class="maint-section-title">Before vs Now — ROI Metrics</h2>
-      <button id="btn-log-metrics" class="admin-btn admin-btn-secondary" type="button">Log Metrics</button>
+    <div class="admin-card-header maint-roi-header">
+      <div>
+        <h2 class="maint-section-title">ROI — first snapshot vs latest</h2>
+        <p class="maint-roi-sub">Log numbers from the <strong>property / ops</strong> app (tenants, properties, payments). “Better” is green when the metric improves (e.g. more revenue, fewer delays). Optional lab-style fields are under “Other metrics”.</p>
+      </div>
+      <button id="btn-log-metrics" class="admin-btn admin-btn-secondary" type="button">Log metrics</button>
     </div>
     <div id="roi-comparison" class="roi-comparison"></div>
   </div>
@@ -137,8 +167,11 @@ const serviceClients = await getAllServiceClients();
         </div>
         <div><label>Contact Name</label><input id="nc-contact-name" class="admin-form-input" required /></div>
         <div><label>Contact Email</label><input id="nc-contact-email" type="email" class="admin-form-input" required /></div>
-        <div class="full"><label>Health Check URL (optional)</label><input id="nc-health-url" class="admin-form-input" placeholder="https://..." /></div>
-        <div class="full"><label>API URL (optional)</label><input id="nc-api-url" class="admin-form-input" placeholder="https://..." /></div>
+        <div class="full"><label>Health Check URL (optional)</label><input id="nc-health-url" class="admin-form-input" placeholder="https://tenant.example.com/health" /></div>
+        <div class="full"><label>API URL (optional)</label><input id="nc-api-url" class="admin-form-input" placeholder="https://tenant.example.com/api" /></div>
+        <div class="full maint-checkbox-row">
+          <label class="maint-inline-check"><input type="checkbox" id="nc-generate-key" /> Generate API key now (shown once after create)</label>
+        </div>
         <div class="full">
           <label>Invoice client (same record as Clients &amp; invoices)</label>
           <select id="nc-invoice-client" class="admin-form-input">
@@ -163,6 +196,14 @@ const serviceClients = await getAllServiceClients();
         <div class="full"><label>Title</label><input id="wo-title" class="admin-form-input" required /></div>
         <div class="full"><label>Description</label><textarea id="wo-description" class="admin-form-input" rows="3"></textarea></div>
         <div class="full"><label>Scope Items (one per line)</label><textarea id="wo-scope" class="admin-form-input" rows="4" placeholder="- Item 1&#10;- Item 2"></textarea></div>
+        <div class="full">
+          <label>Coverage</label>
+          <select id="wo-coverage" class="admin-form-input">
+            <option value="contract_included">Included in maintenance contract</option>
+            <option value="paid_extra">Paid extra (billable)</option>
+            <option value="goodwill_free">Goodwill / complimentary</option>
+          </select>
+        </div>
         <div><label>Estimated Cost</label><input id="wo-cost" class="admin-form-input" type="number" min="0" /></div>
         <div>
           <label>Currency</label>
@@ -183,20 +224,43 @@ const serviceClients = await getAllServiceClients();
 
   <!-- Log Metrics Modal -->
   <div id="modal-log-metrics" class="preview-modal-overlay" style="display:none">
-    <div class="modal">
-      <h3>Log Metrics</h3>
+    <div class="modal modal--wide">
+      <h3>Log metrics snapshot</h3>
       <form id="form-log-metrics" class="grid-form">
-        <div class="full"><label>Date</label><input id="metrics-date" type="date" class="admin-form-input" /></div>
-        <div class="full" style="font-size:12px;color:#6b7280;font-weight:600;">Enter values below (leave blank to skip)</div>
-        <div><label>Avg TAT (minutes)</label><input id="m-avg-tat" class="admin-form-input" type="number" step="0.01" /></div>
-        <div><label>Total Tests</label><input id="m-total-tests" class="admin-form-input" type="number" /></div>
-        <div><label>Delay Rate (%)</label><input id="m-delay-rate" class="admin-form-input" type="number" step="0.01" /></div>
-        <div><label>Revenue (UGX)</label><input id="m-revenue" class="admin-form-input" type="number" /></div>
+        <div class="full"><label>Snapshot date</label><input id="metrics-date" type="date" class="admin-form-input" /></div>
+        <div class="full maint-metric-section-title">Property &amp; operations (recommended)</div>
+        <div><label>Active tenants</label><input id="m-active-tenants" class="admin-form-input" type="number" min="0" step="1" placeholder="Count" /></div>
+        <div><label>Properties managed</label><input id="m-total-properties" class="admin-form-input" type="number" min="0" step="1" /></div>
+        <div><label>Landlords / owners</label><input id="m-total-landlords" class="admin-form-input" type="number" min="0" step="1" /></div>
+        <div><label>Payments recorded (this month)</label><input id="m-payments-month" class="admin-form-input" type="number" min="0" step="1" placeholder="Count of payments" /></div>
+        <div><label>Revenue tracked (UGX)</label><input id="m-revenue-tracked" class="admin-form-input" type="number" min="0" step="1" placeholder="Period total in app" /></div>
+        <details class="full maint-details">
+          <summary>Other metrics (lab / dashboard)</summary>
+          <div class="grid-form grid-form--nested">
+            <div><label>Avg TAT (minutes)</label><input id="m-avg-tat" class="admin-form-input" type="number" step="0.01" /></div>
+            <div><label>Total tests</label><input id="m-total-tests" class="admin-form-input" type="number" /></div>
+            <div><label>Delay rate (%)</label><input id="m-delay-rate" class="admin-form-input" type="number" step="0.01" /></div>
+            <div><label>Revenue — legacy key (UGX)</label><input id="m-revenue-legacy" class="admin-form-input" type="number" placeholder="Only if you used revenue_ugx before" /></div>
+          </div>
+        </details>
         <div class="modal-actions full">
           <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-log-metrics">Cancel</button>
-          <button class="admin-btn admin-btn-primary">Save Metrics</button>
+          <button class="admin-btn admin-btn-primary" type="submit">Save snapshot</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- One-time API key display -->
+  <div id="modal-api-key-result" class="preview-modal-overlay" style="display:none">
+    <div class="modal">
+      <h3>API key</h3>
+      <p class="maint-help">Copy this key now. It will not be shown again.</p>
+      <textarea id="api-key-result-text" class="admin-form-input maint-api-key-text" readonly rows="3"></textarea>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn admin-btn-secondary" id="btn-copy-api-key">Copy</button>
+        <button type="button" class="admin-btn admin-btn-primary" id="btn-api-key-done">Done</button>
+      </div>
     </div>
   </div>
 
@@ -213,10 +277,32 @@ const serviceClients = await getAllServiceClients();
   </div>
 
   <div id="toast-root"></div>
+  </div>
 
   <style>
-    .maint-header{display:flex;justify-content:space-between;align-items:center;}
+    .maint-root{margin:0 auto;max-width:1120px;}
+    .maint-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
     .maint-selector-card{padding:16px;}
+    .maint-connection-card{padding:16px 18px;}
+    .maint-help{font-size:12px;color:#6b7280;margin:8px 0 12px;line-height:1.55;}
+    .maint-help code{font-size:11px;background:#f3f4f6;padding:1px 6px;border-radius:4px;}
+    .maint-connection-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+    @media(max-width:720px){.maint-connection-grid{grid-template-columns:1fr;}}
+    .maint-kicker{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
+    .maint-connection-value{font-size:13px;color:#111;word-break:break-all;margin-top:4px;}
+    .maint-connection-value a{color:#635bff;}
+    .maint-connection-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;}
+    .maint-hint{font-size:11px;color:#6b7280;max-width:440px;line-height:1.4;}
+    .maint-checkbox-row{margin-top:6px;}
+    .maint-inline-check{font-size:12px;font-weight:500;color:#374151;display:flex;align-items:center;gap:8px;cursor:pointer;}
+    .maint-roi-header{align-items:flex-start;gap:12px;}
+    .maint-roi-sub{font-size:12px;color:#6b7280;margin:6px 0 0;font-weight:400;line-height:1.45;max-width:52rem;}
+    .maint-metric-section-title{font-size:11px;font-weight:700;color:#635bff;text-transform:uppercase;letter-spacing:.06em;margin-top:4px;}
+    .maint-details{border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;background:#fafafa;}
+    .maint-details summary{cursor:pointer;font-size:12px;font-weight:600;color:#374151;}
+    .grid-form--nested{margin-top:10px;}
+    .modal--wide{width:min(720px,100%);}
+    .maint-api-key-text{font-family:ui-monospace,SFMono-Regular,monospace;font-size:11px;}
     .maint-selector-label{font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:6px;}
     .maint-client-select{max-width:480px;}
     .maint-section-title{font-size:14px;font-weight:700;color:#111;margin:0;}
@@ -237,8 +323,10 @@ const serviceClients = await getAllServiceClients();
     .filter-tabs{display:flex;gap:.5rem;flex-wrap:wrap;}
     .tab{border:1px solid var(--admin-border);background:#fff;border-radius:999px;padding:.3rem .65rem;font-size:12px;cursor:pointer;}
     .tab.active{background:rgba(99,91,255,.12);border-color:#635bff;color:#635bff;}
-    .act-btn{font-size:11px;padding:4px 8px;border:1px solid var(--admin-border);background:#fff;border-radius:6px;cursor:pointer;}
-    .act-btn--danger{color:#b91c1c;}
+    .act-btn{font-size:12px;padding:6px 12px;border:1px solid var(--admin-border);background:#fff;border-radius:6px;cursor:pointer;font-weight:600;color:#374151;transition:background .12s,border-color .12s;}
+    .act-btn:hover{background:#f9fafb;border-color:#d1d5db;}
+    .act-btn--danger{color:#b91c1c;border-color:#fecaca;background:#fff5f5;}
+    .act-btn--danger:hover{background:#fef2f2;}
     .badge-incident{background:rgba(239,68,68,.15);color:#b91c1c;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
     .badge-preventive{background:rgba(22,163,74,.15);color:#166534;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
     .badge-support{background:rgba(59,130,246,.15);color:#1d4ed8;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
@@ -247,6 +335,7 @@ const serviceClients = await getAllServiceClients();
     .wo-card-info{flex:1;}
     .wo-title{font-weight:700;font-size:13px;}
     .wo-meta{font-size:11px;color:#6b7280;margin-top:2px;}
+    .wo-coverage-badge{display:inline-block;background:rgba(99,91,255,.12);color:#4338ca;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;}
     .wo-actions{display:flex;gap:6px;flex-wrap:wrap;}
     .roi-comparison{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:8px;}
     .roi-metric-card{border:1px solid #e5e7eb;border-radius:8px;padding:12px;}
@@ -285,6 +374,58 @@ const serviceClients = await getAllServiceClients();
     document.addEventListener('click', (e) => { const c = e.target.closest('[data-close]'); if (c) closeModal(c.dataset.close); });
     document.querySelectorAll('.preview-modal-overlay').forEach((o) => o.addEventListener('click', (e) => { if (e.target === o) closeModal(o.id); }));
     document.getElementById('confirm-btn').addEventListener('click', async () => { if (confirmCallback) await confirmCallback(); closeModal('modal-confirm'); });
+
+    function showApiKeyOnce(key, reloadOnDone) {
+      const ta = document.getElementById('api-key-result-text');
+      if (ta) ta.value = key;
+      window.__apiKeyReloadOnDone = !!reloadOnDone;
+      showModal('modal-api-key-result');
+    }
+    document.getElementById('btn-copy-api-key')?.addEventListener('click', async () => {
+      const ta = document.getElementById('api-key-result-text');
+      if (ta?.value) {
+        try {
+          await navigator.clipboard.writeText(ta.value);
+          showToast('Copied to clipboard');
+        } catch (_) {
+          showToast('Copy failed — select and copy manually', 'error');
+        }
+      }
+    });
+    document.getElementById('btn-api-key-done')?.addEventListener('click', () => {
+      closeModal('modal-api-key-result');
+      if (window.__apiKeyReloadOnDone) window.location.reload();
+    });
+
+    function renderConnectionFromSelect() {
+      const sel = document.getElementById('client-select');
+      const opt = sel?.selectedOptions?.[0];
+      const health = (opt?.dataset?.health ?? '').trim();
+      const api = (opt?.dataset?.api ?? '').trim();
+      const hEl = document.getElementById('conn-health-display');
+      const aEl = document.getElementById('conn-api-display');
+      if (!hEl || !aEl) return;
+      if (health) {
+        const a = document.createElement('a');
+        a.href = health;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = health;
+        hEl.replaceChildren(a);
+      } else {
+        hEl.textContent = 'Not set — add in service client settings.';
+      }
+      if (api) {
+        const a = document.createElement('a');
+        a.href = api;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = api;
+        aEl.replaceChildren(a);
+      } else {
+        aEl.textContent = 'Not set';
+      }
+    }
 
     function openConfirm(opts) {
       document.getElementById('confirm-title').textContent = opts.title;
@@ -344,36 +485,48 @@ const serviceClients = await getAllServiceClients();
       `).join('');
     }
 
+    const coverageLabels = { contract_included: 'Contract', paid_extra: 'Paid extra', goodwill_free: 'Goodwill' };
     function renderWorkOrders(wos) {
       const list = document.getElementById('wo-list');
       if (!wos.length) {
         list.innerHTML = '<p style="color:#6b7280;font-size:13px;padding:8px 0;">No work orders yet.</p>';
         return;
       }
-      list.innerHTML = wos.map((wo) => `
+      list.innerHTML = wos.map((wo) => {
+        const cov = coverageLabels[wo.coverage] || wo.coverage || '—';
+        return `
         <div class="wo-card">
           <div class="wo-card-info">
             <div class="wo-title">${wo.woNumber} — ${wo.title}</div>
-            <div class="wo-meta">Status: <strong>${wo.status}</strong> · Est. Cost: ${wo.currency} ${wo.estimatedCost ? Number(wo.estimatedCost).toLocaleString() : 'TBD'}</div>
+            <div class="wo-meta"><span class="wo-coverage-badge">${cov}</span> · Status: <strong>${wo.status}</strong> · Est.: ${wo.currency} ${wo.estimatedCost ? Number(wo.estimatedCost).toLocaleString() : 'TBD'}</div>
             ${wo.description ? `<div class="wo-meta" style="margin-top:4px;color:#374151;">${wo.description}</div>` : ''}
           </div>
           <div class="wo-actions">
             ${wo.status !== 'approved' ? `<button class="act-btn" data-wo-approve="${wo.id}" type="button">Approve</button>` : ''}
-            ${wo.status !== 'completed' && wo.status !== 'invoiced' ? `<button class="act-btn" data-wo-complete="${wo.id}" type="button">Mark Complete</button>` : ''}
+            ${wo.status !== 'completed' && wo.status !== 'invoiced' ? `<button class="act-btn" data-wo-complete="${wo.id}" type="button">Mark complete</button>` : ''}
             <button class="act-btn act-btn--danger" data-wo-delete="${wo.id}" data-wo-number="${wo.woNumber}" type="button">Delete</button>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
     }
 
     async function loadClientData(clientId) {
-      if (!clientId) return;
+      if (!clientId) {
+        selectedClientId = '';
+        ['stats-bar', 'connection-panel', 'log-panel', 'logs-panel', 'wo-panel', 'roi-panel'].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+        return;
+      }
       selectedClientId = clientId;
       document.getElementById('stats-bar').style.display = '';
+      document.getElementById('connection-panel').style.display = '';
       document.getElementById('log-panel').style.display = '';
       document.getElementById('logs-panel').style.display = '';
       document.getElementById('wo-panel').style.display = '';
       document.getElementById('roi-panel').style.display = '';
+      renderConnectionFromSelect();
 
       const [logsRes, woRes] = await Promise.all([
         fetch(`/api/maintenance/logs?serviceClientId=${encodeURIComponent(clientId)}`),
@@ -406,11 +559,21 @@ const serviceClients = await getAllServiceClients();
       const data = await res.json().catch(() => null);
       if (!data) return;
       const container = document.getElementById('roi-comparison');
-      const metricLabels = { 'avg_tat_minutes': 'Avg TAT (min)', 'total_tests': 'Total Tests', 'delay_rate_pct': 'Delay Rate (%)', 'revenue_ugx': 'Revenue (UGX)' };
+      const metricLabels = {
+        active_tenants: 'Active tenants',
+        total_properties: 'Properties managed',
+        total_landlords: 'Landlords / owners',
+        payments_month: 'Payments (month)',
+        revenue_tracked_ugx: 'Revenue tracked (UGX)',
+        avg_tat_minutes: 'Avg TAT (min)',
+        total_tests: 'Total tests',
+        delay_rate_pct: 'Delay rate (%)',
+        revenue_ugx: 'Revenue — legacy (UGX)',
+      };
       const lowerIsBetter = ['avg_tat_minutes', 'delay_rate_pct'];
       const entries = Object.entries(data);
       if (!entries.length) {
-        container.innerHTML = '<p style="color:#6b7280;font-size:13px;">No metric data yet. Click "Log Metrics" to add baseline values.</p>';
+        container.innerHTML = '<p style="color:#6b7280;font-size:13px;">No snapshots yet. Use <strong>Log metrics</strong> to record numbers from the property app; the first date is the baseline and the newest date is “current”.</p>';
         return;
       }
       container.innerHTML = entries.map(([key, val]) => {
@@ -449,8 +612,12 @@ const serviceClients = await getAllServiceClients();
         summary: document.getElementById('log-summary').value.trim(),
         actionTaken: document.getElementById('log-action').value.trim(),
         outcome: document.getElementById('log-outcome').value.trim(),
-        loggedBy: document.getElementById('log-by').value.trim() || 'Wycliff',
+        loggedBy: document.getElementById('log-by').value.trim(),
       };
+      if (!payload.loggedBy) {
+        showToast('Enter who is logging this entry', 'error');
+        return;
+      }
       const res = await fetch('/api/maintenance/logs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) { const d = await res.json().catch(()=>({})); showToast(d.error || 'Failed to save log', 'error'); return; }
       const newLog = await res.json();
@@ -515,10 +682,18 @@ const serviceClients = await getAllServiceClients();
         healthCheckUrl: document.getElementById('nc-health-url').value.trim() || null,
         apiUrl: document.getElementById('nc-api-url').value.trim() || null,
         notes: document.getElementById('nc-notes').value.trim() || null,
+        generateApiKey: !!document.getElementById('nc-generate-key')?.checked,
       };
       const res = await fetch('/api/maintenance/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      if (!res.ok) { showToast('Failed to create client', 'error'); return; }
-      closeModal('modal-new-client'); location.reload();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { showToast(data.error || 'Failed to create client', 'error'); return; }
+      closeModal('modal-new-client');
+      if (data.apiKey) {
+        showToast('Service client created');
+        showApiKeyOnce(data.apiKey, true);
+      } else {
+        window.location.reload();
+      }
     });
 
     // New work order
@@ -533,6 +708,7 @@ const serviceClients = await getAllServiceClients();
         title: document.getElementById('wo-title').value.trim(),
         description: document.getElementById('wo-description').value.trim(),
         scopeItems,
+        coverage: document.getElementById('wo-coverage').value,
         estimatedCost: document.getElementById('wo-cost').value ? Number(document.getElementById('wo-cost').value) : null,
         currency: document.getElementById('wo-currency').value,
         notes: document.getElementById('wo-notes').value.trim() || null,
@@ -581,20 +757,48 @@ const serviceClients = await getAllServiceClients();
       if (!selectedClientId) return;
       const date = document.getElementById('metrics-date').value || today;
       const metrics = [
+        { key: 'active_tenants', el: 'm-active-tenants' },
+        { key: 'total_properties', el: 'm-total-properties' },
+        { key: 'total_landlords', el: 'm-total-landlords' },
+        { key: 'payments_month', el: 'm-payments-month' },
+        { key: 'revenue_tracked_ugx', el: 'm-revenue-tracked' },
         { key: 'avg_tat_minutes', el: 'm-avg-tat' },
         { key: 'total_tests', el: 'm-total-tests' },
         { key: 'delay_rate_pct', el: 'm-delay-rate' },
-        { key: 'revenue_ugx', el: 'm-revenue' },
+        { key: 'revenue_ugx', el: 'm-revenue-legacy' },
       ];
       const payloads = metrics
         .filter(({ el }) => document.getElementById(el).value !== '')
         .map(({ key, el }) => ({ serviceClientId: selectedClientId, snapshotDate: date, metricKey: key, metricValue: Number(document.getElementById(el).value) }));
+      if (!payloads.length) {
+        showToast('Enter at least one metric', 'error');
+        return;
+      }
       for (const p of payloads) {
-        await fetch('/api/roi/snapshots', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) });
+        const r = await fetch('/api/roi/snapshots', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) });
+        if (!r.ok) { showToast('Failed to save metrics', 'error'); return; }
       }
       closeModal('modal-log-metrics');
-      showToast('Metrics saved');
+      showToast('Snapshot saved');
       loadROI(selectedClientId);
+    });
+
+    document.getElementById('btn-gen-api-key').addEventListener('click', async () => {
+      if (!selectedClientId) {
+        showToast('Select a service client first', 'error');
+        return;
+      }
+      const res = await fetch('/api/maintenance/rotate-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedClientId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(data.error || 'Could not generate key', 'error');
+        return;
+      }
+      if (data.apiKey) showApiKeyOnce(data.apiKey, false);
     });
   </script>
 </AdminLayout>

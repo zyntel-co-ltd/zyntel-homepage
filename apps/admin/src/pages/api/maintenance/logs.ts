@@ -29,7 +29,11 @@ export const POST: APIRoute = async ({ request }) => {
     if (!body.serviceClientId || !body.type || !body.area || !body.summary) {
       return new Response(JSON.stringify({ error: 'serviceClientId, type, area, summary required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
-    const log = await createMaintenanceLog(body);
+    const loggedBy = typeof body.loggedBy === 'string' ? body.loggedBy.trim() : '';
+    if (!loggedBy) {
+      return new Response(JSON.stringify({ error: 'loggedBy is required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+    const log = await createMaintenanceLog({ ...body, loggedBy });
     return new Response(JSON.stringify(log), { status: 201, headers: { 'Content-Type': 'application/json' } });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message ?? 'Server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });

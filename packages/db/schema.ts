@@ -160,6 +160,9 @@ export type ProductType = 'dashboard' | 'web-app' | 'saas' | 'other';
 export type MaintenanceLogType = 'incident' | 'preventive' | 'support';
 export type WorkOrderStatus = 'pending' | 'approved' | 'in-progress' | 'completed' | 'invoiced';
 
+/** Included in maintenance contract vs extra billable work vs complimentary */
+export type WorkOrderCoverage = 'contract_included' | 'paid_extra' | 'goodwill_free';
+
 export interface ServiceClient {
   id: string;
   name: string;
@@ -199,6 +202,8 @@ export interface WorkOrder {
   scopeItems: string[];
   estimatedCost: number | null;
   currency: string;
+  /** Contract vs paid add-on vs goodwill — for maintenance reporting */
+  coverage: WorkOrderCoverage;
   status: WorkOrderStatus;
   approvedBy: string | null;
   approvedAt: Date | null;

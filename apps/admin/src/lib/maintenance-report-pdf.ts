@@ -200,9 +200,15 @@ export async function generateMaintenanceReportPdf(opts: {
   y[0] -= 4;
   draw(`Closed: ${closedWOs.length}  ·  Open: ${openWOs.length}`, MARGIN + 10);
   y[0] -= 4;
+  const covLabel: Record<string, string> = {
+    contract_included: 'contract',
+    paid_extra: 'paid extra',
+    goodwill_free: 'goodwill',
+  };
   for (const wo of [...closedWOs, ...openWOs]) {
     const costStr = wo.estimatedCost ? ` · Est. ${wo.currency} ${Number(wo.estimatedCost).toLocaleString()}` : '';
-    draw(`[${wo.status.toUpperCase()}] ${wo.woNumber} — ${wo.title}${costStr}`, MARGIN + 10, 9);
+    const c = covLabel[wo.coverage] ?? wo.coverage;
+    draw(`[${wo.status.toUpperCase()}] ${wo.woNumber} — ${wo.title} (${c})${costStr}`, MARGIN + 10, 9);
   }
   y[0] -= 6;
   hr();

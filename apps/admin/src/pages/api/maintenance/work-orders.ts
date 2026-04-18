@@ -4,6 +4,9 @@ import {
   createWorkOrder,
   updateWorkOrder,
 } from '../../../lib/maintenance.ts';
+import type { WorkOrderCoverage } from '@zyntel/db/schema';
+
+const COVERAGE: WorkOrderCoverage[] = ['contract_included', 'paid_extra', 'goodwill_free'];
 import { sql } from '@zyntel/db';
 
 export const GET: APIRoute = async ({ url }) => {
@@ -24,6 +27,9 @@ export const POST: APIRoute = async ({ request }) => {
     const body = await request.json();
     if (!body.serviceClientId || !body.title) {
       return new Response(JSON.stringify({ error: 'serviceClientId and title required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+    if (body.coverage != null && !COVERAGE.includes(body.coverage)) {
+      return new Response(JSON.stringify({ error: 'Invalid coverage' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
     const wo = await createWorkOrder(body);
     return new Response(JSON.stringify(wo), { status: 201, headers: { 'Content-Type': 'application/json' } });

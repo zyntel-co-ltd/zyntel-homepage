@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { createHash, randomBytes } from 'crypto';
 import {
   getAllServiceClients,
   createServiceClient,
@@ -35,7 +36,16 @@ export const POST: APIRoute = async ({ request }) => {
       apiUrl: body.apiUrl ?? null,
       notes: body.notes ?? null,
     });
-    return new Response(JSON.stringify(client), { status: 201, headers: { 'Content-Type': 'application/json' } });
+    let apiKey: string | undefined;
+    if (body.generateApiKey === true) {
+      apiKey = randomBytes(32).toString('hex');
+      const keyHash = createHash('sha256').update(apiKey).digest('hex');
+      await updateServiceClient(client.id, { apiKeyHash: keyHash });
+    }
+    return new Response(JSON.stringify({ client, ...(apiKey ? { apiKey } : {}) }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message ?? 'Server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }

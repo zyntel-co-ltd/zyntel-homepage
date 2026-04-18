@@ -6,6 +6,7 @@ import type {
   ProductType,
   MaintenanceLogType,
   WorkOrderStatus,
+  WorkOrderCoverage,
 } from '@zyntel/db/schema';
 
 // --- Row mappers ---
@@ -53,6 +54,7 @@ function rowToWorkOrder(row: Record<string, any>): WorkOrder {
     scopeItems: (row.scope_items ?? []) as string[],
     estimatedCost: row.estimated_cost != null ? Number(row.estimated_cost) : null,
     currency: String(row.currency),
+    coverage: (String(row.coverage ?? 'contract_included') as WorkOrderCoverage),
     status: String(row.status) as WorkOrderStatus,
     approvedBy: row.approved_by != null ? String(row.approved_by) : null,
     approvedAt: row.approved_at ? new Date(row.approved_at) : null,
@@ -211,6 +213,9 @@ export async function createMaintenanceLog(data: {
   loggedBy?: string;
 }): Promise<MaintenanceLog> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
+  const loggedBy = (data.loggedBy ?? '').trim();
+  if (!loggedBy) throw new Error('loggedBy is required');
+
   const rows = await sql`
     INSERT INTO maintenance_logs (service_client_id, log_date, type, area, summary, action_taken, outcome, work_order_id, logged_by)
     VALUES (
@@ -222,7 +227,7 @@ export async function createMaintenanceLog(data: {
       ${data.actionTaken ?? ''},
       ${data.outcome ?? ''},
       ${data.workOrderId ?? null},
-      ${data.loggedBy ?? 'Wycliff'}
+      ${loggedBy}
     )
     RETURNING *
   `;
@@ -251,12 +256,14 @@ export async function createWorkOrder(data: {
   scopeItems?: string[];
   estimatedCost?: number | null;
   currency?: string;
+  coverage?: WorkOrderCoverage;
   notes?: string | null;
 }): Promise<WorkOrder> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
   const woNumber = await nextWoNumber();
+  const coverage = data.coverage ?? 'contract_included';
   const rows = await sql`
-    INSERT INTO work_orders (service_client_id, wo_number, title, description, scope_items, estimated_cost, currency, notes)
+    INSERT INTO work_orders (service_client_id, wo_number, title, description, scope_items, estimated_cost, currency, coverage, notes)
     VALUES (
       ${data.serviceClientId},
       ${woNumber},
@@ -265,6 +272,7 @@ export async function createWorkOrder(data: {
       ${JSON.stringify(data.scopeItems ?? [])},
       ${data.estimatedCost ?? null},
       ${data.currency ?? 'UGX'},
+      ${coverage},
       ${data.notes ?? null}
     )
     RETURNING *
@@ -280,6 +288,7 @@ export async function updateWorkOrder(
     scopeItems: string[];
     estimatedCost: number | null;
     currency: string;
+    coverage: WorkOrderCoverage;
     status: WorkOrderStatus;
     approvedBy: string | null;
     approvedAt: Date | null;
@@ -296,6 +305,7 @@ export async function updateWorkOrder(
   if (data.scopeItems !== undefined) { updates.push(`scope_items = $${values.length + 1}`); values.push(JSON.stringify(data.scopeItems)); }
   if (data.estimatedCost !== undefined) { updates.push(`estimated_cost = $${values.length + 1}`); values.push(data.estimatedCost); }
   if (data.currency !== undefined) { updates.push(`currency = $${values.length + 1}`); values.push(data.currency); }
+  if (data.coverage !== undefined) { updates.push(`coverage = $${values.length + 1}`); values.push(data.coverage); }
   if (data.status !== undefined) { updates.push(`status = $${values.length + 1}`); values.push(data.status); }
   if (data.approvedBy !== undefined) { updates.push(`approved_by = $${values.length + 1}`); values.push(data.approvedBy); }
   if (data.approvedAt !== undefined) { updates.push(`approved_at = $${values.length + 1}`); values.push(data.approvedAt); }
