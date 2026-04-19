@@ -20,10 +20,13 @@ https://github.com/vercel/geist-font
 | green_on_black | #7de19a | #0a0a0a |
 | gold_on_black | #ffe066 | #0a0a0a |
 
+For each **black-disk** row above, a matching **`{id}_white_disk`** variant is also exported (same bracket colour, **#ffffff** disk) for dark-themed pages.
+
 SVG: `short_appicon_<id>_appsquare.svg`, `short_appicon_<id>_transparent.svg`
 
 ## Full wordmarks (transparent)
 - Same **circular short mark** as app icons + wordmark. Canonical: `full_<id>_transparent.png` (1000×420).
+- When the short mark uses a **black disk**, a parallel set uses the **white-disk** short mark: `full_<id>_white_disk_transparent.png` and `full_<id>_<width>w_white_disk_transparent.png`.
 - Additional: `full_<id>_<width>w_transparent.png` for 2400, 2000, 1600, 1200, 800, 600, 400 px (height scales with 1000:420).
 - Layout uses **~5% side margins** and **auto-shrinks** long subtitles (then mark / word) so the row fits — no clipped disk or tagline.
 

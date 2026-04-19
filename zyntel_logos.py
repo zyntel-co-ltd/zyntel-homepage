@@ -308,6 +308,31 @@ SHORT_VARIANTS: list[dict] = [
     },
 ]
 
+_BLACK_DISK_HEX = "0a0a0a"
+
+
+def short_variants_for_export() -> list[dict]:
+    """Base short variants plus white-disk alternates for black disks (dark UIs / theme switching)."""
+    out: list[dict] = [dict(v) for v in SHORT_VARIANTS]
+    seen = {v["id"] for v in out}
+    for spec in SHORT_VARIANTS:
+        bg = spec["circle_bg"].lstrip("#").lower()
+        if bg != _BLACK_DISK_HEX:
+            continue
+        wid = f'{spec["id"]}_white_disk'
+        if wid in seen:
+            continue
+        out.append(
+            {
+                **spec,
+                "id": wid,
+                "label": f'{spec.get("label", "")} — white disk (dark UI)',
+                "circle_bg": "#ffffff",
+            }
+        )
+        seen.add(wid)
+    return out
+
 
 # Short PNG exports: app pipelines + common web / design breakpoints.
 SHORT_LOGO_PNG_SIZES = [2048, 1536, 1024, 768, 512, 384, 256, 192, 128, 96, 64, 48, 32]
@@ -362,7 +387,7 @@ def create_short_appicon_pngs():
     allowed_t = set(SHORT_LOGO_TRANSPARENT_SIZES)
     cleanup_transparent_short_pngs_not_in_allowed(allowed_t)
 
-    for spec in SHORT_VARIANTS:
+    for spec in short_variants_for_export():
         sid = spec["id"]
         for canvas in SHORT_LOGO_PNG_SIZES:
             img = render_short_appicon_raster(spec, canvas, "appsquare")
@@ -440,7 +465,7 @@ FULL_LOGO_EXPORT_WIDTHS = [2400, 2000, 1600, 1200, 1000, 800, 600, 400]
 
 
 def _short_variant(short_id: str) -> dict:
-    for v in SHORT_VARIANTS:
+    for v in short_variants_for_export():
         if v["id"] == short_id:
             return v
     raise KeyError(short_id)
@@ -558,6 +583,30 @@ def create_full_logos_transparent():
             img.save(out, "PNG")
             print(f"Created {out}")
 
+    # Full wordmarks using white-disk short marks (for dark-mode UI where black disks disappear)
+    for spec in FULL_LOGOS:
+        sid = spec["short_id"]
+        base = _short_variant(sid)
+        if base["circle_bg"].lstrip("#").lower() != _BLACK_DISK_HEX:
+            continue
+        alt_id = f"{sid}_white_disk"
+        try:
+            _short_variant(alt_id)
+        except KeyError:
+            continue
+        spec_wd = {**spec, "short_id": alt_id}
+        for w in FULL_LOGO_EXPORT_WIDTHS:
+            h = max(120, int(w * 420 / 1000))
+            img = _render_full_logo_raster(spec_wd, w, h)
+            if w == FULL_LOGO_WIDTH:
+                out = os.path.join(SCRIPT_DIR, "logos", f"full_{spec['id']}_white_disk_transparent.png")
+            else:
+                out = os.path.join(
+                    SCRIPT_DIR, "logos", f"full_{spec['id']}_{w}w_white_disk_transparent.png"
+                )
+            img.save(out, "PNG")
+            print(f"Created {out}")
+
 
 def create_code_logo():
     """Code-style banner — Geist Mono (replaces Consolas)."""
@@ -643,7 +692,7 @@ def create_short_appicon_svgs():
     fs, font = fit_bracket_font_max_height(target_h, load_geist_sans_bold)
     tx, ty = _short_bracket_anchor_xy(size, cx, cy, R, font)
 
-    for spec in SHORT_VARIANTS:
+    for spec in short_variants_for_export():
         sid = spec["id"]
         bracket_hex = spec["bracket"]
         disk = spec["circle_bg"]
@@ -706,10 +755,13 @@ https://github.com/vercel/geist-font
 | green_on_black | #7de19a | #0a0a0a |
 | gold_on_black | #ffe066 | #0a0a0a |
 
+For each **black-disk** row above, a matching **`{id}_white_disk`** variant is also exported (same bracket colour, **#ffffff** disk) for dark-themed pages.
+
 SVG: `short_appicon_<id>_appsquare.svg`, `short_appicon_<id>_transparent.svg`
 
 ## Full wordmarks (transparent)
 - Same **circular short mark** as app icons + wordmark. Canonical: `full_<id>_transparent.png` (1000×420).
+- When the short mark uses a **black disk**, a parallel set uses the **white-disk** short mark: `full_<id>_white_disk_transparent.png` and `full_<id>_<width>w_white_disk_transparent.png`.
 - Additional: `full_<id>_<width>w_transparent.png` for """ + fw + """ px (height scales with 1000:420).
 - Layout uses **~5% side margins** and **auto-shrinks** long subtitles (then mark / word) so the row fits — no clipped disk or tagline.
 

@@ -23,6 +23,8 @@ async function main() {
   const fullZyntel = join(logos, 'full_zyntel_transparent.png');
   const shortCyan = join(logos, 'short_appicon_cyan_on_black_256_appsquare.png');
   const fullKanta = join(logos, 'full_kanta_transparent.png');
+  const fullKantaWhiteDisk = join(logos, 'full_kanta_white_disk_transparent.png');
+  const fullZyntforms = join(logos, 'full_zyntforms_company_transparent.png');
 
   ensureDir(webLogos);
   ensureDir(adminLogos);
@@ -50,6 +52,18 @@ async function main() {
 
   if (existsSync(fullKanta)) {
     copyFileSync(fullKanta, join(webLogos, 'kanta-full.png'));
+  }
+  if (existsSync(fullKantaWhiteDisk)) {
+    copyFileSync(fullKantaWhiteDisk, join(webLogos, 'kanta-full-white-disk.png'));
+  }
+
+  if (existsSync(fullZyntforms)) {
+    copyFileSync(fullZyntforms, join(webLogos, 'zyntforms-full.png'));
+    const zfWhiteBuf = await sharp(fullZyntforms)
+      .flatten({ background: { r: 255, g: 255, b: 255 } })
+      .png()
+      .toBuffer();
+    writeFileSync(join(webLogos, 'zyntforms-full-white-bg.png'), zfWhiteBuf);
   }
 
   copyFileSync(fullZyntel, join(adminImagesLogos, 'zyntel_full_cyan.png'));

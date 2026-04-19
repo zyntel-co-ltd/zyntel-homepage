@@ -24,7 +24,7 @@ const product = await getProductBySlug(slug!);
 
 const FALLBACK: Record<string, { name: string; tagline?: string; description: string; features: string[]; externalUrl?: string }> = {
   'zyntel-forms': {
-    name: 'Zyntel Forms',
+    name: 'zyntForms',
     tagline: 'Digital form builder and data collection',
     description: 'Replace paper workflows with digital forms. Create, deploy, and manage forms with automated routing, validation, and structured data capture across healthcare and operations.',
     features: ['Drag-and-drop form builder', 'Automated routing and approvals', 'Offline-capable data collection', 'Integrations with existing systems', 'Analytics and reporting'],
@@ -95,7 +95,7 @@ const isZyntelForms = slug === 'zyntel-forms';
             </>
           ) : isZyntelForms ? (
             <>
-              <a href="https://forms.zyntel.net" class="btn btn-primary">Try Zyntel Forms</a>
+              <a href="https://forms.zyntel.net" class="btn btn-primary">Try zyntForms</a>
               <a href="/contact" class="btn btn-secondary">Talk to us</a>
             </>
           ) : (
