@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <clipPath id="fd">
+      <circle cx="512" cy="512" r="425"/>
+    </clipPath>
+  </defs>
+  <circle cx="512" cy="512" r="425" fill="#ffffff"/>
+  <g clip-path="url(#fd)">
+    <text
+      x="114"
+      y="472"
+      text-anchor="start"
+      dominant-baseline="central"
+      fill="#00f0ff"
+      font-size="1069"
+      font-weight="700"
+      font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    >}</text>
+  </g>
+</svg>

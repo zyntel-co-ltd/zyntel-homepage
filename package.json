@@ -6,6 +6,7 @@
     "packages/*"
   ],
   "scripts": {
+    "sync-logos": "node scripts/sync-public-logos.mjs",
     "favicons": "node scripts/generate-favicons.mjs",
     "og-default": "node scripts/generate-og-default.mjs",
     "forms-icons": "node scripts/emit-forms-icons.mjs",

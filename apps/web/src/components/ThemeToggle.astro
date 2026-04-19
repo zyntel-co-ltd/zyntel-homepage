@@ -28,6 +28,8 @@
       try { localStorage.setItem(STORAGE_KEY, theme); } catch {}
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta) meta.setAttribute('content', theme === 'light' ? '#f8fafc' : '#00f0ff');
+      const fav = document.getElementById('favicon-svg') as HTMLLinkElement | null;
+      if (fav) fav.href = theme === 'dark' ? '/favicon-dark.svg' : '/favicon.svg';
     }
 
     function init() {

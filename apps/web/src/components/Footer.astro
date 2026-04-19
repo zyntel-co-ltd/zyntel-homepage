@@ -34,7 +34,8 @@ const year = new Date().getFullYear();
 
     <div class="footer-bottom">
       <a href="/" class="footer-logo">
-        <img src="/logos/zyntel_full_cyan.png" alt="Zyntel" class="footer-logo-img" />
+        <img src="/logos/zyntel_full_cyan.png" alt="Zyntel" class="footer-logo-img footer-logo-img--theme-light" width="180" height="44" />
+        <img src="/logos/zyntel_full_cyan_white_bg.png" alt="Zyntel" class="footer-logo-img footer-logo-img--theme-dark" width="180" height="44" />
       </a>
       <p class="footer-copy">© {year} Zyntel Co. Limited. Kampala, Uganda.</p>
       <div class="footer-social">
@@ -113,6 +114,16 @@ const year = new Date().getFullYear();
     opacity: 0.95;
     height: 44px;
     width: auto;
+  }
+  .footer-logo-img--theme-dark {
+    display: none;
+  }
+  [data-theme="dark"] .footer-logo-img--theme-light {
+    display: none;
+  }
+  [data-theme="dark"] .footer-logo-img--theme-dark {
+    display: block;
+    border-radius: 12px;
   }
 
   .footer-copy {

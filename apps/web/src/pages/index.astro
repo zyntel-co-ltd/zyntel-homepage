@@ -18,7 +18,22 @@ import Footer from '../components/Footer.astro';
       <div class="container hero-inner">
         <div class="hero-content">
           <p class="hero-eyebrow">Kanta by Zyntel</p>
-          <h1 class="hero-title">Zyntel Platform.<br /><span class="hero-hl">Kanta for hospital operations.</span></h1>
+          <h1 class="hero-title">
+            <span class="hero-kanta-line">
+              <span class="hero-kanta-disk">
+                <img
+                  class="hero-kanta-logo"
+                  src="/logos/kanta-full.png"
+                  width="520"
+                  height="104"
+                  alt="Zyntel Platform"
+                  loading="eager"
+                  decoding="async"
+                />
+              </span>
+            </span>
+            <span class="hero-title-line2"><span class="hero-hl">Kanta for hospital operations.</span></span>
+          </h1>
           <p class="hero-desc">Track equipment, monitor lab performance, and stay audit-ready with one platform designed for East African hospital workflows.</p>
           <div class="hero-actions">
             <a href="https://app.zyntel.net" class="btn btn-primary">Start 14-Day Pilot</a>
@@ -255,6 +270,40 @@ import Footer from '../components/Footer.astro';
     letter-spacing: -0.03em;
     color: var(--text-primary);
     margin-bottom: 1.5rem;
+  }
+
+  /* Full Kanta wordmark — cap height matches one line of the headline (“Zyntel Platform.” scale) */
+  .hero-kanta-line {
+    display: block;
+    margin-bottom: 0.28em;
+  }
+  .hero-kanta-disk {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    line-height: 0;
+  }
+  .hero-kanta-logo {
+    display: block;
+    height: 1em;
+    width: auto;
+    max-width: min(100%, 28rem);
+    object-fit: contain;
+    object-position: left center;
+  }
+  [data-theme="dark"] .hero-kanta-disk {
+    background: #ffffff;
+    border-radius: 9999px;
+    padding: 0.22em 0.75em 0.28em;
+    box-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+  }
+  [data-theme="dark"] .hero-kanta-logo {
+    /* Slight lift so the wordmark reads clearly on the white disk */
+    filter: none;
+  }
+
+  .hero-title-line2 {
+    display: block;
   }
 
   .hero-hl {

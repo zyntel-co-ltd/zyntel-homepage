@@ -5,7 +5,8 @@ import ThemeToggle from './ThemeToggle.astro';
 <nav class="nav">
   <div class="nav-container container">
     <a href="/" class="nav-logo" aria-label="Zyntel Home">
-      <img src="/logos/zyntel_full_cyan.png" alt="Zyntel" class="nav-logo-img" />
+      <img src="/logos/zyntel_full_cyan.png" alt="Zyntel" class="nav-logo-img nav-logo-img--theme-light" width="200" height="52" />
+      <img src="/logos/zyntel_full_cyan_white_bg.png" alt="Zyntel" class="nav-logo-img nav-logo-img--theme-dark" width="200" height="52" />
     </a>
 
     <div class="nav-links" id="nav-links" role="navigation" aria-label="Main">
@@ -117,6 +118,16 @@ import ThemeToggle from './ThemeToggle.astro';
     height: 52px;
     width: auto;
     display: block;
+  }
+  .nav-logo-img--theme-dark {
+    display: none;
+  }
+  [data-theme="dark"] .nav-logo-img--theme-light {
+    display: none;
+  }
+  [data-theme="dark"] .nav-logo-img--theme-dark {
+    display: block;
+    border-radius: 14px;
   }
 
   .nav-logo:hover {

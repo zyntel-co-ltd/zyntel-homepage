@@ -283,3 +283,8 @@ a {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Keep footer content above the fixed sticky CTA when it is visible */
+body:has(.sticky-cta.visible) .footer {
+  padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+}
