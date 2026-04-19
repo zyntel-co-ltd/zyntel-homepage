@@ -56,6 +56,7 @@
 
 <style>
   .theme-toggle {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -89,11 +90,11 @@
     opacity: 0;
   }
 
-  [data-theme="light"] .theme-icon-moon {
+  :global(html[data-theme="light"]) .theme-icon-moon {
     opacity: 0;
   }
 
-  [data-theme="light"] .theme-icon-sun {
+  :global(html[data-theme="light"]) .theme-icon-sun {
     opacity: 1;
     color: var(--gold);
   }

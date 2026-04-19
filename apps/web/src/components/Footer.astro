@@ -118,10 +118,10 @@ const year = new Date().getFullYear();
   .footer-logo-img--theme-dark {
     display: none;
   }
-  [data-theme="dark"] .footer-logo-img--theme-light {
+  :global(html[data-theme="dark"]) .footer-logo-img--theme-light {
     display: none;
   }
-  [data-theme="dark"] .footer-logo-img--theme-dark {
+  :global(html[data-theme="dark"]) .footer-logo-img--theme-dark {
     display: block;
     border-radius: 12px;
   }

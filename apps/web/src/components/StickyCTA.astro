@@ -54,7 +54,7 @@
     visibility: visible;
   }
 
-  [data-theme="dark"] .sticky-cta {
+  :global(html[data-theme="dark"]) .sticky-cta {
     background: color-mix(in srgb, var(--bg-elevated) 62%, transparent);
     box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.35);
   }

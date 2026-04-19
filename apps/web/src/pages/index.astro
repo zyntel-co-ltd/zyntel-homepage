@@ -325,11 +325,11 @@ import Footer from '../components/Footer.astro';
   .hero-kanta-disk--dark {
     display: none;
   }
-  [data-theme="dark"] .hero-kanta-disk--light {
+  :global(html[data-theme="dark"]) .hero-kanta-disk--light {
     display: none;
   }
   /* PNG is full_kanta_white_disk (generator); no extra white pill — optional lift on dark bg */
-  [data-theme="dark"] .hero-kanta-disk--dark {
+  :global(html[data-theme="dark"]) .hero-kanta-disk--dark {
     display: inline-flex;
     filter: drop-shadow(0 4px 22px rgba(0, 0, 0, 0.45));
   }
@@ -749,10 +749,10 @@ import Footer from '../components/Footer.astro';
   .forms-band-zynt-wrap--dark {
     display: none;
   }
-  [data-theme="dark"] .forms-band-zynt-wrap--light {
+  :global(html[data-theme="dark"]) .forms-band-zynt-wrap--light {
     display: none;
   }
-  [data-theme="dark"] .forms-band-zynt-wrap--dark {
+  :global(html[data-theme="dark"]) .forms-band-zynt-wrap--dark {
     display: inline-flex;
   }
   .forms-band-zynt-logo {
@@ -763,7 +763,7 @@ import Footer from '../components/Footer.astro';
     object-position: left center;
     display: block;
   }
-  [data-theme="dark"] .forms-band-zynt-logo {
+  :global(html[data-theme="dark"]) .forms-band-zynt-logo {
     border-radius: 12px;
     box-shadow: 0 2px 14px rgba(0, 0, 0, 0.25);
   }
