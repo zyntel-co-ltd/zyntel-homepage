@@ -36,9 +36,18 @@ _BRACKET_MIN_RIM_INSET_FRAC = 0.003
 _BRACKET_LEFT_FINE_FRAC = 0.0
 
 
-def _short_icon_circle_params(canvas: int) -> tuple[int, int, int]:
-    """Center (cx, cy), radius R — circle inset by standard padding from square edge."""
-    pad = max(2, int(canvas * 0.085))
+def _short_icon_circle_params(canvas: int, *, disk_inset_frac: float | None = None) -> tuple[int, int, int]:
+    """Center (cx, cy), radius R — circle inset from square edge.
+
+    disk_inset_frac: fraction of canvas used as padding on each side (default 0.085).
+    Use 0.0 for a maximum inscribed disk (~1px hairline from the raster edge).
+    """
+    if disk_inset_frac is None:
+        pad = max(2, int(canvas * 0.085))
+    elif disk_inset_frac <= 0:
+        pad = max(1, canvas // 1024)
+    else:
+        pad = max(2, int(canvas * disk_inset_frac))
     cx = cy = canvas // 2
     R = max(2, canvas // 2 - pad)
     return cx, cy, R
@@ -72,14 +81,18 @@ def _short_bracket_anchor_xy(canvas: int, cx: int, cy: int, R: int, font) -> tup
     return tx, ty
 
 
-def render_short_appicon_raster(variant: dict, canvas: int, mode: str) -> Image.Image:
+def render_short_appicon_raster(
+    variant: dict, canvas: int, mode: str, *, disk_inset_frac: float | None = None
+) -> Image.Image:
     """
     Facebook-style: square canvas, transparent outside a circle; bracket clipped to circle.
     mode 'appsquare': filled circle (disk) + colored } (left, full vertical span).
     mode 'transparent': no disk; } only, still clipped to the same circle.
+
+    disk_inset_frac: optional override for circle padding (see _short_icon_circle_params).
     """
     img = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
-    cx, cy, R = _short_icon_circle_params(canvas)
+    cx, cy, R = _short_icon_circle_params(canvas, disk_inset_frac=disk_inset_frac)
     mask = _circle_mask_l(canvas, cx, cy, R)
     hair = max(1, canvas // 1024)
 
@@ -405,36 +418,57 @@ def create_short_appicon_pngs():
 
 def render_kanta_black_rounded_square_icon(short_spec: dict, canvas: int, corner_radius_px: int | None = None) -> Image.Image:
     """
-    Short mark (disk + bracket) centered on a black rounded square — PWA / installed-app style.
+    Short mark (disk + bracket) on a rounded square — PWA / installed-app style.
+    Disk is drawn at full canvas with minimal inset so the circle reaches the square edges.
+    When disk colour matches the rounded square (e.g. green_on_black on #0a0a0a), the circle
+    edge disappears and only the bracket reads.
     Uses Pillow rounded_rectangle (requires Pillow 8.2+).
     """
     from PIL import ImageDraw
 
     if corner_radius_px is None:
         corner_radius_px = max(8, int(canvas * 0.19))
+    bg = hex_to_rgb(short_spec["circle_bg"])
     img = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     draw.rounded_rectangle(
         [0, 0, canvas - 1, canvas - 1],
         radius=corner_radius_px,
-        fill=(10, 10, 10, 255),
+        fill=(*bg, 255),
     )
-    mark_size = max(48, int(canvas * 0.62))
-    mark = render_short_appicon_raster(short_spec, mark_size, "appsquare")
-    mx = (canvas - mark_size) // 2
-    my = (canvas - mark_size) // 2
-    img.paste(mark, (mx, my), mark)
-    return img
+    mark = render_short_appicon_raster(short_spec, canvas, "appsquare", disk_inset_frac=0.0)
+    return Image.alpha_composite(img, mark)
+
+
+def write_kanta_public_brand_short_logos():
+    """Canonical Kanta short marks (black-disk + white-disk) under ../kanta/public/brand/."""
+    brand = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "kanta", "public", "brand"))
+    os.makedirs(brand, exist_ok=True)
+    sizes = [64, 128, 256, 512, 1024]
+    pairs = [
+        ("green_on_black", "kanta-short"),
+        ("green_on_black_white_disk", "kanta-short-white-disk"),
+    ]
+    for short_id, stem in pairs:
+        spec = _short_variant(short_id)
+        for sz in sizes:
+            img = render_short_appicon_raster(spec, sz, "appsquare")
+            out = os.path.join(brand, f"{stem}_{sz}.png")
+            img.save(out, "PNG")
+            print(f"Created {out}")
+        img512 = render_short_appicon_raster(spec, 512, "appsquare")
+        img512.save(os.path.join(brand, f"{stem}.png"), "PNG")
+        print(f"Created {os.path.join(brand, f'{stem}.png')}")
 
 
 def create_kanta_black_square_pwa_icons():
     """
-    Writes PNGs into ../kanta/public/icons and apple-icon.png — green bracket on white disk,
-    on black rounded square (matches installable app treatment).
+    Writes PNGs into ../kanta/public/icons and apple-icon*.png — green bracket on **black** disk
+    (same #0a0a0a as the rounded square so the circle edge is invisible); full-bleed disk.
     """
     kanta_public = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "kanta", "public", "icons"))
     os.makedirs(kanta_public, exist_ok=True)
-    spec = _short_variant("green_on_black_white_disk")
+    spec = _short_variant("green_on_black")
     for size in (192, 512):
         img = render_kanta_black_rounded_square_icon(spec, size)
         out = os.path.join(kanta_public, f"icon-{size}.png")
@@ -447,6 +481,42 @@ def create_kanta_black_square_pwa_icons():
     apple_dark = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "kanta", "public", "apple-icon-dark.png"))
     img180.save(apple_dark, "PNG")
     print(f"Created {apple_dark}")
+
+
+def export_kanta_pwa_assets_to_logos():
+    """
+    Mirror Android / Apple touch outputs into logos/ for the repo and for alternates.
+    The large `short_appicon_*_2048_appsquare.png` files are square canvases with a **circular**
+    disk and **transparent corners** (store safe-zone) — not a missing crop; use these
+    rounded-square PWA renders when you need edge-to-edge square artwork.
+    """
+    logos_dir = os.path.join(SCRIPT_DIR, "logos")
+    os.makedirs(logos_dir, exist_ok=True)
+    spec_dark = _short_variant("green_on_black")
+    spec_white = _short_variant("green_on_black_white_disk")
+
+    for size in (192, 512):
+        img = render_kanta_black_rounded_square_icon(spec_dark, size)
+        out = os.path.join(logos_dir, f"kanta_pwa_icon_{size}.png")
+        img.save(out, "PNG")
+        print(f"Created {out}")
+
+    img180 = render_kanta_black_rounded_square_icon(spec_dark, 180)
+    for name in (
+        "kanta_apple_touch_icon_180.png",
+        "kanta_apple_touch_icon_dark_180.png",
+    ):
+        p = os.path.join(logos_dir, name)
+        img180.save(p, "PNG")
+        print(f"Created {p}")
+
+    img180_light = render_kanta_black_rounded_square_icon(spec_white, 180)
+    out_alt = os.path.join(
+        logos_dir,
+        "kanta_apple_touch_icon_dark_white_disk_white_square_180.png",
+    )
+    img180_light.save(out_alt, "PNG")
+    print(f"Created {out_alt}")
 
 
 def _save_ico_from_variant(spec: dict):
@@ -790,6 +860,7 @@ https://github.com/vercel/geist-font
 
 ## Short app icons (circular disk + bold brace)
 - Square PNG, **transparent outside the circle**; disk + **bold** `}` (Geist Sans Bold), **overscaled** then **clipped** to the circle; bracket is **vertically centered** on the disk; horizontal placement follows inset + past-center + fine-tune constants.
+- **Large `*_appsquare.png` (e.g. 2048 px)** are *not* “uncropped” mistakes: the mark lives in a **circle**; the rest of the square is **transparent** for adaptive-icon / store safe zones. For **full-bleed square** icons use the Kanta PWA renders (`kanta_pwa_icon_*.png`, `kanta_apple_touch_icon_*.png`) or `render_kanta_black_rounded_square_icon`.
 - **Filled (disk + bracket):** sizes """ + sz + """ px → `short_appicon_<id>_<size>_appsquare.png`.
 - **Glyph-only** (no disk, same circular clip): sizes """ + szt + """ px only → `short_appicon_<id>_<size>_transparent.png` (avoids huge “bare brace” 2048px files and noisy 32px transparents).
 - **ICO / ladder:** `short_appicon_<id>.ico`, `short_appicon_<id>_<n>x<n>_appsquare.png`
@@ -804,6 +875,11 @@ https://github.com/vercel/geist-font
 For each **black-disk** row above, a matching **`{id}_white_disk`** variant is also exported (same bracket colour, **#ffffff** disk) for dark-themed pages.
 
 SVG: `short_appicon_<id>_appsquare.svg`, `short_appicon_<id>_transparent.svg`
+
+## Kanta PWA / Apple / Android (mirrored under `logos/`)
+- `kanta_pwa_icon_192.png`, `kanta_pwa_icon_512.png` — same as `../kanta/public/icons/icon-*.png` (rounded square, black disk + green bracket).
+- `kanta_apple_touch_icon_180.png`, `kanta_apple_touch_icon_dark_180.png` — same as `apple-icon.png` / `apple-icon-dark.png` in `../kanta/public/`.
+- `kanta_apple_touch_icon_dark_white_disk_white_square_180.png` — **white** rounded square + **white** disk + green bracket (keepsake for light-on-dark marketing or when you need a light chrome).
 
 ## Full wordmarks (transparent)
 - Same **circular short mark** as app icons + wordmark. Canonical: `full_<id>_transparent.png` (1000×420).
@@ -833,13 +909,19 @@ if __name__ == "__main__":
     print("\n2b) Short app icon SVGs...")
     create_short_appicon_svgs()
 
-    print("\n3) Full logos — transparent...")
+    print("\n3) Full logos (transparent)...")
     create_full_logos_transparent()
 
     print("\n4) README...")
     create_readme_file()
 
-    print("\n5) Kanta PWA — black rounded-square icons → ../kanta/public/ ...")
+    print("\n5) Kanta PWA - black rounded-square icons -> ../kanta/public/ ...")
     create_kanta_black_square_pwa_icons()
 
-    print("\nDone. Output: logos/ + kanta/public/icons/")
+    print("\n5a) Kanta PWA / Apple mirrors -> logos/ ...")
+    export_kanta_pwa_assets_to_logos()
+
+    print("\n5b) Kanta /public/brand - short marks (black + white disk, multi-size)...")
+    write_kanta_public_brand_short_logos()
+
+    print("\nDone. Output: logos/ + kanta/public/icons/ + kanta/public/brand/")
