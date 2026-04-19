@@ -20,13 +20,24 @@ import Footer from '../components/Footer.astro';
           <p class="hero-eyebrow">Kanta by Zyntel</p>
           <h1 class="hero-title">
             <span class="hero-kanta-line">
-              <span class="hero-kanta-disk">
+              <span class="hero-kanta-disk hero-kanta-disk--light">
                 <img
                   class="hero-kanta-logo"
                   src="/logos/kanta-full.png"
                   width="520"
                   height="104"
-                  alt="Zyntel Platform"
+                  alt="Kanta"
+                  loading="eager"
+                  decoding="async"
+                />
+              </span>
+              <span class="hero-kanta-disk hero-kanta-disk--dark">
+                <img
+                  class="hero-kanta-logo"
+                  src="/logos/kanta-full.png"
+                  width="520"
+                  height="104"
+                  alt="Kanta"
                   loading="eager"
                   decoding="async"
                 />
@@ -200,7 +211,19 @@ import Footer from '../components/Footer.astro';
     <section class="forms-band">
       <div class="container">
         <div class="forms-band-inner">
-          <p><strong>Also in the Zyntel Platform:</strong> Zyntel Forms for digital data capture and workflow approvals.</p>
+          <p class="forms-band-text">
+            <span class="forms-band-lead">Also in the</span>
+            <img
+              class="forms-band-kanta-logo"
+              src="/logos/kanta-full.png"
+              width="200"
+              height="40"
+              alt="Kanta"
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="forms-band-tail">: Zyntel Forms for digital data capture and workflow approvals.</span>
+          </p>
           <a href="https://forms.zyntel.net" class="btn btn-secondary forms-cta">Explore Zyntel Forms</a>
         </div>
       </div>
@@ -272,7 +295,7 @@ import Footer from '../components/Footer.astro';
     margin-bottom: 1.5rem;
   }
 
-  /* Full Kanta wordmark — cap height matches one line of the headline (“Zyntel Platform.” scale) */
+  /* Full Kanta wordmark — cap height matches one headline line; dark theme = white disk (same pattern as Nav logos) */
   .hero-kanta-line {
     display: block;
     margin-bottom: 0.28em;
@@ -283,23 +306,26 @@ import Footer from '../components/Footer.astro';
     max-width: 100%;
     line-height: 0;
   }
-  .hero-kanta-logo {
-    display: block;
-    height: 1em;
-    width: auto;
-    max-width: min(100%, 28rem);
-    object-fit: contain;
-    object-position: left center;
+  .hero-kanta-disk--dark {
+    display: none;
   }
-  [data-theme="dark"] .hero-kanta-disk {
+  [data-theme="dark"] .hero-kanta-disk--light {
+    display: none;
+  }
+  [data-theme="dark"] .hero-kanta-disk--dark {
+    display: inline-flex;
     background: #ffffff;
     border-radius: 9999px;
-    padding: 0.22em 0.75em 0.28em;
+    padding: 0.18em 0.65em 0.22em;
     box-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
   }
-  [data-theme="dark"] .hero-kanta-logo {
-    /* Slight lift so the wordmark reads clearly on the white disk */
-    filter: none;
+  .hero-kanta-logo {
+    display: block;
+    height: 0.92em;
+    width: auto;
+    max-width: min(100%, 26rem);
+    object-fit: contain;
+    object-position: left center;
   }
 
   .hero-title-line2 {
@@ -681,9 +707,37 @@ import Footer from '../components/Footer.astro';
     gap: 1rem;
     flex-wrap: wrap;
   }
-  .forms-band-inner p {
+  .forms-band-inner p,
+  .forms-band-text {
     color: var(--text-secondary);
     font-size: 0.92rem;
+  }
+  .forms-band-text {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
+    margin: 0;
+  }
+  .forms-band-lead,
+  .forms-band-tail {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .forms-band-kanta-logo {
+    height: 1.35rem;
+    width: auto;
+    max-width: min(42vw, 11rem);
+    object-fit: contain;
+    object-position: left center;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  [data-theme="dark"] .forms-band-kanta-logo {
+    background: #ffffff;
+    border-radius: 999px;
+    padding: 0.12rem 0.45rem 0.14rem;
+    box-sizing: content-box;
   }
 
   /* ── About strip ── */
