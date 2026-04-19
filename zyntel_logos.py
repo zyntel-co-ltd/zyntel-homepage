@@ -630,7 +630,7 @@ def create_code_logo():
         "medium": (1000, 300),
         "small": (500, 150),
     }
-
+    
     for bg_name, bg_color in backgrounds.items():
         for size_name, (w, h) in resolutions.items():
             if size_name == "large":
@@ -655,7 +655,7 @@ def create_code_logo():
                 [colors["brackets"], colors["measured"], colors["brackets"], colors["managed"], colors["brackets"]],
                 [colors["brackets"]],
             ]
-
+            
             line_height = font_size * 1.02
             max_line_width = 0
             for parts in line_parts:
@@ -665,14 +665,14 @@ def create_code_logo():
             start_x = (w - max_line_width) / 2
             start_y = (h - (line_height * len(line_parts))) / 2
             current_y = start_y
-
+            
             for parts, colors_list in zip(line_parts, line_colors):
                 current_x = start_x
                 for part, col in zip(parts, colors_list):
                     draw.text((current_x, current_y), part, fill=hex_to_rgba(col), font=current_font)
                     current_x += draw.textlength(part, font=current_font)
                 current_y += line_height
-
+            
             fn = os.path.join(SCRIPT_DIR, "logos", f"zyntel_code_{size_name}_{bg_name}_bg.png")
             img.save(fn, "PNG")
             print(f"Created code logo: {fn}")
@@ -777,10 +777,10 @@ SVG: `short_appicon_<id>_appsquare.svg`, `short_appicon_<id>_transparent.svg`
 if __name__ == "__main__":
     os.chdir(SCRIPT_DIR)
     print("Creating Zyntel logo set (Geist Sans / Geist Mono)...\n")
-
+    
     print("1) Code banner (Geist Mono)...")
     create_code_logo()
-
+    
     print("\n2) Short app icon PNGs (all sizes, all variants)...")
     create_short_appicon_pngs()
 
@@ -792,5 +792,5 @@ if __name__ == "__main__":
 
     print("\n4) README...")
     create_readme_file()
-
+    
     print("\nDone. Output: logos/")
