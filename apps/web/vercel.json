@@ -4,6 +4,7 @@
   "outputDirectory": "dist",
   "installCommand": "cd ../.. && npm install",
   "redirects": [
+    { "source": "/sitemap.xml", "destination": "/sitemap-index.xml", "permanent": true },
     { "source": "/admin", "destination": "https://admin.zyntel.net/", "has": [{ "type": "host", "value": "zyntel.net" }], "permanent": false },
     { "source": "/admin/:path*", "destination": "https://admin.zyntel.net/:path*", "has": [{ "type": "host", "value": "zyntel.net" }], "permanent": false },
     { "source": "/admin", "destination": "https://admin-preview.zyntel.net/", "has": [{ "type": "host", "value": "preview.zyntel.net" }], "permanent": false },

@@ -6,7 +6,13 @@
     "packages/*"
   ],
   "scripts": {
-    "favicons": "node scripts/generate-favicons.mjs"
+    "favicons": "node scripts/generate-favicons.mjs",
+    "og-default": "node scripts/generate-og-default.mjs",
+    "forms-icons": "node scripts/emit-forms-icons.mjs",
+    "kanta-icons": "node scripts/emit-kanta-icons.mjs",
+    "mazra-icons": "node scripts/emit-mazra-icons.mjs",
+    "pulse-icons": "node scripts/emit-pulse-icons.mjs",
+    "dashboard-icons": "node scripts/emit-dashboard-icons.mjs"
   },
   "devDependencies": {
     "sharp": "^0.34.5",

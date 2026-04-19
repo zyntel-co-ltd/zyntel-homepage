@@ -8,27 +8,47 @@ interface Props {
   description?: string;
   /** Overrides og:title / twitter:title (defaults to `title | Zyntel`) */
   ogTitle?: string;
-  /** Path under site root, e.g. `/logos/icon_cyan_512x512.png` */
+  /** Path under site root, e.g. `/og-default.png` */
   ogImage?: string;
   ogType?: 'website' | 'article';
   noIndex?: boolean;
   hideStickyCta?: boolean;
+  /** Production canonical URL override (defaults to `site` + current path) */
+  canonicalUrl?: string;
+  /** Homepage: inject Organization JSON-LD */
+  jsonLdOrganization?: boolean;
 }
 
 const {
   title,
   description = 'Kanta by Zyntel — hospital equipment and lab operations platform for East Africa. TAT visibility, QC workflows, maintenance intelligence.',
   ogTitle,
-  ogImage = '/logos/icon_cyan_512x512.png',
+  ogImage = '/og-default.png',
   ogType = 'website',
   noIndex = false,
   hideStickyCta = false,
+  canonicalUrl: canonicalUrlProp,
+  jsonLdOrganization = false,
 } = Astro.props;
 
 const siteOrigin = Astro.site?.origin ?? 'https://zyntel.net';
-const canonicalURL = new URL(Astro.url.pathname, siteOrigin).href;
+const canonicalURL = canonicalUrlProp
+  ? canonicalUrlProp
+  : new URL(Astro.url.pathname, siteOrigin).href;
 const ogImageURL = new URL(ogImage.startsWith('/') ? ogImage : `/${ogImage}`, siteOrigin).href;
 const socialTitle = ogTitle ?? `${title} | Zyntel`;
+
+const organizationLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Zyntel Co. Limited',
+  url: 'https://zyntel.net',
+  sameAs: [
+    'https://www.linkedin.com/company/zynteltech',
+    'https://x.com/ZyntelTech',
+    'https://github.com/zyntel-co-ltd',
+  ],
+};
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -60,6 +80,10 @@ const socialTitle = ogTitle ?? `${title} | Zyntel`;
     <meta name="twitter:title" content={socialTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageURL} />
+
+    {jsonLdOrganization && (
+      <script type="application/ld+json" set:html={JSON.stringify(organizationLd)} />
+    )}
 
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" />
