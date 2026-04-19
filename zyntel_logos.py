@@ -403,6 +403,52 @@ def create_short_appicon_pngs():
 
 
 
+def render_kanta_black_rounded_square_icon(short_spec: dict, canvas: int, corner_radius_px: int | None = None) -> Image.Image:
+    """
+    Short mark (disk + bracket) centered on a black rounded square — PWA / installed-app style.
+    Uses Pillow rounded_rectangle (requires Pillow 8.2+).
+    """
+    from PIL import ImageDraw
+
+    if corner_radius_px is None:
+        corner_radius_px = max(8, int(canvas * 0.19))
+    img = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    draw.rounded_rectangle(
+        [0, 0, canvas - 1, canvas - 1],
+        radius=corner_radius_px,
+        fill=(10, 10, 10, 255),
+    )
+    mark_size = max(48, int(canvas * 0.62))
+    mark = render_short_appicon_raster(short_spec, mark_size, "appsquare")
+    mx = (canvas - mark_size) // 2
+    my = (canvas - mark_size) // 2
+    img.paste(mark, (mx, my), mark)
+    return img
+
+
+def create_kanta_black_square_pwa_icons():
+    """
+    Writes PNGs into ../kanta/public/icons and apple-icon.png — green bracket on white disk,
+    on black rounded square (matches installable app treatment).
+    """
+    kanta_public = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "kanta", "public", "icons"))
+    os.makedirs(kanta_public, exist_ok=True)
+    spec = _short_variant("green_on_black_white_disk")
+    for size in (192, 512):
+        img = render_kanta_black_rounded_square_icon(spec, size)
+        out = os.path.join(kanta_public, f"icon-{size}.png")
+        img.save(out, "PNG")
+        print(f"Created {out}")
+    img180 = render_kanta_black_rounded_square_icon(spec, 180)
+    apple_out = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "kanta", "public", "apple-icon.png"))
+    img180.save(apple_out, "PNG")
+    print(f"Created {apple_out}")
+    apple_dark = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "kanta", "public", "apple-icon-dark.png"))
+    img180.save(apple_dark, "PNG")
+    print(f"Created {apple_dark}")
+
+
 def _save_ico_from_variant(spec: dict):
     """ICO + per-size PNG ladder — filled-circle variant only."""
     os.makedirs(os.path.join(SCRIPT_DIR, "logos"), exist_ok=True)
@@ -792,5 +838,8 @@ if __name__ == "__main__":
 
     print("\n4) README...")
     create_readme_file()
-    
-    print("\nDone. Output: logos/")
+
+    print("\n5) Kanta PWA — black rounded-square icons → ../kanta/public/ ...")
+    create_kanta_black_square_pwa_icons()
+
+    print("\nDone. Output: logos/ + kanta/public/icons/")
