@@ -26,9 +26,14 @@ For each **black-disk** row above, a matching **`{id}_white_disk`** variant is a
 SVG: `short_appicon_<id>_appsquare.svg`, `short_appicon_<id>_transparent.svg`
 
 ## Kanta PWA / Apple / Android (mirrored under `logos/`)
-- `kanta_pwa_icon_192.png`, `kanta_pwa_icon_512.png` — same as `../kanta/public/icons/icon-*.png` (rounded square, black disk + green bracket).
-- `kanta_apple_touch_icon_180.png`, `kanta_apple_touch_icon_dark_180.png` — same as `apple-icon.png` / `apple-icon-dark.png` in `../kanta/public/`.
-- `kanta_apple_touch_icon_dark_white_disk_white_square_180.png` — **white** rounded square + **white** disk + green bracket (keepsake for light-on-dark marketing or when you need a light chrome).
+- **Default (Kanta green):** `kanta_pwa_icon_192.png`, `kanta_pwa_icon_512.png` — same as `../kanta/public/icons/icon-*.png` (rounded square, green bracket on black disk).
+- **Default Apple touch:** `kanta_apple_touch_icon_180.png`, `kanta_apple_touch_icon_dark_180.png` — same as `apple-icon.png` / `apple-icon-dark.png` in `../kanta/public/`.
+- **White-disk square (green bracket):** `kanta_apple_touch_icon_dark_white_disk_white_square_180.png`.
+- **Per short-mark colour (all `short_variants_for_export` ids):** `kanta_pwa_icon_192_<id>.png`, `kanta_pwa_icon_512_<id>.png`, `kanta_apple_touch_icon_180_<id>.png`, `kanta_apple_touch_icon_dark_180_<id>.png`. White-disk variants also get `kanta_apple_touch_icon_dark_white_disk_white_square_180_<id>.png`.
+
+## Kanta form marks (UI / “Cursor hole” style)
+- **Hole (dark UI):** gray disk `#c0c4cc` with the bracket **knocked out** (transparent) — `kanta_short_gray_disk_bracket_hole_<size>.png` in `logos/`, and `kanta-short-form-hole_<size>.png` / `kanta-short-form-hole.png` under `../kanta/public/brand/`.
+- **Light:** black disk + filled slate bracket — `kanta_short_black_disk_gray_bracket_<size>.png` in `logos/`, and `kanta-short-form-light_<size>.png` / `kanta-short-form-light.png` in `../kanta/public/brand/`.
 
 ## Full wordmarks (transparent)
 - Same **circular short mark** as app icons + wordmark. Canonical: `full_<id>_transparent.png` (1000×420).

@@ -486,22 +486,28 @@ def create_kanta_black_square_pwa_icons():
 def export_kanta_pwa_assets_to_logos():
     """
     Mirror Android / Apple touch outputs into logos/ for the repo and for alternates.
+    Unsuffixed filenames keep **Kanta default** (green_on_black). Every short variant also gets:
+      kanta_pwa_icon_{192|512}_{id}.png
+      kanta_apple_touch_icon_180_{id}.png
+      kanta_apple_touch_icon_dark_180_{id}.png
+    White-disk variants additionally get:
+      kanta_apple_touch_icon_dark_white_disk_white_square_180_{id}.png
     The large `short_appicon_*_2048_appsquare.png` files are square canvases with a **circular**
     disk and **transparent corners** (store safe-zone) — not a missing crop; use these
     rounded-square PWA renders when you need edge-to-edge square artwork.
     """
     logos_dir = os.path.join(SCRIPT_DIR, "logos")
     os.makedirs(logos_dir, exist_ok=True)
-    spec_dark = _short_variant("green_on_black")
+    spec_default = _short_variant("green_on_black")
     spec_white = _short_variant("green_on_black_white_disk")
 
     for size in (192, 512):
-        img = render_kanta_black_rounded_square_icon(spec_dark, size)
+        img = render_kanta_black_rounded_square_icon(spec_default, size)
         out = os.path.join(logos_dir, f"kanta_pwa_icon_{size}.png")
         img.save(out, "PNG")
         print(f"Created {out}")
 
-    img180 = render_kanta_black_rounded_square_icon(spec_dark, 180)
+    img180 = render_kanta_black_rounded_square_icon(spec_default, 180)
     for name in (
         "kanta_apple_touch_icon_180.png",
         "kanta_apple_touch_icon_dark_180.png",
@@ -517,6 +523,104 @@ def export_kanta_pwa_assets_to_logos():
     )
     img180_light.save(out_alt, "PNG")
     print(f"Created {out_alt}")
+
+    for spec in short_variants_for_export():
+        sid = spec["id"]
+        for size in (192, 512):
+            img = render_kanta_black_rounded_square_icon(spec, size)
+            p = os.path.join(logos_dir, f"kanta_pwa_icon_{size}_{sid}.png")
+            img.save(p, "PNG")
+            print(f"Created {p}")
+        ap = render_kanta_black_rounded_square_icon(spec, 180)
+        ap.save(os.path.join(logos_dir, f"kanta_apple_touch_icon_180_{sid}.png"), "PNG")
+        print(f"Created logos/kanta_apple_touch_icon_180_{sid}.png")
+        ap.save(os.path.join(logos_dir, f"kanta_apple_touch_icon_dark_180_{sid}.png"), "PNG")
+        print(f"Created logos/kanta_apple_touch_icon_dark_180_{sid}.png")
+        if "white_disk" in sid or spec.get("circle_bg", "").lower().lstrip("#") == "ffffff":
+            ap.save(
+                os.path.join(
+                    logos_dir,
+                    f"kanta_apple_touch_icon_dark_white_disk_white_square_180_{sid}.png",
+                ),
+                "PNG",
+            )
+            print(
+                f"Created logos/kanta_apple_touch_icon_dark_white_disk_white_square_180_{sid}.png"
+            )
+
+
+def _subtract_alpha_channel(base_a: Image.Image, subtract_a: Image.Image) -> Image.Image:
+    """Per-pixel alpha = max(0, base - subtract)."""
+    w, h = base_a.size
+    out = Image.new("L", (w, h))
+    pb = base_a.load()
+    ps = subtract_a.load()
+    po = out.load()
+    for y in range(h):
+        for x in range(w):
+            po[x, y] = max(0, int(pb[x, y]) - int(ps[x, y]))
+    return out
+
+
+def render_kanta_short_bracket_knockout(disk_hex: str, canvas: int) -> Image.Image:
+    """
+    Cursor-style 'hole': filled disk + bracket region fully transparent (knockout).
+    Bracket colour in spec is only used to build the glyph mask (transparent mode).
+    """
+    spec = {
+        "id": "kanta_form_knockout",
+        "circle_bg": disk_hex,
+        "bracket": "#000000",
+    }
+    base = render_short_appicon_raster(spec, canvas, "appsquare")
+    glyph = render_short_appicon_raster(spec, canvas, "transparent")
+    r, g, b, a = base.split()
+    _, _, _, ga = glyph.split()
+    new_a = _subtract_alpha_channel(a, ga)
+    return Image.merge("RGBA", (r, g, b, new_a))
+
+
+def render_kanta_short_black_disk_gray_bracket(canvas: int) -> Image.Image:
+    """Light-mode form mark: black disk + slate bracket (filled, not knocked out)."""
+    spec = {
+        "id": "kanta_form_light",
+        "circle_bg": "#0a0a0a",
+        "bracket": "#94a3b8",
+    }
+    return render_short_appicon_raster(spec, canvas, "appsquare")
+
+
+def export_kanta_form_mark_variants():
+    """
+    Form / UI marks: (1) gray disk + bracket as transparent hole, (2) black disk + gray bracket.
+    Writes to logos/ and ../kanta/public/brand/ at 64–1024 + canonical 512 stems.
+    """
+    logos_dir = os.path.join(SCRIPT_DIR, "logos")
+    brand = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "kanta", "public", "brand"))
+    os.makedirs(logos_dir, exist_ok=True)
+    os.makedirs(brand, exist_ok=True)
+    sizes = [64, 128, 256, 512, 1024]
+    gray_disk = "#c0c4cc"
+    for sz in sizes:
+        hole = render_kanta_short_bracket_knockout(gray_disk, sz)
+        hole.save(
+            os.path.join(logos_dir, f"kanta_short_gray_disk_bracket_hole_{sz}.png"),
+            "PNG",
+        )
+        hole.save(os.path.join(brand, f"kanta-short-form-hole_{sz}.png"), "PNG")
+        lit = render_kanta_short_black_disk_gray_bracket(sz)
+        lit.save(
+            os.path.join(logos_dir, f"kanta_short_black_disk_gray_bracket_{sz}.png"),
+            "PNG",
+        )
+        lit.save(os.path.join(brand, f"kanta-short-form-light_{sz}.png"), "PNG")
+        print(f"Created form marks {sz}px")
+    h512 = render_kanta_short_bracket_knockout(gray_disk, 512)
+    h512.save(os.path.join(brand, "kanta-short-form-hole.png"), "PNG")
+    l512 = render_kanta_short_black_disk_gray_bracket(512)
+    l512.save(os.path.join(brand, "kanta-short-form-light.png"), "PNG")
+    print(f"Created {os.path.join(brand, 'kanta-short-form-hole.png')}")
+    print(f"Created {os.path.join(brand, 'kanta-short-form-light.png')}")
 
 
 def _save_ico_from_variant(spec: dict):
@@ -877,9 +981,14 @@ For each **black-disk** row above, a matching **`{id}_white_disk`** variant is a
 SVG: `short_appicon_<id>_appsquare.svg`, `short_appicon_<id>_transparent.svg`
 
 ## Kanta PWA / Apple / Android (mirrored under `logos/`)
-- `kanta_pwa_icon_192.png`, `kanta_pwa_icon_512.png` — same as `../kanta/public/icons/icon-*.png` (rounded square, black disk + green bracket).
-- `kanta_apple_touch_icon_180.png`, `kanta_apple_touch_icon_dark_180.png` — same as `apple-icon.png` / `apple-icon-dark.png` in `../kanta/public/`.
-- `kanta_apple_touch_icon_dark_white_disk_white_square_180.png` — **white** rounded square + **white** disk + green bracket (keepsake for light-on-dark marketing or when you need a light chrome).
+- **Default (Kanta green):** `kanta_pwa_icon_192.png`, `kanta_pwa_icon_512.png` — same as `../kanta/public/icons/icon-*.png` (rounded square, green bracket on black disk).
+- **Default Apple touch:** `kanta_apple_touch_icon_180.png`, `kanta_apple_touch_icon_dark_180.png` — same as `apple-icon.png` / `apple-icon-dark.png` in `../kanta/public/`.
+- **White-disk square (green bracket):** `kanta_apple_touch_icon_dark_white_disk_white_square_180.png`.
+- **Per short-mark colour (all `short_variants_for_export` ids):** `kanta_pwa_icon_192_<id>.png`, `kanta_pwa_icon_512_<id>.png`, `kanta_apple_touch_icon_180_<id>.png`, `kanta_apple_touch_icon_dark_180_<id>.png`. White-disk variants also get `kanta_apple_touch_icon_dark_white_disk_white_square_180_<id>.png`.
+
+## Kanta form marks (UI / “Cursor hole” style)
+- **Hole (dark UI):** gray disk `#c0c4cc` with the bracket **knocked out** (transparent) — `kanta_short_gray_disk_bracket_hole_<size>.png` in `logos/`, and `kanta-short-form-hole_<size>.png` / `kanta-short-form-hole.png` under `../kanta/public/brand/`.
+- **Light:** black disk + filled slate bracket — `kanta_short_black_disk_gray_bracket_<size>.png` in `logos/`, and `kanta-short-form-light_<size>.png` / `kanta-short-form-light.png` in `../kanta/public/brand/`.
 
 ## Full wordmarks (transparent)
 - Same **circular short mark** as app icons + wordmark. Canonical: `full_<id>_transparent.png` (1000×420).
@@ -920,6 +1029,9 @@ if __name__ == "__main__":
 
     print("\n5a) Kanta PWA / Apple mirrors -> logos/ ...")
     export_kanta_pwa_assets_to_logos()
+
+    print("\n5a1) Kanta form marks (gray hole + black/gray light) -> logos/ + kanta/public/brand/ ...")
+    export_kanta_form_mark_variants()
 
     print("\n5b) Kanta /public/brand - short marks (black + white disk, multi-size)...")
     write_kanta_public_brand_short_logos()
