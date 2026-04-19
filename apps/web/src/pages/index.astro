@@ -295,16 +295,19 @@ import Footer from '../components/Footer.astro';
     margin-bottom: 1.5rem;
   }
 
-  /* Full Kanta wordmark — cap height matches one headline line; dark theme = white disk (same pattern as Nav logos) */
+  /* Line 1 = Kanta wordmark image (replaces former “Zyntel Platform.” headline text). */
   .hero-kanta-line {
     display: block;
-    margin-bottom: 0.28em;
+    margin-bottom: 0.35em;
+    line-height: 1;
+    min-height: clamp(2.75rem, 8vw, 4.25rem);
   }
   .hero-kanta-disk {
     display: inline-flex;
     align-items: center;
     max-width: 100%;
     line-height: 0;
+    vertical-align: top;
   }
   .hero-kanta-disk--dark {
     display: none;
@@ -321,9 +324,10 @@ import Footer from '../components/Footer.astro';
   }
   .hero-kanta-logo {
     display: block;
-    height: 0.92em;
+    /* Match visual weight of a large h1 line (not 0.92em — can collapse vs nested line-height) */
+    height: clamp(2.65rem, 7.5vw, 4.1rem);
     width: auto;
-    max-width: min(100%, 26rem);
+    max-width: min(100%, 28rem);
     object-fit: contain;
     object-position: left center;
   }
