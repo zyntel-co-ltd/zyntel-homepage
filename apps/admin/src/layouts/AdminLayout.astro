@@ -11,6 +11,7 @@ const { title, showSidebar = true } = Astro.props;
 // Admin app is standalone — always use root paths (no /admin prefix)
 const base = '';
 const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
+const iconV = '20260426';
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -36,10 +37,10 @@ const path = (p: string) => base ? (base + (p === '/' ? '' : p)) : (p || '/');
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
     <title>{title} | Zyntel Admin</title>
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" />
-    <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" href={`/favicon.ico?v=${iconV}`} sizes="any" />
+    <link rel="icon" type="image/svg+xml" href={`/favicon.svg?v=${iconV}`} sizes="any" />
+    <link rel="icon" type="image/png" href={`/favicon-32x32.png?v=${iconV}`} sizes="32x32" />
+    <link rel="apple-touch-icon" href={`/apple-touch-icon.png?v=${iconV}`} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet" />

@@ -37,6 +37,7 @@ const canonicalURL = canonicalUrlProp
   : new URL(Astro.url.pathname, siteOrigin).href;
 const ogImageURL = new URL(ogImage.startsWith('/') ? ogImage : `/${ogImage}`, siteOrigin).href;
 const socialTitle = ogTitle ?? `${title} | Zyntel`;
+const iconV = '20260426';
 
 const organizationLd = {
   '@context': 'https://schema.org',
@@ -86,18 +87,18 @@ const organizationLd = {
       <script type="application/ld+json" set:html={JSON.stringify(organizationLd)} />
     )}
 
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" id="favicon-svg" />
-    <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href={`/favicon.ico?v=${iconV}`} sizes="any" />
+    <link rel="icon" type="image/svg+xml" href={`/favicon.svg?v=${iconV}`} sizes="any" id="favicon-svg" />
+    <link rel="icon" type="image/png" href={`/favicon-32x32.png?v=${iconV}`} sizes="32x32" />
+    <link rel="apple-touch-icon" href={`/apple-touch-icon.png?v=${iconV}`} />
+    <link rel="manifest" href={`/manifest.webmanifest?v=${iconV}`} />
     <script is:inline>
       (function(){
         try {
           var k='zyntel-theme', s=localStorage.getItem(k);
           var t=s==='light'||s==='dark'?s:'light';
           var link=document.getElementById('favicon-svg');
-          if (link) link.setAttribute('href', t==='dark' ? '/favicon-dark.svg' : '/favicon.svg');
+          if (link) link.setAttribute('href', t==='dark' ? '/favicon-dark.svg?v=20260426' : '/favicon.svg?v=20260426');
         } catch (e) {}
       })();
     </script>

@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
-    <clipPath id="shortCircleClip_cyan_on_black_transparent">
-      <circle cx="512" cy="512" r="425"/>
+    <clipPath id="shortCircleClip_cyan_on_black_appsquare">
+      <circle cx="512" cy="512" r="512"/>
     </clipPath>
     <style type="text/css"><![CDATA[
       @font-face {
@@ -13,8 +13,9 @@
       .mark { font-family: 'Geist Sans', 'Segoe UI', system-ui, sans-serif; font-weight: 700; }
     ]]></style>
   </defs>
-  <g clip-path="url(#shortCircleClip_cyan_on_black_transparent)">
-    <text class="mark" x="114" y="472" text-anchor="start" dominant-baseline="central"
-          fill="#00f0ff" font-size="1069">}</text>
+  <circle cx="512" cy="512" r="512" fill="#0a0a0a"/>
+  <g clip-path="url(#shortCircleClip_cyan_on_black_appsquare)">
+    <text class="mark" x="5" y="456" text-anchor="start" dominant-baseline="central"
+          fill="#00f0ff" font-size="1466">}</text>
   </g>
 </svg>
