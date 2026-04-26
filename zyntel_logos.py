@@ -24,8 +24,9 @@ _warned_sans = False
 _warned_sans_bold = False
 _warned_mono = False
 
-# Short mark: overshoot height slightly so top/bottom ends exit through circle rim.
-_BRACKET_HEIGHT_SCALE = 1.10
+# Short mark: overshoot height so top/bottom ends exit through circle rim.
+# Needs to be strong enough that very large exports (1536/2048) still look "cropped" the same way.
+_BRACKET_HEIGHT_SCALE = 1.25
 # Bracket anchor starts very close to left rim.
 _BRACKET_INSET_FRAC = 0.01
 # Negative = place bracket LEFT of center. Middle curve sits slightly right of left rim.
@@ -39,13 +40,13 @@ _BRACKET_LEFT_FINE_FRAC = 0.0
 def _short_icon_circle_params(canvas: int, *, disk_inset_frac: float | None = None) -> tuple[int, int, int]:
     """Center (cx, cy), radius R — circle inset from square edge.
 
-    disk_inset_frac: fraction of canvas used as padding on each side (default 0.085).
-    Use 0.0 for a maximum inscribed disk (~1px hairline from the raster edge).
+    disk_inset_frac: fraction of canvas used as padding on each side.
+    Default is a maximum inscribed disk (no padding).
     """
     if disk_inset_frac is None:
-        pad = max(2, int(canvas * 0.085))
+        pad = 0
     elif disk_inset_frac <= 0:
-        pad = max(1, canvas // 1024)
+        pad = 0
     else:
         pad = max(2, int(canvas * disk_inset_frac))
     cx = cy = canvas // 2
@@ -53,10 +54,12 @@ def _short_icon_circle_params(canvas: int, *, disk_inset_frac: float | None = No
     return cx, cy, R
 
 
-def _circle_mask_l(canvas: int, cx: int, cy: int, R: int) -> Image.Image:
+def _circle_mask_l(canvas: int, cx: int, cy: int, R: int, *, bleed_px: int = 0) -> Image.Image:
     m = Image.new("L", (canvas, canvas), 0)
     d = ImageDraw.Draw(m)
-    d.ellipse([cx - R, cy - R, cx + R, cy + R], fill=255)
+    # Pillow's ellipse rasterization can leave fully-transparent edge pixels at large sizes even
+    # when the math is "full-bleed". A tiny overscan ensures the disk visually touches edges.
+    d.ellipse([cx - R - bleed_px, cy - R - bleed_px, cx + R + bleed_px, cy + R + bleed_px], fill=255)
     return m
 
 
@@ -93,12 +96,16 @@ def render_short_appicon_raster(
     """
     img = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
     cx, cy, R = _short_icon_circle_params(canvas, disk_inset_frac=disk_inset_frac)
-    mask = _circle_mask_l(canvas, cx, cy, R)
     hair = max(1, canvas // 1024)
+    bleed = hair
+    mask = _circle_mask_l(canvas, cx, cy, R, bleed_px=bleed)
 
     if mode == "appsquare":
         draw = ImageDraw.Draw(img)
-        draw.ellipse([cx - R, cy - R, cx + R, cy + R], fill=hex_to_rgba(variant["circle_bg"]))
+        draw.ellipse(
+            [cx - R - bleed, cy - R - bleed, cx + R + bleed, cy + R + bleed],
+            fill=hex_to_rgba(variant["circle_bg"]),
+        )
 
     target_h = int((2 * R - max(1, hair * 2)) * _BRACKET_HEIGHT_SCALE)
     _, font = fit_bracket_font_max_height(target_h, load_geist_sans_bold)
@@ -255,7 +262,9 @@ def fit_bracket_font_max_height(max_h: int, font_loader) -> tuple[int, object]:
     """Largest font so '}' vertical bbox fits within max_h (width may exceed)."""
     cap = max(8, max_h)
     best = max(8, cap // 3)
-    top = min(cap * 2, 1400)
+    # Large canvases (1536/2048) need very large font sizes; the old 1400px ceiling
+    # made the brace appear "uncropped" (too small) at those sizes.
+    top = min(cap * 2, 8192)
     for fs in range(top, 7, -1):
         f = font_loader(fs)
         try:
@@ -905,7 +914,7 @@ def create_short_appicon_svgs():
     font_url_bold = "../fonts/GeistSans-Bold.otf"
     font_url_fallback = "../fonts/GeistSans-Medium.otf"
     cx = cy = size // 2
-    pad = max(2, int(size * 0.085))
+    pad = 0
     R = max(2, size // 2 - pad)
     hair = max(1, size // 1024)
     target_h = int((2 * R - max(1, hair * 2)) * _BRACKET_HEIGHT_SCALE)
