@@ -4,7 +4,7 @@ import { getPreviewClientById, updatePreviewClient } from '../../../lib/previews
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { clientId, productionUrl } = await request.json();
+    const { clientId, figmaUrl } = await request.json();
     if (!clientId) {
       return new Response(JSON.stringify({ error: 'clientId required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
@@ -14,13 +14,13 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'Client not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
     }
 
-    const urlToSave = String(productionUrl ?? client.productionUrl ?? '').trim();
+    const urlToSave = String(figmaUrl ?? client.figmaUrl ?? '').trim();
     if (!urlToSave) {
-      return new Response(JSON.stringify({ error: 'productionUrl required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'figmaUrl required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
     const SITE = import.meta.env.SITE_URL ?? 'https://admin.zyntel.net';
-    const productionLink = `${SITE}/p/production?token=${client.token}`;
+    const gateLink = `${SITE}/p/figma?token=${client.token}`;
 
     const cc = (() => {
       const recordCc = getAdminClientEmailCc();
@@ -31,21 +31,22 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { ok, error } = await sendEmail({
       to: client.email,
-      subject: `Final link (production) — ${client.name}`,
+      subject: `Design link (Figma) — ${client.name}`,
       html: `<!doctype html>
 <html>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9fafb;margin:0;padding:28px 16px;">
   <div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px;">
     <p style="margin:0 0 10px;font-weight:800;color:#111;font-size:13px;">Zyntel</p>
-    <h1 style="margin:0 0 10px;font-size:18px;color:#111;">Production link</h1>
+    <h1 style="margin:0 0 10px;font-size:18px;color:#111;">Figma design link</h1>
     <p style="margin:0 0 16px;color:#374151;line-height:1.6;font-size:14px;">
-      Here is the production link for <strong>${client.name}</strong>.
+      Hi, here is the live design link for <strong>${client.name}</strong>.
+      You can leave comments directly on the design and we’ll update it with you.
     </p>
-    <a href="${productionLink}" style="display:inline-block;background:#0f766e;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:700;font-size:14px;">
-      Open production →
+    <a href="${gateLink}" style="display:inline-block;background:#111827;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:700;font-size:14px;">
+      Open design in Figma →
     </a>
     <p style="margin:16px 0 0;color:#6b7280;font-size:12px;line-height:1.6;">
-      This link replaces the staging link. If you need a new staging review, reply and we will send a fresh one.
+      This is a controlled link. If you see “disabled”, reply to this email and we’ll re-enable it for you.
     </p>
   </div>
 </body>
@@ -56,15 +57,13 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: error ?? 'Failed to send' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
     }
 
-    // Enable production and disable staging automatically.
     await updatePreviewClient(client.clientId, {
-      productionUrl: urlToSave,
-      productionEnabled: true,
-      productionSentAt: new Date(),
-      stagingEnabled: false,
+      figmaUrl: urlToSave,
+      figmaEnabled: true,
+      figmaSentAt: new Date(),
     });
 
-    return new Response(JSON.stringify({ sent: true, to: client.email, link: productionLink, cc }), {
+    return new Response(JSON.stringify({ sent: true, to: client.email, link: gateLink, cc }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err: any) {

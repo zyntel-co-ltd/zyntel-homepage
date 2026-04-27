@@ -86,6 +86,8 @@ const stats = {
               <td class="preview-actions">
                 <button class="act-btn" data-action="copy" data-link={client.previewLink} title="Copy preview link" type="button">Copy</button>
                 <button class="act-btn" data-action="send" data-client-id={client.clientId} data-email={client.email} title="Send preview email" type="button">Send</button>
+                <button class="act-btn" data-action="upload" data-client-id={client.clientId} data-name={client.name} title="Upload mockup (zip or html)" type="button">Upload</button>
+                <button class="act-btn" data-action="send-figma" data-client-id={client.clientId} data-email={client.email} title="Send Figma design link" type="button">Figma</button>
                 <button class="act-btn" data-action="send-staging" data-client-id={client.clientId} data-email={client.email} title="Send staging link" type="button">Staging</button>
                 <button class="act-btn" data-action="send-production" data-client-id={client.clientId} data-email={client.email} title="Send production link" type="button">Production</button>
                 <a class="act-btn" href={`/previews/${client.clientId}/responses`} title="Copy all responses" type="button">Copy all</a>
@@ -100,7 +102,13 @@ const stats = {
                   intake: client.intake,
                   choiceOption: client.choiceOption,
                   choiceComments: client.choiceComments,
-                  choiceSubmittedAt: client.choiceSubmittedAt
+                  choiceSubmittedAt: client.choiceSubmittedAt,
+                  stagingUrl: client.stagingUrl,
+                  stagingEnabled: client.stagingEnabled,
+                  productionUrl: client.productionUrl,
+                  productionEnabled: client.productionEnabled,
+                  figmaUrl: client.figmaUrl,
+                  figmaEnabled: client.figmaEnabled
                 })} title="Edit client" type="button">Edit</button>
                 {client.displayStatus !== 'disabled'
                   ? <button class="act-btn act-btn--warn" data-action="disable" data-client-id={client.clientId} data-name={client.name} type="button">Disable</button>
@@ -133,6 +141,7 @@ const stats = {
   <div id="modal-confirm" class="preview-modal-overlay" style="display:none"><div class="modal"><h3 id="confirm-title"></h3><p id="confirm-message"></p><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-confirm">Cancel</button><button id="confirm-btn" type="button" class="admin-btn admin-btn-primary">Confirm</button></div></div></div>
 
   <div id="toast-root"></div>
+  <input id="file-mockup" type="file" accept=".zip,text/html,.html" style="display:none" />
 
   <style>
     .previews-header{display:flex;justify-content:space-between;align-items:center;}
@@ -272,6 +281,10 @@ const stats = {
         <div><label>Project type</label><select id="${prefix}-projectType" class="admin-form-input"><option value="website-design">Website Design</option><option value="web-app">Web App</option><option value="marketplace">Marketplace</option><option value="other">Other</option></select></div>
         <div><label>Client folder</label><input id="${prefix}-clientFolder" class="admin-form-input" required /><p class="muted">Must match the folder name in <code>public/clients/</code> exactly.</p></div>
         <div><label>Presentation file</label><input id="${prefix}-presentationFile" class="admin-form-input" value="presentation.html" required /><p class="muted">Exact filename of the entry HTML file in the client folder.</p></div>
+        <div class="full" style="margin-top:6px"><strong style="font-size:12px;color:#111">Links (optional)</strong><p class="muted" style="margin-top:4px">These are private target URLs. Clients only receive the Zyntel gateway links.</p></div>
+        <div class="full"><label>Figma URL</label><input id="${prefix}-figmaUrl" class="admin-form-input" placeholder="https://www.figma.com/file/..." /></div>
+        <div><label>Staging URL</label><input id="${prefix}-stagingUrl" class="admin-form-input" placeholder="https://staging-...vercel.app" /></div>
+        <div><label>Production URL</label><input id="${prefix}-productionUrl" class="admin-form-input" placeholder="https://client.com" /></div>
         <div><label>Expiry (days)</label><input id="${prefix}-expiryDays" class="admin-form-input" type="number" value="30" min="1" required /><p class="muted" id="${prefix}-expiry-text"></p></div>
         <div class="full"><button type="button" class="admin-btn admin-btn-secondary" data-step="2" data-prefix="${prefix}">Next: Design Brief →</button> <a href="#" data-skip="${prefix}">Submit (skip brief)</a></div>
         <div class="full" data-step2 hidden>
@@ -319,12 +332,35 @@ const stats = {
       const sections=[...document.querySelectorAll(`input[id^="${prefix}-section-"]:checked`)].map(i=>i.value);
       const intake={industry:get('industry'),description:get('description'),targetCustomers:get('targetCustomers'),tone:tones,coloursLike:get('coloursLike'),coloursAvoid:get('coloursAvoid'),competitors:get('competitors'),mustHaveSections:sections,specialRequirements:get('specialRequirements'),deadline:get('deadline')};
       const hasIntake=Object.values(intake).some((v)=>Array.isArray(v)?v.length:Boolean(v));
-      return {clientId:get('clientId'),name:get('name'),email:get('email'),projectType:get('projectType')||'website-design',clientFolder:get('clientFolder'),presentationFile:get('presentationFile'),expiryDays:Number(get('expiryDays')||30),intake:hasIntake?intake:undefined};
+      return {
+        clientId:get('clientId'),
+        name:get('name'),
+        email:get('email'),
+        projectType:get('projectType')||'website-design',
+        clientFolder:get('clientFolder'),
+        presentationFile:get('presentationFile'),
+        figmaUrl:get('figmaUrl')||null,
+        stagingUrl:get('stagingUrl')||null,
+        productionUrl:get('productionUrl')||null,
+        expiryDays:Number(get('expiryDays')||30),
+        intake:hasIntake?intake:undefined
+      };
     }
 
     function collectStep1(prefix){
       const get=(id)=>document.getElementById(`${prefix}-${id}`).value?.trim()||'';
-      return {clientId:get('clientId'),name:get('name'),email:get('email'),projectType:get('projectType')||'website-design',clientFolder:get('clientFolder'),presentationFile:get('presentationFile'),expiryDays:Number(get('expiryDays')||30)};
+      return {
+        clientId:get('clientId'),
+        name:get('name'),
+        email:get('email'),
+        projectType:get('projectType')||'website-design',
+        clientFolder:get('clientFolder'),
+        presentationFile:get('presentationFile'),
+        figmaUrl:get('figmaUrl')||null,
+        stagingUrl:get('stagingUrl')||null,
+        productionUrl:get('productionUrl')||null,
+        expiryDays:Number(get('expiryDays')||30)
+      };
     }
     function collectIntake(prefix){
       const get=(id)=>document.getElementById(`${prefix}-${id}`).value?.trim()||'';
@@ -355,10 +391,45 @@ const stats = {
     }
     async function sendStep(kind, clientId, email){
       const path = kind==='staging' ? '/api/previews/send-staging' : '/api/previews/send-production';
-      const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId})});
+      const label = kind==='staging' ? 'staging' : 'production';
+      const urlPrompt = prompt(`Paste the ${label} URL to send to the client.\n\nTip: use a protected link (password/preview protection) and keep this Zyntel gateway link public.`, '');
+      if (urlPrompt === null) return; // cancelled
+      const v = urlPrompt.trim();
+      const payload = kind==='staging'
+        ? (v ? { clientId, stagingUrl: v } : { clientId })
+        : (v ? { clientId, productionUrl: v } : { clientId });
+      const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const d=await r.json().catch(()=>({}));
       if(!r.ok){showToast(d.error||`Failed to send ${kind} link`,'error');return;}
       showToast(`${kind==='staging'?'Staging':'Production'} link sent to ${email}`);
+    }
+
+    async function sendFigma(clientId, email){
+      const figmaUrl = prompt('Paste the Figma file/prototype link to send.\n\nWe will send the client a controlled Zyntel link that redirects to your Figma URL when enabled.', '');
+      if (figmaUrl === null) return;
+      const v = figmaUrl.trim();
+      const r = await fetch('/api/previews/send-figma', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(v ? { clientId, figmaUrl: v } : { clientId }) });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok){showToast(d.error||'Failed to send Figma link','error');return;}
+      showToast(`Figma link sent to ${email}`);
+    }
+
+    async function uploadMockup(clientId, name){
+      const input = document.getElementById('file-mockup');
+      input.value = '';
+      input.onchange = async () => {
+        const f = input.files && input.files[0];
+        if (!f) return;
+        const fd = new FormData();
+        fd.append('clientId', clientId);
+        fd.append('file', f);
+        showToast(`Uploading mockup for ${name}…`);
+        const r = await fetch('/api/previews/upload-mockup', { method: 'POST', body: fd });
+        const d = await r.json().catch(()=>({}));
+        if(!r.ok){showToast(d.error||'Upload failed','error');return;}
+        showToast('Mockup uploaded. The preview link is now live.');
+      };
+      input.click();
     }
 
     newForm.addEventListener('submit',async(e)=>{
@@ -393,13 +464,17 @@ const stats = {
         await navigator.clipboard.writeText(btn.dataset.link); const old=btn.textContent; btn.textContent='✓ Copied'; setTimeout(()=>btn.textContent=old,2000);
       } else if(action==='send'){
         await sendEmail(clientId, btn.dataset.email);
+      } else if(action==='upload'){
+        await uploadMockup(clientId, name);
+      } else if(action==='send-figma'){
+        await sendFigma(clientId, btn.dataset.email);
       } else if(action==='send-staging'){
         await sendStep('staging', clientId, btn.dataset.email);
       } else if(action==='send-production'){
         await sendStep('production', clientId, btn.dataset.email);
       } else if(action==='edit'){
         const c=JSON.parse(btn.dataset.client||'{}'); currentEditClientId=c.clientId;
-        ['name','clientId','email','projectType','clientFolder','presentationFile'].forEach((k)=>{const el=document.getElementById(`edit-${k}`); if(el) el.value=c[k]||'';});
+        ['name','clientId','email','projectType','clientFolder','presentationFile','figmaUrl','stagingUrl','productionUrl'].forEach((k)=>{const el=document.getElementById(`edit-${k}`); if(el) el.value=c[k]||'';});
         document.getElementById('edit-expiryDays').value='30'; updateExpiryPreview('edit');
         const intake=c.intake||{};
         ['industry','description','targetCustomers','coloursLike','coloursAvoid','competitors','specialRequirements','deadline'].forEach((k)=>{const el=document.getElementById(`edit-${k}`); if(el) el.value=intake[k]||'';});

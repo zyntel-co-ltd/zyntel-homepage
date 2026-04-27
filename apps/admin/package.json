@@ -12,7 +12,11 @@
   },
   "dependencies": {
     "@zyntel/db": "*",
+    "@aws-sdk/client-s3": "^3.890.0",
+    "@aws-sdk/s3-request-presigner": "^3.890.0",
+    "adm-zip": "^0.5.16",
     "astro": "^5.0.0",
+    "mime-types": "^2.1.35",
     "pdf-lib": "^1.17.1",
     "resend": "^4.0.0"
   },

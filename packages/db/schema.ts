@@ -120,6 +120,19 @@ export interface PreviewClient {
   productionUrl?: string | null;
   productionEnabled?: boolean | null;
   productionSentAt?: Date | null;
+  figmaUrl?: string | null;
+  figmaEnabled?: boolean | null;
+  figmaSentAt?: Date | null;
+  activeMockupPackId?: string | null;
+}
+
+export interface PreviewMockupPack {
+  id: string;
+  previewClientId: string;
+  r2Prefix: string;
+  entryPath: string;
+  originalFilename: string | null;
+  createdAt: Date;
 }
 
 // --- Quotes ---

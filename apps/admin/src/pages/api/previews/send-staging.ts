@@ -4,7 +4,7 @@ import { getPreviewClientById, updatePreviewClient } from '../../../lib/previews
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { clientId } = await request.json();
+    const { clientId, stagingUrl } = await request.json();
     if (!clientId) {
       return new Response(JSON.stringify({ error: 'clientId required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
@@ -12,6 +12,11 @@ export const POST: APIRoute = async ({ request }) => {
     const client = await getPreviewClientById(String(clientId));
     if (!client) {
       return new Response(JSON.stringify({ error: 'Client not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    const urlToSave = String(stagingUrl ?? client.stagingUrl ?? '').trim();
+    if (!urlToSave) {
+      return new Response(JSON.stringify({ error: 'stagingUrl required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
     const SITE = import.meta.env.SITE_URL ?? 'https://admin.zyntel.net';
@@ -52,6 +57,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     await updatePreviewClient(client.clientId, {
+      stagingUrl: urlToSave,
       stagingEnabled: true,
       stagingSentAt: new Date(),
     });

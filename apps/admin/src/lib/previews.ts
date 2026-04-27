@@ -1,5 +1,5 @@
 import { sql } from '@zyntel/db';
-import type { PreviewClient, PreviewClientIntake } from '@zyntel/db/schema';
+import type { PreviewClient, PreviewClientIntake, PreviewMockupPack } from '@zyntel/db/schema';
 
 function rowToClient(row: Record<string, any>): PreviewClient {
   return {
@@ -29,6 +29,21 @@ function rowToClient(row: Record<string, any>): PreviewClient {
     productionUrl: (row.production_url ?? null) as string | null,
     productionEnabled: (row.production_enabled ?? null) as boolean | null,
     productionSentAt: row.production_sent_at ? new Date(row.production_sent_at) : null,
+    figmaUrl: (row.figma_url ?? null) as string | null,
+    figmaEnabled: (row.figma_enabled ?? null) as boolean | null,
+    figmaSentAt: row.figma_sent_at ? new Date(row.figma_sent_at) : null,
+    activeMockupPackId: (row.active_mockup_pack_id ?? null) as string | null,
+  };
+}
+
+function rowToMockupPack(row: Record<string, any>): PreviewMockupPack {
+  return {
+    id: String(row.id),
+    previewClientId: String(row.preview_client_id),
+    r2Prefix: String(row.r2_prefix),
+    entryPath: String(row.entry_path),
+    originalFilename: (row.original_filename ?? null) as string | null,
+    createdAt: new Date(row.created_at),
   };
 }
 
@@ -116,6 +131,10 @@ export async function updatePreviewClient(
     productionUrl: string | null;
     productionEnabled: boolean | null;
     productionSentAt: Date | null;
+    figmaUrl: string | null;
+    figmaEnabled: boolean | null;
+    figmaSentAt: Date | null;
+    activeMockupPackId: string | null;
   }>
 ): Promise<PreviewClient> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
@@ -178,6 +197,22 @@ export async function updatePreviewClient(
     updates.push(`production_sent_at = $${values.length + 1}`);
     values.push(data.productionSentAt);
   }
+  if (data.figmaUrl !== undefined) {
+    updates.push(`figma_url = $${values.length + 1}`);
+    values.push(data.figmaUrl);
+  }
+  if (data.figmaEnabled !== undefined) {
+    updates.push(`figma_enabled = $${values.length + 1}`);
+    values.push(data.figmaEnabled as any);
+  }
+  if (data.figmaSentAt !== undefined) {
+    updates.push(`figma_sent_at = $${values.length + 1}`);
+    values.push(data.figmaSentAt);
+  }
+  if (data.activeMockupPackId !== undefined) {
+    updates.push(`active_mockup_pack_id = $${values.length + 1}`);
+    values.push(data.activeMockupPackId);
+  }
 
   if (!updates.length) {
     const existing = await getPreviewClientById(clientId);
@@ -196,6 +231,47 @@ export async function updatePreviewClient(
   const row = rows[0] as Record<string, any> | undefined;
   if (!row) throw new Error('Preview client not found');
   return rowToClient(row);
+}
+
+export async function getActiveMockupPackByToken(token: string): Promise<PreviewMockupPack | null> {
+  if (!import.meta.env.DATABASE_URL) return null;
+  const rows = await sql`
+    SELECT p.*
+    FROM preview_mockup_packs p
+    JOIN preview_clients c ON c.active_mockup_pack_id = p.id
+    WHERE c.token = ${token}
+    LIMIT 1
+  `;
+  const row = rows[0] as Record<string, any> | undefined;
+  return row ? rowToMockupPack(row) : null;
+}
+
+export async function createMockupPackForClient(data: {
+  clientId: string;
+  r2Prefix: string;
+  entryPath: string;
+  originalFilename?: string | null;
+}): Promise<PreviewMockupPack> {
+  if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
+  const clientRows = await sql`SELECT id FROM preview_clients WHERE client_id = ${data.clientId}`;
+  const clientRow = clientRows[0] as { id: string } | undefined;
+  if (!clientRow?.id) throw new Error('Preview client not found');
+
+  const rows = await sql`
+    INSERT INTO preview_mockup_packs (preview_client_id, r2_prefix, entry_path, original_filename)
+    VALUES (${clientRow.id}, ${data.r2Prefix}, ${data.entryPath}, ${data.originalFilename ?? null})
+    RETURNING *
+  `;
+  const pack = rowToMockupPack(rows[0] as Record<string, any>);
+
+  // Set as active pack
+  await sql`
+    UPDATE preview_clients
+    SET active_mockup_pack_id = ${pack.id}, updated_at = now()
+    WHERE client_id = ${data.clientId}
+  `;
+
+  return pack;
 }
 
 export async function submitPreviewChoiceByToken(data: {

@@ -28,10 +28,13 @@ if (!token) {
         day: 'numeric', month: 'long', year: 'numeric'
       });
     } else {
-      return Astro.redirect(
-        `/clients/${client.clientFolder}/${client.presentationFile}?token=${token}`,
-        302
-      );
+      // Prefer R2-backed mockups (no static files + no /clients path exposure).
+      if (client.activeMockupPackId) {
+        return Astro.redirect(`/d/${client.clientId}/entry?token=${token}`, 302);
+      }
+
+      // Backwards-compat: legacy previews stored in static assets.
+      return Astro.redirect(`/clients/${client.clientFolder}/${client.presentationFile}?token=${token}`, 302);
     }
   }
 }
