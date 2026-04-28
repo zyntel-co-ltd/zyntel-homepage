@@ -23,6 +23,9 @@ const serviceClients = await getAllServiceClients();
           data-contact={c.contactName}
           data-health={c.healthCheckUrl ?? ''}
           data-api={c.apiUrl ?? ''}
+          data-repo={c.repoUrl ?? ''}
+          data-sentry={c.sentryUrl ?? ''}
+          data-cronitor={c.cronitorUrl ?? ''}
         >{c.name} — {c.productName}</option>
       ))}
     </select>
@@ -40,6 +43,14 @@ const serviceClients = await getAllServiceClients();
       <div>
         <span class="maint-kicker">API base URL</span>
         <div id="conn-api-display" class="maint-connection-value">—</div>
+      </div>
+      <div>
+        <span class="maint-kicker">Repository link(s)</span>
+        <div id="conn-repo-display" class="maint-connection-value">—</div>
+      </div>
+      <div>
+        <span class="maint-kicker">Observability</span>
+        <div id="conn-obs-display" class="maint-connection-value">—</div>
       </div>
     </div>
     <div class="maint-connection-actions">
@@ -169,6 +180,9 @@ const serviceClients = await getAllServiceClients();
         <div><label>Contact Email</label><input id="nc-contact-email" type="email" class="admin-form-input" required /></div>
         <div class="full"><label>Health Check URL (optional)</label><input id="nc-health-url" class="admin-form-input" placeholder="https://tenant.example.com/health" /></div>
         <div class="full"><label>API URL (optional)</label><input id="nc-api-url" class="admin-form-input" placeholder="https://tenant.example.com/api" /></div>
+        <div class="full"><label>Repository URL(s) (optional)</label><textarea id="nc-repo-url" class="admin-form-input" rows="2" placeholder="https://github.com/org/repo&#10;https://github.com/org/another-repo"></textarea></div>
+        <div class="full"><label>Sentry URL (optional)</label><input id="nc-sentry-url" class="admin-form-input" placeholder="https://sentry.io/organizations/.../projects/..." /></div>
+        <div class="full"><label>Cronitor URL (optional)</label><input id="nc-cronitor-url" class="admin-form-input" placeholder="https://cronitor.io/..." /></div>
         <div class="full maint-checkbox-row">
           <label class="maint-inline-check"><input type="checkbox" id="nc-generate-key" /> Generate API key now (shown once after create)</label>
         </div>
@@ -402,9 +416,14 @@ const serviceClients = await getAllServiceClients();
       const opt = sel?.selectedOptions?.[0];
       const health = (opt?.dataset?.health ?? '').trim();
       const api = (opt?.dataset?.api ?? '').trim();
+      const repo = (opt?.dataset?.repo ?? '').trim();
+      const sentry = (opt?.dataset?.sentry ?? '').trim();
+      const cronitor = (opt?.dataset?.cronitor ?? '').trim();
       const hEl = document.getElementById('conn-health-display');
       const aEl = document.getElementById('conn-api-display');
-      if (!hEl || !aEl) return;
+      const rEl = document.getElementById('conn-repo-display');
+      const oEl = document.getElementById('conn-obs-display');
+      if (!hEl || !aEl || !rEl || !oEl) return;
       if (health) {
         const a = document.createElement('a');
         a.href = health;
@@ -424,6 +443,44 @@ const serviceClients = await getAllServiceClients();
         aEl.replaceChildren(a);
       } else {
         aEl.textContent = 'Not set';
+      }
+
+      if (repo) {
+        const urls = repo.split(/[\n,]+/g).map(s => s.trim()).filter(Boolean);
+        rEl.replaceChildren();
+        urls.forEach((u, idx) => {
+          const a = document.createElement('a');
+          a.href = u;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.textContent = u;
+          rEl.appendChild(a);
+          if (idx !== urls.length - 1) rEl.appendChild(document.createElement('br'));
+        });
+      } else {
+        rEl.textContent = 'Not set';
+      }
+
+      const obsLinks: Array<{ label: string; url: string }> = [];
+      if (sentry) obsLinks.push({ label: 'Sentry', url: sentry });
+      if (cronitor) obsLinks.push({ label: 'Cronitor', url: cronitor });
+      if (obsLinks.length) {
+        oEl.replaceChildren();
+        obsLinks.forEach((l, idx) => {
+          const a = document.createElement('a');
+          a.href = l.url;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.textContent = l.label;
+          oEl.appendChild(a);
+          if (idx !== obsLinks.length - 1) {
+            const sep = document.createElement('span');
+            sep.textContent = ' · ';
+            oEl.appendChild(sep);
+          }
+        });
+      } else {
+        oEl.textContent = 'Not set';
       }
     }
 
@@ -681,6 +738,9 @@ const serviceClients = await getAllServiceClients();
         invoiceClientId: inv ? Number(inv) : null,
         healthCheckUrl: document.getElementById('nc-health-url').value.trim() || null,
         apiUrl: document.getElementById('nc-api-url').value.trim() || null,
+        repoUrl: document.getElementById('nc-repo-url').value.trim() || null,
+        sentryUrl: document.getElementById('nc-sentry-url').value.trim() || null,
+        cronitorUrl: document.getElementById('nc-cronitor-url').value.trim() || null,
         notes: document.getElementById('nc-notes').value.trim() || null,
         generateApiKey: !!document.getElementById('nc-generate-key')?.checked,
       };

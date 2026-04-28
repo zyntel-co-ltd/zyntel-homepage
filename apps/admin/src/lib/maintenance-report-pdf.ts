@@ -4,6 +4,65 @@ import { getServiceClientById, getMaintenanceLogs, getWorkOrders } from './maint
 const MARGIN = 50;
 const CONTENT_WIDTH = 595 - MARGIN * 2;
 const CYAN = rgb(0, 0.94, 1);
+const COMPANY_FOOTER =
+  'Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061';
+
+function parseRepoUrls(repoUrl: string | null | undefined): string[] {
+  if (!repoUrl) return [];
+  return repoUrl
+    .split(/[\n,]+/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function parseGitHubOwnerRepo(url: string): { owner: string; repo: string } | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname !== 'github.com') return null;
+    const parts = u.pathname.split('/').filter(Boolean);
+    if (parts.length < 2) return null;
+    return { owner: parts[0], repo: parts[1].replace(/\.git$/, '') };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchGitHubCommits(opts: {
+  repoUrl: string;
+  sinceIso: string;
+  untilIso: string;
+}): Promise<{ repoUrl: string; total: number | null; commits: Array<{ sha: string; message: string; date: string }> }> {
+  const parsed = parseGitHubOwnerRepo(opts.repoUrl);
+  if (!parsed) return { repoUrl: opts.repoUrl, total: null, commits: [] };
+  const token = import.meta.env.GITHUB_TOKEN;
+  if (!token) return { repoUrl: opts.repoUrl, total: null, commits: [] };
+
+  const apiUrl =
+    `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}` +
+    `/commits?since=${encodeURIComponent(opts.sinceIso)}&until=${encodeURIComponent(opts.untilIso)}&per_page=20`;
+
+  try {
+    const res = await fetch(apiUrl, {
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    });
+    if (!res.ok) return { repoUrl: opts.repoUrl, total: null, commits: [] };
+    const json = await res.json().catch(() => []);
+    const commits = Array.isArray(json)
+      ? json.map((c: any) => ({
+          sha: String(c?.sha ?? '').slice(0, 7),
+          message: String(c?.commit?.message ?? '').split('\n')[0].trim(),
+          date: String(c?.commit?.author?.date ?? ''),
+        })).filter((c: any) => c.sha && c.message)
+      : [];
+    return { repoUrl: opts.repoUrl, total: commits.length, commits };
+  } catch {
+    return { repoUrl: opts.repoUrl, total: null, commits: [] };
+  }
+}
 
 async function loadLogo(baseUrl: string, path: string): Promise<Uint8Array | null> {
   try {
@@ -213,8 +272,36 @@ export async function generateMaintenanceReportPdf(opts: {
   y[0] -= 6;
   hr();
 
+  // Code changes (optional, GitHub only)
+  const repoUrls = parseRepoUrls(client.repoUrl);
+  if (repoUrls.length) {
+    draw('6. Code changes (linked repositories)', MARGIN, 13, true);
+    y[0] -= 4;
+    const sinceIso = new Date(qStartStr + 'T00:00:00.000Z').toISOString();
+    const untilIso = new Date(qEndStr + 'T23:59:59.999Z').toISOString();
+    const repos = await Promise.all(repoUrls.map((repoUrl) => fetchGitHubCommits({ repoUrl, sinceIso, untilIso })));
+    for (const r of repos) {
+      draw(r.repoUrl, MARGIN + 10, 9, true);
+      if (r.total === null) {
+        draw('Unable to fetch commit summary (non-GitHub URL or missing GITHUB_TOKEN).', MARGIN + 10, 9, false, rgb(0.5, 0.5, 0.5));
+        continue;
+      }
+      if (r.commits.length === 0) {
+        draw('No commits found in this window.', MARGIN + 10, 9, false, rgb(0.5, 0.5, 0.5));
+        continue;
+      }
+      for (const c of r.commits.slice(0, 10)) {
+        const msg = truncate(c.message, font, 8, CONTENT_WIDTH - 40);
+        draw(`- ${c.sha} ${msg}`, MARGIN + 18, 8);
+      }
+      if (r.commits.length > 10) draw(`(+${r.commits.length - 10} more)`, MARGIN + 18, 8, false, rgb(0.5, 0.5, 0.5));
+      y[0] -= 6;
+    }
+    hr();
+  }
+
   // Overall status
-  draw('6. Overall Status', MARGIN, 13, true);
+  draw(repoUrls.length ? '7. Overall Status' : '6. Overall Status', MARGIN, 13, true);
   y[0] -= 4;
   const statusText = incidents.length === 0
     ? `${client.productName} operated without incidents this quarter. ${preventive.length} preventive maintenance activities were completed as planned.`
@@ -226,7 +313,7 @@ export async function generateMaintenanceReportPdf(opts: {
   hr();
 
   // Footer
-  page.drawText('Prepared by Zyntel Limited · Kampala, Uganda · zyntel.net', {
+  page.drawText(COMPANY_FOOTER, {
     x: MARGIN,
     y: y[0],
     size: 8,

@@ -381,10 +381,16 @@ const stats = {
       }).filter((i) => i.description.trim());
     }
 
+    const DEFAULT_OVERAGE_DISCLAIMER =
+      'This quote is based on the scope understood at the time of quoting. If additional requirements, change requests, or unforeseen technical constraints arise, the final cost may exceed the quoted amount. Any overages will be communicated and agreed on before extra work begins.';
+
     // Default valid-until to 30 days from now
-    const thirtyDaysFromNow = new Date(); thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-    const isoDate = thirtyDaysFromNow.toISOString().slice(0, 10);
-    document.getElementById('new-validUntil').value = isoDate;
+    function computeDefaultValidUntilIso() {
+      const d = new Date();
+      d.setDate(d.getDate() + 30);
+      return d.toISOString().slice(0, 10);
+    }
+    document.getElementById('new-validUntil').value = computeDefaultValidUntilIso();
 
     document.getElementById('new-add-item').addEventListener('click', () => {
       document.getElementById('new-line-items').appendChild(createItemRow('new'));
@@ -394,7 +400,9 @@ const stats = {
     document.getElementById('btn-new-quote').addEventListener('click', () => {
       document.getElementById('form-new-quote').reset();
       document.getElementById('new-line-items').innerHTML = '';
-      document.getElementById('new-validUntil').value = isoDate;
+      document.getElementById('new-validUntil').value = computeDefaultValidUntilIso();
+      const overEl = document.getElementById('new-overage');
+      if (overEl && !overEl.value?.trim()) overEl.value = DEFAULT_OVERAGE_DISCLAIMER;
       // Add a blank row to start
       document.getElementById('new-line-items').appendChild(createItemRow('new'));
       recalcItems('new');
@@ -423,6 +431,7 @@ const stats = {
       };
       const res = await fetch('/api/quotes/quotes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) { showToast('Failed to create quote', 'error'); return; }
+      window.__adminClearUnsavedChanges?.();
       closeModal('modal-new-quote'); location.reload();
     });
 
@@ -444,6 +453,7 @@ const stats = {
       };
       const res = await fetch('/api/quotes/quotes', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) { showToast('Failed to update quote', 'error'); return; }
+      window.__adminClearUnsavedChanges?.();
       closeModal('modal-edit-quote'); location.reload();
     });
 

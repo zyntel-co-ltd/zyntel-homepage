@@ -151,13 +151,6 @@ const iconV = '20260426';
               </svg>
               Pitches
             </a>
-            <a href="/performance" class="admin-nav-item" data-active={Astro.url.pathname.startsWith('/performance') ? 'true' : undefined}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 12l3.5-4 3 2.5 3-5 2.5 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="13.5" cy="3.5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
-              </svg>
-              Performance
-            </a>
           </nav>
           <div class="admin-sidebar-footer">
             <a href="/help" class="admin-btn admin-btn-ghost" style="width:100%;text-align:left;margin-bottom:0.5rem;font-size:0.8125rem;display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;border-radius:6px;text-decoration:none;color:var(--admin-text-muted);">
@@ -194,6 +187,9 @@ const iconV = '20260426';
         },true);
         document.addEventListener('input',function(e){
           if(adminShouldTrackUnsaved(e.target))window.__adminUnsavedChanges=true;
+        },true);
+        document.addEventListener('submit',function(){
+          window.__adminClearUnsavedChanges?.();
         },true);
       })();
       document.getElementById('admin-logout')?.addEventListener('click', () => {

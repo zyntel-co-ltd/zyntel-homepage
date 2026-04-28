@@ -128,8 +128,8 @@ export async function generateQuotePdf(
   };
 
   drawRight('Quote No.', quote.quoteNumber);
-  drawRight('Date', new Date(quote.createdAt).toLocaleDateString());
-  if (quote.validUntil) drawRight('Valid Until', new Date(quote.validUntil).toLocaleDateString());
+  drawRight('Date', new Date(quote.createdAt).toLocaleDateString('en-GB'));
+  if (quote.validUntil) drawRight('Valid Until', new Date(quote.validUntil).toLocaleDateString('en-GB'));
   drawRight('Total', formatMoney(quote.total, quote.currency));
   y = Math.min(y, yRight - 10);
 
@@ -239,14 +239,6 @@ export async function generateQuotePdf(
     y -= 10;
   }
 
-  // Signature line
-  y -= 20;
-  page.drawRectangle({ x: MARGIN, y: y - 2, width: CONTENT_WIDTH, height: 1, color: rgb(0.85, 0.85, 0.85) });
-  y -= 16;
-  draw('Acceptance', MARGIN, 10, true);
-  draw('Client signature: _________________________________   Date: _______________', MARGIN, 9);
-  y -= 10;
-
   // Footer
   if (quote.validUntil) {
     const validUntilFormatted = new Date(quote.validUntil).toLocaleDateString('en-GB', {
@@ -259,7 +251,7 @@ export async function generateQuotePdf(
   y -= 4;
   page.drawRectangle({ x: MARGIN, y: y - 2, width: CONTENT_WIDTH, height: 1, color: rgb(0.9, 0.9, 0.9) });
   y -= 14;
-  page.drawText('Prepared by Zyntel Limited · Kampala, Uganda · zyntel.net', {
+  page.drawText('Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061', {
     x: MARGIN,
     y,
     size: 8,

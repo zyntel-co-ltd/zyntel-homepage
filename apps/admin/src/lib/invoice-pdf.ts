@@ -220,6 +220,16 @@ export async function generateInvoicePdf(invoice: Invoice, options: PdfOptions =
     }
   }
 
+  // Footer (company address/contact)
+  const footerY = 45;
+  page.drawText('Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061', {
+    x: MARGIN,
+    y: footerY,
+    size: 8,
+    font,
+    color: rgb(0.6, 0.6, 0.6),
+  });
+
   return doc.save();
 }
 
@@ -287,6 +297,15 @@ export async function generateReceiptPdf(
   y -= 24;
 
   page.drawRectangle({ x: MARGIN, y: y - 2, width: receiptWidth, height: 1, color: rgb(0.9, 0.9, 0.9) });
+
+  // Footer (company address/contact)
+  page.drawText('Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061', {
+    x: MARGIN,
+    y: 45,
+    size: 8,
+    font,
+    color: rgb(0.6, 0.6, 0.6),
+  });
 
   return doc.save();
 }

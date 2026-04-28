@@ -381,7 +381,7 @@ const stats = {
       }
       const res=await fetch('/api/previews/clients',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       if(!res.ok){showToast('Failed to create client','error');return;}
-      const c=await res.json(); closeModal('modal-new-client'); location.reload();
+      const c=await res.json(); window.__adminClearUnsavedChanges?.(); closeModal('modal-new-client'); location.reload();
       showToast('Client created', 'success', [{label:'Send email now',onClick:()=>sendEmail(c.clientId,c.email)}]);
     }
     async function sendEmail(clientId,email){
@@ -442,6 +442,7 @@ const stats = {
       payload.clientId=currentEditClientId||payload.clientId;
       const r=await fetch('/api/previews/clients',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       if(!r.ok){showToast('Failed to update client','error');return;}
+      window.__adminClearUnsavedChanges?.();
       closeModal('modal-edit-client'); location.reload();
     });
 

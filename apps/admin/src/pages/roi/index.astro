@@ -159,6 +159,7 @@ const defs = await listROIMetricDefinitions();
       const r=await fetch('/api/roi/definitions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const d=await r.json().catch(()=>({}));
       if(!r.ok){showToast(d.error||'Failed to save','error');return;}
+      window.__adminClearUnsavedChanges?.();
       closeModal('modal-add-metric');
       location.reload();
     });
