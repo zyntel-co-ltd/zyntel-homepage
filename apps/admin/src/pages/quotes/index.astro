@@ -207,9 +207,10 @@ const stats = {
           <label>Terms (optional)</label>
           <textarea id="edit-terms" class="admin-form-input" rows="3"></textarea>
         </div>
-        <div class="form-row">
+        <div class="form-row" id="edit-overage-row">
           <label>Cost &amp; scope notice</label>
           <textarea id="edit-overage" class="admin-form-input" rows="3"></textarea>
+          <button type="button" class="admin-btn admin-btn-secondary" id="edit-add-overage" style="display:none;margin-top:6px;align-self:flex-start;">+ Add scope notice</button>
         </div>
         <div class="modal-actions">
           <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-edit-quote">Cancel</button>
@@ -253,6 +254,15 @@ const stats = {
           <option value="1">Email 2</option>
         </select>
       </div>
+      <div class="form-row">
+        <label>When to send</label>
+        <select id="send-when" class="admin-form-input">
+          <option value="0">Send now</option>
+          <option value="10">In 10 seconds (undo)</option>
+          <option value="60">In 1 minute (undo)</option>
+          <option value="300">In 5 minutes (undo)</option>
+        </select>
+      </div>
       <p class="admin-login-error" id="send-quote-error" style="display:none;"></p>
       <div class="modal-actions">
         <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-send-quote">Cancel</button>
@@ -288,10 +298,26 @@ const stats = {
     .form-row{display:flex;flex-direction:column;gap:4px;}
     .form-row label{font-size:12px;font-weight:600;color:#374151;}
     .form-row--half{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-    .line-items-table{width:100%;border-collapse:collapse;font-size:12px;}
-    .line-items-table th,.line-items-table td{padding:4px 6px;border:1px solid #e5e7eb;text-align:left;}
-    .line-items-table th{background:#f9fafb;font-weight:600;}
-    .line-items-table input{width:100%;border:none;padding:2px 4px;font-size:12px;background:transparent;}
+    .line-items-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;overflow:hidden;border-radius:10px;border:1px solid #e5e7eb;}
+    .line-items-table th,.line-items-table td{padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:left;}
+    .line-items-table tr:last-child td{border-bottom:none;}
+    .line-items-table th{background:#f9fafb;font-weight:700;color:#111827;font-size:12px;}
+    .line-items-table input{
+      width:100%;
+      border:1px solid #e5e7eb;
+      padding:8px 10px;
+      font-size:12px;
+      background:#fff;
+      border-radius:8px;
+      outline:none;
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    .line-items-table input:focus{
+      border-color:#635bff;
+      box-shadow:0 0 0 3px rgba(99,91,255,.15);
+    }
+    .line-items-table input::placeholder{color:#9ca3af;}
+    .li-amount{font-variant-numeric:tabular-nums;}
     .line-items-total{text-align:right;font-weight:700;font-size:13px;margin-top:6px;}
     #toast-root{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:2000;}
     .toast{background:#111;color:#fff;border-radius:8px;padding:10px 12px;font-size:12px;min-width:260px;}
@@ -299,21 +325,23 @@ const stats = {
     .toast-actions{display:flex;gap:6px;margin-top:8px;}
   </style>
 
-  <script>
+  <script define:vars={{ CLIENTS: clients }}>
     let activeFilter = 'all';
     let activeSearch = '';
     let confirmCallback = null;
     const tbody = document.getElementById('quotes-tbody');
-    const CLIENTS = ${JSON.stringify(clients)};
+    const CLIENT_LIST = Array.isArray(CLIENTS) ? CLIENTS : [];
 
     const sendModal = document.getElementById('modal-send-quote');
     const sendEmail1 = document.getElementById('send-email-1');
     const sendEmail2 = document.getElementById('send-email-2');
     const sendTarget = document.getElementById('send-email-target');
+    const sendWhen = document.getElementById('send-when');
     const sendErr = document.getElementById('send-quote-error');
     const sendConfirmBtn = document.getElementById('confirm-send-quote');
     let sendQuoteId = null;
     let sendClientId = null;
+    let sendTimer = null;
 
     function syncSendTargetOptions() {
       const has2 = !!sendEmail2.value.trim();
@@ -329,7 +357,7 @@ const stats = {
       let emails = [];
       const cid = clientId ? Number(clientId) : null;
       if (cid) {
-        const c = CLIENTS.find((x) => Number(x.id) === cid);
+        const c = CLIENT_LIST.find((x) => Number(x.id) === cid);
         if (c && Array.isArray(c.emails) && c.emails.length) emails = c.emails.map((e) => String(e).trim()).filter(Boolean);
         else if (c && c.email) emails = [String(c.email).trim()].filter(Boolean);
       }
@@ -356,32 +384,57 @@ const stats = {
       }
       const useSecond = sendTarget.value === '1' && !!e2;
       const to = useSecond ? e2 : list[0];
+      const delaySeconds = Math.max(0, Number(sendWhen?.value || 0) || 0);
+      const delayMs = delaySeconds * 1000;
 
       sendConfirmBtn.disabled = true;
       sendConfirmBtn.textContent = 'Sending...';
       try {
-        const res = await fetch('/api/quotes/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ quoteId: sendQuoteId, to, client_emails: list }),
-        });
-        const d = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          sendErr.textContent = d.error || 'Failed to send email';
-          sendErr.style.display = 'block';
-          return;
-        }
-        // Update in-memory client list so next send uses latest emails without reload.
-        const cid = sendClientId ? Number(sendClientId) : null;
-        if (cid) {
-          const idx = CLIENTS.findIndex((x) => Number(x.id) === cid);
-          if (idx >= 0) CLIENTS[idx] = { ...CLIENTS[idx], emails: list, email: list[0] };
-        }
+        const actuallySend = async () => {
+          const res = await fetch('/api/quotes/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quoteId: sendQuoteId, to, client_emails: list }),
+          });
+          const d = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(d.error || 'Failed to send email');
+          // Update in-memory client list so next send uses latest emails without reload.
+          const cid = sendClientId ? Number(sendClientId) : null;
+          if (cid) {
+            const idx = CLIENT_LIST.findIndex((x) => Number(x.id) === cid);
+            if (idx >= 0) CLIENT_LIST[idx] = { ...CLIENT_LIST[idx], emails: list, email: list[0] };
+          }
+          showToast(`Quote sent to ${to}`);
+        };
+
         closeModal('modal-send-quote');
-        showToast(`Quote sent to ${to}`);
+
+        if (sendTimer) {
+          clearTimeout(sendTimer);
+          sendTimer = null;
+        }
+
+        if (delayMs > 0) {
+          showToast(`Scheduled: sending in ${delaySeconds}s to ${to}`, 'success', [
+            {
+              label: 'Undo',
+              onClick: () => {
+                if (sendTimer) clearTimeout(sendTimer);
+                sendTimer = null;
+                showToast('Send cancelled');
+              },
+            },
+          ]);
+          sendTimer = setTimeout(() => {
+            sendTimer = null;
+            void actuallySend().catch((err) => showToast(err?.message || 'Failed to send', 'error'));
+          }, delayMs);
+        } else {
+          await actuallySend();
+        }
       } catch (e) {
-        sendErr.textContent = e instanceof Error ? e.message : 'Unknown error';
-        sendErr.style.display = 'block';
+        // If modal is closed and send is immediate, surface error in toast.
+        showToast(e instanceof Error ? e.message : 'Unknown error', 'error');
       } finally {
         sendConfirmBtn.disabled = false;
         sendConfirmBtn.textContent = 'Send';
@@ -454,17 +507,30 @@ const stats = {
       const tr = document.createElement('tr');
       const desc = item.description || '';
       const qty = item.quantity || 1;
-      const price = item.unitPrice || 0;
-      const amount = item.amount || (qty * price);
+      const price = item.unitPrice ? Number(item.unitPrice) : '';
+      const amount = item.amount || (Number(qty) * Number(price || 0));
       tr.innerHTML = `
         <td><input type="text" placeholder="Description" value="${desc}" class="li-desc" /></td>
         <td><input type="number" value="${qty}" min="0.01" step="0.01" class="li-qty" style="width:60px" /></td>
-        <td><input type="number" value="${price}" min="0" step="0.01" class="li-price" style="width:90px" /></td>
+        <td><input type="number" value="${price}" min="0" step="0.01" class="li-price" style="width:110px" placeholder="0.00" /></td>
         <td class="li-amount">${Number(amount).toFixed(2)}</td>
-        <td><button type="button" class="act-btn act-btn--danger li-remove">✕</button></td>
+        <td style="white-space:nowrap;display:flex;gap:6px;">
+          <button type="button" class="act-btn li-dup" title="Duplicate row">⎘</button>
+          <button type="button" class="act-btn act-btn--danger li-remove" title="Delete row">✕</button>
+        </td>
       `;
       const inputs = tr.querySelectorAll('input');
       inputs.forEach((inp) => inp.addEventListener('input', () => recalcItems(prefix)));
+      tr.querySelector('.li-dup').addEventListener('click', () => {
+        const next = createItemRow(prefix, {
+          description: tr.querySelector('.li-desc')?.value || '',
+          quantity: Number(tr.querySelector('.li-qty')?.value || 1),
+          unitPrice: Number(tr.querySelector('.li-price')?.value || 0),
+          amount: Number(tr.querySelector('.li-qty')?.value || 1) * Number(tr.querySelector('.li-price')?.value || 0),
+        });
+        tr.insertAdjacentElement('afterend', next);
+        recalcItems(prefix);
+      });
       tr.querySelector('.li-remove').addEventListener('click', () => { tr.remove(); recalcItems(prefix); });
       return tr;
     }
@@ -591,7 +657,27 @@ const stats = {
         document.getElementById('edit-validUntil').value = q.validUntil ? String(q.validUntil).slice(0, 10) : '';
         document.getElementById('edit-notes').value = q.notes || '';
         document.getElementById('edit-terms').value = q.terms || '';
-        document.getElementById('edit-overage').value = q.overageDisclaimer || DEFAULT_OVERAGE_DISCLAIMER;
+        const editOverageRow = document.getElementById('edit-overage-row');
+        const editAddOverageBtn = document.getElementById('edit-add-overage');
+        const editOverage = document.getElementById('edit-overage');
+        const hasOverage = q.overageDisclaimer != null && String(q.overageDisclaimer).trim() !== '';
+        if (hasOverage) {
+          editOverageRow.style.display = 'flex';
+          editAddOverageBtn.style.display = 'none';
+          editOverage.style.display = 'block';
+          editOverage.value = String(q.overageDisclaimer);
+        } else {
+          // Hide textarea during edit when it wasn't previously present; allow adding explicitly.
+          editOverageRow.style.display = 'flex';
+          editOverage.style.display = 'none';
+          editAddOverageBtn.style.display = 'inline-flex';
+          editOverage.value = '';
+          editAddOverageBtn.onclick = () => {
+            editOverage.style.display = 'block';
+            editAddOverageBtn.style.display = 'none';
+            editOverage.value = DEFAULT_OVERAGE_DISCLAIMER;
+          };
+        }
         const liTbody = document.getElementById('edit-line-items');
         liTbody.innerHTML = '';
         (q.lineItems || []).forEach((li) => liTbody.appendChild(createItemRow('edit', li)));

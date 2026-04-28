@@ -389,9 +389,17 @@ const stats = {
       if (override === null) return;
       const to = override.trim();
       const persistEmail = confirm('Save this as the client email for this preview record?');
-      const r=await fetch('/api/previews/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId, to, persistEmail})});
-      if(!r.ok){showToast('Failed to send email','error');return;}
-      showToast(`Email sent to ${email}`);
+      // Scheduling (client-side): allow undo window before sending.
+      let timer = null;
+      showToast(`Scheduled: sending in 10s to ${to}`, 'success', [
+        { label: 'Undo', onClick: () => { if (timer) clearTimeout(timer); timer = null; showToast('Send cancelled'); } }
+      ]);
+      timer = setTimeout(async () => {
+        timer = null;
+        const r=await fetch('/api/previews/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId, to, persistEmail})});
+        if(!r.ok){showToast('Failed to send email','error');return;}
+        showToast(`Email sent to ${to}`);
+      }, 10000);
     }
     async function sendStep(kind, clientId, email){
       const path = kind==='staging' ? '/api/previews/send-staging' : '/api/previews/send-production';
