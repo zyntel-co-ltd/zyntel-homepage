@@ -427,7 +427,8 @@ const stats = {
         validUntil: document.getElementById('new-validUntil').value || null,
         notes: document.getElementById('new-notes').value.trim() || null,
         terms: document.getElementById('new-terms').value.trim() || null,
-        overageDisclaimer: document.getElementById('new-overage').value.trim() || null,
+        // Keep empty string if user clears it (lets them hide in PDF)
+        overageDisclaimer: document.getElementById('new-overage').value,
       };
       const res = await fetch('/api/quotes/quotes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) { showToast('Failed to create quote', 'error'); return; }
@@ -449,7 +450,8 @@ const stats = {
         validUntil: document.getElementById('edit-validUntil').value || null,
         notes: document.getElementById('edit-notes').value.trim() || null,
         terms: document.getElementById('edit-terms').value.trim() || null,
-        overageDisclaimer: document.getElementById('edit-overage').value.trim() || null,
+        // Keep empty string if user clears it (lets them hide in PDF)
+        overageDisclaimer: document.getElementById('edit-overage').value,
       };
       const res = await fetch('/api/quotes/quotes', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) { showToast('Failed to update quote', 'error'); return; }
@@ -479,7 +481,7 @@ const stats = {
         document.getElementById('edit-validUntil').value = q.validUntil ? String(q.validUntil).slice(0, 10) : '';
         document.getElementById('edit-notes').value = q.notes || '';
         document.getElementById('edit-terms').value = q.terms || '';
-        document.getElementById('edit-overage').value = q.overageDisclaimer || '';
+        document.getElementById('edit-overage').value = q.overageDisclaimer || DEFAULT_OVERAGE_DISCLAIMER;
         const liTbody = document.getElementById('edit-line-items');
         liTbody.innerHTML = '';
         (q.lineItems || []).forEach((li) => liTbody.appendChild(createItemRow('edit', li)));

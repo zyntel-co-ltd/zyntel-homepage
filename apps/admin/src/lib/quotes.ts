@@ -2,6 +2,9 @@ import { sql } from '@zyntel/db';
 import { createInvoice } from '@zyntel/db';
 import type { Quote, QuoteLineItem, QuoteStatus } from '@zyntel/db/schema';
 
+const DEFAULT_OVERAGE_DISCLAIMER =
+  'This quote is based on the scope understood at the time of quoting. If additional requirements, change requests, or unforeseen technical constraints arise, the final cost may exceed the quoted amount. Any overages will be communicated and agreed on before extra work begins.';
+
 function rowToQuote(row: Record<string, any>): Quote {
   return {
     id: String(row.id),
@@ -90,6 +93,10 @@ export async function createQuote(data: {
   const taxRate = data.taxRate ?? 0;
   const total = subtotal + (subtotal * taxRate) / 100;
   const quoteNumber = await nextQuoteNumber();
+  const overageDisclaimer =
+    data.overageDisclaimer === undefined || data.overageDisclaimer === null
+      ? DEFAULT_OVERAGE_DISCLAIMER
+      : data.overageDisclaimer;
 
   const rows = await sql`
     INSERT INTO quotes (quote_number, client_id, title, line_items, subtotal, tax_rate, total, currency, valid_until, notes, terms, overage_disclaimer)
@@ -105,7 +112,7 @@ export async function createQuote(data: {
       ${data.validUntil ?? null},
       ${data.notes ?? null},
       ${data.terms ?? null},
-      ${data.overageDisclaimer ?? null}
+      ${overageDisclaimer}
     )
     RETURNING *
   `;
