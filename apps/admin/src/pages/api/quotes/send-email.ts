@@ -4,9 +4,21 @@ import { generateQuotePdf } from '../../../lib/quote-pdf.ts';
 import { sendEmail } from '../../../lib/email.ts';
 import { updateClient } from '@zyntel/db';
 
+function parseDateOnly(dateStr: string): Date | null {
+  const s = String(dateStr).trim();
+  if (!s) return null;
+  const d = new Date(`${s.slice(0, 10)}T12:00:00Z`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { quoteId, to, clientContacts, setDefaultClientEmail } = await request.json();
+    const body = await request.json().catch(() => ({} as any));
+    const quoteId = body?.quoteId;
+    const to = typeof body?.to === 'string' ? body.to.trim() : '';
+    const clientEmails = Array.isArray(body?.client_emails)
+      ? body.client_emails.map((e: unknown) => String(e).trim()).filter(Boolean)
+      : [];
     if (!quoteId) {
       return new Response(JSON.stringify({ error: 'quoteId required' }), {
         status: 400,
@@ -21,26 +33,28 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    const toAddr = String(to ?? quote.clientEmail ?? '').trim();
+
+    if (quote.clientId && clientEmails.length > 0) {
+      // Persist contact emails for next time.
+      await updateClient(quote.clientId, { emails: clientEmails });
+    }
+
+    const fallback = clientEmails[0] ?? quote.clientEmail?.trim() ?? '';
+    const toAddr = (to || fallback).trim();
     if (!toAddr) {
       return new Response(JSON.stringify({ error: 'Add at least one email to send.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    // Optional: persist contacts/default back to canonical client record
-    if (quote.clientId && Array.isArray(clientContacts) && clientContacts.length) {
-      await updateClient(Number(quote.clientId), { contacts: clientContacts });
-    } else if (quote.clientId && setDefaultClientEmail === true && toAddr) {
-      await updateClient(Number(quote.clientId), { email: toAddr });
-    }
 
     const baseUrl = import.meta.env.SITE_URL ?? import.meta.env.SITE ?? 'https://admin.zyntel.net';
     const pdfBytes = await generateQuotePdf(quote, { baseUrl });
     const pdfBuffer = Buffer.from(pdfBytes);
 
-    const validUntilFormatted = quote.validUntil
-      ? new Date(quote.validUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+    const validUntilDate = quote.validUntil ? parseDateOnly(quote.validUntil) : null;
+    const validUntilFormatted = validUntilDate
+      ? validUntilDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
       : 'as specified';
 
     const totalFormatted = `${quote.currency} ${Number(quote.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
