@@ -155,11 +155,39 @@ function normalizeClientRow(row: Record<string, unknown>): Client {
     }
   }
   if (!emails?.length && email) emails = [email];
+
+  let contacts: Client['contacts'] = null;
+  const rawContacts = (row as any).contacts;
+  if (rawContacts != null) {
+    try {
+      const parsed = Array.isArray(rawContacts) ? rawContacts : JSON.parse(String(rawContacts));
+      if (Array.isArray(parsed)) {
+        contacts = parsed
+          .map((c: any) => ({
+            name: c?.name != null ? String(c.name) : null,
+            email: String(c?.email ?? '').trim(),
+            phone: c?.phone != null ? String(c.phone) : null,
+            isDefault: c?.isDefault != null ? Boolean(c.isDefault) : null,
+          }))
+          .filter((c: any) => c.email);
+        if (contacts.length) {
+          // Ensure exactly one default (first true wins; else first item)
+          const idx = contacts.findIndex((c) => c.isDefault);
+          contacts = contacts.map((c, i) => ({ ...c, isDefault: i === (idx >= 0 ? idx : 0) }));
+          const fromContacts = contacts.map((c) => c.email);
+          emails = fromContacts.length ? fromContacts : emails;
+        }
+      }
+    } catch {
+      contacts = null;
+    }
+  }
   return {
     id: Number(row.id),
     name: String(row.name),
     email: emails?.[0] ?? email,
     emails: emails?.length ? emails : email ? [email] : [],
+    contacts,
     phone: row.phone != null ? String(row.phone) : null,
     address: row.address != null ? String(row.address) : null,
     created_at: String(row.created_at),
@@ -251,8 +279,35 @@ export async function getClient(id: number): Promise<Client | null> {
   return row ? normalizeClientRow(row) : null;
 }
 
-export async function createClient(data: { name: string; email: string; phone?: string; address?: string; emails?: string[] }): Promise<Client | null> {
+export async function createClient(data: { name: string; email: string; phone?: string; address?: string; emails?: string[]; contacts?: Client['contacts'] }): Promise<Client | null> {
   if (!import.meta.env.DATABASE_URL) return null;
+  if (data.contacts?.length) {
+    const normalized = data.contacts
+      .map((c) => ({
+        name: c?.name != null ? String(c.name) : null,
+        email: String((c as any).email ?? '').trim(),
+        phone: (c as any)?.phone != null ? String((c as any).phone) : null,
+        isDefault: Boolean((c as any)?.isDefault),
+      }))
+      .filter((c) => c.email);
+    if (!normalized.length) return null;
+    const defIdx = normalized.findIndex((c) => c.isDefault);
+    const idx = defIdx >= 0 ? defIdx : 0;
+    const ordered = [normalized[idx], ...normalized.filter((_, i) => i !== idx)].map((c, i) => ({ ...c, isDefault: i === 0 }));
+    const primary = ordered[0].email;
+    const emailsJson = JSON.stringify(ordered.map((c) => c.email));
+    const contactsJson = JSON.stringify(ordered);
+    try {
+      const rows = await sql`
+        INSERT INTO clients (name, email, emails, contacts, phone, address)
+        VALUES (${data.name}, ${primary}, ${emailsJson}, ${contactsJson}, ${data.phone ?? null}, ${data.address ?? null})
+        RETURNING *
+      `;
+      return normalizeClientRow(rows[0] as Record<string, unknown>);
+    } catch {
+      // fall back to legacy insert
+    }
+  }
   const primary = String(data.email).trim();
   const list = (data.emails?.length ? data.emails.map((e) => String(e).trim()).filter(Boolean) : [primary]).filter(Boolean);
   if (!list.length) return null;
@@ -279,11 +334,42 @@ export async function createClient(data: { name: string; email: string; phone?: 
   }
 }
 
-export async function updateClient(id: number, data: { name?: string; email?: string; emails?: string[]; phone?: string; address?: string }): Promise<Client | null> {
+export async function updateClient(id: number, data: { name?: string; email?: string; emails?: string[]; phone?: string; address?: string; contacts?: Client['contacts'] }): Promise<Client | null> {
   if (!import.meta.env.DATABASE_URL) return null;
   const existing = await getClient(id);
   if (!existing) return null;
   const name = data.name != null ? String(data.name).trim() : existing.name;
+  if (data.contacts != null) {
+    const normalized = (data.contacts ?? [])
+      .map((c: any) => ({
+        name: c?.name != null ? String(c.name) : null,
+        email: String(c?.email ?? '').trim(),
+        phone: c?.phone != null ? String(c.phone) : null,
+        isDefault: Boolean(c?.isDefault),
+      }))
+      .filter((c: any) => c.email);
+    if (normalized.length === 0) return null;
+    const defIdx = normalized.findIndex((c) => c.isDefault);
+    const idx = defIdx >= 0 ? defIdx : 0;
+    const ordered = [normalized[idx], ...normalized.filter((_, i) => i !== idx)].map((c, i) => ({ ...c, isDefault: i === 0 }));
+    const emailsList = ordered.map((c) => c.email);
+    const email = emailsList[0];
+    const phone = data.phone !== undefined ? (data.phone ? String(data.phone).trim() : null) : existing.phone;
+    const address = data.address !== undefined ? (data.address ? String(data.address).trim() : null) : existing.address;
+    if (!name || !email) return null;
+    const emailsJson = JSON.stringify(emailsList);
+    const contactsJson = JSON.stringify(ordered);
+    try {
+      const rows = await sql`
+        UPDATE clients SET name = ${name}, email = ${email}, emails = ${emailsJson}, contacts = ${contactsJson}, phone = ${phone}, address = ${address}
+        WHERE id = ${id}
+        RETURNING *
+      `;
+      return normalizeClientRow(rows[0] as Record<string, unknown>);
+    } catch {
+      // fall through to legacy update
+    }
+  }
   let emailsList: string[];
   if (data.emails != null) {
     emailsList = data.emails.map((e) => String(e).trim()).filter(Boolean);

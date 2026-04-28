@@ -78,6 +78,12 @@ export interface Client {
   email: string;
   /** All contact emails (primary is `email`, mirrors index 0 when set). */
   emails?: string[] | null;
+  contacts?: Array<{
+    name?: string | null;
+    email: string;
+    phone?: string | null;
+    isDefault?: boolean | null;
+  }> | null;
   phone: string | null;
   address: string | null;
   created_at: string;

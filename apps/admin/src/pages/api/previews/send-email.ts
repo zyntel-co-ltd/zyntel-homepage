@@ -5,7 +5,7 @@ import { Resend } from 'resend';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { clientId } = await request.json();
+    const { clientId, to, persistEmail } = await request.json();
     if (!clientId) {
       return new Response(JSON.stringify({ error: 'clientId required' }), {
         status: 400,
@@ -17,6 +17,13 @@ export const POST: APIRoute = async ({ request }) => {
     if (!client) {
       return new Response(JSON.stringify({ error: 'Client not found' }), {
         status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    const toAddr = String(to ?? client.email ?? '').trim();
+    if (!toAddr) {
+      return new Response(JSON.stringify({ error: 'Add at least one email to send.' }), {
+        status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
@@ -47,13 +54,13 @@ export const POST: APIRoute = async ({ request }) => {
     const resend = new Resend(resendApiKey);
     const recordCc = getAdminClientEmailCc();
     const cc =
-      recordCc && String(client.email).trim().toLowerCase() !== recordCc.toLowerCase()
+      recordCc && toAddr.toLowerCase() !== recordCc.toLowerCase()
         ? [recordCc]
         : [];
 
     const { error } = await resend.emails.send({
       from: fromEmail,
-      to: client.email,
+      to: toAddr,
       ...(cc.length ? { cc } : {}),
       subject: `Your design preview is ready — ${client.name}`,
       html: `<!DOCTYPE html>
@@ -100,7 +107,7 @@ export const POST: APIRoute = async ({ request }) => {
       Questions? Reply to this email or reach us at hello@zyntel.net
     </p>
     <hr style="border:none;border-top:1px solid #f0f0f0;margin:0 0 16px;">
-    <p style="color:#bbb;font-size:11px;margin:0;">Zyntel Limited · Kampala, Uganda · zyntel.net</p>
+    <p style="color:#bbb;font-size:11px;margin:0;">Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061</p>
   </div>
 </body>
 </html>`,
@@ -121,7 +128,15 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    return new Response(JSON.stringify({ sent: true, to: client.email }), {
+    // Persist email back to preview client if requested
+    if (persistEmail === true && toAddr && toAddr !== client.email) {
+      try {
+        const { updatePreviewClient } = await import('../../../lib/previews.ts');
+        await updatePreviewClient(clientId, { email: toAddr } as any);
+      } catch (_) {}
+    }
+
+    return new Response(JSON.stringify({ sent: true, to: toAddr }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err: any) {

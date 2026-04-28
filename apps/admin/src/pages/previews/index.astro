@@ -385,7 +385,11 @@ const stats = {
       showToast('Client created', 'success', [{label:'Send email now',onClick:()=>sendEmail(c.clientId,c.email)}]);
     }
     async function sendEmail(clientId,email){
-      const r=await fetch('/api/previews/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId})});
+      const override = prompt('Send preview to which email?', email || '');
+      if (override === null) return;
+      const to = override.trim();
+      const persistEmail = confirm('Save this as the client email for this preview record?');
+      const r=await fetch('/api/previews/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId, to, persistEmail})});
       if(!r.ok){showToast('Failed to send email','error');return;}
       showToast(`Email sent to ${email}`);
     }

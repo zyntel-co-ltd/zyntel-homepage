@@ -2,10 +2,11 @@ import type { APIRoute } from 'astro';
 import { getQuoteById } from '../../../lib/quotes.ts';
 import { generateQuotePdf } from '../../../lib/quote-pdf.ts';
 import { sendEmail } from '../../../lib/email.ts';
+import { updateClient } from '@zyntel/db';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { quoteId } = await request.json();
+    const { quoteId, to, clientContacts, setDefaultClientEmail } = await request.json();
     if (!quoteId) {
       return new Response(JSON.stringify({ error: 'quoteId required' }), {
         status: 400,
@@ -20,11 +21,18 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    if (!quote.clientEmail) {
-      return new Response(JSON.stringify({ error: 'Client has no email address' }), {
+    const toAddr = String(to ?? quote.clientEmail ?? '').trim();
+    if (!toAddr) {
+      return new Response(JSON.stringify({ error: 'Add at least one email to send.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
+    }
+    // Optional: persist contacts/default back to canonical client record
+    if (quote.clientId && Array.isArray(clientContacts) && clientContacts.length) {
+      await updateClient(Number(quote.clientId), { contacts: clientContacts });
+    } else if (quote.clientId && setDefaultClientEmail === true && toAddr) {
+      await updateClient(Number(quote.clientId), { email: toAddr });
     }
 
     const baseUrl = import.meta.env.SITE_URL ?? import.meta.env.SITE ?? 'https://admin.zyntel.net';
@@ -38,7 +46,7 @@ export const POST: APIRoute = async ({ request }) => {
     const totalFormatted = `${quote.currency} ${Number(quote.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 
     const result = await sendEmail({
-      to: quote.clientEmail,
+      to: toAddr,
       subject: `Quote ${quote.quoteNumber} from Zyntel — ${quote.title}`,
       html: `<!DOCTYPE html>
 <html>
@@ -62,7 +70,7 @@ export const POST: APIRoute = async ({ request }) => {
     </p>
     <p style="color:#999;font-size:12px;margin:0 0 4px;">Questions? Reply to this email or reach us at hello@zyntel.net</p>
     <hr style="border:none;border-top:1px solid #f0f0f0;margin:16px 0;">
-    <p style="color:#bbb;font-size:11px;margin:0;">Zyntel Limited · Kampala, Uganda · zyntel.net</p>
+    <p style="color:#bbb;font-size:11px;margin:0;">Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061</p>
   </div>
 </body>
 </html>`,
@@ -78,7 +86,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    return new Response(JSON.stringify({ sent: true, to: quote.clientEmail }), {
+    return new Response(JSON.stringify({ sent: true, to: toAddr }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err: any) {

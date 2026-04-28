@@ -19,19 +19,28 @@ export const GET: APIRoute = async () => {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    if (!body.name || !body.productName || !body.contactName || !body.contactEmail) {
-      return new Response(JSON.stringify({ error: 'name, productName, contactName, contactEmail required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-    }
     const rawInv = body.invoiceClientId;
     const invoiceClientId =
       rawInv != null && rawInv !== '' ? Number(rawInv) : null;
+    if (!invoiceClientId || isNaN(invoiceClientId)) {
+      return new Response(JSON.stringify({ error: 'Select an existing client from Clients directory' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (!body.productName || !body.contactName || !body.contactEmail) {
+      return new Response(JSON.stringify({ error: 'productName, contactName, contactEmail required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
     const client = await createServiceClient({
-      name: String(body.name).trim(),
+      name: String(body.name ?? '').trim(),
       productName: String(body.productName).trim(),
       productType: body.productType,
       contactName: String(body.contactName).trim(),
       contactEmail: String(body.contactEmail).trim(),
-      invoiceClientId: invoiceClientId != null && !isNaN(invoiceClientId) ? invoiceClientId : null,
+      invoiceClientId,
       healthCheckUrl: body.healthCheckUrl ?? null,
       apiUrl: body.apiUrl ?? null,
       repoUrl: body.repoUrl ?? null,

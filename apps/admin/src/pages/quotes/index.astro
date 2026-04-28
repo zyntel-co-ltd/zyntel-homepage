@@ -466,8 +466,33 @@ const stats = {
       const id = btn.dataset.id || row?.dataset.id;
 
       if (action === 'send') {
-        const clientName = btn.dataset.clientName || 'client';
-        const res = await fetch('/api/quotes/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quoteId: id }) });
+        const q = JSON.parse(btn.dataset.quote || '{}');
+        const clientName = btn.dataset.clientName || q.clientName || 'client';
+        let to = '';
+        let clientContacts = null;
+        try {
+          if (q.clientId) {
+            const r = await fetch(`/api/clients/${q.clientId}`, { headers: { 'x-api-key': (sessionStorage.getItem('zyntel_invoice_api_key') ?? '') } });
+            const d = await r.json().catch(() => ({}));
+            if (r.ok && d?.client) {
+              clientContacts = d.client.contacts || null;
+              const emails = (d.client.emails || []).filter(Boolean);
+              to = String((d.client.email || emails[0] || q.clientEmail || '')).trim();
+            }
+          }
+        } catch (_) {}
+        if (!to) to = String(q.clientEmail || '').trim();
+        const override = prompt(`Send quote to which email?\n\nLeave as-is to use default.\nClient: ${clientName}`, to);
+        if (override === null) return;
+        const toAddr = override.trim();
+        const setDefault = confirm('Use this email as the default for this client? (Updates Clients record)');
+        const payload = {
+          quoteId: id,
+          to: toAddr,
+          ...(clientContacts ? { clientContacts: (setDefault ? (clientContacts.map((c)=>({ ...c, isDefault: String(c.email).trim().toLowerCase() === toAddr.toLowerCase() })) ) : clientContacts) } : {}),
+          ...(setDefault ? { setDefaultClientEmail: true } : {}),
+        };
+        const res = await fetch('/api/quotes/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const d = await res.json().catch(() => ({}));
         if (!res.ok) { showToast(d.error || 'Failed to send email', 'error'); return; }
         showToast(`Quote sent to ${clientName}`);

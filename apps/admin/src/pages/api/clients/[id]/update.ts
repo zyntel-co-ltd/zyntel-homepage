@@ -16,11 +16,19 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   }
   try {
     const body = await request.json();
-    const { name, email, emails, phone, address } = body ?? {};
+    const { name, email, emails, contacts, phone, address } = body ?? {};
     const client = await updateClient(id, {
       name: name != null ? String(name).trim() : undefined,
       email: email != null ? String(email).trim() : undefined,
       emails: Array.isArray(emails) ? emails.map((e: unknown) => String(e).trim()).filter(Boolean) : undefined,
+      contacts: Array.isArray(contacts)
+        ? contacts.map((c: any) => ({
+            name: c?.name != null ? String(c.name).trim() : null,
+            email: String(c?.email ?? '').trim(),
+            phone: c?.phone != null ? String(c.phone).trim() : null,
+            isDefault: Boolean(c?.isDefault),
+          })).filter((c: any) => c.email)
+        : undefined,
       phone: phone !== undefined ? (phone ? String(phone).trim() : null) : undefined,
       address: address !== undefined ? (address ? String(address).trim() : null) : undefined,
     });

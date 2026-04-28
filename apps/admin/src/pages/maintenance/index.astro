@@ -165,7 +165,16 @@ const serviceClients = await getAllServiceClients();
     <div class="modal">
       <h3>New Service Client</h3>
       <form id="form-new-client" class="grid-form">
-        <div class="full"><label>Client / Company Name</label><input id="nc-name" class="admin-form-input" required /></div>
+        <div class="full">
+          <label>Client (from Clients directory)</label>
+          <select id="nc-client-id" class="admin-form-input" required>
+            <option value="">— Loading… —</option>
+          </select>
+          <p style="font-size:11px;color:#6b7280;margin:4px 0 0;">
+            Clients are created/managed in <a href="/clients">Clients</a>. Maintenance always links to a single universal client record.
+          </p>
+        </div>
+        <div class="full"><label>Client / Company Name</label><input id="nc-name" class="admin-form-input" required readonly /></div>
         <div><label>Product Name</label><input id="nc-product-name" class="admin-form-input" required /></div>
         <div>
           <label>Product Type</label>
@@ -185,13 +194,6 @@ const serviceClients = await getAllServiceClients();
         <div class="full"><label>Cronitor URL (optional)</label><input id="nc-cronitor-url" class="admin-form-input" placeholder="https://cronitor.io/..." /></div>
         <div class="full maint-checkbox-row">
           <label class="maint-inline-check"><input type="checkbox" id="nc-generate-key" /> Generate API key now (shown once after create)</label>
-        </div>
-        <div class="full">
-          <label>Invoice client (same record as Clients &amp; invoices)</label>
-          <select id="nc-invoice-client" class="admin-form-input">
-            <option value="">— Loading… —</option>
-          </select>
-          <p style="font-size:11px;color:#6b7280;margin:4px 0 0;">Pick the company from <a href="/clients">Clients</a> so maintenance and billing stay one identity.</p>
         </div>
         <div class="full"><label>Notes</label><textarea id="nc-notes" class="admin-form-input" rows="2"></textarea></div>
         <div class="modal-actions full">
@@ -703,10 +705,10 @@ const serviceClients = await getAllServiceClients();
     });
 
     const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key') ?? '';
-    async function fillInvoiceClientSelect() {
-      const sel = document.getElementById('nc-invoice-client');
+    async function fillCanonicalClientSelect() {
+      const sel = document.getElementById('nc-client-id');
       if (!sel || sel.dataset.ready === '1') return;
-      sel.innerHTML = '<option value="">— Optional: link to Clients directory —</option>';
+      sel.innerHTML = '<option value="">— Select a client —</option>';
       try {
         const r = await fetch('/api/clients/list', { headers: { 'x-api-key': API_KEY } });
         if (!r.ok) return;
@@ -715,6 +717,8 @@ const serviceClients = await getAllServiceClients();
           const o = document.createElement('option');
           o.value = String(c.id);
           o.textContent = `${c.name} (${c.email})`;
+          o.dataset.name = c.name || '';
+          o.dataset.email = c.email || '';
           sel.appendChild(o);
         }
       } catch (_) {}
@@ -723,12 +727,22 @@ const serviceClients = await getAllServiceClients();
 
     // New service client
     document.getElementById('btn-new-client').addEventListener('click', async () => {
-      await fillInvoiceClientSelect();
+      await fillCanonicalClientSelect();
       showModal('modal-new-client');
+    });
+    document.getElementById('nc-client-id')?.addEventListener('change', (e) => {
+      const opt = e.target.selectedOptions?.[0];
+      if (!opt) return;
+      const name = (opt.dataset?.name ?? '').trim();
+      const email = (opt.dataset?.email ?? '').trim();
+      const nameEl = document.getElementById('nc-name');
+      const emailEl = document.getElementById('nc-contact-email');
+      if (nameEl) nameEl.value = name;
+      if (emailEl && !emailEl.value?.trim()) emailEl.value = email;
     });
     document.getElementById('form-new-client').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const inv = document.getElementById('nc-invoice-client').value;
+      const inv = document.getElementById('nc-client-id').value;
       const payload = {
         name: document.getElementById('nc-name').value.trim(),
         productName: document.getElementById('nc-product-name').value.trim(),

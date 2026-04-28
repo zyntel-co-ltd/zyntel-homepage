@@ -26,10 +26,12 @@ export const prerender = false;
           <input type="text" name="name" class="admin-form-input" required placeholder="Acme Ltd" />
         </div>
         <div class="admin-form-group">
-          <label class="admin-form-label">Emails *</label>
-          <p class="admin-form-hint" style="font-size: 0.8125rem; color: var(--admin-text-muted); margin: 0 0 0.5rem 0;">First address is the primary record; add as many as you need.</p>
-          <div id="client-emails-rows"></div>
-          <button type="button" class="admin-btn admin-btn-secondary" id="add-client-email" style="margin-top: 0.25rem;">+ Add email</button>
+          <label class="admin-form-label">Contacts *</label>
+          <p class="admin-form-hint" style="font-size: 0.8125rem; color: var(--admin-text-muted); margin: 0 0 0.5rem 0;">
+            Add one or more contacts. Mark one as default — that address is used by default when sending quotes/invoices.
+          </p>
+          <div id="client-contacts-rows"></div>
+          <button type="button" class="admin-btn admin-btn-secondary" id="add-client-contact" style="margin-top: 0.25rem;">+ Add contact</button>
         </div>
         <div class="admin-form-group">
           <label class="admin-form-label">Phone</label>
@@ -55,46 +57,86 @@ export const prerender = false;
   const id = clientsIdx >= 0 && parts[clientsIdx + 1] ? parts[clientsIdx + 1] : null;
   if (!id) window.location.href = B + '/clients';
 
-  const clientEmailsRows = document.getElementById('client-emails-rows')!;
+  const contactsRows = document.getElementById('client-contacts-rows')!;
 
-  function gatherClientEmails(): string[] {
-    return Array.from(document.querySelectorAll('#client-emails-rows .client-email-input'))
-      .map((el) => (el as HTMLInputElement).value.trim())
-      .filter(Boolean);
+  function gatherContacts(): Array<{ name: string | null; email: string; phone: string | null; isDefault: boolean }> {
+    const rows = Array.from(document.querySelectorAll('#client-contacts-rows [data-contact-row]')) as HTMLElement[];
+    const out = rows.map((row) => {
+      const name = (row.querySelector('.contact-name') as HTMLInputElement)?.value?.trim() || '';
+      const email = (row.querySelector('.contact-email') as HTMLInputElement)?.value?.trim() || '';
+      const phone = (row.querySelector('.contact-phone') as HTMLInputElement)?.value?.trim() || '';
+      const isDefault = (row.querySelector('.contact-default') as HTMLInputElement)?.checked || false;
+      return { name: name || null, email, phone: phone || null, isDefault };
+    }).filter((c) => c.email);
+    if (!out.length) return [];
+    const idx = out.findIndex((c) => c.isDefault);
+    const def = idx >= 0 ? idx : 0;
+    return out.map((c, i) => ({ ...c, isDefault: i === def }));
   }
 
-  function renderClientEmailRows(emails: string[]) {
-    const list = emails.length ? emails : [''];
-    clientEmailsRows.innerHTML = '';
-    list.forEach((em, i) => {
+  function renderContacts(list: Array<{ name?: string | null; email: string; phone?: string | null; isDefault?: boolean | null }>) {
+    const items = list?.length ? list : [{ name: null, email: '', phone: null, isDefault: true }];
+    const defIdx = items.findIndex((c) => c.isDefault);
+    const defaultIndex = defIdx >= 0 ? defIdx : 0;
+    contactsRows.innerHTML = '';
+    items.forEach((c, i) => {
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;';
-      const inp = document.createElement('input');
-      inp.type = 'email';
-      inp.className = 'admin-form-input client-email-input';
-      inp.placeholder = i === 0 ? 'billing@acme.com' : 'Additional email';
-      inp.required = i === 0;
-      inp.value = em;
-      inp.style.flex = '1';
+      row.dataset.contactRow = '1';
+      row.style.cssText = 'display:grid;grid-template-columns: 28px 1.2fr 1.4fr 1fr 90px;gap:0.5rem;align-items:center;margin-bottom:0.5rem;';
+
+      const radioWrap = document.createElement('div');
+      radioWrap.style.display = 'flex';
+      radioWrap.style.justifyContent = 'center';
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'contact-default';
+      radio.className = 'contact-default';
+      radio.checked = i === defaultIndex;
+      radio.title = 'Default';
+      radioWrap.appendChild(radio);
+
+      const nameInp = document.createElement('input');
+      nameInp.type = 'text';
+      nameInp.className = 'admin-form-input contact-name';
+      nameInp.placeholder = 'Name';
+      nameInp.value = (c.name ?? '') as string;
+
+      const emailInp = document.createElement('input');
+      emailInp.type = 'email';
+      emailInp.className = 'admin-form-input contact-email';
+      emailInp.placeholder = 'email@company.com';
+      emailInp.required = i === defaultIndex;
+      emailInp.value = c.email ?? '';
+
+      const phoneInp = document.createElement('input');
+      phoneInp.type = 'text';
+      phoneInp.className = 'admin-form-input contact-phone';
+      phoneInp.placeholder = 'Phone (optional)';
+      phoneInp.value = (c.phone ?? '') as string;
+
       const rm = document.createElement('button');
       rm.type = 'button';
       rm.className = 'admin-btn admin-btn-ghost';
       rm.textContent = 'Remove';
       rm.style.fontSize = '0.8125rem';
-      rm.disabled = list.length <= 1;
+      rm.disabled = items.length <= 1;
       rm.addEventListener('click', () => {
-        const cur = gatherClientEmails();
+        const cur = gatherContacts();
         cur.splice(i, 1);
-        renderClientEmailRows(cur.length ? cur : ['']);
+        renderContacts(cur.length ? cur : [{ name: null, email: '', phone: null, isDefault: true }]);
       });
-      row.appendChild(inp);
+
+      row.appendChild(radioWrap);
+      row.appendChild(nameInp);
+      row.appendChild(emailInp);
+      row.appendChild(phoneInp);
       row.appendChild(rm);
-      clientEmailsRows.appendChild(row);
+      contactsRows.appendChild(row);
     });
   }
 
-  document.getElementById('add-client-email')?.addEventListener('click', () => {
-    renderClientEmailRows([...gatherClientEmails(), '']);
+  document.getElementById('add-client-contact')?.addEventListener('click', () => {
+    renderContacts([...gatherContacts(), { name: null, email: '', phone: null, isDefault: false }]);
   });
 
   async function load() {
@@ -118,9 +160,16 @@ export const prerender = false;
     (document.querySelector('[name="name"]') as HTMLInputElement).value = client.name || '';
     (document.querySelector('[name="phone"]') as HTMLInputElement).value = client.phone || '';
     (document.querySelector('[name="address"]') as HTMLInputElement).value = client.address || '';
-    const em: string[] =
-      client.emails?.length ? client.emails.map((x: string) => String(x).trim()).filter(Boolean) : [];
-    renderClientEmailRows(em.length ? em : [client.email || ''].filter(Boolean));
+    const contacts =
+      client.contacts?.length
+        ? client.contacts
+        : ((client.emails?.length ? client.emails : [client.email]).filter(Boolean) as string[]).map((e: string, idx: number) => ({
+            name: null,
+            email: e,
+            phone: null,
+            isDefault: idx === 0,
+          }));
+    renderContacts(contacts);
 
     const lb = document.getElementById('links-body')!;
     if (links) {
@@ -142,7 +191,7 @@ export const prerender = false;
       lb.innerHTML =
         parts.length > 0
           ? parts.join('<br/><br/>')
-          : 'Nothing linked yet. In <a href="/maintenance">Maintenance</a> → New Service Client, choose this client under “Invoice client”. For property ROI metrics, set <code>client_id</code> when editing that ROI profile.';
+          : 'Nothing linked yet. In <a href="/maintenance">Maintenance</a> → New Service Client, select this client under “Client (from Clients directory)”. For property ROI metrics, set <code>client_id</code> when editing that ROI profile.';
     } else {
       lb.textContent = '';
     }
@@ -152,9 +201,9 @@ export const prerender = false;
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
-    const emails = gatherClientEmails();
-    if (emails.length === 0) {
-      alert('Add at least one email.');
+    const contacts = gatherContacts();
+    if (contacts.length === 0) {
+      alert('Add at least one contact email.');
       return;
     }
     saveBtn.disabled = true;
@@ -165,7 +214,7 @@ export const prerender = false;
         headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
         body: JSON.stringify({
           name: (form.querySelector('[name="name"]') as HTMLInputElement).value.trim(),
-          emails,
+          contacts,
           phone: (form.querySelector('[name="phone"]') as HTMLInputElement).value.trim() || null,
           address: (form.querySelector('[name="address"]') as HTMLInputElement).value.trim() || null,
         }),
