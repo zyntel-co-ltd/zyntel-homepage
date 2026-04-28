@@ -204,6 +204,10 @@ export interface ServiceClient {
   healthCheckUrl: string | null;
   apiUrl: string | null;
   apiKeyHash: string | null;
+  /** Optional encrypted API key for pull-mode (AES-GCM) */
+  apiKeyEncrypted?: string | null;
+  roiLastSyncedAt?: Date | null;
+  roiLastSyncError?: string | null;
   /** Optional repository URL for code-change summaries */
   repoUrl: string | null;
   /** Optional Sentry project URL (deep link) */
@@ -286,6 +290,7 @@ export interface ROISnapshot {
 
 export type ROIMetricDirection = 'higher_is_better' | 'lower_is_better' | 'neutral';
 export type ROIMetricFormat = 'number' | 'currency' | 'percent' | 'duration';
+export type ROIMetricCadence = 'daily' | 'weekly' | 'monthly';
 
 export interface ROIMetricDefinition {
   key: string;
@@ -293,6 +298,9 @@ export interface ROIMetricDefinition {
   unit: string | null;
   direction: ROIMetricDirection;
   format: ROIMetricFormat;
+  cadence?: ROIMetricCadence;
+  description?: string | null;
+  sourceHint?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

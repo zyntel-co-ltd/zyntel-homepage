@@ -23,6 +23,9 @@ function rowToServiceClient(row: Record<string, any>): ServiceClient {
     healthCheckUrl: row.health_check_url != null ? String(row.health_check_url) : null,
     apiUrl: row.api_url != null ? String(row.api_url) : null,
     apiKeyHash: row.api_key_hash != null ? String(row.api_key_hash) : null,
+    apiKeyEncrypted: row.api_key_encrypted != null ? String(row.api_key_encrypted) : null,
+    roiLastSyncedAt: row.roi_last_synced_at ? new Date(row.roi_last_synced_at) : null,
+    roiLastSyncError: row.roi_last_sync_error != null ? String(row.roi_last_sync_error) : null,
     repoUrl: row.repo_url != null ? String(row.repo_url) : null,
     sentryUrl: row.sentry_url != null ? String(row.sentry_url) : null,
     cronitorUrl: row.cronitor_url != null ? String(row.cronitor_url) : null,
@@ -149,6 +152,9 @@ export async function updateServiceClient(
     healthCheckUrl: string | null;
     apiUrl: string | null;
     apiKeyHash: string | null;
+    apiKeyEncrypted: string | null;
+    roiLastSyncedAt: Date | null;
+    roiLastSyncError: string | null;
     repoUrl: string | null;
     sentryUrl: string | null;
     cronitorUrl: string | null;
@@ -169,6 +175,9 @@ export async function updateServiceClient(
     healthCheckUrl: 'health_check_url',
     apiUrl: 'api_url',
     apiKeyHash: 'api_key_hash',
+    apiKeyEncrypted: 'api_key_encrypted',
+    roiLastSyncedAt: 'roi_last_synced_at',
+    roiLastSyncError: 'roi_last_sync_error',
     repoUrl: 'repo_url',
     sentryUrl: 'sentry_url',
     cronitorUrl: 'cronitor_url',

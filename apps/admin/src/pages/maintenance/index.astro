@@ -26,6 +26,8 @@ const serviceClients = await getAllServiceClients();
           data-repo={c.repoUrl ?? ''}
           data-sentry={c.sentryUrl ?? ''}
           data-cronitor={c.cronitorUrl ?? ''}
+          data-roi-last={c.roiLastSyncedAt ? c.roiLastSyncedAt.toISOString() : ''}
+          data-roi-err={c.roiLastSyncError ?? ''}
         >{c.name} — {c.productName}</option>
       ))}
     </select>
@@ -56,6 +58,32 @@ const serviceClients = await getAllServiceClients();
     <div class="maint-connection-actions">
       <button type="button" id="btn-gen-api-key" class="admin-btn admin-btn-primary">Generate / rotate API key</button>
       <span class="maint-hint">Shown once — update <code>ZYNTEL_API_KEY</code> (or your app’s env name) on the client server.</span>
+    </div>
+    <div style="margin-top:14px;border-top:1px solid #eef2f7;padding-top:14px;">
+      <h3 style="margin:0 0 8px;font-size:13px;">ROI auto-sync (recommended)</h3>
+      <p style="margin:0 0 10px;color:#6b7280;font-size:12px;line-height:1.5;">
+        After you implement the product’s <code>/zyntel/v1/snapshot</code> + <code>/zyntel/v1/push-snapshot</code> endpoints, schedule snapshots (Cronitor or system cron).
+        The product will push metrics to <code>admin.zyntel.net</code> automatically — no manual ROI logging.
+      </p>
+      <div class="maint-connection-grid" style="margin-top:8px;">
+        <div class="full">
+          <span class="maint-kicker">Suggested Cronitor URL</span>
+          <div id="roi-cronitor-url" class="maint-connection-value">—</div>
+        </div>
+        <div class="full">
+          <span class="maint-kicker">Admin ingest endpoint</span>
+          <div class="maint-connection-value"><code>POST /api/roi/ingest</code> (header: <code>X-Zyntel-Key</code>)</div>
+        </div>
+        <div class="full">
+          <span class="maint-kicker">Last ROI sync</span>
+          <div id="roi-last-sync" class="maint-connection-value">—</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
+        <button type="button" id="btn-pull-roi" class="admin-btn admin-btn-secondary">Test pull now</button>
+        <span id="roi-pull-hint" style="font-size:12px;color:#6b7280;">Pull uses encrypted key (if stored) and <code>apiUrl</code>.</span>
+      </div>
+      <p id="roi-pull-error" style="display:none;margin:10px 0 0;color:#b91c1c;font-size:12px;"></p>
     </div>
   </div>
 
@@ -425,7 +453,9 @@ const serviceClients = await getAllServiceClients();
       const aEl = document.getElementById('conn-api-display');
       const rEl = document.getElementById('conn-repo-display');
       const oEl = document.getElementById('conn-obs-display');
-      if (!hEl || !aEl || !rEl || !oEl) return;
+      const cronUrlEl = document.getElementById('roi-cronitor-url');
+      const lastEl = document.getElementById('roi-last-sync');
+      if (!hEl || !aEl || !rEl || !oEl || !cronUrlEl || !lastEl) return;
       if (health) {
         const a = document.createElement('a');
         a.href = health;
@@ -484,6 +514,22 @@ const serviceClients = await getAllServiceClients();
       } else {
         oEl.textContent = 'Not set';
       }
+
+      // ROI auto-sync helper display
+      if (api) {
+        const url = api.replace(/\/$/, '') + '/zyntel/v1/push-snapshot';
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = url;
+        cronUrlEl.replaceChildren(a);
+      } else {
+        cronUrlEl.textContent = 'Set API URL first';
+      }
+      const last = (opt?.dataset as any)?.roiLast || '';
+      const err = (opt?.dataset as any)?.roiErr || '';
+      lastEl.textContent = last ? (err ? `${last} (error: ${err})` : last) : '—';
     }
 
     function openConfirm(opts) {
@@ -656,6 +702,39 @@ const serviceClients = await getAllServiceClients();
 
     document.getElementById('client-select').addEventListener('change', (e) => {
       loadClientData(e.target.value);
+    });
+
+    // ROI pull test (optional; requires encrypted key stored + apiUrl configured)
+    document.getElementById('btn-pull-roi')?.addEventListener('click', async () => {
+      const errEl = document.getElementById('roi-pull-error');
+      errEl.style.display = 'none';
+      if (!selectedClientId) return;
+      const btn = document.getElementById('btn-pull-roi');
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.textContent = 'Pulling...';
+      try {
+        const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key') ?? '';
+        const r = await fetch(`/api/roi/pull?serviceClientId=${encodeURIComponent(selectedClientId)}`, {
+          headers: { 'x-api-key': API_KEY },
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          errEl.textContent = d.error || 'Pull failed';
+          errEl.style.display = 'block';
+          return;
+        }
+        showToast('ROI snapshot pulled and stored');
+        // Refresh selector dataset values by reloading page (small + safe)
+        window.__adminClearUnsavedChanges?.();
+        window.location.reload();
+      } catch {
+        errEl.textContent = 'Pull failed';
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = old;
+      }
     });
 
     // Log form submit
