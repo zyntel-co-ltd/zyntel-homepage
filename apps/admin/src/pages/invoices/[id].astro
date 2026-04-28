@@ -435,36 +435,39 @@ export const prerender = false;
     const useSecond = sendTarget.value === '1' && !!e2;
     const to = useSecond ? e2 : list[0];
     btn.disabled = true;
-    btn.textContent = 'Sending...';
-    try {
-      const res = await fetch(`/api/invoices/${id}/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...headers },
-        body: JSON.stringify({ to, client_emails: list }),
-      });
-      const text = await res.text();
-      let data: { error?: string; ok?: boolean; invoice?: { client_email?: string | null } } = {};
+    btn.textContent = 'Scheduled...';
+    sendModal.style.display = 'none';
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    showSentNotification(`Scheduled: sending in 10s to ${to}.`);
+    timer = window.setTimeout(async () => {
+      timer = null;
       try {
-        data = JSON.parse(text);
-      } catch {
-        data = { error: text.slice(0, 120) || `HTTP ${res.status}` };
+        const res = await fetch(`/api/invoices/${id}/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...headers },
+          body: JSON.stringify({ to, client_emails: list }),
+        });
+        const text = await res.text();
+        let data: { error?: string; ok?: boolean; invoice?: { client_email?: string | null } } = {};
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { error: text.slice(0, 120) || `HTTP ${res.status}` };
+        }
+        if (res.ok) {
+          if (data.invoice) invoice = { ...invoice, ...data.invoice } as Record<string, unknown>;
+          showSentNotification(`Invoice sent to ${to}.`);
+          renderInvoice();
+        } else {
+          showSentNotification(data.error || `Failed (${res.status})`);
+        }
+      } catch (e) {
+        showSentNotification(e instanceof Error ? e.message : 'Send failed');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send';
       }
-      if (res.ok) {
-        sendModal.style.display = 'none';
-        if (data.invoice) invoice = { ...invoice, ...data.invoice } as Record<string, unknown>;
-        showSentNotification(`Invoice sent to ${to}.`);
-        renderInvoice();
-      } else {
-        sendErr.textContent = data.error || `Failed (${res.status})`;
-        sendErr.style.display = 'block';
-      }
-    } catch (e) {
-      sendErr.textContent = e instanceof Error ? e.message : 'Unknown error';
-      sendErr.style.display = 'block';
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Send';
-    }
+    }, 10000);
   });
 
   // Record payment modal
