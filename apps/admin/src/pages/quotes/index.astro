@@ -67,10 +67,10 @@ const stats = {
               <td>{q.title}</td>
               <td class="quote-total">{q.currency} {Number(q.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
               <td><span class={`admin-badge status-${q.status}`}>{q.status}</span></td>
-              <td>{q.validUntil ? new Date(q.validUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
+              <td>{q.validUntil ? new Date(`${String(q.validUntil).slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
               <td class="quote-actions">
-                <a class="act-btn" href={`/api/quotes/pdf?id=${q.id}`} target="_blank" title="View PDF">PDF</a>
-                <button class="act-btn" data-action="send" data-id={q.id} data-client-name={q.clientName} type="button">Send</button>
+                <a class="act-btn" href={`/api/quotes/pdf?id=${q.id}&v=${q.updatedAt.getTime()}`} target="_blank" title="View PDF">PDF</a>
+                <button class="act-btn" data-action="send" data-id={q.id} data-client-id={q.clientId ? String(q.clientId) : ''} data-client-name={q.clientName} type="button">Send</button>
                 <button class="act-btn" data-action="edit" data-quote={JSON.stringify(q)} type="button">Edit</button>
                 {q.status !== 'accepted' && q.status !== 'converted' && (
                   <button class="act-btn act-btn--ok" data-action="mark-accepted" data-id={q.id} type="button">Mark Accepted</button>
@@ -231,6 +231,36 @@ const stats = {
     </div>
   </div>
 
+  <!-- Send Quote Modal -->
+  <div id="modal-send-quote" class="preview-modal-overlay" style="display:none">
+    <div class="modal" style="width:min(520px,100%);">
+      <h3>Send quote</h3>
+      <p class="muted" style="margin-top:-6px;margin-bottom:12px;">
+        Choose which client email to send to (you can update the list for future sends).
+      </p>
+      <div class="form-row">
+        <label>Email 1 (primary)</label>
+        <input type="email" id="send-email-1" class="admin-form-input" autocomplete="email" />
+      </div>
+      <div class="form-row">
+        <label>Email 2 (optional)</label>
+        <input type="email" id="send-email-2" class="admin-form-input" autocomplete="email" placeholder="second@…" />
+      </div>
+      <div class="form-row">
+        <label>Send to</label>
+        <select id="send-email-target" class="admin-form-input">
+          <option value="0">Email 1</option>
+          <option value="1">Email 2</option>
+        </select>
+      </div>
+      <p class="admin-login-error" id="send-quote-error" style="display:none;"></p>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-send-quote">Cancel</button>
+        <button type="button" class="admin-btn admin-btn-primary" id="confirm-send-quote">Send</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast-root"></div>
 
   <style>
@@ -274,6 +304,90 @@ const stats = {
     let activeSearch = '';
     let confirmCallback = null;
     const tbody = document.getElementById('quotes-tbody');
+    const CLIENTS = ${JSON.stringify(clients)};
+
+    const sendModal = document.getElementById('modal-send-quote');
+    const sendEmail1 = document.getElementById('send-email-1');
+    const sendEmail2 = document.getElementById('send-email-2');
+    const sendTarget = document.getElementById('send-email-target');
+    const sendErr = document.getElementById('send-quote-error');
+    const sendConfirmBtn = document.getElementById('confirm-send-quote');
+    let sendQuoteId = null;
+    let sendClientId = null;
+
+    function syncSendTargetOptions() {
+      const has2 = !!sendEmail2.value.trim();
+      sendTarget.options[1].disabled = !has2;
+      if (!has2 && sendTarget.value === '1') sendTarget.value = '0';
+    }
+    sendEmail2.addEventListener('input', syncSendTargetOptions);
+
+    function openSendQuoteModal({ quoteId, clientId }) {
+      sendQuoteId = quoteId;
+      sendClientId = clientId;
+      sendErr.style.display = 'none';
+      let emails = [];
+      const cid = clientId ? Number(clientId) : null;
+      if (cid) {
+        const c = CLIENTS.find((x) => Number(x.id) === cid);
+        if (c && Array.isArray(c.emails) && c.emails.length) emails = c.emails.map((e) => String(e).trim()).filter(Boolean);
+        else if (c && c.email) emails = [String(c.email).trim()].filter(Boolean);
+      }
+      sendEmail1.value = emails[0] || '';
+      sendEmail2.value = emails[1] || '';
+      syncSendTargetOptions();
+      showModal('modal-send-quote');
+    }
+
+    async function sendQuoteEmail() {
+      sendErr.style.display = 'none';
+      const e1 = sendEmail1.value.trim();
+      const e2 = sendEmail2.value.trim();
+      const list = [e1, e2].filter(Boolean);
+      if (!sendQuoteId) {
+        sendErr.textContent = 'Missing quote id.';
+        sendErr.style.display = 'block';
+        return;
+      }
+      if (!list.length) {
+        sendErr.textContent = 'Enter at least one email.';
+        sendErr.style.display = 'block';
+        return;
+      }
+      const useSecond = sendTarget.value === '1' && !!e2;
+      const to = useSecond ? e2 : list[0];
+
+      sendConfirmBtn.disabled = true;
+      sendConfirmBtn.textContent = 'Sending...';
+      try {
+        const res = await fetch('/api/quotes/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quoteId: sendQuoteId, to, client_emails: list }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          sendErr.textContent = d.error || 'Failed to send email';
+          sendErr.style.display = 'block';
+          return;
+        }
+        // Update in-memory client list so next send uses latest emails without reload.
+        const cid = sendClientId ? Number(sendClientId) : null;
+        if (cid) {
+          const idx = CLIENTS.findIndex((x) => Number(x.id) === cid);
+          if (idx >= 0) CLIENTS[idx] = { ...CLIENTS[idx], emails: list, email: list[0] };
+        }
+        closeModal('modal-send-quote');
+        showToast(`Quote sent to ${to}`);
+      } catch (e) {
+        sendErr.textContent = e instanceof Error ? e.message : 'Unknown error';
+        sendErr.style.display = 'block';
+      } finally {
+        sendConfirmBtn.disabled = false;
+        sendConfirmBtn.textContent = 'Send';
+      }
+    }
+    sendConfirmBtn.addEventListener('click', () => { void sendQuoteEmail(); });
 
     function applyFilters() {
       [...tbody.querySelectorAll('tr')].forEach((row) => {
@@ -466,36 +580,7 @@ const stats = {
       const id = btn.dataset.id || row?.dataset.id;
 
       if (action === 'send') {
-        const q = JSON.parse(btn.dataset.quote || '{}');
-        const clientName = btn.dataset.clientName || q.clientName || 'client';
-        let to = '';
-        let clientContacts = null;
-        try {
-          if (q.clientId) {
-            const r = await fetch(`/api/clients/${q.clientId}`, { headers: { 'x-api-key': (sessionStorage.getItem('zyntel_invoice_api_key') ?? '') } });
-            const d = await r.json().catch(() => ({}));
-            if (r.ok && d?.client) {
-              clientContacts = d.client.contacts || null;
-              const emails = (d.client.emails || []).filter(Boolean);
-              to = String((d.client.email || emails[0] || q.clientEmail || '')).trim();
-            }
-          }
-        } catch (_) {}
-        if (!to) to = String(q.clientEmail || '').trim();
-        const override = prompt(`Send quote to which email?\n\nLeave as-is to use default.\nClient: ${clientName}`, to);
-        if (override === null) return;
-        const toAddr = override.trim();
-        const setDefault = confirm('Use this email as the default for this client? (Updates Clients record)');
-        const payload = {
-          quoteId: id,
-          to: toAddr,
-          ...(clientContacts ? { clientContacts: (setDefault ? (clientContacts.map((c)=>({ ...c, isDefault: String(c.email).trim().toLowerCase() === toAddr.toLowerCase() })) ) : clientContacts) } : {}),
-          ...(setDefault ? { setDefaultClientEmail: true } : {}),
-        };
-        const res = await fetch('/api/quotes/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        const d = await res.json().catch(() => ({}));
-        if (!res.ok) { showToast(d.error || 'Failed to send email', 'error'); return; }
-        showToast(`Quote sent to ${clientName}`);
+        openSendQuoteModal({ quoteId: id, clientId: btn.dataset.clientId });
       } else if (action === 'edit') {
         const q = JSON.parse(btn.dataset.quote || '{}');
         document.getElementById('edit-id').value = q.id;

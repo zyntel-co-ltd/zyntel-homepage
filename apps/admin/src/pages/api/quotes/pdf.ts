@@ -24,6 +24,8 @@ export const GET: APIRoute = async ({ url }) => {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `inline; filename="${quote.quoteNumber}.pdf"`,
+        'Cache-Control': 'no-store, max-age=0',
+        Pragma: 'no-cache',
       },
     });
   } catch (err: any) {
