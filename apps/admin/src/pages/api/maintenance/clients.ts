@@ -34,6 +34,9 @@ export const POST: APIRoute = async ({ request }) => {
       invoiceClientId: invoiceClientId != null && !isNaN(invoiceClientId) ? invoiceClientId : null,
       healthCheckUrl: body.healthCheckUrl ?? null,
       apiUrl: body.apiUrl ?? null,
+      repoUrl: body.repoUrl ?? null,
+      sentryUrl: body.sentryUrl ?? null,
+      cronitorUrl: body.cronitorUrl ?? null,
       notes: body.notes ?? null,
     });
     let apiKey: string | undefined;

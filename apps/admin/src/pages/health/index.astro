@@ -8,6 +8,9 @@ let healthData: Array<{
   name: string;
   productName: string;
   healthCheckUrl: string | null;
+  repoUrl: string | null;
+  sentryUrl: string | null;
+  cronitorUrl: string | null;
   currentStatus: string | null;
   lastChecked: Date | null;
   responseTimeMs: number | null;
@@ -22,6 +25,9 @@ try {
         sc.name,
         sc.product_name,
         sc.health_check_url,
+        sc.repo_url,
+        sc.sentry_url,
+        sc.cronitor_url,
         latest.status        AS current_status,
         latest.checked_at    AS last_checked,
         latest.response_time_ms,
@@ -51,6 +57,9 @@ try {
       name: String(r.name),
       productName: String(r.product_name),
       healthCheckUrl: r.health_check_url ?? null,
+      repoUrl: r.repo_url ?? null,
+      sentryUrl: r.sentry_url ?? null,
+      cronitorUrl: r.cronitor_url ?? null,
       currentStatus: r.current_status ?? null,
       lastChecked: r.last_checked ? new Date(r.last_checked) : null,
       responseTimeMs: r.response_time_ms != null ? Number(r.response_time_ms) : null,
@@ -121,6 +130,11 @@ function statusLabel(status: string | null) {
               <a href={h.healthCheckUrl} target="_blank" rel="noopener noreferrer">{h.healthCheckUrl}</a>
             </div>
           )}
+          <div class="wo-actions" style="margin-top:6px">
+            {h.sentryUrl && <a class="act-btn" href={h.sentryUrl} target="_blank" rel="noopener noreferrer">Sentry</a>}
+            {h.cronitorUrl && <a class="act-btn" href={h.cronitorUrl} target="_blank" rel="noopener noreferrer">Cronitor</a>}
+            {h.repoUrl && <a class="act-btn" href={h.repoUrl} target="_blank" rel="noopener noreferrer">Repo</a>}
+          </div>
           <button class="act-btn health-history-btn" data-history={h.id} type="button">View 24h history</button>
         </div>
       ))}

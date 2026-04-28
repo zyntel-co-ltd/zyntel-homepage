@@ -33,6 +33,7 @@ function rowToClient(row: Record<string, any>): PreviewClient {
     figmaEnabled: (row.figma_enabled ?? null) as boolean | null,
     figmaSentAt: row.figma_sent_at ? new Date(row.figma_sent_at) : null,
     activeMockupPackId: (row.active_mockup_pack_id ?? null) as string | null,
+    invoiceClientId: row.invoice_client_id != null ? Number(row.invoice_client_id) : null,
   };
 }
 
@@ -93,11 +94,12 @@ export async function createPreviewClient(data: {
   presentationFile: string;
   expiryDays: number;
   intake?: PreviewClientIntake;
+  invoiceClientId?: number | null;
 }): Promise<PreviewClient> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
   const rows = await sql`
     INSERT INTO preview_clients (
-      client_id, name, email, project_type, client_folder, presentation_file, expiry_date, intake
+      client_id, name, email, project_type, client_folder, presentation_file, expiry_date, intake, invoice_client_id
     )
     VALUES (
       ${data.clientId},
@@ -107,7 +109,8 @@ export async function createPreviewClient(data: {
       ${data.clientFolder},
       ${data.presentationFile},
       now() + (${String(data.expiryDays)} || ' days')::interval,
-      ${data.intake ? JSON.stringify(data.intake) : null}
+      ${data.intake ? JSON.stringify(data.intake) : null},
+      ${data.invoiceClientId ?? null}
     )
     RETURNING *
   `;
@@ -135,6 +138,7 @@ export async function updatePreviewClient(
     figmaEnabled: boolean | null;
     figmaSentAt: Date | null;
     activeMockupPackId: string | null;
+    invoiceClientId: number | null;
   }>
 ): Promise<PreviewClient> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
@@ -212,6 +216,10 @@ export async function updatePreviewClient(
   if (data.activeMockupPackId !== undefined) {
     updates.push(`active_mockup_pack_id = $${values.length + 1}`);
     values.push(data.activeMockupPackId);
+  }
+  if (data.invoiceClientId !== undefined) {
+    updates.push(`invoice_client_id = $${values.length + 1}`);
+    values.push(data.invoiceClientId as any);
   }
 
   if (!updates.length) {

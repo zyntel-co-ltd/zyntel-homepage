@@ -124,6 +124,8 @@ export interface PreviewClient {
   figmaEnabled?: boolean | null;
   figmaSentAt?: Date | null;
   activeMockupPackId?: string | null;
+  /** Canonical billing client (clients.id) */
+  invoiceClientId?: number | null;
 }
 
 export interface PreviewMockupPack {
@@ -159,6 +161,14 @@ export interface Quote {
   status: QuoteStatus;
   validUntil: string | null;
   notes: string | null;
+  terms?: string | null;
+  overageDisclaimer?: string | null;
+  approver1Name?: string | null;
+  approver1Role?: string | null;
+  approver1SignedAt?: Date | null;
+  approver2Name?: string | null;
+  approver2Role?: string | null;
+  approver2SignedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   /** Joined client name — populated by lib queries that JOIN clients */
@@ -188,6 +198,12 @@ export interface ServiceClient {
   healthCheckUrl: string | null;
   apiUrl: string | null;
   apiKeyHash: string | null;
+  /** Optional repository URL for code-change summaries */
+  repoUrl: string | null;
+  /** Optional Sentry project URL (deep link) */
+  sentryUrl: string | null;
+  /** Optional Cronitor monitor URL */
+  cronitorUrl: string | null;
   notes: string | null;
   createdAt: Date;
 }
@@ -218,6 +234,13 @@ export interface WorkOrder {
   /** Contract vs paid add-on vs goodwill — for maintenance reporting */
   coverage: WorkOrderCoverage;
   status: WorkOrderStatus;
+  approvalStatus?: 'draft' | 'pending' | 'approved' | 'rejected';
+  approver1Name?: string | null;
+  approver1Role?: string | null;
+  approver1SignedAt?: Date | null;
+  approver2Name?: string | null;
+  approver2Role?: string | null;
+  approver2SignedAt?: Date | null;
   approvedBy: string | null;
   approvedAt: Date | null;
   completedAt: Date | null;
@@ -253,6 +276,19 @@ export interface ROISnapshot {
   source: ROISource;
   notes: string | null;
   createdAt: Date;
+}
+
+export type ROIMetricDirection = 'higher_is_better' | 'lower_is_better' | 'neutral';
+export type ROIMetricFormat = 'number' | 'currency' | 'percent' | 'duration';
+
+export interface ROIMetricDefinition {
+  key: string;
+  label: string;
+  unit: string | null;
+  direction: ROIMetricDirection;
+  format: ROIMetricFormat;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /** Neon tables maintenance_clients / app_metrics — property ROI tracker (parallel to service_clients). */

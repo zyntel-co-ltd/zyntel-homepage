@@ -23,6 +23,9 @@ function rowToServiceClient(row: Record<string, any>): ServiceClient {
     healthCheckUrl: row.health_check_url != null ? String(row.health_check_url) : null,
     apiUrl: row.api_url != null ? String(row.api_url) : null,
     apiKeyHash: row.api_key_hash != null ? String(row.api_key_hash) : null,
+    repoUrl: row.repo_url != null ? String(row.repo_url) : null,
+    sentryUrl: row.sentry_url != null ? String(row.sentry_url) : null,
+    cronitorUrl: row.cronitor_url != null ? String(row.cronitor_url) : null,
     notes: row.notes != null ? String(row.notes) : null,
     createdAt: new Date(row.created_at),
   };
@@ -56,6 +59,13 @@ function rowToWorkOrder(row: Record<string, any>): WorkOrder {
     currency: String(row.currency),
     coverage: (String(row.coverage ?? 'contract_included') as WorkOrderCoverage),
     status: String(row.status) as WorkOrderStatus,
+    approvalStatus: (row.approval_status ?? 'draft') as any,
+    approver1Name: (row.approver1_name ?? null) as string | null,
+    approver1Role: (row.approver1_role ?? null) as string | null,
+    approver1SignedAt: row.approver1_signed_at ? new Date(row.approver1_signed_at) : null,
+    approver2Name: (row.approver2_name ?? null) as string | null,
+    approver2Role: (row.approver2_role ?? null) as string | null,
+    approver2SignedAt: row.approver2_signed_at ? new Date(row.approver2_signed_at) : null,
     approvedBy: row.approved_by != null ? String(row.approved_by) : null,
     approvedAt: row.approved_at ? new Date(row.approved_at) : null,
     completedAt: row.completed_at ? new Date(row.completed_at) : null,
@@ -97,11 +107,17 @@ export async function createServiceClient(data: {
   invoiceClientId?: number | null;
   healthCheckUrl?: string | null;
   apiUrl?: string | null;
+  repoUrl?: string | null;
+  sentryUrl?: string | null;
+  cronitorUrl?: string | null;
   notes?: string | null;
 }): Promise<ServiceClient> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
   const rows = await sql`
-    INSERT INTO service_clients (name, product_name, product_type, contact_name, contact_email, invoice_client_id, health_check_url, api_url, notes)
+    INSERT INTO service_clients (
+      name, product_name, product_type, contact_name, contact_email, invoice_client_id,
+      health_check_url, api_url, repo_url, sentry_url, cronitor_url, notes
+    )
     VALUES (
       ${data.name},
       ${data.productName},
@@ -111,6 +127,9 @@ export async function createServiceClient(data: {
       ${data.invoiceClientId ?? null},
       ${data.healthCheckUrl ?? null},
       ${data.apiUrl ?? null},
+      ${data.repoUrl ?? null},
+      ${data.sentryUrl ?? null},
+      ${data.cronitorUrl ?? null},
       ${data.notes ?? null}
     )
     RETURNING *
@@ -130,6 +149,9 @@ export async function updateServiceClient(
     healthCheckUrl: string | null;
     apiUrl: string | null;
     apiKeyHash: string | null;
+    repoUrl: string | null;
+    sentryUrl: string | null;
+    cronitorUrl: string | null;
     notes: string | null;
   }>
 ): Promise<ServiceClient> {
@@ -147,6 +169,9 @@ export async function updateServiceClient(
     healthCheckUrl: 'health_check_url',
     apiUrl: 'api_url',
     apiKeyHash: 'api_key_hash',
+    repoUrl: 'repo_url',
+    sentryUrl: 'sentry_url',
+    cronitorUrl: 'cronitor_url',
     notes: 'notes',
   };
   for (const [key, col] of Object.entries(map)) {
@@ -290,6 +315,13 @@ export async function updateWorkOrder(
     currency: string;
     coverage: WorkOrderCoverage;
     status: WorkOrderStatus;
+    approvalStatus: 'draft' | 'pending' | 'approved' | 'rejected';
+    approver1Name: string | null;
+    approver1Role: string | null;
+    approver1SignedAt: Date | null;
+    approver2Name: string | null;
+    approver2Role: string | null;
+    approver2SignedAt: Date | null;
     approvedBy: string | null;
     approvedAt: Date | null;
     completedAt: Date | null;
@@ -307,6 +339,13 @@ export async function updateWorkOrder(
   if (data.currency !== undefined) { updates.push(`currency = $${values.length + 1}`); values.push(data.currency); }
   if (data.coverage !== undefined) { updates.push(`coverage = $${values.length + 1}`); values.push(data.coverage); }
   if (data.status !== undefined) { updates.push(`status = $${values.length + 1}`); values.push(data.status); }
+  if (data.approvalStatus !== undefined) { updates.push(`approval_status = $${values.length + 1}`); values.push(data.approvalStatus); }
+  if (data.approver1Name !== undefined) { updates.push(`approver1_name = $${values.length + 1}`); values.push(data.approver1Name); }
+  if (data.approver1Role !== undefined) { updates.push(`approver1_role = $${values.length + 1}`); values.push(data.approver1Role); }
+  if (data.approver1SignedAt !== undefined) { updates.push(`approver1_signed_at = $${values.length + 1}`); values.push(data.approver1SignedAt); }
+  if (data.approver2Name !== undefined) { updates.push(`approver2_name = $${values.length + 1}`); values.push(data.approver2Name); }
+  if (data.approver2Role !== undefined) { updates.push(`approver2_role = $${values.length + 1}`); values.push(data.approver2Role); }
+  if (data.approver2SignedAt !== undefined) { updates.push(`approver2_signed_at = $${values.length + 1}`); values.push(data.approver2SignedAt); }
   if (data.approvedBy !== undefined) { updates.push(`approved_by = $${values.length + 1}`); values.push(data.approvedBy); }
   if (data.approvedAt !== undefined) { updates.push(`approved_at = $${values.length + 1}`); values.push(data.approvedAt); }
   if (data.completedAt !== undefined) { updates.push(`completed_at = $${values.length + 1}`); values.push(data.completedAt); }

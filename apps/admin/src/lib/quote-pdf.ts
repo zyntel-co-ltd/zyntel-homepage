@@ -221,6 +221,24 @@ export async function generateQuotePdf(
     y -= 10;
   }
 
+  // Terms / disclaimers
+  const termsBlocks: Array<{ heading: string; text: string | null | undefined }> = [
+    { heading: 'Terms', text: quote.terms },
+    { heading: 'Cost & scope notice', text: quote.overageDisclaimer },
+  ];
+  for (const b of termsBlocks) {
+    if (!b.text) continue;
+    draw(`${b.heading}:`, MARGIN, 10, true);
+    for (const para of String(b.text).split('\n')) {
+      const wrapped = wrapText(para, font, 9, CONTENT_WIDTH);
+      for (const line of wrapped) {
+        page.drawText(line, { x: MARGIN, y, size: 9, font, color: rgb(0.2, 0.2, 0.2) });
+        y -= 12;
+      }
+    }
+    y -= 10;
+  }
+
   // Signature line
   y -= 20;
   page.drawRectangle({ x: MARGIN, y: y - 2, width: CONTENT_WIDTH, height: 1, color: rgb(0.85, 0.85, 0.85) });

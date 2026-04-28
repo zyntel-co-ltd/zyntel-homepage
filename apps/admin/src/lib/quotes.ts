@@ -16,6 +16,14 @@ function rowToQuote(row: Record<string, any>): Quote {
     status: String(row.status) as QuoteStatus,
     validUntil: row.valid_until ? String(row.valid_until).slice(0, 10) : null,
     notes: row.notes != null ? String(row.notes) : null,
+    terms: row.terms != null ? String(row.terms) : null,
+    overageDisclaimer: row.overage_disclaimer != null ? String(row.overage_disclaimer) : null,
+    approver1Name: row.approver1_name != null ? String(row.approver1_name) : null,
+    approver1Role: row.approver1_role != null ? String(row.approver1_role) : null,
+    approver1SignedAt: row.approver1_signed_at ? new Date(row.approver1_signed_at) : null,
+    approver2Name: row.approver2_name != null ? String(row.approver2_name) : null,
+    approver2Role: row.approver2_role != null ? String(row.approver2_role) : null,
+    approver2SignedAt: row.approver2_signed_at ? new Date(row.approver2_signed_at) : null,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
     clientName: row.client_name != null ? String(row.client_name) : null,
@@ -73,6 +81,8 @@ export async function createQuote(data: {
   currency?: string;
   validUntil?: string | null;
   notes?: string | null;
+  terms?: string | null;
+  overageDisclaimer?: string | null;
 }): Promise<Quote> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
   const lineItems = data.lineItems;
@@ -82,7 +92,7 @@ export async function createQuote(data: {
   const quoteNumber = await nextQuoteNumber();
 
   const rows = await sql`
-    INSERT INTO quotes (quote_number, client_id, title, line_items, subtotal, tax_rate, total, currency, valid_until, notes)
+    INSERT INTO quotes (quote_number, client_id, title, line_items, subtotal, tax_rate, total, currency, valid_until, notes, terms, overage_disclaimer)
     VALUES (
       ${quoteNumber},
       ${data.clientId ?? null},
@@ -93,7 +103,9 @@ export async function createQuote(data: {
       ${total},
       ${data.currency ?? 'UGX'},
       ${data.validUntil ?? null},
-      ${data.notes ?? null}
+      ${data.notes ?? null},
+      ${data.terms ?? null},
+      ${data.overageDisclaimer ?? null}
     )
     RETURNING *
   `;
@@ -110,6 +122,14 @@ export async function updateQuote(
     currency: string;
     validUntil: string | null;
     notes: string | null;
+    terms: string | null;
+    overageDisclaimer: string | null;
+    approver1Name: string | null;
+    approver1Role: string | null;
+    approver1SignedAt: Date | null;
+    approver2Name: string | null;
+    approver2Role: string | null;
+    approver2SignedAt: Date | null;
   }>
 ): Promise<Quote> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
@@ -121,6 +141,14 @@ export async function updateQuote(
   if (data.currency !== undefined) { updates.push(`currency = $${values.length + 1}`); values.push(data.currency); }
   if (data.validUntil !== undefined) { updates.push(`valid_until = $${values.length + 1}`); values.push(data.validUntil); }
   if (data.notes !== undefined) { updates.push(`notes = $${values.length + 1}`); values.push(data.notes); }
+  if (data.terms !== undefined) { updates.push(`terms = $${values.length + 1}`); values.push(data.terms); }
+  if (data.overageDisclaimer !== undefined) { updates.push(`overage_disclaimer = $${values.length + 1}`); values.push(data.overageDisclaimer); }
+  if (data.approver1Name !== undefined) { updates.push(`approver1_name = $${values.length + 1}`); values.push(data.approver1Name); }
+  if (data.approver1Role !== undefined) { updates.push(`approver1_role = $${values.length + 1}`); values.push(data.approver1Role); }
+  if (data.approver1SignedAt !== undefined) { updates.push(`approver1_signed_at = $${values.length + 1}`); values.push(data.approver1SignedAt); }
+  if (data.approver2Name !== undefined) { updates.push(`approver2_name = $${values.length + 1}`); values.push(data.approver2Name); }
+  if (data.approver2Role !== undefined) { updates.push(`approver2_role = $${values.length + 1}`); values.push(data.approver2Role); }
+  if (data.approver2SignedAt !== undefined) { updates.push(`approver2_signed_at = $${values.length + 1}`); values.push(data.approver2SignedAt); }
 
   if (data.lineItems !== undefined) {
     const items = data.lineItems;

@@ -1,0 +1,143 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { sql } from '@zyntel/db';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+const clientId = Number(id);
+if (!Number.isFinite(clientId)) {
+  throw new Error('Invalid client id');
+}
+
+const clientRows = await sql`SELECT * FROM clients WHERE id = ${clientId}`;
+const client = clientRows[0] as any | undefined;
+
+const quotes = await sql`
+  SELECT * FROM quotes
+  WHERE client_id = ${clientId}
+  ORDER BY created_at DESC
+  LIMIT 50
+` as any[];
+
+const invoices = await sql`
+  SELECT id, invoice_number, status, total, currency, created_at, due_date
+  FROM invoices
+  WHERE client_id = ${clientId}
+  ORDER BY created_at DESC
+  LIMIT 50
+` as any[];
+
+const serviceClients = await sql`
+  SELECT id, name, product_name, product_type, health_check_url, repo_url, sentry_url, cronitor_url
+  FROM service_clients
+  WHERE invoice_client_id = ${clientId}
+  ORDER BY created_at DESC
+` as any[];
+
+const previewClients = await sql`
+  SELECT client_id, name, status, expiry_date, token, figma_enabled, staging_enabled, production_enabled
+  FROM preview_clients
+  WHERE invoice_client_id = ${clientId}
+  ORDER BY created_at DESC
+` as any[];
+
+const SITE = import.meta.env.SITE_URL ?? 'https://admin.zyntel.net';
+---
+<AdminLayout title="Client Overview">
+  <header class="admin-header" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div>
+      <a href="/clients" class="admin-btn admin-btn-ghost" style="margin-bottom: 0.75rem;">← Clients</a>
+      <h1 class="admin-title">{client ? client.name : 'Client not found'}</h1>
+      <p class="admin-subtitle">Single source of truth view across billing, maintenance, and previews.</p>
+    </div>
+    {client && (
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <a class="admin-btn admin-btn-secondary" href={`/clients/${clientId}/edit`}>Edit client</a>
+        <a class="admin-btn" href="/quotes">Quotes</a>
+        <a class="admin-btn" href="/maintenance">Maintenance</a>
+        <a class="admin-btn" href="/previews">Previews</a>
+      </div>
+    )}
+  </header>
+
+  {!client ? (
+    <div class="admin-card" style="padding:24px;">Client not found.</div>
+  ) : (
+    <>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:12px;">
+        <div class="admin-card" style="padding:14px 16px;">
+          <div style="font-size:11px;color:#6b7280;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Primary email</div>
+          <div style="margin-top:6px;font-weight:800;">{client.email}</div>
+        </div>
+        <div class="admin-card" style="padding:14px 16px;">
+          <div style="font-size:11px;color:#6b7280;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Invoices</div>
+          <div style="margin-top:6px;font-weight:800;">{invoices.length}</div>
+        </div>
+        <div class="admin-card" style="padding:14px 16px;">
+          <div style="font-size:11px;color:#6b7280;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Quotes</div>
+          <div style="margin-top:6px;font-weight:800;">{quotes.length}</div>
+        </div>
+        <div class="admin-card" style="padding:14px 16px;">
+          <div style="font-size:11px;color:#6b7280;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Maintenance products</div>
+          <div style="margin-top:6px;font-weight:800;">{serviceClients.length}</div>
+        </div>
+        <div class="admin-card" style="padding:14px 16px;">
+          <div style="font-size:11px;color:#6b7280;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Preview links</div>
+          <div style="margin-top:6px;font-weight:800;">{previewClients.length}</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr;gap:12px;">
+        <div class="admin-card">
+          <div class="admin-card-header" style="padding:14px 16px;border-bottom:1px solid #eee;">
+            <h2 class="maint-section-title">Maintenance products</h2>
+          </div>
+          <div style="padding:14px 16px;">
+            {serviceClients.length ? (
+              <ul style="margin:0;padding-left:18px;">
+                {serviceClients.map((s) => (
+                  <li>
+                    <strong>{s.product_name}</strong> <span style="color:#6b7280">({s.product_type})</span>
+                    <div style="font-size:12px;color:#6b7280;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;">
+                      {s.health_check_url && <a href={s.health_check_url} target="_blank" rel="noopener noreferrer">Health URL</a>}
+                      {s.repo_url && <a href={s.repo_url} target="_blank" rel="noopener noreferrer">Repo</a>}
+                      {s.sentry_url && <a href={s.sentry_url} target="_blank" rel="noopener noreferrer">Sentry</a>}
+                      {s.cronitor_url && <a href={s.cronitor_url} target="_blank" rel="noopener noreferrer">Cronitor</a>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p style="margin:0;color:#6b7280;">No maintenance products linked yet (set `invoice_client_id` on a service client).</p>
+            )}
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-header" style="padding:14px 16px;border-bottom:1px solid #eee;">
+            <h2 class="maint-section-title">Preview links</h2>
+          </div>
+          <div style="padding:14px 16px;">
+            {previewClients.length ? (
+              <ul style="margin:0;padding-left:18px;">
+                {previewClients.map((p) => (
+                  <li>
+                    <strong>{p.name}</strong> <span style="color:#6b7280">({p.client_id})</span>
+                    <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+                      Link: <a href={`${SITE}/p/${p.token}`} target="_blank" rel="noopener noreferrer">{`${SITE}/p/${p.token}`}</a>
+                      {' · '}Expiry: {new Date(p.expiry_date).toLocaleDateString('en-GB')}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p style="margin:0;color:#6b7280;">No preview clients linked yet (set `invoice_client_id` on a preview client).</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  )}
+</AdminLayout>
+

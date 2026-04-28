@@ -28,6 +28,11 @@ try {
   // Log view on successful validation (duration is unknown here; capture UA)
   await logPitchView(session.id, Astro.request.headers.get('user-agent'), null);
 
+  // Prefer uploaded (R2) decks if configured.
+  if (session.r2Prefix && session.entryPath) {
+    return Astro.redirect(`/pd/entry?token=${token}`, 302);
+  }
+
   return Astro.redirect(
     `/pitches/${session.deckFolder}/${session.deckFile}?token=${token}`,
     302

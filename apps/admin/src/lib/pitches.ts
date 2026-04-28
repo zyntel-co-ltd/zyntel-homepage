@@ -10,6 +10,9 @@ export interface PitchSession {
   eventContext: string;
   deckFolder: string;
   deckFile: string;
+  /** Optional R2-backed deck pack (preferred) */
+  r2Prefix?: string | null;
+  entryPath?: string | null;
   status: PitchSessionStatus;
   expiryDate: Date | null;
   createdAt: Date;
@@ -33,6 +36,8 @@ function rowToSession(row: Record<string, any>): PitchSession {
     eventContext: String(row.event_context),
     deckFolder: String(row.deck_folder),
     deckFile: String(row.deck_file),
+    r2Prefix: row.r2_prefix != null ? String(row.r2_prefix) : null,
+    entryPath: row.entry_path != null ? String(row.entry_path) : null,
     status: String(row.status) as PitchSessionStatus,
     expiryDate: row.expiry_date ? new Date(row.expiry_date) : null,
     createdAt: new Date(row.created_at),
@@ -164,6 +169,8 @@ export async function updatePitchSession(
     deckFile: string;
     status: PitchSessionStatus;
     expiryDate: Date | null;
+    r2Prefix: string | null;
+    entryPath: string | null;
   }>
 ): Promise<PitchSession> {
   if (!import.meta.env.DATABASE_URL) throw new Error('DATABASE_URL must be set');
@@ -198,6 +205,14 @@ export async function updatePitchSession(
   if (data.expiryDate !== undefined) {
     updates.push(`expiry_date = $${values.length + 1}`);
     values.push(data.expiryDate);
+  }
+  if (data.r2Prefix !== undefined) {
+    updates.push(`r2_prefix = $${values.length + 1}`);
+    values.push(data.r2Prefix);
+  }
+  if (data.entryPath !== undefined) {
+    updates.push(`entry_path = $${values.length + 1}`);
+    values.push(data.entryPath);
   }
 
   if (!updates.length) {

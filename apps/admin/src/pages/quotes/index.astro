@@ -138,6 +138,14 @@ const stats = {
           <label>Notes</label>
           <textarea id="new-notes" class="admin-form-input" rows="3"></textarea>
         </div>
+        <div class="form-row">
+          <label>Terms (optional)</label>
+          <textarea id="new-terms" class="admin-form-input" rows="3" placeholder="Payment terms, assumptions, exclusions..."></textarea>
+        </div>
+        <div class="form-row">
+          <label>Cost &amp; scope notice (recommended)</label>
+          <textarea id="new-overage" class="admin-form-input" rows="3" placeholder="This quote is an estimate. Final cost may exceed if scope changes or additional work is required. Any overage will be explained in the maintenance report or change order."></textarea>
+        </div>
         <div class="modal-actions">
           <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-new-quote">Cancel</button>
           <button class="admin-btn admin-btn-primary">Create Quote</button>
@@ -194,6 +202,14 @@ const stats = {
         <div class="form-row">
           <label>Notes</label>
           <textarea id="edit-notes" class="admin-form-input" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Terms (optional)</label>
+          <textarea id="edit-terms" class="admin-form-input" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Cost &amp; scope notice</label>
+          <textarea id="edit-overage" class="admin-form-input" rows="3"></textarea>
         </div>
         <div class="modal-actions">
           <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-edit-quote">Cancel</button>
@@ -402,6 +418,8 @@ const stats = {
         currency: document.getElementById('new-currency').value,
         validUntil: document.getElementById('new-validUntil').value || null,
         notes: document.getElementById('new-notes').value.trim() || null,
+        terms: document.getElementById('new-terms').value.trim() || null,
+        overageDisclaimer: document.getElementById('new-overage').value.trim() || null,
       };
       const res = await fetch('/api/quotes/quotes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) { showToast('Failed to create quote', 'error'); return; }
@@ -421,6 +439,8 @@ const stats = {
         currency: document.getElementById('edit-currency').value,
         validUntil: document.getElementById('edit-validUntil').value || null,
         notes: document.getElementById('edit-notes').value.trim() || null,
+        terms: document.getElementById('edit-terms').value.trim() || null,
+        overageDisclaimer: document.getElementById('edit-overage').value.trim() || null,
       };
       const res = await fetch('/api/quotes/quotes', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) { showToast('Failed to update quote', 'error'); return; }
@@ -448,6 +468,8 @@ const stats = {
         document.getElementById('edit-taxRate').value = String(q.taxRate || 0);
         document.getElementById('edit-validUntil').value = q.validUntil ? String(q.validUntil).slice(0, 10) : '';
         document.getElementById('edit-notes').value = q.notes || '';
+        document.getElementById('edit-terms').value = q.terms || '';
+        document.getElementById('edit-overage').value = q.overageDisclaimer || '';
         const liTbody = document.getElementById('edit-line-items');
         liTbody.innerHTML = '';
         (q.lineItems || []).forEach((li) => liTbody.appendChild(createItemRow('edit', li)));

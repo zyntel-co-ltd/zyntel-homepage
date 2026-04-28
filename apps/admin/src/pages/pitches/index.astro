@@ -89,6 +89,7 @@ const sessionsWithMeta = sessions.map((s) => {
               <td>{s.lastViewedFormatted}</td>
               <td class="preview-actions">
                 <button class="act-btn" data-action="copy" data-link={s.pitchLink} type="button">Copy Link</button>
+                <button class="act-btn" data-action="upload" data-token={s.token} type="button">Upload Deck</button>
                 <button class="act-btn" data-action="history" data-id={s.id} type="button">View History</button>
                 <button class="act-btn" data-action="edit" data-session={JSON.stringify({
                   id: s.id,
@@ -138,6 +139,7 @@ const sessionsWithMeta = sessions.map((s) => {
 
   <div id="modal-confirm" class="preview-modal-overlay" style="display:none"><div class="modal"><h3 id="confirm-title"></h3><p id="confirm-message"></p><div class="modal-actions"><button type="button" class="admin-btn admin-btn-secondary" data-close="modal-confirm">Cancel</button><button id="confirm-btn" type="button" class="admin-btn admin-btn-primary">Confirm</button></div></div></div>
   <div id="toast-root"></div>
+  <input id="file-deck" type="file" accept=".zip,text/html,.html" style="display:none" />
 
   <style>
     .previews-header{display:flex;justify-content:space-between;align-items:center;}
@@ -344,6 +346,25 @@ const sessionsWithMeta = sessions.map((s) => {
       const action=btn.dataset.action;
       const row=btn.closest('tr');
       if(action==='copy'){ copyToClipboard(btn.dataset.link); return; }
+      if(action==='upload'){
+        const token = btn.dataset.token;
+        const input = document.getElementById('file-deck');
+        input.value = '';
+        input.onchange = async () => {
+          const f = input.files && input.files[0];
+          if (!f) return;
+          const fd = new FormData();
+          fd.append('token', token);
+          fd.append('file', f);
+          showToast('Uploading deck…');
+          const r = await fetch('/api/pitches/upload-deck', { method: 'POST', body: fd });
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) { showToast(d.error || 'Upload failed', 'error'); return; }
+          showToast('Deck uploaded. Your pitch link now serves the uploaded deck.');
+        };
+        input.click();
+        return;
+      }
       if(action==='history'){ openHistory(btn.dataset.id); return; }
       if(action==='edit'){
         const s=JSON.parse(btn.dataset.session);
