@@ -2,11 +2,31 @@ import { sql } from '@zyntel/db';
 import { createInvoice } from '@zyntel/db';
 import type { Quote, QuoteLineItem, QuoteStatus } from '@zyntel/db/schema';
 
+function normalizeDateOnly(value: unknown): string | null {
+  if (!value) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  if (typeof value === 'string') {
+    const s = value.trim();
+    if (!s) return null;
+    // Most common DB shapes: "YYYY-MM-DD..." or already "YYYY-MM-DD"
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+    return null;
+  }
+  // Fallback for drivers returning numeric timestamps etc.
+  const d = new Date(value as any);
+  if (!Number.isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  return null;
+}
+
 const DEFAULT_OVERAGE_DISCLAIMER =
   'This quote is based on the scope understood at the time of quoting. If additional requirements, change requests, or unforeseen technical constraints arise, the final cost may exceed the quoted amount. Any overages will be communicated and agreed on before extra work begins.';
 
 function rowToQuote(row: Record<string, any>): Quote {
-  return {
+  const q: Quote & { clientAddress?: string | null } = {
     id: String(row.id),
     quoteNumber: String(row.quote_number),
     clientId: row.client_id != null ? Number(row.client_id) : null,
@@ -17,7 +37,7 @@ function rowToQuote(row: Record<string, any>): Quote {
     total: Number(row.total),
     currency: String(row.currency),
     status: String(row.status) as QuoteStatus,
-    validUntil: row.valid_until ? String(row.valid_until).slice(0, 10) : null,
+    validUntil: normalizeDateOnly(row.valid_until),
     notes: row.notes != null ? String(row.notes) : null,
     terms: row.terms != null ? String(row.terms) : null,
     overageDisclaimer: row.overage_disclaimer != null ? String(row.overage_disclaimer) : null,
@@ -32,6 +52,8 @@ function rowToQuote(row: Record<string, any>): Quote {
     clientName: row.client_name != null ? String(row.client_name) : null,
     clientEmail: row.client_email != null ? String(row.client_email) : null,
   };
+  q.clientAddress = row.client_address != null ? String(row.client_address) : null;
+  return q;
 }
 
 async function nextQuoteNumber(): Promise<string> {
@@ -44,7 +66,7 @@ async function nextQuoteNumber(): Promise<string> {
 export async function getAllQuotes(): Promise<Quote[]> {
   if (!import.meta.env.DATABASE_URL) return [];
   const rows = await sql`
-    SELECT q.*, c.name AS client_name, c.email AS client_email
+    SELECT q.*, c.name AS client_name, c.email AS client_email, c.address AS client_address
     FROM quotes q
     LEFT JOIN clients c ON c.id = q.client_id
     ORDER BY q.created_at DESC
@@ -55,7 +77,7 @@ export async function getAllQuotes(): Promise<Quote[]> {
 export async function getQuoteById(id: string): Promise<Quote | null> {
   if (!import.meta.env.DATABASE_URL) return null;
   const rows = await sql`
-    SELECT q.*, c.name AS client_name, c.email AS client_email
+    SELECT q.*, c.name AS client_name, c.email AS client_email, c.address AS client_address
     FROM quotes q
     LEFT JOIN clients c ON c.id = q.client_id
     WHERE q.id = ${id}
@@ -67,7 +89,7 @@ export async function getQuoteById(id: string): Promise<Quote | null> {
 export async function getQuotesByClient(clientId: number): Promise<Quote[]> {
   if (!import.meta.env.DATABASE_URL) return [];
   const rows = await sql`
-    SELECT q.*, c.name AS client_name, c.email AS client_email
+    SELECT q.*, c.name AS client_name, c.email AS client_email, c.address AS client_address
     FROM quotes q
     LEFT JOIN clients c ON c.id = q.client_id
     WHERE q.client_id = ${clientId}

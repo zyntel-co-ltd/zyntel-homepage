@@ -8,6 +8,21 @@ const CYAN = rgb(0, 0.94, 1);
 const MARGIN = 50;
 const CONTENT_WIDTH = 595 - MARGIN * 2;
 
+function parseDateOnly(dateStr: string): Date | null {
+  const s = String(dateStr).trim();
+  if (!s) return null;
+  // Ensure date-only values don't shift across timezones.
+  const d = new Date(`${s.slice(0, 10)}T12:00:00Z`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function extractPoBox(address: string): string | null {
+  const a = String(address ?? '').trim();
+  if (!a) return null;
+  const m = a.match(/\bP\.?\s*O\.?\s*Box\b[^\n,;]*/i);
+  return m ? m[0].replace(/\s+/g, ' ').trim() : null;
+}
+
 async function loadLogo(baseUrl: string, path: string): Promise<Uint8Array | null> {
   try {
     const url = `${baseUrl.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
@@ -68,7 +83,7 @@ function wrapText(
 }
 
 export async function generateQuotePdf(
-  quote: Quote,
+  quote: Quote & { clientAddress?: string | null },
   options: { baseUrl?: string } = {}
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
@@ -109,6 +124,9 @@ export async function generateQuotePdf(
   };
 
   draw(`Quote ${quote.quoteNumber}`, MARGIN, 20, true);
+  if (quote.title) {
+    draw(quote.title, MARGIN, 12, false);
+  }
   y -= 8;
 
   const colRightStart = rightEdge - 140;
@@ -129,13 +147,17 @@ export async function generateQuotePdf(
 
   drawRight('Quote No.', quote.quoteNumber);
   drawRight('Date', new Date(quote.createdAt).toLocaleDateString('en-GB'));
-  if (quote.validUntil) drawRight('Valid Until', new Date(quote.validUntil).toLocaleDateString('en-GB'));
+  if (quote.validUntil) {
+    const d = parseDateOnly(quote.validUntil);
+    if (d) drawRight('Valid Until', d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }));
+  }
   drawRight('Total', formatMoney(quote.total, quote.currency));
   y = Math.min(y, yRight - 10);
 
   draw('Prepared For:', MARGIN, 12, true);
   if (quote.clientName) draw(quote.clientName, MARGIN);
-  if (quote.clientEmail) draw(quote.clientEmail, MARGIN);
+  const poBox = quote.clientAddress ? extractPoBox(quote.clientAddress) : null;
+  if (poBox) draw(poBox, MARGIN);
   y -= 20;
 
   const items = quote.lineItems;
@@ -241,12 +263,15 @@ export async function generateQuotePdf(
 
   // Footer
   if (quote.validUntil) {
-    const validUntilFormatted = new Date(quote.validUntil).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-    draw(`This quote is valid until ${validUntilFormatted}.`, MARGIN, 9);
+    const d = parseDateOnly(quote.validUntil);
+    if (d) {
+      const validUntilFormatted = d.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+      draw(`This quote is valid until ${validUntilFormatted}.`, MARGIN, 9);
+    }
   }
   y -= 4;
   page.drawRectangle({ x: MARGIN, y: y - 2, width: CONTENT_WIDTH, height: 1, color: rgb(0.9, 0.9, 0.9) });
