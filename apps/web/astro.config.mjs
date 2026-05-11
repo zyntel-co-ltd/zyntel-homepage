@@ -7,6 +7,7 @@ const NOINDEX_PATHS = ['/careers', '/newsletter', '/demos', '/faqs'];
 export default defineConfig({
   output: 'server',
   adapter: node({ mode: 'standalone' }),
+  server: { host: true },
   site: 'https://zyntel.net',
   integrations: [
     sitemap({
