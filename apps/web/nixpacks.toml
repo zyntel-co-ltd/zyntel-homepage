@@ -3,4 +3,4 @@ NIXPACKS_NODE_VERSION = "22"
 
 [phases.install]
 dependsOn = ["setup"]
-cmds = ["cd ../.. && npm install"]
+cmds = ["npm install"]
