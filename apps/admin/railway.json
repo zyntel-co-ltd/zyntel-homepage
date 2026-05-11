@@ -2,7 +2,7 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "cd ../.. && npm run build -w zyntel-homepage"
+    "buildCommand": "cd ../.. && npm run build -w zyntel-admin"
   },
   "deploy": {
     "startCommand": "npm run start",
