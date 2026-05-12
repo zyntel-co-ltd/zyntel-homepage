@@ -1,0 +1,6 @@
+[variables]
+NIXPACKS_NODE_VERSION = "22"
+
+[phases.install]
+dependsOn = ["setup"]
+cmds = ["npm install"]

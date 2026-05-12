@@ -1,0 +1,11 @@
+# Zyntel Co. Limited — Vulnerability Disclosure
+# https://www.rfc-editor.org/rfc/rfc9116
+
+Contact: mailto:security@zyntel.net
+Contact: https://zyntel.net/contact
+Expires: 2027-12-31T23:59:59.000Z
+Encryption: https://zyntel.net/.well-known/pgp-key.txt
+Preferred-Languages: en
+Canonical: https://zyntel.net/.well-known/security.txt
+Policy: https://zyntel.net/policy/security
+Acknowledgments: https://zyntel.net/policy/security#acknowledgments

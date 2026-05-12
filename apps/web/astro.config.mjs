@@ -1,12 +1,13 @@
 import { defineConfig } from 'astro/config';
-import vercel from '@astrojs/vercel';
+import node from '@astrojs/node';
 import sitemap from '@astrojs/sitemap';
 
 const NOINDEX_PATHS = ['/careers', '/newsletter', '/demos', '/faqs'];
 
 export default defineConfig({
   output: 'server',
-  adapter: vercel(),
+  adapter: node({ mode: 'standalone' }),
+  server: { host: true },
   site: 'https://zyntel.net',
   integrations: [
     sitemap({
