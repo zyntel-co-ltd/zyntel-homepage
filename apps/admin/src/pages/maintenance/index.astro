@@ -59,13 +59,13 @@ const serviceClients = await getAllServiceClients();
       <button type="button" id="btn-gen-api-key" class="admin-btn admin-btn-primary">Generate / rotate API key</button>
       <span class="maint-hint">Shown once — update <code>ZYNTEL_API_KEY</code> (or your app’s env name) on the client server.</span>
     </div>
-    <div style="margin-top:14px;border-top:1px solid #eef2f7;padding-top:14px;">
-      <h3 style="margin:0 0 8px;font-size:13px;">ROI auto-sync (recommended)</h3>
-      <p style="margin:0 0 10px;color:#6b7280;font-size:12px;line-height:1.5;">
+    <div class="maint-roi-inset">
+      <h3>ROI auto-sync (recommended)</h3>
+      <p>
         After you implement the product’s <code>/zyntel/v1/snapshot</code> + <code>/zyntel/v1/push-snapshot</code> endpoints, schedule snapshots (Cronitor or system cron).
         The product will push metrics to <code>admin.zyntel.net</code> automatically — no manual ROI logging.
       </p>
-      <div class="maint-connection-grid" style="margin-top:8px;">
+      <div class="maint-connection-grid">
         <div class="full">
           <span class="maint-kicker">Suggested Cronitor URL</span>
           <div id="roi-cronitor-url" class="maint-connection-value">—</div>
@@ -79,11 +79,11 @@ const serviceClients = await getAllServiceClients();
           <div id="roi-last-sync" class="maint-connection-value">—</div>
         </div>
       </div>
-      <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
+      <div class="maint-connection-actions">
         <button type="button" id="btn-pull-roi" class="admin-btn admin-btn-secondary">Test pull now</button>
-        <span id="roi-pull-hint" style="font-size:12px;color:#6b7280;">Pull uses encrypted key (if stored) and <code>apiUrl</code>.</span>
+        <span id="roi-pull-hint" class="maint-hint">Pull uses encrypted key (if stored) and <code>apiUrl</code>.</span>
       </div>
-      <p id="roi-pull-error" style="display:none;margin:10px 0 0;color:#b91c1c;font-size:12px;"></p>
+      <p id="roi-pull-error" style="display:none;margin:8px 0 0;color:var(--admin-danger);font-size:12px;"></p>
     </div>
   </div>
 
@@ -171,9 +171,15 @@ const serviceClients = await getAllServiceClients();
   <div id="wo-panel" class="admin-card" style="display:none">
     <div class="admin-card-header">
       <h2 class="maint-section-title">Work Orders</h2>
-      <button id="btn-new-wo" class="admin-btn admin-btn-secondary" type="button">+ New Work Order</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="btn-download-report" class="admin-btn admin-btn-secondary" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Quarterly Report PDF
+        </button>
+        <button id="btn-new-wo" class="admin-btn admin-btn-primary" type="button">+ New Work Order</button>
+      </div>
     </div>
-    <div id="wo-list" class="wo-list"></div>
+    <div id="wo-list" class="wo-list" style="padding:0 16px 16px;"></div>
   </div>
 
   <!-- ROI Metrics Panel -->
@@ -324,81 +330,135 @@ const serviceClients = await getAllServiceClients();
   </div>
 
   <style>
+    /* ── Page wrapper ── */
     .maint-root{margin:0 auto;max-width:1120px;}
     .maint-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
-    .maint-selector-card{padding:16px;}
-    .maint-connection-card{padding:16px 18px;}
-    .maint-help{font-size:12px;color:#6b7280;margin:8px 0 12px;line-height:1.55;}
-    .maint-help code{font-size:11px;background:#f3f4f6;padding:1px 6px;border-radius:4px;}
-    .maint-connection-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+
+    /* ── Card padding helpers ── */
+    .maint-selector-card{padding:16px 20px;}
+    .maint-connection-card{padding:18px 20px;}
+    .admin-card{margin-bottom:1.25rem;}
+
+    /* ── Help text & code ── */
+    .maint-help{font-size:12px;color:var(--admin-text-muted);margin:8px 0 12px;line-height:1.55;}
+    .maint-help code{font-size:11px;background:var(--admin-bg-elevated);border:1px solid var(--admin-border);padding:1px 6px;border-radius:4px;font-family:ui-monospace,monospace;}
+
+    /* ── Connection grid ── */
+    .maint-connection-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
     @media(max-width:720px){.maint-connection-grid{grid-template-columns:1fr;}}
-    .maint-kicker{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;}
-    .maint-connection-value{font-size:13px;color:#111;word-break:break-all;margin-top:4px;}
-    .maint-connection-value a{color:#635bff;}
-    .maint-connection-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;}
-    .maint-hint{font-size:11px;color:#6b7280;max-width:440px;line-height:1.4;}
+    .maint-kicker{font-size:11px;font-weight:700;color:var(--admin-text-muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:4px;}
+    .maint-connection-value{font-size:13px;color:var(--admin-text);word-break:break-all;}
+    .maint-connection-value a{color:var(--admin-accent);}
+    .maint-connection-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:4px;}
+    .maint-hint{font-size:11px;color:var(--admin-text-muted);max-width:440px;line-height:1.4;}
+    .maint-roi-inset{margin-top:14px;border-top:1px solid var(--admin-border);padding-top:14px;}
+    .maint-roi-inset h3{margin:0 0 6px;font-size:13px;color:var(--admin-text);}
+    .maint-roi-inset p{margin:0 0 10px;color:var(--admin-text-muted);font-size:12px;line-height:1.5;}
+
+    /* ── Checkbox row ── */
     .maint-checkbox-row{margin-top:6px;}
-    .maint-inline-check{font-size:12px;font-weight:500;color:#374151;display:flex;align-items:center;gap:8px;cursor:pointer;}
+    .maint-inline-check{font-size:12px;font-weight:500;color:var(--admin-text);display:flex;align-items:center;gap:8px;cursor:pointer;}
+
+    /* ── ROI header / sub ── */
     .maint-roi-header{align-items:flex-start;gap:12px;}
-    .maint-roi-sub{font-size:12px;color:#6b7280;margin:6px 0 0;font-weight:400;line-height:1.45;max-width:52rem;}
-    .maint-metric-section-title{font-size:11px;font-weight:700;color:#635bff;text-transform:uppercase;letter-spacing:.06em;margin-top:4px;}
-    .maint-details{border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;background:#fafafa;}
-    .maint-details summary{cursor:pointer;font-size:12px;font-weight:600;color:#374151;}
+    .maint-roi-sub{font-size:12px;color:var(--admin-text-muted);margin:4px 0 0;font-weight:400;line-height:1.45;max-width:52rem;}
+    .maint-metric-section-title{font-size:11px;font-weight:700;color:var(--admin-accent);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;}
+
+    /* ── Details / expandable ── */
+    .maint-details{border:1px solid var(--admin-border);border-radius:8px;padding:10px 12px;background:var(--admin-bg-elevated);}
+    .maint-details summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--admin-text);}
     .grid-form--nested{margin-top:10px;}
+
+    /* ── Modals ── */
     .modal--wide{width:min(720px,100%);}
     .maint-api-key-text{font-family:ui-monospace,SFMono-Regular,monospace;font-size:11px;}
-    .maint-selector-label{font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:6px;}
-    .maint-client-select{max-width:480px;}
-    .maint-section-title{font-size:14px;font-weight:700;color:#111;margin:0;}
-    .log-form{display:flex;flex-direction:column;gap:12px;}
-    .log-form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
-    .log-form-row--full{grid-template-columns:1fr;}
-    .log-form-row label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;}
-    .type-chips{display:flex;gap:10px;}
-    .type-chip{padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;border:2px solid transparent;cursor:pointer;transition:all .12s;}
-    .type-chip--incident{background:rgba(239,68,68,.1);color:#b91c1c;border-color:#fca5a5;}
-    .type-chip--preventive{background:rgba(22,163,74,.1);color:#166534;border-color:#86efac;}
-    .type-chip--support{background:rgba(59,130,246,.1);color:#1d4ed8;border-color:#93c5fd;}
-    .type-chip.active{box-shadow:0 0 0 3px rgba(0,0,0,.15);}
-    .type-chip--incident.active{background:#b91c1c;color:#fff;}
-    .type-chip--preventive.active{background:#166534;color:#fff;}
-    .type-chip--support.active{background:#1d4ed8;color:#fff;}
-    .char-counter{font-size:11px;color:#9ca3af;font-weight:400;float:right;}
-    .filter-tabs{display:flex;gap:.5rem;flex-wrap:wrap;}
-    .tab{border:1px solid var(--admin-border);background:#fff;border-radius:999px;padding:.3rem .65rem;font-size:12px;cursor:pointer;}
-    .tab.active{background:rgba(99,91,255,.12);border-color:#635bff;color:#635bff;}
-    .act-btn{font-size:12px;padding:6px 12px;border:1px solid var(--admin-border);background:#fff;border-radius:6px;cursor:pointer;font-weight:600;color:#374151;transition:background .12s,border-color .12s;}
-    .act-btn:hover{background:#f9fafb;border-color:#d1d5db;}
-    .act-btn--danger{color:#b91c1c;border-color:#fecaca;background:#fff5f5;}
-    .act-btn--danger:hover{background:#fef2f2;}
-    .badge-incident{background:rgba(239,68,68,.15);color:#b91c1c;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
-    .badge-preventive{background:rgba(22,163,74,.15);color:#166534;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
-    .badge-support{background:rgba(59,130,246,.15);color:#1d4ed8;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
-    .wo-list{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
-    .wo-card{border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
-    .wo-card-info{flex:1;}
-    .wo-title{font-weight:700;font-size:13px;}
-    .wo-meta{font-size:11px;color:#6b7280;margin-top:2px;}
-    .wo-coverage-badge{display:inline-block;background:rgba(99,91,255,.12);color:#4338ca;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;}
-    .wo-actions{display:flex;gap:6px;flex-wrap:wrap;}
-    .roi-comparison{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:8px;}
-    .roi-metric-card{border:1px solid #e5e7eb;border-radius:8px;padding:12px;}
-    .roi-metric-label{font-size:11px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
-    .roi-metric-vals{display:flex;gap:8px;align-items:baseline;margin-top:4px;}
-    .roi-val-old{font-size:11px;color:#6b7280;text-decoration:line-through;}
-    .roi-val-new{font-size:16px;font-weight:800;color:#111;}
-    .roi-change{font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;}
-    .roi-change--good{background:rgba(22,163,74,.15);color:#166534;}
-    .roi-change--bad{background:rgba(239,68,68,.15);color:#b91c1c;}
-    .preview-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;z-index:1200;padding:16px;}
-    .modal{width:min(640px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:12px;padding:24px;}
+    .preview-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);align-items:center;justify-content:center;z-index:1200;padding:16px;}
+    .modal{width:min(640px,100%);max-height:90vh;overflow:auto;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;padding:24px;box-shadow:0 24px 48px rgba(0,0,0,.12);}
+    .modal h3{font-size:1.0625rem;font-weight:700;color:var(--admin-text);margin:0 0 16px;}
     .grid-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
     .grid-form .full{grid-column:1/-1;}
-    .grid-form label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:3px;}
-    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
-    #toast-root{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:2000;}
-    .toast{background:#111;color:#fff;border-radius:8px;padding:10px 12px;font-size:12px;min-width:260px;}
-    .toast.error{background:#7f1d1d;}
+    .grid-form label{font-size:12px;font-weight:600;color:var(--admin-text);display:block;margin-bottom:3px;}
+    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--admin-border);}
+
+    /* ── Form labels inside cards ── */
+    .maint-selector-label{font-size:12px;font-weight:700;color:var(--admin-text);display:block;margin-bottom:6px;}
+    .maint-client-select{max-width:480px;}
+    .maint-section-title{font-size:14px;font-weight:700;color:var(--admin-text);margin:0;}
+
+    /* ── Log form ── */
+    .log-form{display:flex;flex-direction:column;gap:12px;}
+    .log-form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+    @media(max-width:600px){.log-form-row{grid-template-columns:1fr;}}
+    .log-form-row--full{grid-template-columns:1fr!important;}
+    .log-form-row label{font-size:12px;font-weight:600;color:var(--admin-text);display:block;margin-bottom:4px;}
+
+    /* ── Type chips ── */
+    .type-chips{display:flex;gap:10px;flex-wrap:wrap;}
+    .type-chip{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;border:2px solid transparent;cursor:pointer;transition:all .12s;}
+    .type-chip--incident{background:rgba(239,68,68,.08);color:#b91c1c;border-color:#fca5a5;}
+    .type-chip--preventive{background:rgba(22,163,74,.08);color:#166534;border-color:#86efac;}
+    .type-chip--support{background:rgba(59,130,246,.08);color:#1d4ed8;border-color:#93c5fd;}
+    .type-chip.active{box-shadow:0 0 0 3px rgba(0,0,0,.12);}
+    .type-chip--incident.active{background:#b91c1c;color:#fff;border-color:#b91c1c;}
+    .type-chip--preventive.active{background:#166534;color:#fff;border-color:#166534;}
+    .type-chip--support.active{background:#1d4ed8;color:#fff;border-color:#1d4ed8;}
+    .char-counter{font-size:11px;color:var(--admin-text-muted);font-weight:400;float:right;}
+
+    /* ── Filter tabs ── */
+    .filter-tabs{display:flex;gap:.5rem;flex-wrap:wrap;}
+    .tab{border:1px solid var(--admin-border);background:var(--admin-card);border-radius:999px;padding:.3rem .65rem;font-size:12px;cursor:pointer;color:var(--admin-text-muted);transition:all .12s;}
+    .tab:hover{border-color:var(--admin-accent);color:var(--admin-accent);}
+    .tab.active{background:rgba(99,91,255,.1);border-color:var(--admin-accent);color:var(--admin-accent);}
+
+    /* ── Action buttons in table/card rows ── */
+    .act-btn{font-size:12px;padding:5px 11px;border:1px solid var(--admin-border);background:var(--admin-card);border-radius:6px;cursor:pointer;font-weight:600;color:var(--admin-text);transition:background .12s,border-color .12s;display:inline-flex;align-items:center;gap:5px;}
+    .act-btn:hover{background:var(--admin-card-hover);}
+    .act-btn--danger{color:var(--admin-danger);border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.04);}
+    .act-btn--danger:hover{background:rgba(220,38,38,.08);}
+    .act-btn--print{color:var(--admin-accent);border-color:rgba(99,91,255,.35);background:rgba(99,91,255,.06);}
+    .act-btn--print:hover{background:rgba(99,91,255,.12);}
+
+    /* ── Log type badges ── */
+    .badge-incident{background:rgba(239,68,68,.12);color:#b91c1c;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
+    .badge-preventive{background:rgba(22,163,74,.12);color:#166534;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
+    .badge-support{background:rgba(59,130,246,.12);color:#1d4ed8;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
+
+    /* ── Work order cards ── */
+    .wo-list{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+    .wo-card{border:1px solid var(--admin-border);border-radius:10px;padding:14px 16px;background:var(--admin-bg-elevated);display:flex;justify-content:space-between;align-items:flex-start;gap:14px;transition:box-shadow .15s;}
+    .wo-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.06);}
+    .wo-card-info{flex:1;min-width:0;}
+    .wo-number{font-size:11px;font-weight:700;color:var(--admin-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
+    .wo-title{font-weight:700;font-size:14px;color:var(--admin-text);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .wo-meta{font-size:12px;color:var(--admin-text-muted);margin-top:2px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+    .wo-scope-preview{font-size:12px;color:var(--admin-text-muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--admin-border);}
+    .wo-coverage-badge{display:inline-flex;align-items:center;background:rgba(99,91,255,.1);color:var(--admin-accent);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;}
+    .wo-status-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;}
+    .wo-status--pending{background:rgba(245,158,11,.12);color:#b45309;}
+    .wo-status--approved{background:rgba(99,91,255,.12);color:var(--admin-accent);}
+    .wo-status--in-progress{background:rgba(59,130,246,.12);color:#1d4ed8;}
+    .wo-status--completed{background:rgba(13,148,136,.12);color:#0d9488;}
+    .wo-status--invoiced{background:rgba(105,115,134,.12);color:var(--admin-text-muted);}
+    .wo-actions{display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;}
+
+    /* ── ROI comparison ── */
+    .roi-comparison{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:8px;}
+    .roi-metric-card{border:1px solid var(--admin-border);border-radius:8px;padding:12px;background:var(--admin-bg-elevated);}
+    .roi-metric-label{font-size:11px;color:var(--admin-text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+    .roi-metric-vals{display:flex;gap:8px;align-items:baseline;margin-top:4px;}
+    .roi-val-old{font-size:11px;color:var(--admin-text-muted);text-decoration:line-through;}
+    .roi-val-new{font-size:16px;font-weight:800;color:var(--admin-text);}
+    .roi-change{font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;}
+    .roi-change--good{background:rgba(22,163,74,.12);color:#166534;}
+    .roi-change--bad{background:rgba(239,68,68,.12);color:#b91c1c;}
+
+    /* ── Stats bar (override default for tighter spacing) ── */
+    #stats-bar{margin-bottom:1.25rem;}
+
+    /* ── Toast notifications ── */
+    #toast-root{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:2000;pointer-events:none;}
+    .toast{background:var(--admin-text);color:var(--admin-card);border-radius:8px;padding:10px 14px;font-size:13px;min-width:260px;pointer-events:auto;box-shadow:0 4px 12px rgba(0,0,0,.2);}
+    .toast.error{background:#7f1d1d;color:#fff;}
   </style>
 
   <script>
@@ -591,24 +651,39 @@ const serviceClients = await getAllServiceClients();
     }
 
     const coverageLabels = { contract_included: 'Contract', paid_extra: 'Paid extra', goodwill_free: 'Goodwill' };
+    const statusClass = { pending: 'wo-status--pending', approved: 'wo-status--approved', 'in-progress': 'wo-status--in-progress', completed: 'wo-status--completed', invoiced: 'wo-status--invoiced' };
     function renderWorkOrders(wos) {
       const list = document.getElementById('wo-list');
       if (!wos.length) {
-        list.innerHTML = '<p style="color:#6b7280;font-size:13px;padding:8px 0;">No work orders yet.</p>';
+        list.innerHTML = '<p class="maint-help" style="padding:4px 0;">No work orders yet. Click <strong>+ New Work Order</strong> to create one.</p>';
         return;
       }
       list.innerHTML = wos.map((wo) => {
         const cov = coverageLabels[wo.coverage] || wo.coverage || '—';
+        const sCls = statusClass[wo.status] || '';
+        const scopeHtml = wo.scopeItems && wo.scopeItems.length
+          ? `<div class="wo-scope-preview">${wo.scopeItems.slice(0,3).map(i => `• ${i}`).join(' &nbsp;')}${wo.scopeItems.length > 3 ? ` <em>+${wo.scopeItems.length - 3} more</em>` : ''}</div>`
+          : '';
         return `
         <div class="wo-card">
           <div class="wo-card-info">
-            <div class="wo-title">${wo.woNumber} — ${wo.title}</div>
-            <div class="wo-meta"><span class="wo-coverage-badge">${cov}</span> · Status: <strong>${wo.status}</strong> · Est.: ${wo.currency} ${wo.estimatedCost ? Number(wo.estimatedCost).toLocaleString() : 'TBD'}</div>
-            ${wo.description ? `<div class="wo-meta" style="margin-top:4px;color:#374151;">${wo.description}</div>` : ''}
+            <div class="wo-number">${wo.woNumber}</div>
+            <div class="wo-title">${wo.title}</div>
+            <div class="wo-meta">
+              <span class="wo-coverage-badge">${cov}</span>
+              <span class="wo-status-badge ${sCls}">${wo.status.replace('-',' ')}</span>
+              <span>Est: ${wo.currency} ${wo.estimatedCost ? Number(wo.estimatedCost).toLocaleString() : 'TBD'}</span>
+            </div>
+            ${wo.description ? `<div class="maint-help" style="margin:4px 0 0;">${wo.description}</div>` : ''}
+            ${scopeHtml}
           </div>
           <div class="wo-actions">
-            ${wo.status !== 'approved' ? `<button class="act-btn" data-wo-approve="${wo.id}" type="button">Approve</button>` : ''}
-            ${wo.status !== 'completed' && wo.status !== 'invoiced' ? `<button class="act-btn" data-wo-complete="${wo.id}" type="button">Mark complete</button>` : ''}
+            <button class="act-btn act-btn--print" data-wo-print="${wo.id}" data-wo-number="${wo.woNumber}" type="button">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Print PDF
+            </button>
+            ${wo.status !== 'approved' && wo.status !== 'completed' && wo.status !== 'invoiced' ? `<button class="act-btn" data-wo-approve="${wo.id}" type="button">Approve</button>` : ''}
+            ${wo.status !== 'completed' && wo.status !== 'invoiced' ? `<button class="act-btn" data-wo-complete="${wo.id}" type="button">Complete</button>` : ''}
             <button class="act-btn act-btn--danger" data-wo-delete="${wo.id}" data-wo-number="${wo.woNumber}" type="button">Delete</button>
           </div>
         </div>`;
@@ -874,11 +949,25 @@ const serviceClients = await getAllServiceClients();
       await loadClientData(selectedClientId);
     });
 
-    // WO actions (approve/complete/delete)
+    // WO actions (print/approve/complete/delete)
     document.getElementById('wo-list').addEventListener('click', async (e) => {
+      const printBtn = e.target.closest('[data-wo-print]');
       const approveBtn = e.target.closest('[data-wo-approve]');
       const completeBtn = e.target.closest('[data-wo-complete]');
       const deleteBtn = e.target.closest('[data-wo-delete]');
+      if (printBtn) {
+        const id = printBtn.dataset.woPrint;
+        const wn = printBtn.dataset.woNumber || 'work-order';
+        const url = `/api/maintenance/work-order-pdf?id=${encodeURIComponent(id)}`;
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.download = `${wn}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return;
+      }
       if (approveBtn) {
         const id = approveBtn.dataset.woApprove;
         const res = await fetch('/api/maintenance/work-orders', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: 'approved' }) });
@@ -934,6 +1023,16 @@ const serviceClients = await getAllServiceClients();
       closeModal('modal-log-metrics');
       showToast('Snapshot saved');
       loadROI(selectedClientId);
+    });
+
+    // Quarterly report download
+    document.getElementById('btn-download-report')?.addEventListener('click', () => {
+      if (!selectedClientId) { showToast('Select a service client first', 'error'); return; }
+      const now = new Date();
+      const q = 'Q' + (Math.floor(now.getMonth() / 3) + 1);
+      const year = now.getFullYear();
+      const url = `/api/maintenance/report-pdf?clientId=${encodeURIComponent(selectedClientId)}&quarter=${q}&year=${year}`;
+      window.open(url, '_blank');
     });
 
     document.getElementById('btn-gen-api-key').addEventListener('click', async () => {
