@@ -204,7 +204,10 @@
   background: var(--admin-card);
   border: 1px solid var(--admin-border);
   border-radius: 12px;
-  overflow: hidden;
+}
+
+.admin-card--padded {
+  padding: 1.25rem 1.5rem;
 }
 
 .admin-card-header {
@@ -569,4 +572,87 @@
   .admin-table td {
     padding: 0.75rem 1rem;
   }
+}
+
+/* ── Aliases for [id].astro and other pages that use shorthand class names ── */
+.admin-field-group { margin-bottom: 0; }
+.admin-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  margin-bottom: 0.3rem;
+}
+.admin-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.9375rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-bg-elevated);
+  color: var(--admin-text);
+  transition: border-color 0.15s ease;
+  font-family: inherit;
+}
+.admin-input:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.15);
+}
+.admin-input::placeholder { color: var(--admin-text-muted); }
+textarea.admin-input { resize: vertical; }
+
+/* ── Two-column layout utility ── */
+.admin-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 640px) { .admin-two-col { grid-template-columns: 1fr; } }
+
+/* ── Page section wrapper ── */
+.admin-section {
+  margin-bottom: 1.5rem;
+}
+
+/* ── Kicker / overline label ── */
+.admin-kicker {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+/* ── Status dot ── */
+.admin-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.admin-dot--green { background: #10b981; }
+.admin-dot--amber { background: #f59e0b; }
+.admin-dot--red   { background: #ef4444; }
+.admin-dot--gray  { background: #9ca3af; }
+
+/* ── Divider ── */
+.admin-divider {
+  border: none;
+  border-top: 1px solid var(--admin-border);
+  margin: 1.25rem 0;
+}
+
+/* ── Print utilities ── */
+@media print {
+  .admin-sidebar,
+  .admin-header,
+  .no-print { display: none !important; }
+  .admin-main { padding: 0; }
+  .admin-app { display: block; }
+  .admin-card { border: 1px solid #ddd; border-radius: 0; }
 }

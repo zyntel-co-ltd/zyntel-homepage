@@ -65,41 +65,41 @@ const { id } = Astro.params;
         <button id="close-edit" style="background:none;border:none;cursor:pointer;font-size:1.25rem;color:var(--admin-text-muted);">✕</button>
       </div>
       <form id="edit-form" style="display:flex;flex-direction:column;gap:1rem;">
-        <div class="admin-field-group"><label class="admin-label">Client Name *</label><input class="admin-input" name="name" required /></div>
-        <div class="admin-field-group"><label class="admin-label">App Name *</label><input class="admin-input" name="app_name" required /></div>
-        <div class="admin-field-group"><label class="admin-label">App URL</label><input class="admin-input" name="app_url" type="url" /></div>
-        <div class="admin-field-group"><label class="admin-label">Tech Stack</label><input class="admin-input" name="tech_stack" /></div>
-        <div class="admin-field-group"><label class="admin-label">Status</label>
-          <select class="admin-input" name="status">
+        <div class="admin-form-group"><label class="admin-form-label">Client Name *</label><input class="admin-form-input" name="name" required /></div>
+        <div class="admin-form-group"><label class="admin-form-label">App Name *</label><input class="admin-form-input" name="app_name" required /></div>
+        <div class="admin-form-group"><label class="admin-form-label">App URL</label><input class="admin-form-input" name="app_url" type="url" /></div>
+        <div class="admin-form-group"><label class="admin-form-label">Tech Stack</label><input class="admin-form-input" name="tech_stack" /></div>
+        <div class="admin-form-group"><label class="admin-form-label">Status</label>
+          <select class="admin-form-input" name="status">
             <option value="active">Active</option>
             <option value="paused">Paused</option>
             <option value="churned">Churned</option>
           </select>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-          <div class="admin-field-group"><label class="admin-label">Monthly Retainer</label><input class="admin-input" name="monthly_retainer" type="number" min="0" /></div>
-          <div class="admin-field-group"><label class="admin-label">Currency</label>
-            <select class="admin-input" name="currency"><option value="UGX">UGX</option><option value="USD">USD</option><option value="KES">KES</option></select>
+          <div class="admin-form-group"><label class="admin-form-label">Monthly Retainer</label><input class="admin-form-input" name="monthly_retainer" type="number" min="0" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Currency</label>
+            <select class="admin-form-input" name="currency"><option value="UGX">UGX</option><option value="USD">USD</option><option value="KES">KES</option></select>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-          <div class="admin-field-group"><label class="admin-label">Original Dev Cost</label><input class="admin-input" name="original_dev_cost" type="number" min="0" /></div>
-          <div class="admin-field-group"><label class="admin-label">Start Date</label><input class="admin-input" name="start_date" type="date" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Original Dev Cost</label><input class="admin-form-input" name="original_dev_cost" type="number" min="0" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Start Date</label><input class="admin-form-input" name="start_date" type="date" /></div>
         </div>
-        <div class="admin-field-group"><label class="admin-label">Contact Name</label><input class="admin-input" name="contact_name" /></div>
+        <div class="admin-form-group"><label class="admin-form-label">Contact Name</label><input class="admin-form-input" name="contact_name" /></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-          <div class="admin-field-group"><label class="admin-label">Contact Email</label><input class="admin-input" name="contact_email" type="email" /></div>
-          <div class="admin-field-group"><label class="admin-label">Contact Phone</label><input class="admin-input" name="contact_phone" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Contact Email</label><input class="admin-form-input" name="contact_email" type="email" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Contact Phone</label><input class="admin-form-input" name="contact_phone" /></div>
         </div>
-        <div class="admin-field-group"><label class="admin-label">Metrics API URL</label><input class="admin-input" name="metrics_api_url" type="url" /></div>
-        <div class="admin-field-group">
-          <label class="admin-label">Metrics API Key</label>
+        <div class="admin-form-group"><label class="admin-form-label">Metrics API URL</label><input class="admin-form-input" name="metrics_api_url" type="url" /></div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Metrics API Key</label>
           <div style="display:flex;gap:0.5rem;align-items:stretch;">
-            <input class="admin-input" id="edit-metrics-api-key" name="metrics_api_key" type="password" placeholder="Leave blank to keep existing" style="flex:1;" autocomplete="off" />
+            <input class="admin-form-input" id="edit-metrics-api-key" name="metrics_api_key" type="password" placeholder="Leave blank to keep existing" style="flex:1;" autocomplete="off" />
             <button type="button" class="admin-btn" id="btn-gen-key-edit" title="Generate a new key and copy to clipboard">Generate key</button>
           </div>
         </div>
-        <div class="admin-field-group"><label class="admin-label">Notes</label><textarea class="admin-input" name="notes" rows="3"></textarea></div>
+        <div class="admin-form-group"><label class="admin-form-label">Notes</label><textarea class="admin-form-input" name="notes" rows="3"></textarea></div>
         <div id="edit-err" style="color:var(--admin-danger);font-size:0.875rem;display:none;"></div>
         <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
           <button type="button" class="admin-btn" id="cancel-edit">Cancel</button>
@@ -117,25 +117,25 @@ const { id } = Astro.params;
         <button id="close-log" style="background:none;border:none;cursor:pointer;font-size:1.25rem;color:var(--admin-text-muted);">✕</button>
       </div>
       <form id="log-form" style="display:flex;flex-direction:column;gap:1rem;">
-        <div class="admin-field-group">
-          <label class="admin-label">Month *</label>
-          <input class="admin-input" name="period" type="month" required />
+        <div class="admin-form-group">
+          <label class="admin-form-label">Month *</label>
+          <input class="admin-form-input" name="period" type="month" required />
         </div>
         <p style="font-size:0.8125rem;color:var(--admin-text-muted);margin:0;">App usage metrics</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-          <div class="admin-field-group"><label class="admin-label">Active tenants</label><input class="admin-input" name="active_tenants" type="number" min="0" /></div>
-          <div class="admin-field-group"><label class="admin-label">Total properties</label><input class="admin-input" name="total_properties" type="number" min="0" /></div>
-          <div class="admin-field-group"><label class="admin-label">Total landlords</label><input class="admin-input" name="total_landlords" type="number" min="0" /></div>
-          <div class="admin-field-group"><label class="admin-label">Payments recorded</label><input class="admin-input" name="payments_recorded" type="number" min="0" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Active tenants</label><input class="admin-form-input" name="active_tenants" type="number" min="0" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Total properties</label><input class="admin-form-input" name="total_properties" type="number" min="0" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Total landlords</label><input class="admin-form-input" name="total_landlords" type="number" min="0" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Payments recorded</label><input class="admin-form-input" name="payments_recorded" type="number" min="0" /></div>
         </div>
         <p style="font-size:0.8125rem;color:var(--admin-text-muted);margin:0;">Financial impact</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-          <div class="admin-field-group"><label class="admin-label">Revenue tracked (this month)</label><input class="admin-input" name="revenue_tracked" type="number" min="0" placeholder="UGX" /></div>
-          <div class="admin-field-group"><label class="admin-label">Cumulative revenue tracked</label><input class="admin-input" name="cumulative_revenue_tracked" type="number" min="0" placeholder="UGX" /></div>
-          <div class="admin-field-group"><label class="admin-label">Hours saved</label><input class="admin-input" name="hours_saved" type="number" min="0" step="0.5" placeholder="e.g. 8" /></div>
-          <div class="admin-field-group"><label class="admin-label">Value per hour (UGX)</label><input class="admin-input" name="hourly_value" type="number" min="0" placeholder="e.g. 10000" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Revenue tracked (this month)</label><input class="admin-form-input" name="revenue_tracked" type="number" min="0" placeholder="UGX" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Cumulative revenue tracked</label><input class="admin-form-input" name="cumulative_revenue_tracked" type="number" min="0" placeholder="UGX" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Hours saved</label><input class="admin-form-input" name="hours_saved" type="number" min="0" step="0.5" placeholder="e.g. 8" /></div>
+          <div class="admin-form-group"><label class="admin-form-label">Value per hour (UGX)</label><input class="admin-form-input" name="hourly_value" type="number" min="0" placeholder="e.g. 10000" /></div>
         </div>
-        <div class="admin-field-group"><label class="admin-label">Notes</label><textarea class="admin-input" name="notes" rows="2" placeholder="Any observations about this month"></textarea></div>
+        <div class="admin-form-group"><label class="admin-form-label">Notes</label><textarea class="admin-form-input" name="notes" rows="2" placeholder="Any observations about this month"></textarea></div>
         <div id="log-err" style="color:var(--admin-danger);font-size:0.875rem;display:none;"></div>
         <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
           <button type="button" class="admin-btn" id="cancel-log">Cancel</button>
@@ -197,7 +197,7 @@ const { id } = Astro.params;
       ['Monthly retainer', c.monthly_retainer ? fmt(c.monthly_retainer, c.currency) : 'No retainer'],
       ['Metrics API', c.metrics_api_url ? `<a href="${c.metrics_api_url}" target="_blank" style="font-size:0.8rem;">Configured ↗</a>` : 'Not configured'],
     ].map(([k, v]) => `<div style="display:flex;gap:0.5rem;"><span style="color:var(--admin-text-muted);min-width:120px;">${k}</span><span>${v}</span></div>`).join('') +
-    `<div style="margin-top:1rem;"><button class="admin-btn admin-btn-ghost" id="edit-btn" style="font-size:0.8125rem;">Edit details</button></div>`;
+    `<div style="margin-top:1rem;"><button class="admin-btn admin-btn-secondary" id="edit-btn" style="font-size:0.8125rem;">Edit details</button></div>`;
     document.getElementById('edit-btn').addEventListener('click', () => openEditPanel(c));
   }
 
