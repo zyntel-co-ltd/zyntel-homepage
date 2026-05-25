@@ -258,11 +258,23 @@ const serviceClients = await getAllServiceClients();
     }
 
     async function loadWOs() {
-      const res = await fetch('/api/work-orders');
-      if (!res.ok) { showToast('Failed to load work orders', 'error'); return; }
-      allWOs = await res.json();
-      renderStats(allWOs);
-      renderTable(allWOs);
+      try {
+        const res = await fetch('/api/work-orders');
+        const data = await res.json().catch(() => null);
+        if (!res.ok || data === null) {
+          const msg = data?.error ?? `HTTP ${res.status}`;
+          showToast(`Failed to load work orders: ${msg}`, 'error');
+          document.getElementById('wo-tbody')!.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--admin-text-muted);">Error loading work orders: ${msg}</td></tr>`;
+          return;
+        }
+        allWOs = Array.isArray(data) ? data : [];
+        renderStats(allWOs);
+        renderTable(allWOs);
+      } catch (err: any) {
+        const msg = err?.message ?? 'Network error';
+        showToast(`Failed to load work orders: ${msg}`, 'error');
+        document.getElementById('wo-tbody')!.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--admin-text-muted);">Error: ${msg}</td></tr>`;
+      }
     }
 
     // Filter tabs
