@@ -117,7 +117,7 @@ async function getWorkOrderWithClient(id: string): Promise<{ wo: WorkOrder; clie
 
 const COVERAGE_LABEL: Record<string, string> = {
   contract_included: 'Included in maintenance contract',
-  paid_extra: 'Paid extra (billable)',
+  paid_extra: 'Paid',
   goodwill_free: 'Goodwill / complimentary',
 };
 
@@ -277,15 +277,15 @@ export async function generateWorkOrderPdf(opts: {
   }
 
   // --- Signature blocks: 2 rows × 2 columns (4 total, all optional except row 1) ---
-  // Calculate how much space we need: 2 rows × (sigBoxH + gap) + section label + hr
   const sigBoxH = 56;
   const sigGap = 12; // gap between columns
   const sigRowGap = 10; // gap between rows
   const sigW = (CONTENT_W - sigGap) / 2;
-  const totalSigH = 14 + 10 + (sigBoxH * 2) + sigRowGap + 10; // label + hr + 2 rows + gaps
+  // Exact space: separator gap (14) + "Authorisation" heading (14) + 2 rows of boxes + row gap
+  const totalSigH = 14 + 14 + sigBoxH + sigRowGap + sigBoxH; // = 150
 
-  // If current y is too close to SAFE_BOTTOM to fit signatures, add a second page
-  if (y - totalSigH < SAFE_BOTTOM) {
+  // Only push to a new page if signatures would genuinely overlap the footer
+  if (y - totalSigH < FOOTER_Y + 16) {
     const page2 = doc.addPage([PAGE_W, PAGE_H]);
     // Footer on page 2
     page2.drawText(COMPANY_FOOTER, { x: MARGIN, y: FOOTER_Y, size: 8, font, color: MUTED });
