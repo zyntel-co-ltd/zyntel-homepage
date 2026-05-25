@@ -317,11 +317,11 @@ function drawSignatures(
   page.drawText('Authorisation', { x: margin, y, size: 10, font: fontBold, color: ink });
   y -= 14;
 
-  const sigLabels: Array<{ heading: string; name?: string | null; role?: string | null; signedAt?: Date | null }> = [
-    { heading: 'Client Signatory (1)', name: wo.approver1Name, role: wo.approver1Role, signedAt: wo.approver1SignedAt },
-    { heading: 'Zyntel Authorised By', name: wo.approver2Name, role: wo.approver2Role, signedAt: wo.approver2SignedAt },
-    { heading: 'Client Signatory (2) — optional', name: null, role: null },
-    { heading: 'Witness / Additional Approver — optional', name: null, role: null },
+  const sigLabels: Array<{ name?: string | null; role?: string | null; signedAt?: Date | null }> = [
+    { name: wo.approver1Name, role: wo.approver1Role, signedAt: wo.approver1SignedAt },
+    { name: wo.approver2Name, role: wo.approver2Role, signedAt: wo.approver2SignedAt },
+    { name: null, role: null },
+    { name: null, role: null },
   ];
 
   // Row 1: sigLabels[0] + sigLabels[1]
@@ -337,17 +337,15 @@ function drawSignatures(
       const bx = margin + c * (boxW + colGap);
       const bg = r === 1 ? rgb(0.985, 0.985, 0.99) : rgb(0.975, 0.975, 0.99);
       page.drawRectangle({ x: bx, y: rowY - boxH, width: boxW, height: boxH, borderColor: border, borderWidth: 1, color: bg });
-      page.drawText(sig.heading, { x: bx + 8, y: rowY - 13, size: 8, font: fontBold, color: muted });
 
       if (sig.name) {
-        page.drawText(sig.name, { x: bx + 8, y: rowY - 27, size: 9, font: fontBold, color: ink });
-        if (sig.role) page.drawText(sig.role, { x: bx + 8, y: rowY - 39, size: 8, font, color: muted });
-        if (sig.signedAt) page.drawText(`Signed: ${sig.signedAt.toLocaleDateString('en-GB')}`, { x: bx + 8, y: rowY - 50, size: 8, font, color: muted });
+        page.drawText(`Name: ${sig.name}`, { x: bx + 8, y: rowY - 16, size: 9, font: fontBold, color: ink });
+        if (sig.role) page.drawText(`Designation: ${sig.role}`, { x: bx + 8, y: rowY - 30, size: 8, font, color: muted });
+        if (sig.signedAt) page.drawText(`Signed: ${sig.signedAt.toLocaleDateString('en-GB')}`, { x: bx + 8, y: rowY - 42, size: 8, font, color: muted });
       } else {
         const lineColor = r === 1 ? rgb(0.8, 0.8, 0.85) : muted;
-        page.drawText('Name: _______________________________', { x: bx + 8, y: rowY - 27, size: 8, font, color: lineColor });
-        page.drawText('Sig / Date: ________________________', { x: bx + 8, y: rowY - 39, size: 8, font, color: lineColor });
-        if (r === 1) page.drawText('(optional)', { x: bx + 8, y: rowY - 51, size: 7, font, color: rgb(0.75, 0.75, 0.8) });
+        page.drawText('Name: _______________________________', { x: bx + 8, y: rowY - 16, size: 8, font, color: lineColor });
+        page.drawText('Designation: _______________________', { x: bx + 8, y: rowY - 30, size: 8, font, color: lineColor });
       }
     }
 
