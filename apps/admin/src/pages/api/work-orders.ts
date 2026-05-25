@@ -11,16 +11,20 @@ export const GET: APIRoute = async ({ url }) => {
       return new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } });
     }
     const status = url.searchParams.get('status');
-    const rows = await sql`
-      SELECT
-        wo.*,
-        sc.name   AS client_name,
-        sc.product_name AS client_product_name
-      FROM work_orders wo
-      JOIN service_clients sc ON sc.id = wo.service_client_id
-      ${status ? sql`WHERE wo.status = ${status}` : sql``}
-      ORDER BY wo.created_at DESC
-    `;
+    const rows = status
+      ? await sql`
+          SELECT wo.*, sc.name AS client_name, sc.product_name AS client_product_name
+          FROM work_orders wo
+          JOIN service_clients sc ON sc.id = wo.service_client_id
+          WHERE wo.status = ${status}
+          ORDER BY wo.created_at DESC
+        `
+      : await sql`
+          SELECT wo.*, sc.name AS client_name, sc.product_name AS client_product_name
+          FROM work_orders wo
+          JOIN service_clients sc ON sc.id = wo.service_client_id
+          ORDER BY wo.created_at DESC
+        `;
     const wos = (rows as Record<string, any>[]).map((row) => ({
       id: String(row.id),
       serviceClientId: String(row.service_client_id),
