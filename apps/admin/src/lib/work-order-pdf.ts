@@ -234,10 +234,15 @@ export async function generateWorkOrderPdf(opts: {
   if (wo.scopeItems && wo.scopeItems.length > 0) {
     page.drawText('Scope of Work', { x: MARGIN, y, size: 10, font: fontBold, color: INK });
     y -= 14;
+    const bulletGlyph = '• ';
+    const bulletW = font.widthOfTextAtSize(bulletGlyph, 10);
+    const bulletTextX = MARGIN + 8 + bulletW;
+    const bulletTextMaxW = CONTENT_W - 8 - bulletW;
     for (const item of wo.scopeItems) {
-      const lines = wrap(`• ${item}`, font, 10, CONTENT_W - 16);
+      const lines = wrap(item, font, 10, bulletTextMaxW);
       for (let i = 0; i < lines.length; i++) {
-        page.drawText(lines[i], { x: MARGIN + 8, y, size: 10, font, color: INK });
+        if (i === 0) page.drawText(bulletGlyph, { x: MARGIN + 8, y, size: 10, font, color: INK });
+        page.drawText(lines[i], { x: bulletTextX, y, size: 10, font, color: INK });
         y -= 14;
       }
     }
