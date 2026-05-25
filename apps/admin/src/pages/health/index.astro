@@ -89,7 +89,7 @@ function statusLabel(status: string | null) {
   </header>
 
   {healthData.length === 0 ? (
-    <div class="admin-card" style="padding:32px;text-align:center;color:#6b7280;">
+    <div class="admin-card" style="padding:32px;text-align:center;color:var(--admin-text-muted);">
       <p>No service clients with health check URLs configured yet.</p>
       <p style="font-size:13px;">Add a service client in the <a href="/maintenance">Maintenance</a> page and set a health check URL.</p>
     </div>
@@ -153,32 +153,27 @@ function statusLabel(status: string | null) {
   </div>
 
   <style>
-    .health-header{display:flex;justify-content:space-between;align-items:center;}
-    .health-refresh-note{font-size:12px;color:#9ca3af;}
-    .health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
-    .health-card{background:#fff;border:1px solid #e5e7eb;border-left:4px solid #e5e7eb;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:6px;}
-    .health-card-top{display:flex;align-items:center;gap:8px;}
-    .health-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-    .health-status-label{font-size:13px;font-weight:700;}
-    .health-product-name{font-size:16px;font-weight:800;color:#111;}
-    .health-client-name{font-size:12px;color:#6b7280;}
-    .health-meta{font-size:11px;color:#9ca3af;}
-    .health-uptime{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#374151;margin-top:4px;}
-    .health-url{font-size:11px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-    .health-url a{color:#635bff;text-decoration:none;}
-    .health-history-btn{margin-top:6px;font-size:11px;padding:4px 8px;border:1px solid #e5e7eb;background:#fff;border-radius:6px;cursor:pointer;}
-    .act-btn{font-size:11px;padding:4px 8px;border:1px solid var(--admin-border);background:#fff;border-radius:6px;cursor:pointer;}
-    .preview-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;z-index:1200;padding:16px;}
-    .modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:12px;padding:24px;}
-    .modal--wide{width:min(800px,100%);}
-    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
-    .timeline{display:flex;flex-direction:column;gap:6px;}
-    .timeline-item{display:flex;gap:12px;align-items:center;padding:6px 10px;border-radius:6px;font-size:12px;}
-    .timeline-item--up{background:rgba(22,163,74,.08);}
-    .timeline-item--degraded{background:rgba(217,119,6,.08);}
-    .timeline-item--down{background:rgba(220,38,38,.08);}
-    .timeline-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-    .dot-up{background:#16a34a}.dot-degraded{background:#d97706}.dot-down{background:#dc2626}
+    /* background/border/text-color for .health-card, .health-product-name,
+       .health-client-name, .health-meta, .health-url are in global admin.css */
+    .health-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .health-refresh-note { font-size: 0.75rem; color: var(--admin-text-muted); }
+    .health-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .health-card { border-left: 4px solid var(--admin-border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+    .health-card-top { display: flex; align-items: center; gap: 8px; }
+    .health-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .health-status-label { font-size: 0.8125rem; font-weight: 700; }
+    .health-product-name { font-size: 1rem; font-weight: 800; }
+    .health-client-name { font-size: 0.75rem; }
+    .health-meta { font-size: 0.6875rem; }
+    .health-uptime { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--admin-text); margin-top: 4px; }
+    .health-history-btn { margin-top: 6px; }
+    .timeline { display: flex; flex-direction: column; gap: 6px; }
+    .timeline-item { display: flex; gap: 12px; align-items: center; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; }
+    .timeline-item--up { background: rgba(22, 163, 74, .08); }
+    .timeline-item--degraded { background: rgba(217, 119, 6, .08); }
+    .timeline-item--down { background: rgba(220, 38, 38, .08); }
+    .timeline-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-up { background: #16a34a; } .dot-degraded { background: #d97706; } .dot-down { background: #dc2626; }
   </style>
 
   <script>

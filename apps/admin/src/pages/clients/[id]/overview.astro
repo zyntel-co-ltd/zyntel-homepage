@@ -67,30 +67,30 @@ const SITE = import.meta.env.SITE_URL ?? 'https://admin.zyntel.net';
     <>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:12px;">
         <div class="admin-card" style="padding:14px 16px;">
-          <div style="font-size:11px;color:#6b7280;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Primary email</div>
+          <div style="font-size:11px;color:var(--admin-text-muted);font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Primary email</div>
           <div style="margin-top:6px;font-weight:800;">{client.email}</div>
         </div>
         <div class="admin-card" style="padding:14px 16px;">
-          <div style="font-size:11px;color:#6b7280;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Invoices</div>
+          <div style="font-size:11px;color:var(--admin-text-muted);font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Invoices</div>
           <div style="margin-top:6px;font-weight:800;">{invoices.length}</div>
         </div>
         <div class="admin-card" style="padding:14px 16px;">
-          <div style="font-size:11px;color:#6b7280;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Quotes</div>
+          <div style="font-size:11px;color:var(--admin-text-muted);font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Quotes</div>
           <div style="margin-top:6px;font-weight:800;">{quotes.length}</div>
         </div>
         <div class="admin-card" style="padding:14px 16px;">
-          <div style="font-size:11px;color:#6b7280;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Maintenance products</div>
+          <div style="font-size:11px;color:var(--admin-text-muted);font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Maintenance products</div>
           <div style="margin-top:6px;font-weight:800;">{serviceClients.length}</div>
         </div>
         <div class="admin-card" style="padding:14px 16px;">
-          <div style="font-size:11px;color:#6b7280;font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Preview links</div>
+          <div style="font-size:11px;color:var(--admin-text-muted);font-weight:800;letter-spacing:.06em;text-transform:uppercase;">Preview links</div>
           <div style="margin-top:6px;font-weight:800;">{previewClients.length}</div>
         </div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr;gap:12px;">
         <div class="admin-card">
-          <div class="admin-card-header" style="padding:14px 16px;border-bottom:1px solid #eee;">
+          <div class="admin-card-header" style="padding:14px 16px;border-bottom:1px solid var(--admin-border);">
             <h2 class="maint-section-title">Maintenance products</h2>
           </div>
           <div style="padding:14px 16px;">
@@ -98,8 +98,8 @@ const SITE = import.meta.env.SITE_URL ?? 'https://admin.zyntel.net';
               <ul style="margin:0;padding-left:18px;">
                 {serviceClients.map((s) => (
                   <li>
-                    <strong>{s.product_name}</strong> <span style="color:#6b7280">({s.product_type})</span>
-                    <div style="font-size:12px;color:#6b7280;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;">
+                    <strong>{s.product_name}</strong> <span style="color:var(--admin-text-muted)">({s.product_type})</span>
+                    <div style="font-size:12px;color:var(--admin-text-muted);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;">
                       {s.health_check_url && <a href={s.health_check_url} target="_blank" rel="noopener noreferrer">Health URL</a>}
                       {s.repo_url && <a href={s.repo_url} target="_blank" rel="noopener noreferrer">Repo</a>}
                       {s.sentry_url && <a href={s.sentry_url} target="_blank" rel="noopener noreferrer">Sentry</a>}
@@ -109,13 +109,13 @@ const SITE = import.meta.env.SITE_URL ?? 'https://admin.zyntel.net';
                 ))}
               </ul>
             ) : (
-              <p style="margin:0;color:#6b7280;">No maintenance products linked yet (set `invoice_client_id` on a service client).</p>
+              <p style="margin:0;color:var(--admin-text-muted);">No maintenance products linked yet (set `invoice_client_id` on a service client).</p>
             )}
           </div>
         </div>
 
         <div class="admin-card">
-          <div class="admin-card-header" style="padding:14px 16px;border-bottom:1px solid #eee;">
+          <div class="admin-card-header" style="padding:14px 16px;border-bottom:1px solid var(--admin-border);">
             <h2 class="maint-section-title">Preview links</h2>
           </div>
           <div style="padding:14px 16px;">
@@ -123,8 +123,8 @@ const SITE = import.meta.env.SITE_URL ?? 'https://admin.zyntel.net';
               <ul style="margin:0;padding-left:18px;">
                 {previewClients.map((p) => (
                   <li>
-                    <strong>{p.name}</strong> <span style="color:#6b7280">({p.client_id})</span>
-                    <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+                    <strong>{p.name}</strong> <span style="color:var(--admin-text-muted)">({p.client_id})</span>
+                    <div style="font-size:12px;color:var(--admin-text-muted);margin-top:4px;">
                       Link: <a href={`${SITE}/p/${p.token}`} target="_blank" rel="noopener noreferrer">{`${SITE}/p/${p.token}`}</a>
                       {' · '}Expiry: {new Date(p.expiry_date).toLocaleDateString('en-GB')}
                     </div>
@@ -132,7 +132,7 @@ const SITE = import.meta.env.SITE_URL ?? 'https://admin.zyntel.net';
                 ))}
               </ul>
             ) : (
-              <p style="margin:0;color:#6b7280;">No preview clients linked yet (set `invoice_client_id` on a preview client).</p>
+              <p style="margin:0;color:var(--admin-text-muted);">No preview clients linked yet (set `invoice_client_id` on a preview client).</p>
             )}
           </div>
         </div>
