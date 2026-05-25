@@ -66,7 +66,7 @@ const serviceClients = await getAllServiceClients();
           <label>Coverage</label>
           <select id="edit-wo-coverage" class="admin-form-input">
             <option value="contract_included">Included in contract</option>
-            <option value="paid_extra">Paid extra (billable)</option>
+            <option value="paid_extra">Paid</option>
             <option value="goodwill_free">Goodwill / complimentary</option>
           </select>
         </div>
@@ -120,7 +120,7 @@ const serviceClients = await getAllServiceClients();
           <label>Coverage</label>
           <select id="new-wo-coverage" class="admin-form-input">
             <option value="contract_included">Included in contract</option>
-            <option value="paid_extra">Paid extra (billable)</option>
+            <option value="paid_extra">Paid</option>
             <option value="goodwill_free">Goodwill / complimentary</option>
           </select>
         </div>
@@ -182,7 +182,7 @@ const serviceClients = await getAllServiceClients();
 
     const COVERAGE_LABEL: Record<string, string> = {
       contract_included: 'Contract',
-      paid_extra: 'Paid extra',
+      paid_extra: 'Paid',
       goodwill_free: 'Goodwill',
     };
     const STATUS_CLS: Record<string, string> = {
