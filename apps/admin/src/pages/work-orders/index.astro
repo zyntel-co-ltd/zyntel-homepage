@@ -1,0 +1,370 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAllServiceClients } from '../../lib/maintenance.ts';
+
+const serviceClients = await getAllServiceClients();
+---
+<AdminLayout title="Work Orders">
+  <header class="admin-header wo-page-header">
+    <div>
+      <h1 class="admin-title">Work Orders</h1>
+      <p class="admin-subtitle">All work orders across every service client. Edit or update pending orders; print PDFs; track status.</p>
+    </div>
+    <button id="btn-new-wo" class="admin-btn admin-btn-primary" type="button">+ New Work Order</button>
+  </header>
+
+  <div class="admin-stats" id="wo-stats" style="display:none">
+    <div class="admin-stat-card"><div class="admin-stat-label">Total</div><div class="admin-stat-value" id="stat-total">—</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Pending</div><div class="admin-stat-value" id="stat-pending">—</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">In Progress</div><div class="admin-stat-value" id="stat-inprogress">—</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Completed</div><div class="admin-stat-value" id="stat-completed">—</div></div>
+    <div class="admin-stat-card"><div class="admin-stat-label">Invoiced</div><div class="admin-stat-value" id="stat-invoiced">—</div></div>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-card-header wo-toolbar">
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="tab active" data-filter="all" type="button">All</button>
+        <button class="tab" data-filter="pending" type="button">Pending</button>
+        <button class="tab" data-filter="approved" type="button">Approved</button>
+        <button class="tab" data-filter="in-progress" type="button">In Progress</button>
+        <button class="tab" data-filter="completed" type="button">Completed</button>
+        <button class="tab" data-filter="invoiced" type="button">Invoiced</button>
+      </div>
+      <input id="wo-search" class="admin-form-input" placeholder="Search by title, client, WO no…" style="max-width:260px;" />
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table" id="wo-table">
+        <thead>
+          <tr>
+            <th>WO No</th>
+            <th>Client</th>
+            <th>Title</th>
+            <th>Coverage</th>
+            <th>Status</th>
+            <th>Est. Cost</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="wo-tbody">
+          <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--admin-text-muted);">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Edit Work Order Modal -->
+  <div id="modal-edit-wo" class="preview-modal-overlay" style="display:none">
+    <div class="modal modal--wide">
+      <h3>Edit Work Order</h3>
+      <form id="form-edit-wo" class="grid-form">
+        <input type="hidden" id="edit-wo-id" />
+        <div class="full"><label>Title</label><input id="edit-wo-title" class="admin-form-input" required /></div>
+        <div class="full"><label>Description</label><textarea id="edit-wo-desc" class="admin-form-input" rows="3"></textarea></div>
+        <div class="full"><label>Scope Items <span style="font-weight:400;color:var(--admin-text-muted)">(one per line)</span></label><textarea id="edit-wo-scope" class="admin-form-input" rows="4" placeholder="Deliverable 1&#10;Deliverable 2"></textarea></div>
+        <div>
+          <label>Coverage</label>
+          <select id="edit-wo-coverage" class="admin-form-input">
+            <option value="contract_included">Included in contract</option>
+            <option value="paid_extra">Paid extra (billable)</option>
+            <option value="goodwill_free">Goodwill / complimentary</option>
+          </select>
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="edit-wo-status" class="admin-form-input">
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="in-progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="invoiced">Invoiced</option>
+          </select>
+        </div>
+        <div><label>Estimated Cost</label><input id="edit-wo-cost" class="admin-form-input" type="number" min="0" step="0.01" /></div>
+        <div>
+          <label>Currency</label>
+          <select id="edit-wo-currency" class="admin-form-input">
+            <option value="UGX">UGX</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+          </select>
+        </div>
+        <div class="full"><label>Notes</label><textarea id="edit-wo-notes" class="admin-form-input" rows="2"></textarea></div>
+        <div class="modal-actions full">
+          <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-edit-wo">Cancel</button>
+          <button class="admin-btn admin-btn-primary" type="submit">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- New Work Order Modal -->
+  <div id="modal-new-wo" class="preview-modal-overlay" style="display:none">
+    <div class="modal modal--wide">
+      <h3>New Work Order</h3>
+      <form id="form-new-wo" class="grid-form">
+        <div class="full">
+          <label>Service Client</label>
+          <select id="new-wo-client" class="admin-form-input" required>
+            <option value="">— Select a service client —</option>
+            {serviceClients.map((c) => (
+              <option value={c.id}>{c.name} — {c.productName}</option>
+            ))}
+          </select>
+        </div>
+        <div class="full"><label>Title</label><input id="new-wo-title" class="admin-form-input" required /></div>
+        <div class="full"><label>Description</label><textarea id="new-wo-desc" class="admin-form-input" rows="3"></textarea></div>
+        <div class="full"><label>Scope Items <span style="font-weight:400;color:var(--admin-text-muted)">(one per line)</span></label><textarea id="new-wo-scope" class="admin-form-input" rows="4" placeholder="Deliverable 1&#10;Deliverable 2"></textarea></div>
+        <div>
+          <label>Coverage</label>
+          <select id="new-wo-coverage" class="admin-form-input">
+            <option value="contract_included">Included in contract</option>
+            <option value="paid_extra">Paid extra (billable)</option>
+            <option value="goodwill_free">Goodwill / complimentary</option>
+          </select>
+        </div>
+        <div>
+          <label>Currency</label>
+          <select id="new-wo-currency" class="admin-form-input">
+            <option value="UGX">UGX</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+          </select>
+        </div>
+        <div class="full"><label>Estimated Cost</label><input id="new-wo-cost" class="admin-form-input" type="number" min="0" step="0.01" /></div>
+        <div class="full"><label>Notes</label><textarea id="new-wo-notes" class="admin-form-input" rows="2"></textarea></div>
+        <div class="modal-actions full">
+          <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-new-wo">Cancel</button>
+          <button class="admin-btn admin-btn-primary" type="submit">Create Work Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div id="modal-confirm" class="preview-modal-overlay" style="display:none">
+    <div class="modal modal--narrow">
+      <h3 id="confirm-title">Delete Work Order?</h3>
+      <p id="confirm-msg" style="color:var(--admin-text-muted);font-size:0.875rem;margin-top:-0.5rem;"></p>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-confirm">Cancel</button>
+        <button id="confirm-btn" type="button" class="admin-btn" style="background:#dc2626;color:#fff;border-color:#dc2626;">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-root"></div>
+
+  <style>
+    .wo-page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+    .wo-toolbar { gap: 1rem; flex-wrap: wrap; }
+    .wo-number-cell { font-family: ui-monospace, monospace; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+    .wo-client-cell { font-size: 0.8125rem; }
+    .wo-product { font-size: 0.6875rem; color: var(--admin-text-muted); margin-top: 2px; }
+    .wo-actions-cell { display: flex; flex-wrap: wrap; gap: 5px; }
+    .wo-cov { display: inline-block; font-size: 0.6875rem; font-weight: 600; border-radius: 999px; padding: 2px 8px; background: rgba(99,91,255,.1); color: var(--admin-accent); }
+    .status-pending    { background: rgba(245,158,11,.15); color: #b45309; }
+    .status-approved   { background: rgba(99,91,255,.15); color: var(--admin-accent); }
+    .status-in-progress { background: rgba(59,130,246,.15); color: #1d4ed8; }
+    .status-completed  { background: rgba(13,148,136,.15); color: #0d9488; }
+    .status-invoiced   { background: rgba(107,114,128,.15); color: var(--admin-text-muted); }
+    #toast-root { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; }
+    .toast { background: #111; color: #fff; border-radius: 8px; padding: 10px 14px; font-size: 0.75rem; min-width: 240px; }
+    .toast.error { background: #7f1d1d; }
+  </style>
+
+  <script>
+    const API_KEY = sessionStorage.getItem('zyntel_invoice_api_key') ?? '';
+    const B = (window as unknown as { __ADMIN_BASE__?: string }).__ADMIN_BASE__ ?? '';
+    if (!API_KEY) window.location.href = B + '/login';
+
+    const COVERAGE_LABEL: Record<string, string> = {
+      contract_included: 'Contract',
+      paid_extra: 'Paid extra',
+      goodwill_free: 'Goodwill',
+    };
+    const STATUS_CLS: Record<string, string> = {
+      pending: 'status-pending',
+      approved: 'status-approved',
+      'in-progress': 'status-in-progress',
+      completed: 'status-completed',
+      invoiced: 'status-invoiced',
+    };
+
+    let allWOs: any[] = [];
+    let activeFilter = 'all';
+    let activeSearch = '';
+    let confirmCb: (() => void) | null = null;
+
+    function showToast(msg: string, type = 'success') {
+      const el = document.createElement('div');
+      el.className = `toast${type === 'error' ? ' error' : ''}`;
+      el.textContent = msg;
+      document.getElementById('toast-root')!.appendChild(el);
+      setTimeout(() => el.remove(), 4500);
+    }
+    function showModal(id: string) { const el = document.getElementById(id); if (el) el.style.display = 'flex'; }
+    function closeModal(id: string) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+    document.addEventListener('click', (e) => { const c = (e.target as Element).closest('[data-close]') as HTMLElement | null; if (c) closeModal(c.dataset.close!); });
+    document.querySelectorAll('.preview-modal-overlay').forEach((o) => o.addEventListener('click', (e) => { if (e.target === o) closeModal((o as HTMLElement).id); }));
+    document.getElementById('confirm-btn')!.addEventListener('click', () => { confirmCb?.(); closeModal('modal-confirm'); });
+
+    function canEdit(wo: any) {
+      return wo.status !== 'completed' && wo.status !== 'invoiced';
+    }
+
+    function renderStats(wos: any[]) {
+      const bar = document.getElementById('wo-stats')!;
+      bar.style.display = '';
+      document.getElementById('stat-total')!.textContent = String(wos.length);
+      document.getElementById('stat-pending')!.textContent = String(wos.filter(w => w.status === 'pending').length);
+      document.getElementById('stat-inprogress')!.textContent = String(wos.filter(w => w.status === 'in-progress').length);
+      document.getElementById('stat-completed')!.textContent = String(wos.filter(w => w.status === 'completed').length);
+      document.getElementById('stat-invoiced')!.textContent = String(wos.filter(w => w.status === 'invoiced').length);
+    }
+
+    function renderTable(wos: any[]) {
+      const tbody = document.getElementById('wo-tbody')!;
+      const filtered = wos.filter((w) => {
+        const passFilter = activeFilter === 'all' || w.status === activeFilter;
+        const passSearch = !activeSearch || [w.woNumber, w.title, w.clientName, w.productName].join(' ').toLowerCase().includes(activeSearch);
+        return passFilter && passSearch;
+      });
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--admin-text-muted);">No work orders found.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = filtered.map((wo) => {
+        const covLabel = COVERAGE_LABEL[wo.coverage] ?? wo.coverage;
+        const sCls = STATUS_CLS[wo.status] ?? '';
+        const costStr = wo.estimatedCost != null ? `${wo.currency} ${Number(wo.estimatedCost).toLocaleString()}` : '—';
+        const editable = canEdit(wo);
+        return `<tr data-id="${wo.id}" data-status="${wo.status}" data-search="${[wo.woNumber, wo.title, wo.clientName, wo.productName].join(' ').toLowerCase()}">
+          <td class="wo-number-cell">${wo.woNumber}</td>
+          <td class="wo-client-cell"><div>${wo.clientName}</div><div class="wo-product">${wo.productName}</div></td>
+          <td style="font-size:0.875rem;">${wo.title}</td>
+          <td><span class="wo-cov">${covLabel}</span></td>
+          <td><span class="admin-badge ${sCls}">${wo.status.replace('-', ' ')}</span></td>
+          <td style="font-size:0.8125rem;white-space:nowrap;">${costStr}</td>
+          <td class="wo-actions-cell">
+            <a class="act-btn" href="/api/maintenance/work-order-pdf?id=${wo.id}" target="_blank">PDF</a>
+            ${editable ? `<button class="act-btn" data-action="edit" data-wo='${JSON.stringify(wo).replace(/'/g, '&#39;')}' type="button">Edit</button>` : ''}
+            <button class="act-btn act-btn--danger" data-action="delete" data-id="${wo.id}" data-wo-number="${wo.woNumber}" type="button">Delete</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function loadWOs() {
+      const res = await fetch('/api/work-orders');
+      if (!res.ok) { showToast('Failed to load work orders', 'error'); return; }
+      allWOs = await res.json();
+      renderStats(allWOs);
+      renderTable(allWOs);
+    }
+
+    // Filter tabs
+    document.getElementById('filter-tabs')!.addEventListener('click', (e) => {
+      const btn = (e.target as Element).closest('[data-filter]') as HTMLElement | null;
+      if (!btn) return;
+      activeFilter = btn.dataset.filter!;
+      document.querySelectorAll('#filter-tabs .tab').forEach((t) => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderTable(allWOs);
+    });
+
+    // Search
+    document.getElementById('wo-search')!.addEventListener('input', (e) => {
+      activeSearch = (e.target as HTMLInputElement).value.toLowerCase().trim();
+      renderTable(allWOs);
+    });
+
+    // Table actions (edit / delete)
+    document.getElementById('wo-tbody')!.addEventListener('click', (e) => {
+      const btn = (e.target as Element).closest('[data-action]') as HTMLElement | null;
+      if (!btn) return;
+      const action = btn.dataset.action;
+
+      if (action === 'edit') {
+        const wo = JSON.parse(btn.dataset.wo!);
+        (document.getElementById('edit-wo-id') as HTMLInputElement).value = wo.id;
+        (document.getElementById('edit-wo-title') as HTMLInputElement).value = wo.title;
+        (document.getElementById('edit-wo-desc') as HTMLTextAreaElement).value = wo.description ?? '';
+        (document.getElementById('edit-wo-scope') as HTMLTextAreaElement).value = (wo.scopeItems ?? []).join('\n');
+        (document.getElementById('edit-wo-coverage') as HTMLSelectElement).value = wo.coverage;
+        (document.getElementById('edit-wo-status') as HTMLSelectElement).value = wo.status;
+        (document.getElementById('edit-wo-cost') as HTMLInputElement).value = wo.estimatedCost ?? '';
+        (document.getElementById('edit-wo-currency') as HTMLSelectElement).value = wo.currency ?? 'UGX';
+        (document.getElementById('edit-wo-notes') as HTMLTextAreaElement).value = wo.notes ?? '';
+        showModal('modal-edit-wo');
+      } else if (action === 'delete') {
+        const id = btn.dataset.id!;
+        const wn = btn.dataset.woNumber!;
+        document.getElementById('confirm-title')!.textContent = `Delete ${wn}?`;
+        document.getElementById('confirm-msg')!.textContent = 'This cannot be undone.';
+        confirmCb = async () => {
+          const r = await fetch(`/api/work-orders?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+          if (!r.ok) { showToast('Delete failed', 'error'); return; }
+          allWOs = allWOs.filter((w) => w.id !== id);
+          renderStats(allWOs);
+          renderTable(allWOs);
+          showToast(`${wn} deleted`);
+        };
+        showModal('modal-confirm');
+      }
+    });
+
+    // Edit form submit
+    document.getElementById('form-edit-wo')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = (document.getElementById('edit-wo-id') as HTMLInputElement).value;
+      const scopeRaw = (document.getElementById('edit-wo-scope') as HTMLTextAreaElement).value;
+      const payload = {
+        id,
+        title: (document.getElementById('edit-wo-title') as HTMLInputElement).value.trim(),
+        description: (document.getElementById('edit-wo-desc') as HTMLTextAreaElement).value.trim(),
+        scopeItems: scopeRaw.split('\n').map((s) => s.trim()).filter(Boolean),
+        coverage: (document.getElementById('edit-wo-coverage') as HTMLSelectElement).value,
+        status: (document.getElementById('edit-wo-status') as HTMLSelectElement).value,
+        estimatedCost: Number((document.getElementById('edit-wo-cost') as HTMLInputElement).value) || null,
+        currency: (document.getElementById('edit-wo-currency') as HTMLSelectElement).value,
+        notes: (document.getElementById('edit-wo-notes') as HTMLTextAreaElement).value.trim() || null,
+      };
+      const r = await fetch('/api/work-orders', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!r.ok) { showToast('Failed to save changes', 'error'); return; }
+      closeModal('modal-edit-wo');
+      showToast('Work order updated');
+      await loadWOs();
+    });
+
+    // New WO form submit
+    document.getElementById('btn-new-wo')!.addEventListener('click', () => {
+      (document.getElementById('form-new-wo') as HTMLFormElement).reset();
+      showModal('modal-new-wo');
+    });
+    document.getElementById('form-new-wo')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const scopeRaw = (document.getElementById('new-wo-scope') as HTMLTextAreaElement).value;
+      const payload = {
+        serviceClientId: (document.getElementById('new-wo-client') as HTMLSelectElement).value,
+        title: (document.getElementById('new-wo-title') as HTMLInputElement).value.trim(),
+        description: (document.getElementById('new-wo-desc') as HTMLTextAreaElement).value.trim(),
+        scopeItems: scopeRaw.split('\n').map((s) => s.trim()).filter(Boolean),
+        coverage: (document.getElementById('new-wo-coverage') as HTMLSelectElement).value,
+        currency: (document.getElementById('new-wo-currency') as HTMLSelectElement).value,
+        estimatedCost: Number((document.getElementById('new-wo-cost') as HTMLInputElement).value) || null,
+        notes: (document.getElementById('new-wo-notes') as HTMLTextAreaElement).value.trim() || null,
+      };
+      if (!payload.serviceClientId) { showToast('Select a service client first', 'error'); return; }
+      const r = await fetch('/api/maintenance/work-orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!r.ok) { showToast('Failed to create work order', 'error'); return; }
+      closeModal('modal-new-wo');
+      showToast('Work order created');
+      await loadWOs();
+    });
+
+    loadWOs();
+  </script>
+</AdminLayout>
