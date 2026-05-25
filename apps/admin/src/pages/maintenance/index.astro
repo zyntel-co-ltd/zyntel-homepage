@@ -204,7 +204,7 @@ const serviceClients = await getAllServiceClients();
           <select id="nc-client-id" class="admin-form-input" required>
             <option value="">— Loading… —</option>
           </select>
-          <p style="font-size:11px;color:#6b7280;margin:4px 0 0;">
+          <p style="font-size:0.6875rem;color:var(--admin-text-muted);margin:4px 0 0;">
             Clients are created/managed in <a href="/clients">Clients</a>. Maintenance always links to a single universal client record.
           </p>
         </div>
@@ -634,7 +634,7 @@ const serviceClients = await getAllServiceClients();
       const tbody = document.getElementById('logs-tbody');
       const filtered = logFilter === 'all' ? allLogs : allLogs.filter((l) => l.type === logFilter);
       if (!filtered.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6b7280;padding:24px;font-size:13px;">No logs yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--admin-text-muted);padding:24px;font-size:13px;">No logs yet.</td></tr>';
         return;
       }
       tbody.innerHTML = filtered.map((log) => `
@@ -643,7 +643,7 @@ const serviceClients = await getAllServiceClients();
           <td><span class="badge-${log.type}">${log.type}</span></td>
           <td style="font-size:12px;">${log.area}</td>
           <td style="font-size:12px;max-width:200px;">${log.summary}</td>
-          <td style="font-size:12px;max-width:180px;color:#6b7280;">${log.actionTaken || '—'}</td>
+          <td style="font-size:0.75rem;max-width:180px;color:var(--admin-text-muted);">${log.actionTaken || '—'}</td>
           <td style="font-size:12px;">${log.loggedBy}</td>
           <td><button class="act-btn act-btn--danger" data-del-log="${log.id}" type="button">Delete</button></td>
         </tr>
@@ -753,7 +753,7 @@ const serviceClients = await getAllServiceClients();
       const lowerIsBetter = ['avg_tat_minutes', 'delay_rate_pct'];
       const entries = Object.entries(data);
       if (!entries.length) {
-        container.innerHTML = '<p style="color:#6b7280;font-size:13px;">No snapshots yet. Use <strong>Log metrics</strong> to record numbers from the property app; the first date is the baseline and the newest date is “current”.</p>';
+        container.innerHTML = '<p style=”color:var(--admin-text-muted);font-size:13px;”>No snapshots yet. Use <strong>Log metrics</strong> to record numbers from the property app; the first date is the baseline and the newest date is “current”.</p>';
         return;
       }
       container.innerHTML = entries.map(([key, val]) => {

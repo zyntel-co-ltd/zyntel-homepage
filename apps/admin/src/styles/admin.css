@@ -647,6 +647,125 @@ textarea.admin-input { resize: vertical; }
   margin: 1.25rem 0;
 }
 
+/* ── Shared modal system (preview-modal-overlay / .modal pattern) ── */
+/* These appear on health, ROI, maintenance, and quotes pages. Kept alongside
+   .admin-modal-* so both class sets work without page-level duplication. */
+.preview-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+  animation: admin-fade-in 0.18s ease;
+}
+.modal {
+  width: min(640px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.14);
+  animation: admin-slide-up 0.22s ease;
+}
+.modal--wide  { width: min(800px, 100%); }
+.modal--narrow { width: min(480px, 100%); }
+.modal h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  margin: 0 0 1rem;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+/* ── Shared filter tabs (used by quotes, maintenance) ── */
+.filter-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.tab {
+  border: 1px solid var(--admin-border);
+  background: var(--admin-card);
+  border-radius: 999px;
+  padding: 0.275rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--admin-text-muted);
+  transition: all 0.12s;
+}
+.tab:hover { background: var(--admin-card-hover); color: var(--admin-text); }
+.tab.active {
+  background: rgba(99, 91, 255, 0.12);
+  border-color: var(--admin-accent);
+  color: var(--admin-accent);
+  font-weight: 600;
+}
+
+/* ── Shared grid form (modals on ROI, maintenance) ── */
+.grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+.grid-form .full { grid-column: 1 / -1; }
+.grid-form label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+.grid-form--nested { margin-top: 0.5rem; }
+@media (max-width: 540px) { .grid-form { grid-template-columns: 1fr; } }
+
+/* ── Shared action button (health, maintenance WO cards) ── */
+.act-btn {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-card);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--admin-text);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: background 0.12s, border-color 0.12s;
+}
+.act-btn:hover { background: var(--admin-card-hover); border-color: #c1c9d2; }
+.act-btn--danger { color: var(--admin-danger); border-color: #fecaca; background: var(--admin-card); }
+.act-btn--danger:hover { background: rgba(220, 38, 38, 0.06); }
+
+/* ── Invoice detail responsive layout ── */
+.invoice-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2rem;
+}
+@media (max-width: 900px) {
+  .invoice-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Health page card variables override (ensures dark mode works) ── */
+.health-card {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+}
+.health-product-name { color: var(--admin-text); }
+.health-client-name, .health-meta { color: var(--admin-text-muted); }
+/* Allow long URLs to wrap rather than clip silently */
+.health-url {
+  font-size: 0.6875rem;
+  color: var(--admin-text-muted);
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+.health-url a { color: var(--admin-accent); text-decoration: none; }
+
 /* ── Print utilities ── */
 @media print {
   .admin-sidebar,

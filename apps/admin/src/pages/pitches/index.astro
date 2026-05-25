@@ -142,26 +142,19 @@ const sessionsWithMeta = sessions.map((s) => {
   <input id="file-deck" type="file" accept=".zip,text/html,.html" style="display:none" />
 
   <style>
-    .previews-header{display:flex;justify-content:space-between;align-items:center;}
-    .previews-toolbar{gap:1rem;flex-wrap:wrap;}
-    .filter-tabs{display:flex;gap:.5rem;flex-wrap:wrap;}
-    .tab{border:1px solid var(--admin-border);background:#fff;border-radius:999px;padding:.35rem .7rem;font-size:12px;cursor:pointer;}
-    .tab.active{background:rgba(99,91,255,.12);border-color:#635bff;color:#635bff;}
-    .preview-client-name{font-weight:700;display:flex;gap:6px;align-items:center;}
-    .status-active{background:rgba(13,148,136,.15);color:#0d9488}
-    .status-expired{background:rgba(245,158,11,.2);color:#b45309}
-    .status-disabled{background:rgba(107,114,128,.2);color:#374151}
-    .preview-actions{display:flex;flex-wrap:wrap;gap:6px}
-    .act-btn{font-size:11px;padding:4px 8px;border:1px solid var(--admin-border);background:#fff;border-radius:6px;cursor:pointer}
-    .act-btn--warn{color:#b45309}.act-btn--ok{color:#15803d}.act-btn--danger{color:#b91c1c}
-    .preview-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;z-index:1200;padding:16px}
-    .modal{width:min(860px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:12px;padding:18px}
-    .grid-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .grid-form .full{grid-column:1/-1}
-    .modal-actions{display:flex;justify-content:flex-end;gap:8px;grid-column:1/-1;margin-top:6px}
-    #toast-root{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:2000}
-    .toast{background:#111;color:#fff;border-radius:8px;padding:10px 12px;font-size:12px;min-width:260px}
-    .toast.error{background:#7f1d1d}
+    /* .preview-modal-overlay, .modal, .grid-form, .modal-actions,
+       .filter-tabs, .tab, .tab.active, .act-btn now in global admin.css */
+    .previews-header { display: flex; justify-content: space-between; align-items: center; }
+    .previews-toolbar { gap: 1rem; flex-wrap: wrap; }
+    .preview-client-name { font-weight: 700; display: flex; gap: 6px; align-items: center; }
+    .status-active { background: rgba(13,148,136,.15); color: #0d9488; }
+    .status-expired { background: rgba(245,158,11,.2); color: #b45309; }
+    .status-disabled { background: rgba(107,114,128,.2); color: var(--admin-text-muted); }
+    .preview-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .act-btn--warn { color: #b45309; } .act-btn--ok { color: #15803d; }
+    #toast-root { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; }
+    .toast { background: #111; color: #fff; border-radius: 8px; padding: 10px 12px; font-size: 0.75rem; min-width: 260px; }
+    .toast.error { background: #7f1d1d; }
   </style>
 
   <script>

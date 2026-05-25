@@ -1,9 +1,9 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { getServiceClientById, getMaintenanceLogs, getWorkOrders } from './maintenance.ts';
+import { loadPdfLogo } from './pdf-logo.ts';
 
 const MARGIN = 50;
 const CONTENT_WIDTH = 595 - MARGIN * 2;
-const CYAN = rgb(0, 0.94, 1);
 const COMPANY_FOOTER =
   'Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061';
 
@@ -64,16 +64,6 @@ async function fetchGitHubCommits(opts: {
   }
 }
 
-async function loadLogo(baseUrl: string, path: string): Promise<Uint8Array | null> {
-  try {
-    const url = `${baseUrl.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return new Uint8Array(await res.arrayBuffer());
-  } catch {
-    return null;
-  }
-}
 
 function truncate(
   text: string,
@@ -163,22 +153,21 @@ export async function generateMaintenanceReportPdf(opts: {
   const rightEdge = 595 - MARGIN;
 
   const baseUrl = opts.baseUrl ?? import.meta.env.SITE ?? 'https://zyntel.net';
-  let logoBytes = await loadLogo(baseUrl, '/images/logos/zyntel_full_cyan.png');
-  if (!logoBytes) logoBytes = await loadLogo(baseUrl, '/logos/zyntel_full_cyan.png');
+  const logoBytes = await loadPdfLogo(baseUrl);
 
   if (logoBytes) {
     try {
       const png = await doc.embedPng(logoBytes);
-      const scale = Math.min(140 / png.width, 38 / png.height);
+      const scale = Math.min(140 / png.width, 36 / png.height);
       page.drawImage(png, { x: MARGIN, y: y[0] - png.height * scale, width: png.width * scale, height: png.height * scale });
       y[0] -= png.height * scale + 16;
     } catch {
-      page.drawText('zyntel', { x: MARGIN, y: y[0], size: 18, font: fontMono, color: CYAN });
-      y[0] -= 26;
+      page.drawText('Zyntel Co. Limited', { x: MARGIN, y: y[0], size: 13, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
+      y[0] -= 22;
     }
   } else {
-    page.drawText('zyntel', { x: MARGIN, y: y[0], size: 18, font: fontMono, color: CYAN });
-    y[0] -= 26;
+    page.drawText('Zyntel Co. Limited', { x: MARGIN, y: y[0], size: 13, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
+    y[0] -= 22;
   }
 
   const draw = (text: string, x = MARGIN, size = 10, bold = false, col = rgb(0.1, 0.1, 0.1)) => {
