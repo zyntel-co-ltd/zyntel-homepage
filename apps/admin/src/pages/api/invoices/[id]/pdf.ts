@@ -26,12 +26,13 @@ export const GET: APIRoute = async ({ params, request }) => {
     const clientBranding = client?.pdf_header_name || client?.pdf_footer_text
       ? { headerName: client.pdf_header_name, footerText: client.pdf_footer_text }
       : null;
+    const prefix = (clientBranding?.headerName?.trim() || 'Zyntel').replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
     const pdfBytes = await generateInvoicePdf(invoice, { baseUrl, paymentAccount: paymentAccount ?? undefined, clientBranding });
     return new Response(pdfBytes, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="Invoice-${invoice.invoice_number}.pdf"`,
+        'Content-Disposition': `attachment; filename="${prefix}-${invoice.invoice_number}.pdf"`,
       },
     });
   } catch (e) {
