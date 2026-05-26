@@ -86,6 +86,10 @@ export interface Client {
   }> | null;
   phone: string | null;
   address: string | null;
+  /** When set, replaces the Zyntel logo with this name in PDF document headers. */
+  pdf_header_name?: string | null;
+  /** When set, replaces the default Zyntel footer line in all PDF documents. */
+  pdf_footer_text?: string | null;
   created_at: string;
 }
 

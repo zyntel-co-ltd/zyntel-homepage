@@ -190,6 +190,8 @@ function normalizeClientRow(row: Record<string, unknown>): Client {
     contacts,
     phone: row.phone != null ? String(row.phone) : null,
     address: row.address != null ? String(row.address) : null,
+    pdf_header_name: row.pdf_header_name != null ? String(row.pdf_header_name) : null,
+    pdf_footer_text: row.pdf_footer_text != null ? String(row.pdf_footer_text) : null,
     created_at: String(row.created_at),
   };
 }
@@ -334,11 +336,22 @@ export async function createClient(data: { name: string; email: string; phone?: 
   }
 }
 
-export async function updateClient(id: number, data: { name?: string; email?: string; emails?: string[]; phone?: string; address?: string; contacts?: Client['contacts'] }): Promise<Client | null> {
+export async function updateClient(id: number, data: {
+  name?: string;
+  email?: string;
+  emails?: string[];
+  phone?: string;
+  address?: string;
+  contacts?: Client['contacts'];
+  pdf_header_name?: string | null;
+  pdf_footer_text?: string | null;
+}): Promise<Client | null> {
   if (!import.meta.env.DATABASE_URL) return null;
   const existing = await getClient(id);
   if (!existing) return null;
   const name = data.name != null ? String(data.name).trim() : existing.name;
+  const pdfHeaderName = 'pdf_header_name' in data ? (data.pdf_header_name ? String(data.pdf_header_name).trim() : null) : existing.pdf_header_name ?? null;
+  const pdfFooterText = 'pdf_footer_text' in data ? (data.pdf_footer_text ? String(data.pdf_footer_text).trim() : null) : existing.pdf_footer_text ?? null;
   if (data.contacts != null) {
     const normalized = (data.contacts ?? [])
       .map((c: any) => ({
@@ -361,7 +374,9 @@ export async function updateClient(id: number, data: { name?: string; email?: st
     const contactsJson = JSON.stringify(ordered);
     try {
       const rows = await sql`
-        UPDATE clients SET name = ${name}, email = ${email}, emails = ${emailsJson}, contacts = ${contactsJson}, phone = ${phone}, address = ${address}
+        UPDATE clients SET name = ${name}, email = ${email}, emails = ${emailsJson}, contacts = ${contactsJson},
+          phone = ${phone}, address = ${address},
+          pdf_header_name = ${pdfHeaderName}, pdf_footer_text = ${pdfFooterText}
         WHERE id = ${id}
         RETURNING *
       `;
@@ -389,7 +404,9 @@ export async function updateClient(id: number, data: { name?: string; email?: st
   const emailsJson = JSON.stringify(emailsList);
   try {
     const rows = await sql`
-      UPDATE clients SET name = ${name}, email = ${email}, emails = ${emailsJson}, phone = ${phone}, address = ${address}
+      UPDATE clients SET name = ${name}, email = ${email}, emails = ${emailsJson},
+        phone = ${phone}, address = ${address},
+        pdf_header_name = ${pdfHeaderName}, pdf_footer_text = ${pdfFooterText}
       WHERE id = ${id}
       RETURNING *
     `;

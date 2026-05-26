@@ -5,9 +5,15 @@ import { loadPdfLogo } from './pdf-logo.ts';
 const formatMoney = (n: number, currency: string): string =>
   currency ? `${currency} ${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : String(Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 }));
 
+export interface ClientBranding {
+  headerName?: string | null;
+  footerText?: string | null;
+}
+
 export interface PdfOptions {
   baseUrl?: string;
   paymentAccount?: PaymentAccount | null;
+  clientBranding?: ClientBranding | null;
 }
 
 const MARGIN = 50;
@@ -61,23 +67,30 @@ export async function generateInvoicePdf(invoice: Invoice, options: PdfOptions =
   let y = height - 40;
 
   const baseUrl = options.baseUrl ?? import.meta.env.SITE ?? 'https://zyntel.net';
-  const logoBytes = await loadPdfLogo(baseUrl);
+  const customHeader = options.clientBranding?.headerName?.trim() || null;
+  const customFooter = options.clientBranding?.footerText?.trim() || null;
 
-  if (logoBytes) {
-    try {
-      const png = await doc.embedPng(logoBytes);
-      const scale = Math.min(160 / png.width, 40 / png.height);
-      const w = png.width * scale;
-      const h = png.height * scale;
-      page.drawImage(png, { x: MARGIN, y: y - h, width: w, height: h });
-      y -= h + 20;
-    } catch {
+  if (customHeader) {
+    page.drawText(customHeader, { x: MARGIN, y, size: 14, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
+    y -= 24;
+  } else {
+    const logoBytes = await loadPdfLogo(baseUrl);
+    if (logoBytes) {
+      try {
+        const png = await doc.embedPng(logoBytes);
+        const scale = Math.min(160 / png.width, 40 / png.height);
+        const w = png.width * scale;
+        const h = png.height * scale;
+        page.drawImage(png, { x: MARGIN, y: y - h, width: w, height: h });
+        y -= h + 20;
+      } catch {
+        page.drawText('Zyntel Co. Limited', { x: MARGIN, y, size: 14, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
+        y -= 24;
+      }
+    } else {
       page.drawText('Zyntel Co. Limited', { x: MARGIN, y, size: 14, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
       y -= 24;
     }
-  } else {
-    page.drawText('Zyntel Co. Limited', { x: MARGIN, y, size: 14, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
-    y -= 24;
   }
 
   const draw = (text: string, x: number, size = 11, bold = false) => {
@@ -207,10 +220,9 @@ export async function generateInvoicePdf(invoice: Invoice, options: PdfOptions =
   }
 
   // Footer (company address/contact)
-  const footerY = 45;
-  page.drawText('Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061', {
+  page.drawText(customFooter ?? 'Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061', {
     x: MARGIN,
-    y: footerY,
+    y: 45,
     size: 8,
     font,
     color: rgb(0.6, 0.6, 0.6),
@@ -233,25 +245,32 @@ export async function generateReceiptPdf(
   let y = height - 50;
 
   const baseUrl = options.baseUrl ?? import.meta.env.SITE ?? 'https://zyntel.net';
-  let logoBytes = await loadLogo(baseUrl, '/images/logos/zyntel_logo_cyan.png');
-  if (!logoBytes) logoBytes = await loadLogo(baseUrl, '/logos/zyntel_logo_cyan.png');
+  const rcptCustomHeader = options.clientBranding?.headerName?.trim() || null;
+  const rcptCustomFooter = options.clientBranding?.footerText?.trim() || null;
+  const CYAN = rgb(0, 0.78, 0.87);
 
-  if (logoBytes) {
-    try {
-      const png = await doc.embedPng(logoBytes);
-      const scale = Math.min(48 / png.width, 48 / png.height);
-      const w = png.width * scale;
-      const h = png.height * scale;
-      page.drawImage(png, { x: 50, y: y - h, width: w, height: h });
-      page.drawText('zyntel', { x: 50 + w + 12, y: y - h + 14, size: 18, font: fontMono, color: CYAN });
-      y -= h + 24;
-    } catch {
+  if (rcptCustomHeader) {
+    page.drawText(rcptCustomHeader, { x: MARGIN, y, size: 14, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
+    y -= 24;
+  } else {
+    const logoBytes = await loadPdfLogo(baseUrl);
+    if (logoBytes) {
+      try {
+        const png = await doc.embedPng(logoBytes);
+        const scale = Math.min(48 / png.width, 48 / png.height);
+        const w = png.width * scale;
+        const h = png.height * scale;
+        page.drawImage(png, { x: 50, y: y - h, width: w, height: h });
+        page.drawText('zyntel', { x: 50 + w + 12, y: y - h + 14, size: 18, font: fontMono, color: CYAN });
+        y -= h + 24;
+      } catch {
+        page.drawText('zyntel', { x: 50, y, size: 18, font: fontMono, color: CYAN });
+        y -= 28;
+      }
+    } else {
       page.drawText('zyntel', { x: 50, y, size: 18, font: fontMono, color: CYAN });
       y -= 28;
     }
-  } else {
-    page.drawText('zyntel', { x: 50, y, size: 18, font: fontMono, color: CYAN });
-    y -= 28;
   }
 
   const draw = (text: string, x: number, size = 11, bold = false) => {
@@ -285,7 +304,7 @@ export async function generateReceiptPdf(
   page.drawRectangle({ x: MARGIN, y: y - 2, width: receiptWidth, height: 1, color: rgb(0.9, 0.9, 0.9) });
 
   // Footer (company address/contact)
-  page.drawText('Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061', {
+  page.drawText(rcptCustomFooter ?? 'Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061', {
     x: MARGIN,
     y: 45,
     size: 8,

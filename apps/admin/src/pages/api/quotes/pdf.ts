@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getQuoteById } from '../../../lib/quotes.ts';
 import { generateQuotePdf } from '../../../lib/quote-pdf.ts';
+import { getClient } from '@zyntel/db';
 
 export const GET: APIRoute = async ({ url }) => {
   try {
@@ -19,7 +20,11 @@ export const GET: APIRoute = async ({ url }) => {
       });
     }
     const baseUrl = import.meta.env.SITE_URL ?? import.meta.env.SITE ?? 'https://admin.zyntel.net';
-    const pdfBytes = await generateQuotePdf(quote, { baseUrl });
+    const client = quote.clientId ? await getClient(quote.clientId) : null;
+    const clientBranding = client?.pdf_header_name || client?.pdf_footer_text
+      ? { headerName: client.pdf_header_name, footerText: client.pdf_footer_text }
+      : null;
+    const pdfBytes = await generateQuotePdf(quote, { baseUrl, clientBranding });
     return new Response(pdfBytes, {
       headers: {
         'Content-Type': 'application/pdf',
