@@ -73,7 +73,7 @@ function wrapText(
 
 export async function generateQuotePdf(
   quote: Quote & { clientAddress?: string | null },
-  options: { baseUrl?: string } = {}
+  options: { baseUrl?: string; clientBranding?: { headerName?: string | null; footerText?: string | null } | null } = {}
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
@@ -85,23 +85,30 @@ export async function generateQuotePdf(
   let y = height - 40;
 
   const baseUrl = options.baseUrl ?? import.meta.env.SITE ?? 'https://zyntel.net';
-  const logoBytes = await loadPdfLogo(baseUrl);
+  const customHeader = options.clientBranding?.headerName?.trim() || null;
+  const customFooter = options.clientBranding?.footerText?.trim() || null;
 
-  if (logoBytes) {
-    try {
-      const png = await doc.embedPng(logoBytes);
-      const scale = Math.min(160 / png.width, 40 / png.height);
-      const w = png.width * scale;
-      const h = png.height * scale;
-      page.drawImage(png, { x: MARGIN, y: y - h, width: w, height: h });
-      y -= h + 20;
-    } catch {
+  if (customHeader) {
+    page.drawText(customHeader, { x: MARGIN, y, size: 14, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
+    y -= 24;
+  } else {
+    const logoBytes = await loadPdfLogo(baseUrl);
+    if (logoBytes) {
+      try {
+        const png = await doc.embedPng(logoBytes);
+        const scale = Math.min(160 / png.width, 40 / png.height);
+        const w = png.width * scale;
+        const h = png.height * scale;
+        page.drawImage(png, { x: MARGIN, y: y - h, width: w, height: h });
+        y -= h + 20;
+      } catch {
+        page.drawText('Zyntel Co. Limited', { x: MARGIN, y, size: 14, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
+        y -= 24;
+      }
+    } else {
       page.drawText('Zyntel Co. Limited', { x: MARGIN, y, size: 14, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
       y -= 24;
     }
-  } else {
-    page.drawText('Zyntel Co. Limited', { x: MARGIN, y, size: 14, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
-    y -= 24;
   }
 
   const draw = (text: string, x: number, size = 11, bold = false) => {
@@ -264,7 +271,7 @@ export async function generateQuotePdf(
   y -= 4;
   page.drawRectangle({ x: MARGIN, y: y - 2, width: CONTENT_WIDTH, height: 1, color: rgb(0.9, 0.9, 0.9) });
   y -= 14;
-  page.drawText('Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061', {
+  page.drawText(customFooter ?? 'Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061', {
     x: MARGIN,
     y,
     size: 8,

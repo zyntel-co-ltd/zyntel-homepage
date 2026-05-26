@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getInvoice, getPayment } from '@zyntel/db';
+import { getInvoice, getPayment, getClient } from '@zyntel/db';
 import { generateReceiptPdf } from '../../../../lib/invoice-pdf';
 
 export const GET: APIRoute = async ({ params, request }) => {
@@ -17,7 +17,11 @@ export const GET: APIRoute = async ({ params, request }) => {
       return new Response('Invoice not found', { status: 404 });
     }
     const baseUrl = new URL(request.url).origin;
-    const pdfBytes = await generateReceiptPdf(invoice, payment, { baseUrl });
+    const client = invoice.client_id ? await getClient(invoice.client_id) : null;
+    const clientBranding = client?.pdf_header_name || client?.pdf_footer_text
+      ? { headerName: client.pdf_header_name, footerText: client.pdf_footer_text }
+      : null;
+    const pdfBytes = await generateReceiptPdf(invoice, payment, { baseUrl, clientBranding });
     return new Response(pdfBytes, {
       status: 200,
       headers: {

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getInvoice, getPaymentAccount } from '@zyntel/db';
+import { getInvoice, getPaymentAccount, getClient } from '@zyntel/db';
 import { generateInvoicePdf } from '../../../../lib/invoice-pdf';
 
 export const GET: APIRoute = async ({ params, request }) => {
@@ -19,8 +19,14 @@ export const GET: APIRoute = async ({ params, request }) => {
       });
     }
     const baseUrl = new URL(request.url).origin;
-    const paymentAccount = invoice.payment_account_id ? await getPaymentAccount(invoice.payment_account_id) : null;
-    const pdfBytes = await generateInvoicePdf(invoice, { baseUrl, paymentAccount: paymentAccount ?? undefined });
+    const [paymentAccount, client] = await Promise.all([
+      invoice.payment_account_id ? getPaymentAccount(invoice.payment_account_id) : Promise.resolve(null),
+      invoice.client_id ? getClient(invoice.client_id) : Promise.resolve(null),
+    ]);
+    const clientBranding = client?.pdf_header_name || client?.pdf_footer_text
+      ? { headerName: client.pdf_header_name, footerText: client.pdf_footer_text }
+      : null;
+    const pdfBytes = await generateInvoicePdf(invoice, { baseUrl, paymentAccount: paymentAccount ?? undefined, clientBranding });
     return new Response(pdfBytes, {
       status: 200,
       headers: {

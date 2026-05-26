@@ -16,7 +16,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   }
   try {
     const body = await request.json();
-    const { name, email, emails, contacts, phone, address } = body ?? {};
+    const { name, email, emails, contacts, phone, address, pdf_header_name, pdf_footer_text } = body ?? {};
     const client = await updateClient(id, {
       name: name != null ? String(name).trim() : undefined,
       email: email != null ? String(email).trim() : undefined,
@@ -31,6 +31,8 @@ export const PATCH: APIRoute = async ({ params, request }) => {
         : undefined,
       phone: phone !== undefined ? (phone ? String(phone).trim() : null) : undefined,
       address: address !== undefined ? (address ? String(address).trim() : null) : undefined,
+      pdf_header_name: pdf_header_name !== undefined ? (pdf_header_name ? String(pdf_header_name).trim() : null) : undefined,
+      pdf_footer_text: pdf_footer_text !== undefined ? (pdf_footer_text ? String(pdf_footer_text).trim() : null) : undefined,
     });
     if (!client) {
       return new Response(JSON.stringify({ error: 'Client not found or invalid data' }), { status: 400 });

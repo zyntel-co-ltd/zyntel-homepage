@@ -15,7 +15,7 @@ const FOOTER_H = 30; // reserved space at page bottom for footer
 const FOOTER_Y = MARGIN; // absolute Y of footer line
 const SAFE_BOTTOM = FOOTER_Y + FOOTER_H + 8; // content must not go below this
 
-const COMPANY_FOOTER =
+const DEFAULT_COMPANY_FOOTER =
   'Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061';
 
 function wrap(
@@ -132,10 +132,14 @@ const STATUS_LABEL: Record<string, string> = {
 export async function generateWorkOrderPdf(opts: {
   workOrderId: string;
   baseUrl?: string;
+  clientBranding?: { headerName?: string | null; footerText?: string | null } | null;
 }): Promise<Uint8Array> {
   const result = await getWorkOrderWithClient(opts.workOrderId);
   if (!result) throw new Error('Work order not found');
   const { wo, client } = result;
+
+  const customHeader = opts.clientBranding?.headerName?.trim() || null;
+  const COMPANY_FOOTER = opts.clientBranding?.footerText?.trim() || DEFAULT_COMPANY_FOOTER;
 
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
@@ -150,22 +154,27 @@ export async function generateWorkOrderPdf(opts: {
   let y = PAGE_H - MARGIN;
 
   // --- Logo ---
-  const logoBytes = await loadPdfLogo(opts.baseUrl);
-  if (logoBytes) {
-    try {
-      const png = await doc.embedPng(logoBytes);
-      const scale = Math.min(150 / png.width, 36 / png.height);
-      const w = png.width * scale;
-      const h = png.height * scale;
-      page.drawImage(png, { x: MARGIN, y: y - h, width: w, height: h });
-      y -= h + 14;
-    } catch {
+  if (customHeader) {
+    page.drawText(customHeader, { x: MARGIN, y, size: 13, font: fontBold, color: INK });
+    y -= 22;
+  } else {
+    const logoBytes = await loadPdfLogo(opts.baseUrl);
+    if (logoBytes) {
+      try {
+        const png = await doc.embedPng(logoBytes);
+        const scale = Math.min(150 / png.width, 36 / png.height);
+        const w = png.width * scale;
+        const h = png.height * scale;
+        page.drawImage(png, { x: MARGIN, y: y - h, width: w, height: h });
+        y -= h + 14;
+      } catch {
+        page.drawText('Zyntel Co. Limited', { x: MARGIN, y, size: 13, font: fontBold, color: INK });
+        y -= 22;
+      }
+    } else {
       page.drawText('Zyntel Co. Limited', { x: MARGIN, y, size: 13, font: fontBold, color: INK });
       y -= 22;
     }
-  } else {
-    page.drawText('Zyntel Co. Limited', { x: MARGIN, y, size: 13, font: fontBold, color: INK });
-    y -= 22;
   }
 
   // --- Horizontal rule under logo ---
@@ -285,7 +294,7 @@ export async function generateWorkOrderPdf(opts: {
   const totalSigH = 14 + 14 + sigBoxH + sigRowGap + sigBoxH; // = 150
 
   // Only push to a new page if signatures would genuinely overlap the footer
-  if (y - totalSigH < FOOTER_Y + 16) {
+  if (y - totalSigH < FOOTER_Y + 12) {
     const page2 = doc.addPage([PAGE_W, PAGE_H]);
     // Footer on page 2
     page2.drawText(COMPANY_FOOTER, { x: MARGIN, y: FOOTER_Y, size: 8, font, color: MUTED });
@@ -345,12 +354,12 @@ function drawSignatures(
 
       if (sig.name) {
         page.drawText(`Name: ${sig.name}`, { x: bx + 8, y: rowY - 16, size: 9, font: fontBold, color: ink });
-        if (sig.role) page.drawText(`Designation: ${sig.role}`, { x: bx + 8, y: rowY - 30, size: 8, font, color: muted });
-        if (sig.signedAt) page.drawText(`Signed: ${sig.signedAt.toLocaleDateString('en-GB')}`, { x: bx + 8, y: rowY - 42, size: 8, font, color: muted });
+        if (sig.role) page.drawText(`Designation: ${sig.role}`, { x: bx + 8, y: rowY - 38, size: 8, font, color: muted });
+        if (sig.signedAt) page.drawText(`Signed: ${sig.signedAt.toLocaleDateString('en-GB')}`, { x: bx + 8, y: rowY - 50, size: 8, font, color: muted });
       } else {
         const lineColor = r === 1 ? rgb(0.8, 0.8, 0.85) : muted;
         page.drawText('Name: _______________________________', { x: bx + 8, y: rowY - 16, size: 8, font, color: lineColor });
-        page.drawText('Designation: _______________________', { x: bx + 8, y: rowY - 30, size: 8, font, color: lineColor });
+        page.drawText('Designation: _______________________', { x: bx + 8, y: rowY - 38, size: 8, font, color: lineColor });
       }
     }
 
