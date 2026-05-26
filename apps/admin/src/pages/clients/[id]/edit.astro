@@ -42,20 +42,27 @@ export const prerender = false;
           <input type="text" name="address" class="admin-form-input" placeholder="Kampala, Uganda" />
         </div>
         <hr style="border:none;border-top:1px solid var(--admin-border);margin:1.25rem 0;" />
-        <h3 style="font-size:0.9rem;font-weight:600;margin:0 0 0.25rem;">PDF Branding</h3>
-        <p class="admin-form-hint" style="font-size:0.8125rem;color:var(--admin-text-muted);margin:0 0 0.75rem;">
-          Override the default Zyntel logo and footer on all documents (invoices, receipts, quotes, work orders) for this client.
-          Leave blank to use the standard Zyntel branding.
-        </p>
-        <div class="admin-form-group">
-          <label class="admin-form-label">PDF Header Name</label>
-          <input type="text" name="pdf_header_name" class="admin-form-input" placeholder="e.g. Ntale Nithamu Diini" />
-          <p class="admin-form-hint" style="font-size:0.8125rem;color:var(--admin-text-muted);margin:0.25rem 0 0;">Replaces the Zyntel logo with this name in the document header.</p>
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.4rem;">
+          <h3 style="font-size:0.9rem;font-weight:600;margin:0;">PDF Branding</h3>
+          <button type="button" id="pdf-branding-toggle"
+            style="font-size:0.72rem;font-weight:600;padding:0.18rem 0.65rem;border-radius:999px;border:1.5px solid var(--admin-border);background:transparent;color:var(--admin-text-muted);cursor:pointer;letter-spacing:0.04em;">
+            OFF
+          </button>
         </div>
-        <div class="admin-form-group">
-          <label class="admin-form-label">PDF Footer Text</label>
-          <input type="text" name="pdf_footer_text" class="admin-form-input" placeholder="e.g. Ntale Nithamu Diini · Naalya, Kampala · +256 786 421061 · zyntel@proton.me" />
-          <p class="admin-form-hint" style="font-size:0.8125rem;color:var(--admin-text-muted);margin:0.25rem 0 0;">Replaces the default footer line on all documents for this client.</p>
+        <p class="admin-form-hint" style="font-size:0.8125rem;color:var(--admin-text-muted);margin:0 0 0.75rem;">
+          Override the Zyntel header and footer on all PDFs for this client. Toggle on to customise.
+        </p>
+        <div id="pdf-branding-fields" style="display:none;">
+          <div class="admin-form-group">
+            <label class="admin-form-label">Header Name</label>
+            <input type="text" name="pdf_header_name" class="admin-form-input" />
+            <p class="admin-form-hint" style="font-size:0.8125rem;color:var(--admin-text-muted);margin:0.25rem 0 0;">Replaces the Zyntel logo with this name in the document header.</p>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Footer Text</label>
+            <input type="text" name="pdf_footer_text" class="admin-form-input" />
+            <p class="admin-form-hint" style="font-size:0.8125rem;color:var(--admin-text-muted);margin:0.25rem 0 0;">Replaces the default footer line on all documents for this client.</p>
+          </div>
         </div>
         <button type="submit" class="admin-btn admin-btn-primary" id="save-btn">Save</button>
       </form>
@@ -74,6 +81,31 @@ export const prerender = false;
   if (!id) window.location.href = B + '/clients';
 
   const contactsRows = document.getElementById('client-contacts-rows')!;
+
+  const DEFAULT_PDF_HEADER = 'Zyntel Co. Limited';
+  const DEFAULT_PDF_FOOTER = 'Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061';
+
+  let pdfBrandingEnabled = false;
+
+  function setPdfBranding(enabled: boolean, fromToggle = false) {
+    pdfBrandingEnabled = enabled;
+    const btn = document.getElementById('pdf-branding-toggle') as HTMLButtonElement;
+    const fields = document.getElementById('pdf-branding-fields') as HTMLDivElement;
+    btn.textContent = enabled ? 'ON' : 'OFF';
+    btn.style.borderColor = enabled ? 'var(--admin-primary, #2563eb)' : 'var(--admin-border)';
+    btn.style.color = enabled ? 'var(--admin-primary, #2563eb)' : 'var(--admin-text-muted)';
+    fields.style.display = enabled ? 'block' : 'none';
+    if (enabled && fromToggle) {
+      const hdr = document.querySelector('[name="pdf_header_name"]') as HTMLInputElement;
+      const ftr = document.querySelector('[name="pdf_footer_text"]') as HTMLInputElement;
+      if (!hdr.value.trim()) hdr.value = DEFAULT_PDF_HEADER;
+      if (!ftr.value.trim()) ftr.value = DEFAULT_PDF_FOOTER;
+    }
+  }
+
+  document.getElementById('pdf-branding-toggle')!.addEventListener('click', () => {
+    setPdfBranding(!pdfBrandingEnabled, true);
+  });;
 
   function gatherContacts(): Array<{ name: string | null; email: string; phone: string | null; isDefault: boolean }> {
     const rows = Array.from(document.querySelectorAll('#client-contacts-rows [data-contact-row]')) as HTMLElement[];
@@ -176,8 +208,10 @@ export const prerender = false;
     (document.querySelector('[name="name"]') as HTMLInputElement).value = client.name || '';
     (document.querySelector('[name="phone"]') as HTMLInputElement).value = client.phone || '';
     (document.querySelector('[name="address"]') as HTMLInputElement).value = client.address || '';
+    const hasCustomBranding = !!(client.pdf_header_name || client.pdf_footer_text);
     (document.querySelector('[name="pdf_header_name"]') as HTMLInputElement).value = client.pdf_header_name || '';
     (document.querySelector('[name="pdf_footer_text"]') as HTMLInputElement).value = client.pdf_footer_text || '';
+    setPdfBranding(hasCustomBranding);
     const contacts =
       client.contacts?.length
         ? client.contacts
@@ -235,8 +269,8 @@ export const prerender = false;
           contacts,
           phone: (form.querySelector('[name="phone"]') as HTMLInputElement).value.trim() || null,
           address: (form.querySelector('[name="address"]') as HTMLInputElement).value.trim() || null,
-          pdf_header_name: (form.querySelector('[name="pdf_header_name"]') as HTMLInputElement).value.trim() || null,
-          pdf_footer_text: (form.querySelector('[name="pdf_footer_text"]') as HTMLInputElement).value.trim() || null,
+          pdf_header_name: pdfBrandingEnabled ? (form.querySelector('[name="pdf_header_name"]') as HTMLInputElement).value.trim() || null : null,
+          pdf_footer_text: pdfBrandingEnabled ? (form.querySelector('[name="pdf_footer_text"]') as HTMLInputElement).value.trim() || null : null,
         }),
       });
       const data = await res.json();
