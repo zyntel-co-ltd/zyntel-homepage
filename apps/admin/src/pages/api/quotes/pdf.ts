@@ -24,11 +24,12 @@ export const GET: APIRoute = async ({ url }) => {
     const clientBranding = client?.pdf_header_name || client?.pdf_footer_text
       ? { headerName: client.pdf_header_name, footerText: client.pdf_footer_text }
       : null;
+    const prefix = (clientBranding?.headerName?.trim() || 'Zyntel').replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
     const pdfBytes = await generateQuotePdf(quote, { baseUrl, clientBranding });
     return new Response(pdfBytes, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${quote.quoteNumber}.pdf"`,
+        'Content-Disposition': `inline; filename="${prefix}-${quote.quoteNumber}.pdf"`,
         'Cache-Control': 'no-store, max-age=0',
         Pragma: 'no-cache',
       },
