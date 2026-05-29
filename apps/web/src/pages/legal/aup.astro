@@ -1,0 +1,181 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+const updated = "May 2026";
+---
+<BaseLayout
+  title="Acceptable Use Policy"
+  description="Acceptable Use Policy for Zyntel Co. Limited products — what you may and may not do."
+>
+  <Nav />
+  <main>
+    <section class="page-header">
+      <div class="container">
+        <p class="page-eyebrow">Legal</p>
+        <h1 class="page-title">Acceptable Use Policy</h1>
+        <p class="page-sub">Last updated: {updated}</p>
+      </div>
+    </section>
+
+    <section class="legal-body">
+      <div class="container legal-prose">
+
+        <p class="lead">This Acceptable Use Policy ("AUP") describes what you may and may not do when using products operated by Zyntel Co. Limited ("Zyntel", "we", "us") — including zyntForms and KantaHub. By using any Zyntel product, you agree to this AUP.</p>
+
+        <h2>1. Permitted uses</h2>
+        <p>You may use Zyntel products for any lawful purpose that is consistent with the product's intended function, including:</p>
+        <ul>
+          <li>Creating forms to collect structured information from willing respondents</li>
+          <li>Managing laboratory operations, equipment, and clinical workflows (KantaHub)</li>
+          <li>Conducting surveys, assessments, and research with appropriate participant consent</li>
+          <li>Internal team workflows, checklists, and approvals</li>
+          <li>Customer feedback, event registration, and lead collection</li>
+        </ul>
+
+        <h2>2. Prohibited uses</h2>
+        <p>You must not use Zyntel products to:</p>
+
+        <h3>Deception and fraud</h3>
+        <ul>
+          <li>Create forms designed to deceive, impersonate, or mislead respondents about who is collecting their information and why</li>
+          <li>Conduct phishing attacks — forms that impersonate banks, government agencies, or other organisations to harvest credentials</li>
+          <li>Collect payment or financial information under false pretences</li>
+          <li>Misrepresent yourself or your organisation when collecting data</li>
+        </ul>
+
+        <h3>Harmful or illegal content</h3>
+        <ul>
+          <li>Collect, store, or process data in violation of Uganda's Data Protection and Privacy Act 2019 or any other applicable law</li>
+          <li>Collect data from children under 18 without verifiable parental consent</li>
+          <li>Collect sensitive personal data (health, financial, government ID, biometric) without appropriate legal basis and security measures</li>
+          <li>Create or distribute content that is defamatory, obscene, or harmful</li>
+          <li>Facilitate or encourage illegal activities</li>
+        </ul>
+
+        <h3>Spam and unsolicited communications</h3>
+        <ul>
+          <li>Use form response data to send unsolicited marketing or commercial messages</li>
+          <li>Distribute form links via spam or unsolicited bulk communications</li>
+          <li>Harvest email addresses for purposes other than those stated to respondents</li>
+        </ul>
+
+        <h3>Technical abuse</h3>
+        <ul>
+          <li>Attempt to gain unauthorised access to any Zyntel system, database, or account</li>
+          <li>Interfere with, disrupt, or degrade the performance of Zyntel services</li>
+          <li>Use automated tools (bots, scrapers) to submit form responses at scale without authorisation</li>
+          <li>Attempt to reverse-engineer, decompile, or extract proprietary code or data from Zyntel products</li>
+          <li>Circumvent rate limits, plan restrictions, or access controls</li>
+        </ul>
+
+        <h3>Resale and misrepresentation</h3>
+        <ul>
+          <li>Resell or sublicense access to Zyntel products without written authorisation</li>
+          <li>Represent Zyntel products as your own white-label product without an Enterprise agreement</li>
+        </ul>
+
+        <h2>3. Healthcare-specific rules (KantaHub)</h2>
+        <p>Users of KantaHub additionally must:</p>
+        <ul>
+          <li>Ensure that patient data entered into KantaHub is handled in accordance with applicable health information laws and your facility's data governance policies</li>
+          <li>Not use KantaHub as the sole system of record for clinical decisions without appropriate clinical oversight</li>
+          <li>Maintain confidentiality of patient-identifiable information in accordance with your professional obligations</li>
+          <li>Not share account credentials between staff members — each user must have their own account</li>
+        </ul>
+
+        <h2>4. Reporting violations</h2>
+        <p>If you encounter a form or account that you believe violates this AUP — for example, a phishing form that appears to use zyntForms — please report it immediately to <a href="mailto:contact@zyntel.net">contact@zyntel.net</a>. Include the form URL and a description of the concern. We investigate all reports and take action where warranted, including suspension of the offending account.</p>
+
+        <h2>5. Consequences of violations</h2>
+        <p>Zyntel reserves the right, at its sole discretion, to:</p>
+        <ul>
+          <li>Suspend or terminate accounts that violate this AUP, without notice where immediate action is required</li>
+          <li>Remove forms or content that violate this AUP</li>
+          <li>Report violations to appropriate authorities where required by law</li>
+          <li>Seek damages where violations cause harm to Zyntel, its users, or third parties</li>
+        </ul>
+
+        <h2>6. Changes to this policy</h2>
+        <p>We may update this AUP as our products evolve. Material changes will be communicated via email or in-product notice. Continued use of Zyntel products after changes take effect constitutes acceptance of the updated AUP.</p>
+
+        <h2>7. Contact</h2>
+        <p>For questions about this policy: <a href="mailto:contact@zyntel.net">contact@zyntel.net</a><br />
+        Zyntel Co. Limited, Kampala, Uganda.</p>
+
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-header {
+    padding: 9rem 0 3rem;
+    text-align: center;
+  }
+  .page-eyebrow {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 0.75rem;
+  }
+  .page-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+  .page-sub {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+  .legal-body {
+    padding: 2rem 0 8rem;
+  }
+  .legal-prose {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .lead {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .legal-prose h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 2.5rem 0 0.75rem;
+  }
+  .legal-prose h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 1.25rem 0 0.5rem;
+  }
+  .legal-prose p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    font-size: 0.97rem;
+  }
+  .legal-prose ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .legal-prose ul li {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 0.97rem;
+    margin-bottom: 0.35rem;
+  }
+  .legal-prose a { color: var(--cyan); }
+</style>

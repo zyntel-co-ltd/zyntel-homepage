@@ -1,0 +1,166 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+const updated = "May 2026";
+---
+<BaseLayout
+  title="Cookie Policy"
+  description="Cookie policy for Zyntel Co. Limited — what cookies we use and why."
+>
+  <Nav />
+  <main>
+    <section class="page-header">
+      <div class="container">
+        <p class="page-eyebrow">Legal</p>
+        <h1 class="page-title">Cookie Policy</h1>
+        <p class="page-sub">Last updated: {updated}</p>
+      </div>
+    </section>
+
+    <section class="legal-body">
+      <div class="container legal-prose">
+
+        <p class="lead">This Cookie Policy explains what cookies and similar technologies Zyntel Co. Limited ("Zyntel", "we", "us") uses on our websites and products (zyntel.net, KantaHub, zyntForms), and what choices you have.</p>
+
+        <h2>1. What are cookies?</h2>
+        <p>Cookies are small text files stored on your device when you visit a website. They help websites remember information about your visit — for example, keeping you logged in or remembering your preferences.</p>
+
+        <h2>2. Cookies we use</h2>
+
+        <h3>Strictly necessary cookies</h3>
+        <p>These cookies are essential for our products to function. They cannot be switched off. They are set in response to actions you take — such as logging in or submitting a form.</p>
+        <ul>
+          <li><strong>Session token</strong> (<code>forms_refresh_token</code>, <code>forms_access_token</code>) — Used by zyntForms to keep you authenticated. HTTP-only where security requires it. Expires after 7 days of inactivity.</li>
+          <li><strong>Anonymous session</strong> — Used by zyntForms to associate a no-login session with your browser. Expires after 14 days. Permanently deleted if no account is created.</li>
+          <li><strong>KantaHub session</strong> — Used to maintain your login to KantaHub. Expires at browser close or after 24 hours, whichever comes first.</li>
+          <li><strong>CSRF protection</strong> — Prevents cross-site request forgery. Session-scoped.</li>
+        </ul>
+
+        <h3>Analytics cookies</h3>
+        <p>We use PostHog to understand how our products are used — which features are most valuable, where users encounter friction, and which pages are most visited. This data is anonymised and is used only to improve our products.</p>
+        <ul>
+          <li><strong>PostHog</strong> (<code>ph_*</code> cookies) — Tracks anonymised product usage events. No personally identifiable information is sent to PostHog. Persists for 1 year.</li>
+        </ul>
+        <p>We do not use Google Analytics, Meta Pixel, or any advertising tracking cookies.</p>
+
+        <h3>What we do not use</h3>
+        <ul>
+          <li>Advertising or retargeting cookies</li>
+          <li>Cross-site tracking cookies</li>
+          <li>Social media tracking pixels</li>
+          <li>Third-party behavioural profiling</li>
+        </ul>
+
+        <h2>3. How to control cookies</h2>
+        <p>You can control and delete cookies through your browser settings. Most browsers allow you to:</p>
+        <ul>
+          <li>View what cookies are stored and delete them individually</li>
+          <li>Block all cookies from a specific site</li>
+          <li>Block all third-party cookies</li>
+          <li>Delete all cookies when you close the browser</li>
+        </ul>
+        <p>If you block strictly necessary cookies, our products will not function correctly — you will not be able to log in or maintain a session.</p>
+        <p>Browser-specific guides: <a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener">Chrome</a> · <a href="https://support.mozilla.org/en-US/kb/enhanced-tracking-protection-firefox-desktop" target="_blank" rel="noopener">Firefox</a> · <a href="https://support.apple.com/guide/safari/manage-cookies-sfri11471/mac" target="_blank" rel="noopener">Safari</a>.</p>
+
+        <h2>4. Opt out of PostHog analytics</h2>
+        <p>To opt out of PostHog product analytics on our sites, you can:</p>
+        <ul>
+          <li>Use your browser's "Do Not Track" setting — we honour this signal</li>
+          <li>Block the PostHog domain (<code>eu.posthog.com</code> or <code>app.posthog.com</code>) via a browser extension such as uBlock Origin</li>
+          <li>Contact us at <a href="mailto:contact@zyntel.net">contact@zyntel.net</a> to request opt-out</li>
+        </ul>
+
+        <h2>5. Data Protection</h2>
+        <p>Cookie data is processed in accordance with Uganda's Data Protection and Privacy Act 2019 and, where applicable, the EU General Data Protection Regulation. For full details of how we handle your personal data, see our <a href="/legal/privacy">Privacy Policy</a>.</p>
+
+        <h2>6. Changes to this policy</h2>
+        <p>We may update this Cookie Policy when we add or change the cookies we use. The "Last updated" date at the top reflects the current version. Material changes will be communicated via an in-product notice or email.</p>
+
+        <h2>7. Contact</h2>
+        <p>For questions about our use of cookies: <a href="mailto:contact@zyntel.net">contact@zyntel.net</a><br />
+        Zyntel Co. Limited, Kampala, Uganda.</p>
+
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .page-header {
+    padding: 9rem 0 3rem;
+    text-align: center;
+  }
+  .page-eyebrow {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 0.75rem;
+  }
+  .page-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+  .page-sub {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+  .legal-body {
+    padding: 2rem 0 8rem;
+  }
+  .legal-prose {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .lead {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .legal-prose h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 2.5rem 0 0.75rem;
+  }
+  .legal-prose h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 1.25rem 0 0.5rem;
+  }
+  .legal-prose p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    font-size: 0.97rem;
+  }
+  .legal-prose ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .legal-prose ul li {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 0.97rem;
+    margin-bottom: 0.35rem;
+  }
+  .legal-prose a { color: var(--cyan); }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    background: var(--surface-2, rgba(255,255,255,0.05));
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+  }
+</style>
