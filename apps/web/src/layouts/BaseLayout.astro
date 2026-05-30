@@ -3,6 +3,7 @@ import '../styles/global.css';
 import ScrollToTop from '../components/ScrollToTop.astro';
 import StickyCTA from '../components/StickyCTA.astro';
 import Analytics from '../components/Analytics.astro';
+import CookieConsent from '../components/CookieConsent.astro';
 
 interface Props {
   title: string;
@@ -22,7 +23,7 @@ interface Props {
 
 const {
   title,
-  description = 'Kanta by Zyntel — hospital equipment and lab operations platform for East Africa. TAT visibility, QC workflows, maintenance intelligence.',
+  description = 'Zyntel Co. Limited — building Kanta and ZyntForms for East Africa. Kanta is the hospital intelligence platform for labs and facilities. ZyntForms is the team forms platform.',
   ogTitle,
   ogImage = '/og-default.png',
   ogType = 'website',
@@ -117,5 +118,6 @@ const organizationLd = {
     <slot />
     <ScrollToTop />
     {!hideStickyCta && <StickyCTA />}
+    <CookieConsent />
   </body>
 </html>
