@@ -37,27 +37,48 @@ async function fetchGitHubCommits(opts: {
   const token = import.meta.env.GITHUB_TOKEN;
   if (!token) return { repoUrl: opts.repoUrl, total: null, commits: [] };
 
-  const apiUrl =
+  const baseApiUrl =
     `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}` +
-    `/commits?since=${encodeURIComponent(opts.sinceIso)}&until=${encodeURIComponent(opts.untilIso)}&per_page=20`;
+    `/commits?since=${encodeURIComponent(opts.sinceIso)}&until=${encodeURIComponent(opts.untilIso)}&per_page=100`;
+
+  const headers = {
+    'Accept': 'application/vnd.github+json',
+    'Authorization': `Bearer ${token}`,
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  function parseCommitRows(json: any): Array<{ sha: string; message: string; date: string }> {
+    if (!Array.isArray(json)) return [];
+    return json
+      .map((c: any) => ({
+        sha: String(c?.sha ?? '').slice(0, 7),
+        message: String(c?.commit?.message ?? '').split('\n')[0].trim(),
+        date: String(c?.commit?.author?.date ?? ''),
+      }))
+      .filter((c: any) => c.sha && c.message);
+  }
 
   try {
-    const res = await fetch(apiUrl, {
-      headers: {
-        'Accept': 'application/vnd.github+json',
-        'Authorization': `Bearer ${token}`,
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-    });
-    if (!res.ok) return { repoUrl: opts.repoUrl, total: null, commits: [] };
-    const json = await res.json().catch(() => []);
-    const commits = Array.isArray(json)
-      ? json.map((c: any) => ({
-          sha: String(c?.sha ?? '').slice(0, 7),
-          message: String(c?.commit?.message ?? '').split('\n')[0].trim(),
-          date: String(c?.commit?.author?.date ?? ''),
-        })).filter((c: any) => c.sha && c.message)
-      : [];
+    const allCommits: Array<{ sha: string; message: string; date: string }> = [];
+    const MAX_COMMITS = 200;
+
+    // Fetch page 1
+    const res1 = await fetch(`${baseApiUrl}&page=1`, { headers });
+    if (!res1.ok) return { repoUrl: opts.repoUrl, total: null, commits: [] };
+    const json1 = await res1.json().catch(() => []);
+    const page1 = parseCommitRows(json1);
+    allCommits.push(...page1);
+
+    // If page 1 was full (100 items), fetch page 2 to get up to 200
+    if (page1.length === 100 && allCommits.length < MAX_COMMITS) {
+      const res2 = await fetch(`${baseApiUrl}&page=2`, { headers });
+      if (res2.ok) {
+        const json2 = await res2.json().catch(() => []);
+        allCommits.push(...parseCommitRows(json2));
+      }
+    }
+
+    const commits = allCommits.slice(0, MAX_COMMITS);
     return { repoUrl: opts.repoUrl, total: commits.length, commits };
   } catch {
     return { repoUrl: opts.repoUrl, total: null, commits: [] };
@@ -279,11 +300,10 @@ export async function generateMaintenanceReportPdf(opts: {
         draw('No commits found in this window.', MARGIN + 10, 9, false, rgb(0.5, 0.5, 0.5));
         continue;
       }
-      for (const c of r.commits.slice(0, 10)) {
+      for (const c of r.commits) {
         const msg = truncate(c.message, font, 8, CONTENT_WIDTH - 40);
         draw(`- ${c.sha} ${msg}`, MARGIN + 18, 8);
       }
-      if (r.commits.length > 10) draw(`(+${r.commits.length - 10} more)`, MARGIN + 18, 8, false, rgb(0.5, 0.5, 0.5));
       y[0] -= 6;
     }
     hr();

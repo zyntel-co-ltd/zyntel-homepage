@@ -1,20 +1,7 @@
-import { defineMiddleware } from 'astro:middleware';
+import type { APIRoute } from 'astro';
 import { sql } from '@zyntel/db';
 
-let migrationsDone = false;
-
-async function runPendingMigrations() {
-  if (migrationsDone) return;
-  migrationsDone = true;
-  try {
-    await sql`
-      ALTER TABLE clients
-        ADD COLUMN IF NOT EXISTS pdf_header_name TEXT,
-        ADD COLUMN IF NOT EXISTS pdf_footer_text TEXT
-    `;
-  } catch {
-    // non-fatal — columns may already exist or DB unavailable at startup
-  }
+export const POST: APIRoute = async () => {
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS quarterly_reports (
@@ -32,6 +19,7 @@ async function runPendingMigrations() {
         updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
       )
     `;
+
     await sql`
       CREATE TABLE IF NOT EXISTS case_studies (
         id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -46,12 +34,15 @@ async function runPendingMigrations() {
         updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
       )
     `;
-  } catch {
-    // non-fatal — tables may already exist or DB unavailable at startup
-  }
-}
 
-export const onRequest = defineMiddleware(async (_ctx, next) => {
-  await runPendingMigrations();
-  return next();
-});
+    return new Response(JSON.stringify({ ok: true, message: 'Reporting tables created or already exist.' }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err: any) {
+    console.error('[apply-report-migrations]', err);
+    return new Response(JSON.stringify({ error: err.message ?? 'Migration failed' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};

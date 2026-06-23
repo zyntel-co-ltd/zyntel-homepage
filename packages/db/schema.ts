@@ -368,3 +368,33 @@ export interface PreviewClientIntake {
   specialRequirements: string;
   deadline: string;
 }
+
+// --- Reporting ---
+
+export interface QuarterlyReport {
+  id: string;
+  serviceClientId: string;
+  quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
+  year: number;
+  title: string;
+  markdownContent: string;
+  generatedAt: Date;
+  generatedBy: string | null;
+  pdfUrl: string | null;
+  status: 'draft' | 'final';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CaseStudy {
+  id: string;
+  serviceClientId: string;
+  title: string;
+  markdownContent: string;
+  summary: string | null;
+  tags: string[];
+  status: 'draft' | 'published';
+  publishedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}

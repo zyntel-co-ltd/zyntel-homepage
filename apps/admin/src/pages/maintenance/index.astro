@@ -53,6 +53,9 @@ const serviceClients = await getAllServiceClients();
         <div class="maint-stat-value" id="stat-open-wo">0</div>
         <a href="/work-orders" class="maint-stat-link">View →</a>
       </div>
+      <a id="btn-reports-link" href="#" class="admin-btn admin-btn-secondary maint-report-btn" style="display:none;">
+        Reports →
+      </a>
       <button id="btn-download-report" class="admin-btn admin-btn-secondary maint-report-btn" type="button">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Quarterly Report PDF
@@ -531,6 +534,8 @@ const serviceClients = await getAllServiceClients();
         ['stats-bar', 'connection-panel', 'log-panel', 'logs-panel', 'roi-panel'].forEach((id) => {
           const el = document.getElementById(id); if (el) el.style.display = 'none';
         });
+        const reportsLink = document.getElementById('btn-reports-link');
+        if (reportsLink) reportsLink.style.display = 'none';
         return;
       }
       selectedClientId = clientId;
@@ -539,6 +544,11 @@ const serviceClients = await getAllServiceClients();
       document.getElementById('log-panel').style.display = '';
       document.getElementById('logs-panel').style.display = '';
       document.getElementById('roi-panel').style.display = '';
+      const reportsLink = document.getElementById('btn-reports-link');
+      if (reportsLink) {
+        reportsLink.href = `/maintenance/reports/${encodeURIComponent(clientId)}`;
+        reportsLink.style.display = '';
+      }
       renderConnectionFromSelect();
 
       const [logsRes, woRes] = await Promise.all([
