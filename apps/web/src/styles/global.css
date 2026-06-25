@@ -124,7 +124,7 @@ body {
   font-family: var(--font-sans);
   line-height: 1.6;
   color: var(--text-primary);
-  background: #c8cad4; /* slightly darker than --ag-bg so rounded card floats */
+  background: #e8e8ed; /* light cool gray page canvas */
   overflow-x: hidden;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   letter-spacing: -0.01em;

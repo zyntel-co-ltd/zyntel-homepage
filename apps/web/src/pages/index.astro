@@ -52,18 +52,6 @@ const faqs = [
     a: "A clear brief or problem statement, access to a decision-maker, and a rough budget range. We handle all the technical scoping, wireframing, and planning from there.",
   },
   {
-    q: "Which technologies do you use?",
-    a: "React, Next.js, and Astro for frontends; Node.js, Python, and Go for backends; PostgreSQL and MongoDB for data. We choose the stack that best fits your project — not our habit.",
-  },
-  {
-    q: "Do you provide ongoing support after launch?",
-    a: "Yes. We offer monthly maintenance retainers, performance monitoring, security updates, and can scale features as your product grows. We don't disappear post-launch.",
-  },
-  {
-    q: "Can you work with our existing codebase?",
-    a: "Absolutely. We regularly take over existing projects, conduct code audits, and build incrementally — without recommending a full rewrite unless it's truly necessary.",
-  },
-  {
     q: "How does pricing work?",
     a: "Fixed-price per project based on scope, not hourly billing. After a discovery call you receive a detailed proposal with clear deliverables and no surprise costs.",
   },
@@ -138,6 +126,34 @@ const faqs = [
       </div>
     </div>
 
+    <!-- ── ABOUT STRIP (no card) ── -->
+    <section class="ag-about-strip">
+      <div class="ag-wrap">
+        <div class="ag-about-grid">
+          <div class="ag-about-left">
+            <div class="ag-label-pill">
+              <span class="ag-label-pill-dot" aria-hidden="true"></span>
+              About us
+            </div>
+            <h2 class="ag-about-title">Expert web engineering<br>for East Africa.</h2>
+            <p class="ag-about-desc">We're a Kampala-based studio designing and engineering apps, websites, and custom software for businesses across East Africa. Your technical partner from first idea to live product.</p>
+            <p class="ag-about-desc">Built on transparency, reliable delivery, and code that lasts — not just launches.</p>
+            <a href="/about" class="ag-btn ag-btn--outline ag-btn--sm">› Our story</a>
+          </div>
+          <div class="ag-about-stats">
+            <div class="ag-about-stat">
+              <span class="ag-about-stat-num">25+</span>
+              <span class="ag-about-stat-label">Projects delivered</span>
+            </div>
+            <div class="ag-about-stat">
+              <span class="ag-about-stat-num">15+</span>
+              <span class="ag-about-stat-label">Clients served</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── SERVICES PILL ── -->
     <div class="ag-section-pill" id="services-pill">
 
@@ -148,7 +164,10 @@ const faqs = [
 
             <!-- Left: sticky header -->
             <div class="ag-home-svc-header">
-              <p class="ag-section-eyebrow" style="text-align:left">Services</p>
+              <div class="ag-label-pill">
+                <span class="ag-label-pill-dot" aria-hidden="true"></span>
+                Services
+              </div>
               <h2 class="ag-home-svc-big-title">End-to-end<br>digital services</h2>
               <p class="ag-home-svc-big-desc">From first idea to live product — design, engineering, and delivery under one roof in Kampala.</p>
               <a href="/services" class="ag-btn ag-btn--dark">See all services →</a>
@@ -177,13 +196,13 @@ const faqs = [
       </section>
 
       <!-- ── ZYNTFORMS SPOTLIGHT ── -->
-      <section class="ag-section ag-section--alt">
+      <section class="ag-section">
         <div class="ag-wrap">
           <div class="ag-zf-card">
             <div class="ag-zf-glow" aria-hidden="true"></div>
             <div>
-              <div class="ag-zf-eyebrow">
-                <span class="ag-zf-dot" aria-hidden="true"></span>
+              <div class="ag-label-pill ag-label-pill--zf">
+                <span class="ag-label-pill-dot ag-label-pill-dot--zf" aria-hidden="true"></span>
                 New product
               </div>
               <h2 class="ag-zf-title">
@@ -246,44 +265,83 @@ const faqs = [
       </section>
 
       <!-- ── PROCESS ── -->
-      <section class="ag-section ag-section--alt">
+      <section class="ag-section" id="process">
         <div class="ag-wrap">
-          <p class="ag-section-eyebrow">How we work</p>
-          <h2 class="ag-section-title">From idea to live product<br>in three clear stages</h2>
-          <div class="ag-process-grid">
-            <div class="ag-process-step">
-              <div class="ag-process-num">01</div>
-              <h3>Discover</h3>
-              <p>We learn your business, users, and goals. Then we map the right technology to the right problem — no jargon, just clarity.</p>
+          <div class="ag-proc-layout">
+
+            <!-- Left: heading + arrows -->
+            <div class="ag-proc-left">
+              <div class="ag-label-pill">
+                <span class="ag-label-pill-dot" aria-hidden="true"></span>
+                Process
+              </div>
+              <h2 class="ag-proc-title">From Idea<br>to Production</h2>
+              <div class="ag-proc-arrows">
+                <button class="ag-proc-arrow-btn" id="proc-prev" aria-label="Previous step">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button class="ag-proc-arrow-btn" id="proc-next" aria-label="Next step">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
             </div>
-            <div class="ag-process-arrow" aria-hidden="true">→</div>
-            <div class="ag-process-step">
-              <div class="ag-process-num">02</div>
-              <h3>Design & Build</h3>
-              <p>UI/UX design, rapid prototyping, then full-stack development with regular milestone check-ins and your feedback built in.</p>
+
+            <!-- Right: scrollable card track -->
+            <div class="ag-proc-slider-wrap">
+              <div class="ag-proc-slider" id="ag-proc-slider">
+
+                <div class="ag-proc-card">
+                  <div class="ag-proc-card-icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                  </div>
+                  <h3 class="ag-proc-card-title">Discover & Scope</h3>
+                  <p class="ag-proc-card-desc">Align on problems, goals, and success metrics. Opportunity brief, phased roadmap, and effort/cost ranges — before a single line of code.</p>
+                  <div class="ag-proc-card-footer">
+                    <span class="ag-proc-badge">3–7 DAYS</span>
+                    <span class="ag-proc-step-num">01<span class="ag-proc-step-total">/03</span></span>
+                  </div>
+                </div>
+
+                <div class="ag-proc-card">
+                  <div class="ag-proc-card-icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  </div>
+                  <h3 class="ag-proc-card-title">Design & Build</h3>
+                  <p class="ag-proc-card-desc">UI/UX design, rapid prototyping, then full-stack development with regular milestone check-ins and your feedback baked in throughout.</p>
+                  <div class="ag-proc-card-footer">
+                    <span class="ag-proc-badge">2–6 WEEKS</span>
+                    <span class="ag-proc-step-num">02<span class="ag-proc-step-total">/03</span></span>
+                  </div>
+                </div>
+
+                <div class="ag-proc-card">
+                  <div class="ag-proc-card-icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg>
+                  </div>
+                  <h3 class="ag-proc-card-title">Launch & Scale</h3>
+                  <p class="ag-proc-card-desc">Deploy, test, and stay your technical partner — maintenance, performance monitoring, and new features as your business grows.</p>
+                  <div class="ag-proc-card-footer">
+                    <span class="ag-proc-badge">ONGOING</span>
+                    <span class="ag-proc-step-num">03<span class="ag-proc-step-total">/03</span></span>
+                  </div>
+                </div>
+
+              </div>
             </div>
-            <div class="ag-process-arrow" aria-hidden="true">→</div>
-            <div class="ag-process-step">
-              <div class="ag-process-num">03</div>
-              <h3>Launch & Grow</h3>
-              <p>We deploy, test, and remain your technical partner for maintenance, iterations, and scaling as your business grows.</p>
-            </div>
+
           </div>
         </div>
       </section>
 
     </div><!-- end #services-pill -->
 
-    <!-- ── FAQ PILL ── -->
-    <div class="ag-section-pill" id="faq-pill">
-
-      <!-- ── FAQ ── -->
-      <section class="ag-section">
-        <div class="ag-wrap">
-          <div class="ag-faq-eyebrow">
-            <span class="ag-faq-dot" aria-hidden="true"></span>
-            FAQs
-          </div>
+    <!-- ── FAQ (no card, floats on page bg) ── -->
+    <section class="ag-section ag-section--naked" id="faq">
+      <div class="ag-wrap">
+        <div class="ag-label-pill">
+          <span class="ag-label-pill-dot" aria-hidden="true"></span>
+          FAQs
+        </div>
           <h2 class="ag-faq-big-title">Frequently Asked<br>Questions</h2>
           <div class="ag-faq-list" id="faq-list">
             {faqs.map((faq, i) => (
@@ -301,24 +359,22 @@ const faqs = [
         </div>
       </section>
 
-      <!-- ── CTA ── -->
-      <section class="ag-section ag-section--alt">
-        <div class="ag-wrap">
-          <div class="ag-cta-card">
-            <div class="ag-cta-blob ag-cta-blob--v" aria-hidden="true"></div>
-            <div class="ag-cta-blob ag-cta-blob--p" aria-hidden="true"></div>
-            <p class="ag-cta-eyebrow">Ready when you are</p>
-            <h2 class="ag-cta-title">Let's build something<br><span class="ag-grad-text">great together.</span></h2>
-            <p class="ag-cta-sub">Tell us about your project and we'll get back to you within one business day.</p>
-            <div class="ag-cta-actions">
-              <a href="/contact" class="ag-btn ag-btn--violet">Start a project</a>
-              <a href="mailto:contact@zyntel.net" class="ag-btn ag-btn--white-outline">contact@zyntel.net</a>
-            </div>
+    <!-- ── CTA ── -->
+    <section class="ag-section ag-section--naked">
+      <div class="ag-wrap">
+        <div class="ag-cta-card ag-cta-card--home">
+          <div class="ag-cta-blob ag-cta-blob--v" aria-hidden="true"></div>
+          <div class="ag-cta-blob ag-cta-blob--p" aria-hidden="true"></div>
+          <p class="ag-cta-eyebrow">Let's work together</p>
+          <h2 class="ag-cta-title">Ready to start<br><span class="ag-grad-text">your project?</span></h2>
+          <p class="ag-cta-sub">Tell us what you're building and we'll put together a plan. No commitment required.</p>
+          <div class="ag-cta-actions">
+            <a href="/contact" class="ag-btn ag-btn--violet ag-magnetic">Get in touch</a>
+            <a href="mailto:contact@zyntel.net" class="ag-btn ag-btn--white-outline ag-magnetic">contact@zyntel.net</a>
           </div>
         </div>
-      </section>
-
-    </div><!-- end #faq-pill -->
+      </div>
+    </section>
 
   </main>
   <Footer />
@@ -401,6 +457,67 @@ const faqs = [
       item.classList.add('is-active');
       item.querySelector('.ag-home-svc-trigger')?.setAttribute('aria-expanded', 'true');
     });
+  });
+
+  // ── Process card slider ──
+  const procSlider = document.getElementById('ag-proc-slider') as HTMLElement | null;
+  const procPrev   = document.getElementById('proc-prev') as HTMLButtonElement | null;
+  const procNext   = document.getElementById('proc-next') as HTMLButtonElement | null;
+
+  if (procSlider && procPrev && procNext) {
+    const cards = procSlider.querySelectorAll<HTMLElement>('.ag-proc-card');
+    let idx = 0;
+
+    function procUpdate() {
+      const card = cards[0];
+      const gap = 20;
+      const step = card.offsetWidth + gap;
+      const visCount = window.innerWidth > 900 ? 2 : 1;
+      const maxIdx = Math.max(0, cards.length - visCount);
+      idx = Math.min(idx, maxIdx);
+      procSlider.style.transform = `translateX(-${idx * step}px)`;
+      procPrev.disabled = idx === 0;
+      procNext.disabled = idx >= maxIdx;
+    }
+
+    procPrev.addEventListener('click', () => { idx = Math.max(0, idx - 1); procUpdate(); });
+    procNext.addEventListener('click', () => { idx += 1; procUpdate(); });
+    window.addEventListener('resize', procUpdate);
+    procUpdate();
+  }
+
+  // ── CTA card: cursor glow + scroll entrance + magnetic buttons ──
+  const ctaCard = document.querySelector<HTMLElement>('.ag-cta-card--home');
+
+  if (ctaCard) {
+    ctaCard.addEventListener('mousemove', (e: MouseEvent) => {
+      const r = ctaCard.getBoundingClientRect();
+      ctaCard.style.setProperty('--cta-x', `${e.clientX - r.left}px`);
+      ctaCard.style.setProperty('--cta-y', `${e.clientY - r.top}px`);
+    });
+
+    const ctaIo = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) { ctaCard.classList.add('is-visible'); ctaIo.unobserve(entry.target); }
+      });
+    }, { threshold: 0.15 });
+    ctaIo.observe(ctaCard);
+  }
+
+  // Magnetic buttons
+  document.querySelectorAll<HTMLElement>('.ag-magnetic').forEach(btn => {
+    btn.addEventListener('mousemove', (e: MouseEvent) => {
+      const r = btn.getBoundingClientRect();
+      const x = (e.clientX - r.left - r.width  / 2) * 0.28;
+      const y = (e.clientY - r.top  - r.height / 2) * 0.36;
+      btn.style.transform = `translate(${x}px, ${y}px)`;
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transition = 'transform 0.55s cubic-bezier(0.25, 1, 0.5, 1)';
+      btn.style.transform  = '';
+      setTimeout(() => { btn.style.transition = ''; }, 560);
+    });
+    btn.addEventListener('mouseenter', () => { btn.style.transition = 'transform 0.1s ease'; });
   });
 
   // ── FAQ accordion ──
