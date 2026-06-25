@@ -118,16 +118,20 @@
 
 html {
   scroll-behavior: smooth;
+  /* Promote scroll to compositor thread — prevents main-thread jank */
+  overflow-y: scroll;
 }
 
 body {
   font-family: var(--font-sans);
   line-height: 1.6;
   color: var(--text-primary);
-  background: #e8e8ed; /* light cool gray page canvas */
+  background: #e8e8ed;
   overflow-x: hidden;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   letter-spacing: -0.01em;
+  /* Isolate the stacking context so GPU layers don't bleed */
+  isolation: isolate;
 }
 
 .container {

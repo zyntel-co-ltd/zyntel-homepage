@@ -136,10 +136,12 @@ const isContact = currentPath.startsWith('/contact');
       if (navAnimTimer) clearTimeout(navAnimTimer);
       nav.classList.remove('is-entering');
       nav.classList.add('is-leaving');
-      // Wait for exit animation (420ms) then swap to floating pill with fade-in
+      // Wait for exit animation then swap to floating pill with fade-in.
+      // Add is-returning FIRST (locks opacity to 0 via fill-mode:both) so there
+      // is no single-frame flash of the dark pill before the white pill appears.
       navAnimTimer = setTimeout(() => {
-        nav.classList.remove('is-scrolled', 'is-leaving');
         nav.classList.add('is-returning');
+        nav.classList.remove('is-scrolled', 'is-leaving');
         navReturnTimer = setTimeout(() => nav.classList.remove('is-returning'), 380);
       }, 430);
     }
@@ -430,7 +432,12 @@ const isContact = currentPath.startsWith('/contact');
   }
 
   .ag-nav.is-returning {
-    animation: ag-nav-return 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: ag-nav-return 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Snap pill back to white instantly — prevents dark→white cross-fade during fade-in */
+  .ag-nav.is-returning .ag-nav-pill {
+    transition: none;
   }
 
   /* Snap pill styles instantly — no cross-fade during the slide */

@@ -360,11 +360,49 @@ const faqs = [
       </section>
 
     <!-- ── CTA ── -->
-    <section class="ag-section ag-section--naked">
+    <section class="ag-section ag-section--naked" style="padding-top:1.5rem;padding-bottom:4rem;">
       <div class="ag-wrap">
         <div class="ag-cta-card ag-cta-card--home">
           <div class="ag-cta-blob ag-cta-blob--v" aria-hidden="true"></div>
           <div class="ag-cta-blob ag-cta-blob--p" aria-hidden="true"></div>
+
+          <!-- Floating code tokens rising into space -->
+          <div class="ag-cta-code-field" aria-hidden="true">
+            <span class="ag-code-token" style="--cx:4%;  --cd:0s;   --dur:9s;  --cr:-3deg">&lt;div class="idea"&gt;</span>
+            <span class="ag-code-token" style="--cx:24%; --cd:2s;   --dur:7s;  --cr:4deg">const ship = await build()</span>
+            <span class="ag-code-token" style="--cx:10%; --cd:4.5s; --dur:8s;  --cr:-5deg">npm run deploy 🚀</span>
+            <span class="ag-code-token" style="--cx:48%; --cd:1.2s; --dur:10s; --cr:2deg">git push origin main</span>
+            <span class="ag-code-token" style="--cx:65%; --cd:3.8s; --dur:7.5s;--cr:-4deg">&#123; success: true &#125;</span>
+            <span class="ag-code-token" style="--cx:35%; --cd:6s;   --dur:8.5s;--cr:3deg">✓ Tests passed</span>
+            <span class="ag-code-token" style="--cx:55%; --cd:0.6s; --dur:11s; --cr:-2deg">v2.0 ✦ shipped</span>
+            <span class="ag-code-token" style="--cx:18%; --cd:7.5s; --dur:6.5s;--cr:5deg">await launch()</span>
+          </div>
+
+          <!-- Cartoon jumping character -->
+          <div class="ag-cta-character" aria-hidden="true">
+            <div class="ag-char-shadow"></div>
+            <div class="ag-char-wrap">
+              <!-- Cap -->
+              <div class="ag-char-cap"></div>
+              <!-- Head -->
+              <div class="ag-char-head">
+                <div class="ag-char-eye ag-char-eye--l"></div>
+                <div class="ag-char-eye ag-char-eye--r"></div>
+              </div>
+              <!-- Body -->
+              <div class="ag-char-torso"></div>
+              <!-- Legs -->
+              <div class="ag-char-legs">
+                <div class="ag-char-leg ag-char-leg--l"></div>
+                <div class="ag-char-leg ag-char-leg--r"></div>
+              </div>
+            </div>
+            <!-- Sparkles -->
+            <span class="ag-char-spark ag-char-spark--1">✦</span>
+            <span class="ag-char-spark ag-char-spark--2">✦</span>
+            <span class="ag-char-spark ag-char-spark--3">·</span>
+          </div>
+
           <p class="ag-cta-eyebrow">Let's work together</p>
           <h2 class="ag-cta-title">Ready to start<br><span class="ag-grad-text">your project?</span></h2>
           <p class="ag-cta-sub">Tell us what you're building and we'll put together a plan. No commitment required.</p>
@@ -391,7 +429,15 @@ const faqs = [
 
   if (hero && blob1 && blob2) {
     let tx = 0, ty = 0, cx = 0, cy = 0, t = 0;
+    let heroVisible = true;
     const lerp = (a: number, b: number, f: number) => a + (b - a) * f;
+
+    // Pause the rAF work when hero is off-screen — eliminates scroll jank
+    const heroVio = new IntersectionObserver(
+      (entries) => { heroVisible = entries[0].isIntersecting; },
+      { threshold: 0 }
+    );
+    heroVio.observe(hero);
 
     hero.addEventListener('mousemove', (e: MouseEvent) => {
       const r = hero.getBoundingClientRect();
@@ -408,21 +454,19 @@ const faqs = [
     });
 
     (function tick() {
-      t += 0.006; // visible speed — full cycle ~20s per blob
+      requestAnimationFrame(tick);
+      if (!heroVisible) return; // skip DOM writes when hero is off-screen
 
+      t += 0.006;
       cx = lerp(cx, tx, 0.055);
       cy = lerp(cy, ty, 0.055);
 
-      // Large-amplitude sine float — each blob has unique frequency + phase so they never sync
       const f1x = Math.sin(t * 0.8)  * 70 + Math.cos(t * 0.5) * 35;
       const f1y = Math.cos(t * 0.65) * 60 + Math.sin(t * 0.55) * 28;
-
       const f2x = Math.sin(t * 0.6 + 2.1) * -65 + Math.cos(t * 0.38) * 30;
       const f2y = Math.cos(t * 0.5 + 1.0) * -55 + Math.sin(t * 0.7)  * 25;
-
       const f3x = Math.sin(t * 0.45 + 3.5) * 40;
       const f3y = Math.cos(t * 0.38 + 2.0) * 35;
-
       const f4x = Math.sin(t * 0.7 + 1.4) * 65 + Math.cos(t * 0.45) * 30;
       const f4y = Math.cos(t * 0.55 + 0.8) * 50 + Math.sin(t * 0.6)  * 22;
 
@@ -439,8 +483,6 @@ const faqs = [
         blob4.style.setProperty('--blob4-y', `${cy * -12 + f4y}px`);
       }
       if (heroWrap) heroWrap.style.transform = `translate(${cx * -8}px, ${cy * -6}px)`;
-
-      requestAnimationFrame(tick);
     })();
   }
 
