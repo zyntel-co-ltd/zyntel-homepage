@@ -84,6 +84,9 @@ const faqs = [
     <section class="ag-hero">
       <div class="ag-blob ag-blob--1" aria-hidden="true"></div>
       <div class="ag-blob ag-blob--2" aria-hidden="true"></div>
+      <div class="ag-blob ag-blob--3" aria-hidden="true"></div>
+      <div class="ag-blob ag-blob--4" aria-hidden="true"></div>
+
       <div class="ag-wrap">
         <h1 class="ag-hero-title">
           We build digital products<br>
@@ -96,22 +99,10 @@ const faqs = [
           <a href="/contact" class="ag-btn ag-btn--dark">Start your project</a>
           <a href="/services" class="ag-btn ag-btn--white">Explore services →</a>
         </div>
-        <div class="ag-stats-row">
-          <div class="ag-stat">
-            <span class="ag-stat-num">25+</span>
-            <span class="ag-stat-label">Projects delivered</span>
-          </div>
-          <div class="ag-stat-div" aria-hidden="true"></div>
-          <div class="ag-stat">
-            <span class="ag-stat-num">15+</span>
-            <span class="ag-stat-label">Clients served</span>
-          </div>
-          <div class="ag-stat-div" aria-hidden="true"></div>
-          <div class="ag-stat">
-            <span class="ag-stat-num">3+</span>
-            <span class="ag-stat-label">Years building</span>
-          </div>
-        </div>
+      </div>
+      <!-- Scroll indicator -->
+      <div class="ag-hero-scroll" aria-hidden="true">
+        <span class="ag-hero-scroll-dot"></span>
       </div>
     </section>
     </div><!-- end .ag-hero-wrapper -->
@@ -334,16 +325,17 @@ const faqs = [
 </BaseLayout>
 
 <script>
-  // ── Hero mouse parallax + spotlight ──
+  // ── Hero: organic sine-wave float + mouse parallax (all driven from one rAF loop) ──
   const hero = document.querySelector<HTMLElement>('.ag-hero');
   const blob1 = document.querySelector<HTMLElement>('.ag-blob--1');
   const blob2 = document.querySelector<HTMLElement>('.ag-blob--2');
+  const blob3 = document.querySelector<HTMLElement>('.ag-blob--3');
+  const blob4 = document.querySelector<HTMLElement>('.ag-blob--4');
   const heroWrap = document.querySelector<HTMLElement>('.ag-hero .ag-wrap');
 
   if (hero && blob1 && blob2) {
-    let tx = 0, ty = 0, cx = 0, cy = 0;
-
-    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    let tx = 0, ty = 0, cx = 0, cy = 0, t = 0;
+    const lerp = (a: number, b: number, f: number) => a + (b - a) * f;
 
     hero.addEventListener('mousemove', (e: MouseEvent) => {
       const r = hero.getBoundingClientRect();
@@ -360,11 +352,38 @@ const faqs = [
     });
 
     (function tick() {
+      t += 0.006; // visible speed — full cycle ~20s per blob
+
       cx = lerp(cx, tx, 0.055);
       cy = lerp(cy, ty, 0.055);
-      blob1.style.transform = `translate(${cx * 45}px, ${cy * 32}px)`;
-      blob2.style.transform = `translate(${cx * -28}px, ${cy * -22}px)`;
-      if (heroWrap) heroWrap.style.transform = `translate(${cx * -9}px, ${cy * -7}px)`;
+
+      // Large-amplitude sine float — each blob has unique frequency + phase so they never sync
+      const f1x = Math.sin(t * 0.8)  * 70 + Math.cos(t * 0.5) * 35;
+      const f1y = Math.cos(t * 0.65) * 60 + Math.sin(t * 0.55) * 28;
+
+      const f2x = Math.sin(t * 0.6 + 2.1) * -65 + Math.cos(t * 0.38) * 30;
+      const f2y = Math.cos(t * 0.5 + 1.0) * -55 + Math.sin(t * 0.7)  * 25;
+
+      const f3x = Math.sin(t * 0.45 + 3.5) * 40;
+      const f3y = Math.cos(t * 0.38 + 2.0) * 35;
+
+      const f4x = Math.sin(t * 0.7 + 1.4) * 65 + Math.cos(t * 0.45) * 30;
+      const f4y = Math.cos(t * 0.55 + 0.8) * 50 + Math.sin(t * 0.6)  * 22;
+
+      blob1.style.setProperty('--blob1-x', `${cx * 40 + f1x}px`);
+      blob1.style.setProperty('--blob1-y', `${cy * 28 + f1y}px`);
+      blob2.style.setProperty('--blob2-x', `${cx * -24 + f2x}px`);
+      blob2.style.setProperty('--blob2-y', `${cy * -18 + f2y}px`);
+      if (blob3) {
+        blob3.style.setProperty('--blob3-x', `${cx * 12 + f3x}px`);
+        blob3.style.setProperty('--blob3-y', `${cy * 8  + f3y}px`);
+      }
+      if (blob4) {
+        blob4.style.setProperty('--blob4-x', `${cx * -18 + f4x}px`);
+        blob4.style.setProperty('--blob4-y', `${cy * -12 + f4y}px`);
+      }
+      if (heroWrap) heroWrap.style.transform = `translate(${cx * -8}px, ${cy * -6}px)`;
+
       requestAnimationFrame(tick);
     })();
   }

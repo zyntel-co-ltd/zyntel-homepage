@@ -20,7 +20,7 @@
   --ag-gradient-light: linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(79, 70, 229, 0.08) 100%);
   --ag-blob-1:      #7c3aed;
   --ag-blob-2:      #4f46e5;
-  --ag-blob-3:      rgba(79, 70, 229, 0.25);
+  --ag-blob-3:      rgba(124, 58, 237, 0.18);
 }
 
 /* ─── Page shell ─── */
@@ -116,10 +116,17 @@
 }
 
 .ag-grad-text {
-  background: var(--ag-gradient);
+  background: linear-gradient(105deg, #7c3aed 0%, #6d28d9 20%, #a78bfa 48%, #4f46e5 70%, #7c3aed 100%);
+  background-size: 220% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  animation: ag-grad-shimmer 4s ease-in-out infinite;
+}
+
+@keyframes ag-grad-shimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 /* ─── Sections ─── */
@@ -250,6 +257,17 @@
   text-align: center;
 }
 
+/* Subtle dot grid texture — Stripe-style premium background */
+.ag-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(109, 40, 217, 0.09) 1px, transparent 1px);
+  background-size: 30px 30px;
+  z-index: 1;
+  pointer-events: none;
+}
+
 /* Spotlight that follows cursor */
 .ag-hero::before {
   content: '';
@@ -265,44 +283,84 @@
   transition: background 0.1s;
 }
 
-/* Blob decorations — large organic swooping shapes (Aigocy-style) */
+/* Blob decorations — glowing orbs via radial-gradient + heavy blur */
 .ag-blob {
   position: absolute;
   pointer-events: none;
-  animation: blob-drift 12s ease-in-out infinite alternate;
-  will-change: border-radius, transform;
+  border-radius: 50%;
+  will-change: transform;
 }
 
-/* Primary: large hard-edged organic shape, right side — the "swoosh" */
+/* All blob movement is JS-driven (sine float + mouse parallax combined in rAF loop) */
+
+/* Primary: tall oval purple streak, right side */
 .ag-blob--1 {
-  width: min(900px, 90vw);
-  height: min(1000px, 120vh);
-  background: linear-gradient(155deg, var(--ag-blob-1) 0%, var(--ag-blob-2) 55%, transparent 80%);
-  top: -420px;
-  right: -320px;
-  opacity: 0.52;
-  filter: blur(4px);
-  border-radius: 28% 72% 65% 35% / 55% 30% 70% 45%;
+  width: 500px;
+  height: 900px;
+  background: radial-gradient(
+    circle at center,
+    rgba(124, 58, 237, 0.88) 0%,
+    rgba(109, 40, 217, 0.48) 32%,
+    rgba(79, 70, 229, 0.20) 58%,
+    transparent 72%
+  );
+  filter: blur(100px);
+  mix-blend-mode: multiply;
+  top: -15%;
+  right: -10%;
+  transform: rotate(-15deg) translate(var(--blob1-x, 0px), var(--blob1-y, 0px));
 }
 
-/* Secondary: softer underlayer for depth */
+/* Secondary: softer violet, drifts independently */
 .ag-blob--2 {
-  width: min(650px, 70vw);
-  height: min(750px, 90vh);
-  background: radial-gradient(ellipse at 50% 40%, rgba(79, 70, 229, 0.45), rgba(124, 58, 237, 0.18), transparent 68%);
-  top: -280px;
-  right: -180px;
-  opacity: 0.55;
-  filter: blur(40px);
-  border-radius: 50% 40% 38% 55% / 42% 58% 36% 50%;
-  animation-delay: -6s;
+  width: 420px;
+  height: 620px;
+  background: radial-gradient(
+    circle at center,
+    rgba(167, 139, 250, 0.65) 0%,
+    rgba(139, 92, 246, 0.30) 42%,
+    transparent 68%
+  );
+  filter: blur(90px);
+  mix-blend-mode: multiply;
+  top: 22%;
+  right: 5%;
+  transform: rotate(-5deg) translate(var(--blob2-x, 0px), var(--blob2-y, 0px));
 }
 
-@keyframes blob-drift {
-  0%   { border-radius: 28% 72% 65% 35% / 55% 30% 70% 45%; transform: scale(1) rotate(0deg) translateY(0px); }
-  50%  { border-radius: 38% 62% 55% 45% / 45% 45% 55% 52%; transform: scale(1.03) rotate(2deg) translateY(-10px); }
-  100% { border-radius: 45% 55% 40% 60% / 60% 35% 65% 40%; transform: scale(0.98) rotate(-1.5deg) translateY(8px); }
+/* Tertiary: dark indigo depth, bottom-right anchor */
+.ag-blob--3 {
+  width: 380px;
+  height: 420px;
+  background: radial-gradient(
+    circle at center,
+    rgba(20, 5, 48, 0.65) 0%,
+    rgba(14, 4, 34, 0.30) 44%,
+    transparent 70%
+  );
+  filter: blur(60px);
+  top: 52%;
+  right: -8%;
+  transform: translate(var(--blob3-x, 0px), var(--blob3-y, 0px));
 }
+
+/* Quaternary: lavender accent, top-left — creates the cross-directional mesh */
+.ag-blob--4 {
+  width: 460px;
+  height: 680px;
+  background: radial-gradient(
+    circle at center,
+    rgba(192, 168, 255, 0.58) 0%,
+    rgba(167, 139, 250, 0.26) 40%,
+    transparent 68%
+  );
+  filter: blur(88px);
+  mix-blend-mode: multiply;
+  top: -18%;
+  left: -8%;
+  transform: rotate(10deg) translate(var(--blob4-x, 0px), var(--blob4-y, 0px));
+}
+
 
 .ag-hero .ag-wrap {
   position: relative;
@@ -322,6 +380,7 @@
   max-width: 16ch;
   margin-left: auto;
   margin-right: auto;
+  animation: ag-hero-reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
 
 .ag-hero-sub {
@@ -330,6 +389,7 @@
   color: var(--ag-muted);
   max-width: 38rem;
   margin: 0 auto 2.5rem;
+  animation: ag-hero-reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.32s both;
 }
 
 .ag-hero-actions {
@@ -338,6 +398,43 @@
   gap: 0.85rem;
   justify-content: center;
   margin-bottom: 4rem;
+  animation: ag-hero-reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.52s both;
+}
+
+@keyframes ag-hero-reveal {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scroll indicator */
+.ag-hero-scroll {
+  position: absolute;
+  bottom: 2.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1.55rem;
+  height: 2.6rem;
+  border: 2px solid rgba(0, 0, 0, 0.16);
+  border-radius: 999px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 0.38rem;
+  z-index: 5;
+  animation: ag-hero-reveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.85s both;
+}
+
+.ag-hero-scroll-dot {
+  width: 0.28rem;
+  height: 0.52rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28);
+  animation: ag-scroll-bounce 1.9s ease-in-out infinite;
+}
+
+@keyframes ag-scroll-bounce {
+  0%, 100% { transform: translateY(0);      opacity: 1; }
+  70%       { transform: translateY(0.9rem); opacity: 0.25; }
 }
 
 /* Inline visual badge (like Aigocy's tool logos in the title) */
