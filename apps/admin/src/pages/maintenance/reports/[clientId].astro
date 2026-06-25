@@ -10,6 +10,17 @@ const reports = client ? await getQuarterlyReports(client.id) : [];
 
 const currentYear = new Date().getFullYear();
 const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q1' | 'Q2' | 'Q3' | 'Q4';
+
+function quarterToMonths(q: string): string {
+  const map: Record<string, string> = { Q1: 'Jan–Mar', Q2: 'Apr–Jun', Q3: 'Jul–Sep', Q4: 'Oct–Dec' };
+  return map[q] ?? q;
+}
+
+function daysStale(cursorDate: string | null): number | null {
+  if (!cursorDate) return null;
+  const diff = Date.now() - new Date(cursorDate).getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
 ---
 <AdminLayout title={client ? `Reports — ${client.name}` : 'Reports'}>
   <div class="rep-root">
@@ -64,30 +75,51 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
                   <tr>
                     <th>Period</th>
                     <th>Title</th>
-                    <th>Sources</th>
+                    <th>Data current as of</th>
                     <th>Status</th>
                     <th>Generated</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {reports.map((r) => (
-                    <tr data-report-id={r.id}>
-                      <td style="white-space:nowrap;font-weight:600;">{r.quarter} {r.year}</td>
-                      <td style="max-width:300px;">{r.title}</td>
-                      <td style="font-size:0.75rem;color:var(--admin-text-muted);" class="rep-sources-cell" data-id={r.id}>—</td>
-                      <td>
-                        <span class={`rep-badge rep-badge--${r.status}`}>{r.status}</span>
-                      </td>
-                      <td style="font-size:0.75rem;color:var(--admin-text-muted);white-space:nowrap;">
-                        {r.generatedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </td>
-                      <td style="display:flex;gap:6px;justify-content:flex-end;">
-                        <button class="act-btn" data-view-report={r.id} type="button">View</button>
-                        <button class="act-btn act-btn--danger" data-del-report={r.id} type="button">Delete</button>
-                      </td>
-                    </tr>
-                  ))}
+                  {reports.map((r) => {
+                    const stale = daysStale(r.dataCursorDate);
+                    const needsRefresh = r.status === 'draft' && stale !== null && stale > 0;
+                    return (
+                      <tr data-report-id={r.id}>
+                        <td style="white-space:nowrap;font-weight:600;">{r.quarter} {r.year}</td>
+                        <td style="max-width:260px;">{r.title}</td>
+                        <td style="font-size:0.75rem;">
+                          {r.dataCursorDate ? (
+                            <span class={needsRefresh ? 'cursor-stale' : 'cursor-ok'}>
+                              {r.dataCursorDate}
+                              {needsRefresh && <span class="stale-badge">{stale}d old</span>}
+                            </span>
+                          ) : (
+                            <span style="color:var(--admin-text-muted);">—</span>
+                          )}
+                        </td>
+                        <td>
+                          <span class={`rep-badge rep-badge--${r.status}`}>{r.status}</span>
+                        </td>
+                        <td style="font-size:0.75rem;color:var(--admin-text-muted);white-space:nowrap;">
+                          {r.generatedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </td>
+                        <td>
+                          <div style="display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap;">
+                            <button class="act-btn" data-view-report={r.id} type="button">View</button>
+                            {r.status === 'draft' && (
+                              <button class="act-btn act-btn--refresh" data-refresh-report={r.id}
+                                data-quarter={r.quarter} data-year={r.year} type="button">Refresh</button>
+                            )}
+                            <a class="act-btn" href={`/api/maintenance/report-pdf?reportId=${r.id}`}
+                              target="_blank" rel="noopener">PDF</a>
+                            <button class="act-btn act-btn--danger" data-del-report={r.id} type="button">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -121,8 +153,11 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
       <div class="modal">
         <h3>Generate Quarterly Report</h3>
         <p style="font-size:0.8125rem;color:var(--admin-text-muted);margin-top:-0.25rem;">
-          Pulls from GitHub commits, Sentry errors, ROI snapshots, and logged activities automatically.
+          Pulls from GitHub commits, Sentry errors, ROI snapshots, and logged activities. If a draft already exists for the period it will be refreshed in place.
         </p>
+        <div id="gen-existing-warning" style="display:none;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:6px;padding:8px 12px;font-size:0.8125rem;color:#92400e;margin-bottom:8px;">
+          A draft report already exists for this period — generating will refresh it with the latest data.
+        </div>
         <form id="form-gen-report" class="grid-form">
           <div>
             <label>Quarter</label>
@@ -158,34 +193,15 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
       <div class="modal modal--wide">
         <h3>Log Maintenance Activity</h3>
 
-        <!-- Quick templates -->
         <div class="log-templates">
           <span style="font-size:0.75rem;font-weight:600;color:var(--admin-text-muted);text-transform:uppercase;letter-spacing:.04em;">Quick templates</span>
           <div class="log-template-row">
-            <button type="button" class="log-tpl-btn" data-tpl="incident">
-              <span class="log-tpl-icon">⚠</span>
-              <span>Incident</span>
-            </button>
-            <button type="button" class="log-tpl-btn" data-tpl="deploy-fix">
-              <span class="log-tpl-icon">⚙</span>
-              <span>Deploy Fix</span>
-            </button>
-            <button type="button" class="log-tpl-btn" data-tpl="preventive-check">
-              <span class="log-tpl-icon">✓</span>
-              <span>Health Check</span>
-            </button>
-            <button type="button" class="log-tpl-btn" data-tpl="db-maintenance">
-              <span class="log-tpl-icon">🗄</span>
-              <span>DB Maintenance</span>
-            </button>
-            <button type="button" class="log-tpl-btn" data-tpl="support">
-              <span class="log-tpl-icon">💬</span>
-              <span>Support Request</span>
-            </button>
-            <button type="button" class="log-tpl-btn" data-tpl="monitoring">
-              <span class="log-tpl-icon">📊</span>
-              <span>Monitoring Alert</span>
-            </button>
+            <button type="button" class="log-tpl-btn" data-tpl="incident"><span class="log-tpl-icon">⚠</span><span>Incident</span></button>
+            <button type="button" class="log-tpl-btn" data-tpl="deploy-fix"><span class="log-tpl-icon">⚙</span><span>Deploy Fix</span></button>
+            <button type="button" class="log-tpl-btn" data-tpl="preventive-check"><span class="log-tpl-icon">✓</span><span>Health Check</span></button>
+            <button type="button" class="log-tpl-btn" data-tpl="db-maintenance"><span class="log-tpl-icon">🗄</span><span>DB Maintenance</span></button>
+            <button type="button" class="log-tpl-btn" data-tpl="support"><span class="log-tpl-icon">💬</span><span>Support Request</span></button>
+            <button type="button" class="log-tpl-btn" data-tpl="monitoring"><span class="log-tpl-icon">📊</span><span>Monitoring Alert</span></button>
           </div>
         </div>
 
@@ -235,8 +251,10 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
       <div class="modal modal--report">
         <div class="rep-modal-header">
           <h3 id="view-report-title">Report</h3>
-          <div style="display:flex;gap:8px;align-items:center;">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <span id="view-report-status" class="rep-badge"></span>
+            <a id="btn-download-pdf" class="admin-btn admin-btn-secondary" href="#" target="_blank" rel="noopener"
+              style="font-size:0.75rem;">Download PDF</a>
             <button id="btn-finalize-report" class="admin-btn admin-btn-secondary" type="button" style="font-size:0.75rem;">Mark as Final</button>
             <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-view-report" style="font-size:0.75rem;">Close</button>
           </div>
@@ -284,21 +302,25 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
     .rep-badge--draft { background: rgba(245,158,11,.12); color: #92400e; }
     .rep-badge--final { background: rgba(22,163,74,.12); color: #166534; }
 
-    /* Activity log table inside section */
+    .cursor-ok { color: var(--admin-text-muted); }
+    .cursor-stale { color: #92400e; font-weight: 600; }
+    .stale-badge { display: inline-block; background: rgba(245,158,11,.18); color: #92400e; border-radius: 999px; font-size: 0.65rem; font-weight: 700; padding: 1px 6px; margin-left: 5px; }
+
+    .act-btn--refresh { background: rgba(99,91,255,.08); color: var(--admin-accent); border-color: rgba(99,91,255,.2); }
+    .act-btn--refresh:hover { background: rgba(99,91,255,.15); }
+
     #activity-log-body .admin-table-wrap { overflow-x: auto; }
     .log-type-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; }
     .log-type-incident { background: rgba(239,68,68,.1); color: #b91c1c; }
     .log-type-preventive { background: rgba(22,163,74,.1); color: #166534; }
     .log-type-support { background: rgba(99,91,255,.1); color: #4338ca; }
 
-    /* Log templates */
     .log-templates { background: var(--admin-bg-elevated); border-radius: 8px; padding: 12px 14px; }
     .log-template-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
     .log-tpl-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--admin-border); border-radius: 6px; background: var(--admin-card); cursor: pointer; font-size: 0.8125rem; color: var(--admin-text); transition: background 0.15s; }
     .log-tpl-btn:hover { background: var(--admin-bg-elevated); border-color: var(--admin-accent); color: var(--admin-accent); }
     .log-tpl-icon { font-size: 1rem; }
 
-    /* Modal overrides */
     .modal--report { width: min(860px, 98vw); max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; }
     .modal--wide { width: min(680px, 98vw); }
     .modal--narrow { width: min(440px, 100%); }
@@ -332,7 +354,9 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
     .toast.error { background: #7f1d1d; color: #fff; }
   </style>
 
-  <script define:vars={{ clientId, currentQuarter, currentYear }}>
+  <script define:vars={{ clientId, currentQuarter, currentYear, reportsJson: JSON.stringify(reports.map(r => ({ id: r.id, quarter: r.quarter, year: r.year, status: r.status }))) }}>
+    const existingReports = JSON.parse(reportsJson);
+
     function showToast(msg, type = 'success') {
       const t = document.createElement('div');
       t.className = `toast${type === 'error' ? ' error' : ''}`;
@@ -369,10 +393,8 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
       const lines = md.split('\n');
       const out = [];
       let inUl = false, inTable = false, tableHeader = false;
-
       function flushList() { if (inUl) { out.push('</ul>'); inUl = false; } }
       function flushTable() { if (inTable) { out.push('</tbody></table>'); inTable = false; tableHeader = false; } }
-
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trimEnd();
         if (/^---+$/.test(line.trim())) { flushList(); flushTable(); out.push('<hr>'); continue; }
@@ -419,7 +441,6 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
         el.innerHTML = '<div class="rep-empty">No activity logged yet. Use "Log Activity" to add the first entry.</div>';
         return;
       }
-      const typeLabels = { incident: 'incident', preventive: 'preventive', support: 'support' };
       el.innerHTML = `<div class="admin-table-wrap"><table class="admin-table">
         <thead><tr><th>Date</th><th>Type</th><th>Area</th><th>Summary</th><th>Outcome</th><th>Logged by</th><th></th></tr></thead>
         <tbody>
@@ -435,7 +456,6 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
         </tbody>
       </table></div>`;
     }
-
     document.getElementById('log-filter-type').addEventListener('change', (e) => loadActivityLog(e.target.value));
     loadActivityLog('');
 
@@ -444,9 +464,7 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
       if (delLog) {
         const id = delLog.dataset.delLog;
         openConfirm({
-          title: 'Delete log entry?',
-          message: 'This cannot be undone.',
-          label: 'Delete',
+          title: 'Delete log entry?', message: 'This cannot be undone.', label: 'Delete',
           onConfirm: async () => {
             const res = await fetch(`/api/maintenance/logs?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
             if (!res.ok) { showToast('Failed to delete', 'error'); return; }
@@ -471,7 +489,6 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
       support: { type: 'support', area: '', summary: '', action: 'Assisted client. ', outcome: 'Resolved.' },
       monitoring: { type: 'incident', area: 'Monitoring', summary: 'Monitoring alert triggered — ', action: 'Investigated alert.', outcome: '' },
     };
-
     document.querySelectorAll('.log-tpl-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const tpl = TEMPLATES[btn.dataset.tpl];
@@ -501,9 +518,7 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
           loggedBy: document.getElementById('log-by').value.trim(),
         };
         const res = await fetch('/api/maintenance/logs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) { showToast(data.error || 'Failed to save', 'error'); return; }
@@ -511,44 +526,96 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
         showToast('Activity logged');
         document.getElementById('form-log-activity').reset();
         loadActivityLog(document.getElementById('log-filter-type').value);
-      } finally {
-        btn.disabled = false;
-      }
+      } finally { btn.disabled = false; }
     });
 
     // ── Generate report ───────────────────────────────────────────────────
     const genSelect = document.getElementById('gen-quarter');
     if (genSelect) genSelect.value = currentQuarter;
 
-    document.getElementById('btn-generate-report').addEventListener('click', () => showModal('modal-gen-report'));
+    function updateGenWarning() {
+      const q = document.getElementById('gen-quarter').value;
+      const y = Number(document.getElementById('gen-year').value);
+      const existing = existingReports.find(r => r.quarter === q && r.year === y);
+      const warn = document.getElementById('gen-existing-warning');
+      if (existing && existing.status === 'draft') {
+        warn.style.display = 'block';
+        warn.textContent = 'A draft report already exists for this period — generating will refresh it with the latest data.';
+      } else if (existing && existing.status === 'final') {
+        warn.style.display = 'block';
+        warn.textContent = 'This report has been marked as final and cannot be regenerated.';
+        warn.style.color = '#b91c1c';
+        warn.style.background = 'rgba(239,68,68,.08)';
+        warn.style.borderColor = 'rgba(239,68,68,.2)';
+      } else {
+        warn.style.display = 'none';
+      }
+    }
+
+    document.getElementById('gen-quarter').addEventListener('change', updateGenWarning);
+    document.getElementById('gen-year').addEventListener('input', updateGenWarning);
+    document.getElementById('btn-generate-report').addEventListener('click', () => {
+      updateGenWarning();
+      showModal('modal-gen-report');
+    });
+
+    async function runGenerate(quarter, year) {
+      const btn = document.getElementById('btn-gen-submit');
+      const orig = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+      try {
+        const res = await fetch('/api/maintenance/generate-report', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ serviceClientId: clientId, quarter, year }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showToast(data.error || 'Failed to generate report', 'error');
+          return false;
+        }
+        const src = data._sources ?? {};
+        const parts = [];
+        if (src.aiGenerated) parts.push('AI-written');
+        if (src.commits) parts.push(`${src.commits} commits`);
+        if (src.roiSnapshots) parts.push(`${src.roiSnapshots} metrics`);
+        if (src.sentryIssues) parts.push(`${src.sentryIssues} Sentry issues`);
+        const verb = data.wasUpdated ? 'refreshed' : 'generated';
+        showToast(`Report ${verb}${parts.length ? ' (' + parts.join(', ') + ')' : ''} — reloading…`);
+        return true;
+      } catch {
+        showToast('Network error', 'error');
+        return false;
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = orig; }
+      }
+    }
 
     document.getElementById('form-gen-report').addEventListener('submit', async (e) => {
       e.preventDefault();
       const quarter = document.getElementById('gen-quarter').value;
       const year = Number(document.getElementById('gen-year').value);
-      const btn = document.getElementById('btn-gen-submit');
-      btn.disabled = true;
-      const orig = btn.textContent;
-      btn.textContent = 'Generating…';
-      try {
-        const res = await fetch('/api/maintenance/generate-report', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ serviceClientId: clientId, quarter, year }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) { showToast(data.error || 'Failed to generate report', 'error'); return; }
-        const src = data._sources ?? {};
-        const parts = [];
-        if (src.aiGenerated) parts.push('AI-written');
-        if (src.commits) parts.push(`${src.commits} commits`);
-        if (src.roiSnapshots) parts.push(`${src.roiSnapshots} ROI snapshots`);
-        if (src.sentryIssues) parts.push(`${src.sentryIssues} Sentry issues`);
-        closeModal('modal-gen-report');
-        showToast(`Report generated${parts.length ? ' (' + parts.join(', ') + ')' : ''} — reloading…`);
-        setTimeout(() => window.location.reload(), 1200);
-      } catch { showToast('Network error', 'error'); }
-      finally { btn.disabled = false; btn.textContent = orig; }
+      // Block if final
+      const existing = existingReports.find(r => r.quarter === quarter && r.year === year);
+      if (existing && existing.status === 'final') {
+        showToast('This report is final. Delete it first to regenerate.', 'error');
+        return;
+      }
+      const ok = await runGenerate(quarter, year);
+      if (ok) { closeModal('modal-gen-report'); setTimeout(() => window.location.reload(), 1200); }
+    });
+
+    // ── Refresh report (inline button) ────────────────────────────────────
+    document.addEventListener('click', async (e) => {
+      const refreshBtn = e.target.closest('[data-refresh-report]');
+      if (refreshBtn) {
+        const quarter = refreshBtn.dataset.quarter;
+        const year = Number(refreshBtn.dataset.year);
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = '…';
+        const ok = await runGenerate(quarter, year);
+        if (ok) setTimeout(() => window.location.reload(), 1200);
+        else { refreshBtn.disabled = false; refreshBtn.textContent = 'Refresh'; }
+      }
     });
 
     // ── View / edit report ────────────────────────────────────────────────
@@ -569,6 +636,8 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
         document.getElementById('edit-report-md').value = report.markdownContent || '';
         const finalBtn = document.getElementById('btn-finalize-report');
         if (finalBtn) finalBtn.style.display = report.status === 'final' ? 'none' : '';
+        const pdfBtn = document.getElementById('btn-download-pdf');
+        if (pdfBtn) pdfBtn.href = `/api/maintenance/report-pdf?reportId=${encodeURIComponent(id)}`;
         showModal('modal-view-report');
       }
 
@@ -591,8 +660,7 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
       if (!currentReportId) return;
       const markdownContent = document.getElementById('edit-report-md').value;
       const res = await fetch('/api/maintenance/reports', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: currentReportId, markdownContent }),
       });
       const data = await res.json().catch(() => ({}));
@@ -620,7 +688,12 @@ const currentQuarter = ('Q' + (Math.floor(new Date().getMonth() / 3) + 1)) as 'Q
       document.getElementById('btn-finalize-report').style.display = 'none';
       showToast('Report marked as final');
       const row = document.querySelector(`[data-report-id="${currentReportId}"]`);
-      if (row) { const badge = row.querySelector('.rep-badge'); if (badge) { badge.textContent = 'final'; badge.className = 'rep-badge rep-badge--final'; } }
+      if (row) {
+        const badge = row.querySelector('.rep-badge');
+        if (badge) { badge.textContent = 'final'; badge.className = 'rep-badge rep-badge--final'; }
+        const refreshBtn = row.querySelector('[data-refresh-report]');
+        if (refreshBtn) refreshBtn.remove();
+      }
     });
   </script>
 </AdminLayout>

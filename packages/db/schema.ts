@@ -382,6 +382,9 @@ export interface QuarterlyReport {
   generatedBy: string | null;
   pdfUrl: string | null;
   status: 'draft' | 'final';
+  dataCursorDate: string | null;
+  lastRefreshedAt: Date | null;
+  sourceData: Record<string, any> | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -397,4 +400,39 @@ export interface CaseStudy {
   publishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// --- App Events (structured log ingestion) ---
+
+export type AppEventLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
+
+/**
+ * Standard event types pushed from any Zyntel app.
+ * Extend by using 'custom' + a descriptive message.
+ */
+export type AppEventType =
+  | 'startup'        // process started or restarted
+  | 'deployment'     // new version deployed
+  | 'health_change'  // app went up / down / degraded
+  | 'pipeline_run'   // data pipeline completed or failed
+  | 'cron_run'       // scheduled job ran
+  | 'error'          // error summary (not raw — use Sentry for raw)
+  | 'audit'          // user-initiated action
+  | 'maintenance'    // maintenance activity (mirrors maintenance_logs)
+  | 'custom';        // anything else; describe in message
+
+export interface AppEvent {
+  id: string;
+  serviceClientId: string;
+  app: string;
+  environment: string;
+  eventType: AppEventType | string;
+  level: AppEventLevel;
+  message: string;
+  data: Record<string, any> | null;
+  source: string | null;
+  actor: string | null;
+  r2Key: string | null;
+  occurredAt: Date;
+  createdAt: Date;
 }

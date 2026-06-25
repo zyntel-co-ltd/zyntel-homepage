@@ -1,121 +1,37 @@
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import { getServiceClientById, getMaintenanceLogs, getWorkOrders } from './maintenance.ts';
+import { PDFDocument, StandardFonts, rgb, type PDFPage, type PDFFont, type RGB } from 'pdf-lib';
+import type { ServiceClient } from '@zyntel/db/schema';
 import { loadPdfLogo } from './pdf-logo.ts';
+import type { ReportInput } from './reports.ts';
 
 const MARGIN = 50;
-const CONTENT_WIDTH = 595 - MARGIN * 2;
-const COMPANY_FOOTER =
-  'Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061';
+const PAGE_W = 595;
+const PAGE_H = 842;
+const CONTENT_W = PAGE_W - MARGIN * 2;
+const COMPANY_FOOTER = 'Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net · 0786421061';
 
-function parseRepoUrls(repoUrl: string | null | undefined): string[] {
-  if (!repoUrl) return [];
-  return repoUrl
-    .split(/[\n,]+/g)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-function parseGitHubOwnerRepo(url: string): { owner: string; repo: string } | null {
-  try {
-    const u = new URL(url);
-    if (u.hostname !== 'github.com') return null;
-    const parts = u.pathname.split('/').filter(Boolean);
-    if (parts.length < 2) return null;
-    return { owner: parts[0], repo: parts[1].replace(/\.git$/, '') };
-  } catch {
-    return null;
-  }
-}
-
-async function fetchGitHubCommits(opts: {
-  repoUrl: string;
-  sinceIso: string;
-  untilIso: string;
-}): Promise<{ repoUrl: string; total: number | null; commits: Array<{ sha: string; message: string; date: string }> }> {
-  const parsed = parseGitHubOwnerRepo(opts.repoUrl);
-  if (!parsed) return { repoUrl: opts.repoUrl, total: null, commits: [] };
-  const token = import.meta.env.GITHUB_TOKEN;
-  if (!token) return { repoUrl: opts.repoUrl, total: null, commits: [] };
-
-  const baseApiUrl =
-    `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}` +
-    `/commits?since=${encodeURIComponent(opts.sinceIso)}&until=${encodeURIComponent(opts.untilIso)}&per_page=100`;
-
-  const headers = {
-    'Accept': 'application/vnd.github+json',
-    'Authorization': `Bearer ${token}`,
-    'X-GitHub-Api-Version': '2022-11-28',
-  };
-
-  function parseCommitRows(json: any): Array<{ sha: string; message: string; date: string }> {
-    if (!Array.isArray(json)) return [];
-    return json
-      .map((c: any) => ({
-        sha: String(c?.sha ?? '').slice(0, 7),
-        message: String(c?.commit?.message ?? '').split('\n')[0].trim(),
-        date: String(c?.commit?.author?.date ?? ''),
-      }))
-      .filter((c: any) => c.sha && c.message);
-  }
-
-  try {
-    const allCommits: Array<{ sha: string; message: string; date: string }> = [];
-    const MAX_COMMITS = 200;
-
-    // Fetch page 1
-    const res1 = await fetch(`${baseApiUrl}&page=1`, { headers });
-    if (!res1.ok) return { repoUrl: opts.repoUrl, total: null, commits: [] };
-    const json1 = await res1.json().catch(() => []);
-    const page1 = parseCommitRows(json1);
-    allCommits.push(...page1);
-
-    // If page 1 was full (100 items), fetch page 2 to get up to 200
-    if (page1.length === 100 && allCommits.length < MAX_COMMITS) {
-      const res2 = await fetch(`${baseApiUrl}&page=2`, { headers });
-      if (res2.ok) {
-        const json2 = await res2.json().catch(() => []);
-        allCommits.push(...parseCommitRows(json2));
-      }
-    }
-
-    const commits = allCommits.slice(0, MAX_COMMITS);
-    return { repoUrl: opts.repoUrl, total: commits.length, commits };
-  } catch {
-    return { repoUrl: opts.repoUrl, total: null, commits: [] };
-  }
-}
-
-
-function truncate(
-  text: string,
-  font: { widthOfTextAtSize: (t: string, s: number) => number },
-  size: number,
-  maxWidth: number
-): string {
-  if (font.widthOfTextAtSize(text, size) <= maxWidth) return text;
-  let s = text;
-  while (s.length > 0 && font.widthOfTextAtSize(s + '...', size) > maxWidth) s = s.slice(0, -1);
-  return s ? s + '...' : '...';
-}
+// --- Text utilities ---
 
 function wrapText(
   text: string,
-  font: { widthOfTextAtSize: (t: string, s: number) => number },
+  font: PDFFont,
   size: number,
-  maxWidth: number
+  maxWidth: number,
 ): string[] {
   if (!text.trim()) return [];
   const words = text.split(/\s+/);
   const lines: string[] = [];
   let current = '';
-  for (const w of words) {
-    const test = current ? `${current} ${w}` : w;
-    if (font.widthOfTextAtSize(test, size) <= maxWidth) {
-      current = test;
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (font.widthOfTextAtSize(candidate, size) <= maxWidth) {
+      current = candidate;
     } else {
       if (current) lines.push(current);
-      current = font.widthOfTextAtSize(w, size) <= maxWidth ? w : (() => {
-        let chunk = w;
+      // Force-break words that are too long on their own
+      if (font.widthOfTextAtSize(word, size) <= maxWidth) {
+        current = word;
+      } else {
+        let chunk = word;
         while (chunk.length > 0) {
           let fit = chunk.length;
           while (fit > 0 && font.widthOfTextAtSize(chunk.slice(0, fit), size) > maxWidth) fit--;
@@ -123,20 +39,348 @@ function wrapText(
           lines.push(chunk.slice(0, fit));
           chunk = chunk.slice(fit);
         }
-        return '';
-      })();
+        current = '';
+      }
     }
   }
   if (current) lines.push(current);
   return lines;
 }
 
+function truncate(text: string, font: PDFFont, size: number, maxWidth: number): string {
+  if (font.widthOfTextAtSize(text, size) <= maxWidth) return text;
+  let s = text;
+  while (s.length > 0 && font.widthOfTextAtSize(s + '…', size) > maxWidth) s = s.slice(0, -1);
+  return s ? s + '…' : '…';
+}
+
+// --- Paginated writer ---
+
+class PdfWriter {
+  private doc!: PDFDocument;
+  private pages: PDFPage[] = [];
+  private cur!: PDFPage;
+  private y = 0;
+  private font!: PDFFont;
+  private fontBold!: PDFFont;
+  private pageCount = 0;
+
+  async init(doc: PDFDocument) {
+    this.doc = doc;
+    this.font = await doc.embedFont(StandardFonts.Helvetica);
+    this.fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+    this.newPage();
+  }
+
+  getFont(bold = false): PDFFont { return bold ? this.fontBold : this.font; }
+
+  newPage() {
+    this.cur = this.doc.addPage([PAGE_W, PAGE_H]);
+    this.pages.push(this.cur);
+    this.y = PAGE_H - MARGIN;
+    this.pageCount++;
+  }
+
+  ensure(height: number) {
+    if (this.y - height < MARGIN + 20) this.newPage();
+  }
+
+  gap(n = 8) { this.y -= n; }
+
+  line(
+    text: string,
+    opts: { bold?: boolean; size?: number; color?: RGB; x?: number; maxWidth?: number } = {},
+  ) {
+    const size = opts.size ?? 10;
+    const f = this.getFont(opts.bold);
+    const x = opts.x ?? MARGIN;
+    const mw = opts.maxWidth ?? (CONTENT_W - (x - MARGIN));
+    const wrapped = wrapText(text, f, size, mw);
+    for (const l of wrapped) {
+      this.ensure(size + 4);
+      this.cur.drawText(l, { x, y: this.y, size, font: f, color: opts.color ?? rgb(0.1, 0.1, 0.1) });
+      this.y -= size + 4;
+    }
+  }
+
+  rule(color = rgb(0.88, 0.88, 0.88)) {
+    this.ensure(12);
+    this.cur.drawRectangle({ x: MARGIN, y: this.y - 2, width: CONTENT_W, height: 1, color });
+    this.y -= 14;
+  }
+
+  section(title: string) {
+    this.gap(6);
+    this.ensure(20);
+    this.line(title, { bold: true, size: 12 });
+    this.gap(4);
+  }
+
+  tableRow(cols: Array<{ text: string; x: number; width: number }>, bold = false, rowColor?: RGB) {
+    const f = this.getFont(bold);
+    const size = 8;
+    // measure max height across all cells
+    let maxLines = 1;
+    for (const col of cols) {
+      const wrapped = wrapText(col.text, f, size, col.width - 4);
+      if (wrapped.length > maxLines) maxLines = wrapped.length;
+    }
+    const rowH = maxLines * (size + 3) + 4;
+    this.ensure(rowH + 2);
+    if (rowColor) {
+      this.cur.drawRectangle({ x: MARGIN, y: this.y - rowH + 2, width: CONTENT_W, height: rowH, color: rowColor });
+    }
+    for (const col of cols) {
+      const wrapped = wrapText(col.text, f, size, col.width - 4);
+      let lineY = this.y;
+      for (const l of wrapped) {
+        this.cur.drawText(l, { x: col.x + 2, y: lineY, size, font: f, color: rgb(0.1, 0.1, 0.1) });
+        lineY -= size + 3;
+      }
+    }
+    this.y -= rowH + 2;
+  }
+
+  pageFooter(text: string) {
+    for (const p of this.pages) {
+      p.drawText(text, {
+        x: MARGIN, y: MARGIN - 14,
+        size: 7, font: this.font, color: rgb(0.6, 0.6, 0.6),
+      });
+    }
+  }
+}
+
+// --- Main export ---
+
+export async function generateClientSummaryPdf(opts: {
+  client: ServiceClient;
+  sourceData: ReportInput;
+  baseUrl?: string;
+}): Promise<Uint8Array> {
+  const { client, sourceData: data } = opts;
+
+  const doc = await PDFDocument.create();
+  const w = new PdfWriter();
+  await w.init(doc);
+
+  const baseUrl = opts.baseUrl ?? import.meta.env.SITE_URL ?? import.meta.env.SITE ?? 'https://zyntel.net';
+  const logoBytes = await loadPdfLogo(baseUrl).catch(() => null);
+
+  const covLabel: Record<string, string> = {
+    contract_included: 'Contract', paid_extra: 'Billable', goodwill_free: 'Complimentary',
+  };
+
+  // ── Cover / header ─────────────────────────────────────────────────────────
+
+  if (logoBytes) {
+    try {
+      const png = await doc.embedPng(logoBytes);
+      const scale = Math.min(130 / png.width, 32 / png.height);
+      w['cur'].drawImage(png, {
+        x: MARGIN, y: w['y'] - png.height * scale,
+        width: png.width * scale, height: png.height * scale,
+      });
+      w['y'] -= png.height * scale + 16;
+    } catch {
+      w.line('Zyntel Co. Limited', { bold: true, size: 13 });
+    }
+  } else {
+    w.line('Zyntel Co. Limited', { bold: true, size: 13 });
+  }
+
+  w.gap(4);
+  w.line(`${data.quarter} ${data.year} Activity Summary${data.isCurrentQuarter ? ' — In Progress' : ''}`, { bold: true, size: 18 });
+  w.gap(4);
+  w.line(`${client.name}  ·  ${client.productName}`, { size: 10, color: rgb(0.4, 0.4, 0.4) });
+  w.line(
+    `Period: ${data.periodStart} to ${data.dataCursorDate}` +
+    (data.isCurrentQuarter ? '  (quarter still in progress)' : ''),
+    { size: 9, color: rgb(0.5, 0.5, 0.5) },
+  );
+  w.line(
+    `Prepared: ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+    { size: 9, color: rgb(0.5, 0.5, 0.5) },
+  );
+  w.gap(8);
+  w.rule(rgb(0.2, 0.2, 0.2));
+
+  // ── System Health ──────────────────────────────────────────────────────────
+
+  w.section('System Health');
+  const healthRows: Array<[string, string | number]> = [
+    ['Incidents', data.incidents.length],
+    ['Preventive maintenance checks', data.preventive.length],
+    ['Support requests handled', data.support.length],
+    ['Work orders completed', data.closedWOs.length],
+    ['Work orders in progress', data.openWOs.length],
+  ];
+  if (data.commits && data.commits.length) healthRows.push(['Code commits delivered', data.commits.length]);
+  if (data.sentryIssues && data.sentryIssues.length) healthRows.push(['Sentry errors tracked', data.sentryIssues.length]);
+
+  const col1 = MARGIN;
+  const col2 = MARGIN + 260;
+  w.tableRow(
+    [{ text: 'Category', x: col1, width: 240 }, { text: 'Count', x: col2, width: 80 }],
+    true, rgb(0.93, 0.93, 0.95),
+  );
+  for (const [label, val] of healthRows) {
+    w.tableRow([
+      { text: String(label), x: col1, width: 240 },
+      { text: String(val), x: col2, width: 80 },
+    ]);
+  }
+  w.gap(10);
+  w.rule();
+
+  // ── Key Metrics ────────────────────────────────────────────────────────────
+
+  if (data.roiSnapshots && data.roiSnapshots.length) {
+    w.section('Key Metrics');
+    const grouped: Record<string, Array<{ value: number; date: string }>> = {};
+    for (const s of data.roiSnapshots) {
+      if (!grouped[s.metricKey]) grouped[s.metricKey] = [];
+      grouped[s.metricKey].push({ value: s.metricValue, date: s.snapshotDate });
+    }
+    const mCol1 = MARGIN;
+    const mCol2 = MARGIN + 200;
+    const mCol3 = MARGIN + 310;
+    w.tableRow([
+      { text: 'Metric', x: mCol1, width: 200 },
+      { text: 'Latest Value', x: mCol2, width: 110 },
+      { text: 'As of', x: mCol3, width: 120 },
+    ], true, rgb(0.93, 0.93, 0.95));
+    for (const [key, vals] of Object.entries(grouped)) {
+      const sorted = [...vals].sort((a, b) => a.date.localeCompare(b.date));
+      const latest = sorted[sorted.length - 1];
+      w.tableRow([
+        { text: key, x: mCol1, width: 200 },
+        { text: latest.value.toLocaleString(), x: mCol2, width: 110 },
+        { text: latest.date, x: mCol3, width: 120 },
+      ]);
+    }
+    w.gap(10);
+    w.rule();
+  }
+
+  // ── Incidents ──────────────────────────────────────────────────────────────
+
+  w.section('Incidents');
+  if (!data.incidents.length) {
+    w.line('No incidents this period — system operated without disruption.', {
+      size: 9, color: rgb(0.35, 0.55, 0.35),
+    });
+  } else {
+    const iCol1 = MARGIN;
+    const iCol2 = MARGIN + 70;
+    const iCol3 = MARGIN + 130;
+    const iCol4 = MARGIN + 290;
+    w.tableRow([
+      { text: 'Date', x: iCol1, width: 70 },
+      { text: 'Area', x: iCol2, width: 60 },
+      { text: 'Summary', x: iCol3, width: 160 },
+      { text: 'Resolution', x: iCol4, width: 145 },
+    ], true, rgb(0.93, 0.93, 0.95));
+    for (const inc of data.incidents) {
+      const res = inc.outcome || inc.actionTaken || '—';
+      w.tableRow([
+        { text: inc.logDate, x: iCol1, width: 70 },
+        { text: truncate(inc.area, w.getFont(), 8, 56), x: iCol2, width: 60 },
+        { text: inc.summary, x: iCol3, width: 160 },
+        { text: res, x: iCol4, width: 145 },
+      ]);
+    }
+  }
+  w.gap(10);
+  w.rule();
+
+  // ── Completed Work Orders ──────────────────────────────────────────────────
+
+  if (data.closedWOs.length) {
+    w.section('Completed Work Orders');
+    const wCol1 = MARGIN;
+    const wCol2 = MARGIN + 70;
+    const wCol3 = MARGIN + 270;
+    const wCol4 = MARGIN + 370;
+    w.tableRow([
+      { text: 'WO #', x: wCol1, width: 70 },
+      { text: 'Title', x: wCol2, width: 200 },
+      { text: 'Coverage', x: wCol3, width: 100 },
+      { text: 'Est. Cost', x: wCol4, width: 65 },
+    ], true, rgb(0.93, 0.93, 0.95));
+    for (const wo of data.closedWOs) {
+      const costStr = wo.estimatedCost ? `${wo.currency} ${Number(wo.estimatedCost).toLocaleString()}` : '—';
+      w.tableRow([
+        { text: wo.woNumber, x: wCol1, width: 70 },
+        { text: wo.title, x: wCol2, width: 200 },
+        { text: covLabel[wo.coverage] ?? wo.coverage, x: wCol3, width: 100 },
+        { text: costStr, x: wCol4, width: 65 },
+      ]);
+    }
+    w.gap(10);
+    w.rule();
+  }
+
+  // ── Open Work Orders ───────────────────────────────────────────────────────
+
+  if (data.openWOs.length) {
+    w.section('Work In Progress');
+    for (const wo of data.openWOs) {
+      w.line(`${wo.woNumber} — ${wo.title}  [${wo.status}]`, { size: 9, x: MARGIN + 10 });
+    }
+    w.gap(10);
+    w.rule();
+  }
+
+  // ── Development Activity ───────────────────────────────────────────────────
+
+  if (data.commits && data.commits.length) {
+    w.section('Development Activity');
+    w.line(
+      `${data.commits.length} code update${data.commits.length === 1 ? '' : 's'} delivered to ${client.productName} this period.`,
+      { size: 9 },
+    );
+    w.gap(4);
+
+    const dCol1 = MARGIN;
+    const dCol2 = MARGIN + 55;
+    w.tableRow([
+      { text: 'Date', x: dCol1, width: 55 },
+      { text: 'Change', x: dCol2, width: CONTENT_W - 55 },
+    ], true, rgb(0.93, 0.93, 0.95));
+    for (const c of data.commits.slice(0, 40)) {
+      w.tableRow([
+        { text: c.date, x: dCol1, width: 55 },
+        { text: c.message, x: dCol2, width: CONTENT_W - 55 },
+      ]);
+    }
+    if (data.commits.length > 40) {
+      w.gap(4);
+      w.line(`…and ${data.commits.length - 40} more commits. See the full report for the complete log.`, {
+        size: 8, color: rgb(0.5, 0.5, 0.5),
+      });
+    }
+    w.gap(10);
+    w.rule();
+  }
+
+  // ── Footer on all pages ────────────────────────────────────────────────────
+  w.pageFooter(COMPANY_FOOTER);
+
+  return doc.save();
+}
+
+// Legacy wrapper — keeps the old API working for any callers still using it.
+// Loads data fresh and delegates to generateClientSummaryPdf.
 export async function generateMaintenanceReportPdf(opts: {
   serviceClientId: string;
   quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
   year: number;
   baseUrl?: string;
 }): Promise<Uint8Array> {
+  const { getServiceClientById, getMaintenanceLogs, getWorkOrders } = await import('./maintenance.ts');
+  const { fetchCommitsForPeriod } = await import('./github.ts');
+
   const client = await getServiceClientById(opts.serviceClientId);
   if (!client) throw new Error('Service client not found');
 
@@ -146,189 +390,50 @@ export async function generateMaintenanceReportPdf(opts: {
   const [qStartMonth, qEndMonth] = qMap[opts.quarter];
   const qStart = new Date(opts.year, qStartMonth, 1);
   const qEnd = new Date(opts.year, qEndMonth + 1, 0);
-  const qStartStr = qStart.toISOString().slice(0, 10);
-  const qEndStr = qEnd.toISOString().slice(0, 10);
+  const periodStart = qStart.toISOString().slice(0, 10);
+  const periodEnd = qEnd.toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
+  const dataCursorDate = today < periodEnd ? today : periodEnd;
+  const isCurrentQuarter = today <= periodEnd && today >= periodStart;
 
-  const [allLogs, allWOs] = await Promise.all([
-    getMaintenanceLogs(opts.serviceClientId, { dateFrom: qStartStr, dateTo: qEndStr }),
+  const githubToken = import.meta.env.GITHUB_TOKEN as string | undefined;
+
+  const [allLogs, allWOs, commits] = await Promise.all([
+    getMaintenanceLogs(opts.serviceClientId, { dateFrom: periodStart, dateTo: dataCursorDate }),
     getWorkOrders(opts.serviceClientId),
+    client.repoUrl
+      ? fetchCommitsForPeriod(client.repoUrl, periodStart, dataCursorDate, githubToken)
+      : Promise.resolve([]),
   ]);
 
-  const incidents = allLogs.filter((l) => l.type === 'incident');
-  const preventive = allLogs.filter((l) => l.type === 'preventive');
-  const support = allLogs.filter((l) => l.type === 'support');
-  const closedWOs = allWOs.filter((w) => ['completed', 'invoiced'].includes(w.status));
-  const openWOs = allWOs.filter((w) => !['completed', 'invoiced'].includes(w.status));
-
-  const doc = await PDFDocument.create();
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const fontMono = await doc.embedFont(StandardFonts.Courier);
-
-  const addPage = () => {
-    const p = doc.addPage([595, 842]);
-    return { page: p, y: [p.getHeight() - 50] };
+  const sourceData: ReportInput = {
+    clientName: client.name,
+    productName: client.productName,
+    quarter: opts.quarter,
+    year: opts.year,
+    periodStart,
+    periodEnd,
+    dataCursorDate,
+    isCurrentQuarter,
+    incidents: allLogs.filter((l) => l.type === 'incident').map((i) => ({
+      logDate: i.logDate, area: i.area, summary: i.summary,
+      actionTaken: i.actionTaken || undefined, outcome: i.outcome || undefined,
+    })),
+    preventive: allLogs.filter((l) => l.type === 'preventive').map((p) => ({
+      logDate: p.logDate, area: p.area, summary: p.summary,
+    })),
+    support: allLogs.filter((l) => l.type === 'support').map((s) => ({
+      logDate: s.logDate, area: s.area, summary: s.summary,
+    })),
+    closedWOs: allWOs.filter((w) => ['completed', 'invoiced'].includes(w.status)).map((w) => ({
+      woNumber: w.woNumber, title: w.title, coverage: w.coverage,
+      estimatedCost: w.estimatedCost, currency: w.currency,
+    })),
+    openWOs: allWOs.filter((w) => !['completed', 'invoiced'].includes(w.status)).map((w) => ({
+      woNumber: w.woNumber, title: w.title, coverage: w.coverage, status: w.status,
+    })),
+    commits: commits.length ? commits : undefined,
   };
 
-  const { page, y } = addPage();
-  const rightEdge = 595 - MARGIN;
-
-  const baseUrl = opts.baseUrl ?? import.meta.env.SITE ?? 'https://zyntel.net';
-  const logoBytes = await loadPdfLogo(baseUrl);
-
-  if (logoBytes) {
-    try {
-      const png = await doc.embedPng(logoBytes);
-      const scale = Math.min(140 / png.width, 36 / png.height);
-      page.drawImage(png, { x: MARGIN, y: y[0] - png.height * scale, width: png.width * scale, height: png.height * scale });
-      y[0] -= png.height * scale + 16;
-    } catch {
-      page.drawText('Zyntel Co. Limited', { x: MARGIN, y: y[0], size: 13, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
-      y[0] -= 22;
-    }
-  } else {
-    page.drawText('Zyntel Co. Limited', { x: MARGIN, y: y[0], size: 13, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
-    y[0] -= 22;
-  }
-
-  const draw = (text: string, x = MARGIN, size = 10, bold = false, col = rgb(0.1, 0.1, 0.1)) => {
-    const f = bold ? fontBold : font;
-    page.drawText(truncate(text, f, size, rightEdge - x), { x, y: y[0], size, font: f, color: col });
-    y[0] -= size + 5;
-  };
-
-  const hr = () => {
-    page.drawRectangle({ x: MARGIN, y: y[0] - 2, width: CONTENT_WIDTH, height: 1, color: rgb(0.88, 0.88, 0.88) });
-    y[0] -= 12;
-  };
-
-  draw(`Quarterly Maintenance Report — ${opts.quarter} ${opts.year}`, MARGIN, 18, true);
-  draw(`Client: ${client.name} · Product: ${client.productName}`, MARGIN, 10, false, rgb(0.4, 0.4, 0.4));
-  draw(`Period: ${qStartStr} to ${qEndStr}`, MARGIN, 10, false, rgb(0.4, 0.4, 0.4));
-  draw(`Generated: ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`, MARGIN, 10, false, rgb(0.4, 0.4, 0.4));
-  y[0] -= 8;
-  hr();
-
-  // System availability summary
-  draw('1. System Availability Summary', MARGIN, 13, true);
-  y[0] -= 4;
-  draw(`Total maintenance activities: ${allLogs.length}`, MARGIN + 10);
-  draw(`Incidents: ${incidents.length}`, MARGIN + 10);
-  draw(`Preventive maintenance activities: ${preventive.length}`, MARGIN + 10);
-  draw(`Support requests: ${support.length}`, MARGIN + 10);
-  y[0] -= 8;
-  hr();
-
-  // Incidents table
-  draw('2. Incidents', MARGIN, 13, true);
-  y[0] -= 4;
-  if (!incidents.length) {
-    draw('No incidents this quarter.', MARGIN + 10, 10, false, rgb(0.5, 0.5, 0.5));
-  } else {
-    const cols = { date: MARGIN, area: MARGIN + 60, summary: MARGIN + 110, action: MARGIN + 270 };
-    page.drawText('Date', { x: cols.date, y: y[0], size: 8, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
-    page.drawText('Area', { x: cols.area, y: y[0], size: 8, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
-    page.drawText('Summary', { x: cols.summary, y: y[0], size: 8, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
-    page.drawText('Resolution', { x: cols.action, y: y[0], size: 8, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
-    y[0] -= 14;
-    for (const inc of incidents) {
-      const summaryLines = wrapText(inc.summary, font, 8, 150);
-      const actionLines = wrapText(inc.outcome || inc.actionTaken || '—', font, 8, 145);
-      const rowHeight = Math.max(summaryLines.length, actionLines.length) * 11;
-      page.drawText(inc.logDate, { x: cols.date, y: y[0], size: 8, font, color: rgb(0.2, 0.2, 0.2) });
-      page.drawText(truncate(inc.area, font, 8, 45), { x: cols.area, y: y[0], size: 8, font, color: rgb(0.2, 0.2, 0.2) });
-      let lineY = y[0];
-      for (const line of summaryLines) { page.drawText(line, { x: cols.summary, y: lineY, size: 8, font, color: rgb(0.2, 0.2, 0.2) }); lineY -= 11; }
-      lineY = y[0];
-      for (const line of actionLines) { page.drawText(line, { x: cols.action, y: lineY, size: 8, font, color: rgb(0.2, 0.2, 0.2) }); lineY -= 11; }
-      y[0] -= rowHeight + 4;
-    }
-  }
-  y[0] -= 6;
-  hr();
-
-  // Preventive maintenance
-  draw('3. Preventive Maintenance', MARGIN, 13, true);
-  y[0] -= 4;
-  draw(`${preventive.length} preventive maintenance activities performed this quarter.`, MARGIN + 10);
-  for (const p of preventive) {
-    draw(`${p.logDate} — ${p.area}: ${p.summary}`, MARGIN + 10, 9);
-  }
-  y[0] -= 6;
-  hr();
-
-  // Support activity
-  draw('4. Support Activity', MARGIN, 13, true);
-  y[0] -= 4;
-  draw(`${support.length} support request(s) handled this quarter.`, MARGIN + 10);
-  y[0] -= 6;
-  hr();
-
-  // Work orders
-  draw('5. Work Orders', MARGIN, 13, true);
-  y[0] -= 4;
-  draw(`Closed: ${closedWOs.length}  ·  Open: ${openWOs.length}`, MARGIN + 10);
-  y[0] -= 4;
-  const covLabel: Record<string, string> = {
-    contract_included: 'contract',
-    paid_extra: 'paid extra',
-    goodwill_free: 'goodwill',
-  };
-  for (const wo of [...closedWOs, ...openWOs]) {
-    const costStr = wo.estimatedCost ? ` · Est. ${wo.currency} ${Number(wo.estimatedCost).toLocaleString()}` : '';
-    const c = covLabel[wo.coverage] ?? wo.coverage;
-    draw(`[${wo.status.toUpperCase()}] ${wo.woNumber} — ${wo.title} (${c})${costStr}`, MARGIN + 10, 9);
-  }
-  y[0] -= 6;
-  hr();
-
-  // Code changes (optional, GitHub only)
-  const repoUrls = parseRepoUrls(client.repoUrl);
-  if (repoUrls.length) {
-    draw('6. Code changes (linked repositories)', MARGIN, 13, true);
-    y[0] -= 4;
-    const sinceIso = new Date(qStartStr + 'T00:00:00.000Z').toISOString();
-    const untilIso = new Date(qEndStr + 'T23:59:59.999Z').toISOString();
-    const repos = await Promise.all(repoUrls.map((repoUrl) => fetchGitHubCommits({ repoUrl, sinceIso, untilIso })));
-    for (const r of repos) {
-      draw(r.repoUrl, MARGIN + 10, 9, true);
-      if (r.total === null) {
-        draw('Unable to fetch commit summary (non-GitHub URL or missing GITHUB_TOKEN).', MARGIN + 10, 9, false, rgb(0.5, 0.5, 0.5));
-        continue;
-      }
-      if (r.commits.length === 0) {
-        draw('No commits found in this window.', MARGIN + 10, 9, false, rgb(0.5, 0.5, 0.5));
-        continue;
-      }
-      for (const c of r.commits) {
-        const msg = truncate(c.message, font, 8, CONTENT_WIDTH - 40);
-        draw(`- ${c.sha} ${msg}`, MARGIN + 18, 8);
-      }
-      y[0] -= 6;
-    }
-    hr();
-  }
-
-  // Overall status
-  draw(repoUrls.length ? '7. Overall Status' : '6. Overall Status', MARGIN, 13, true);
-  y[0] -= 4;
-  const statusText = incidents.length === 0
-    ? `${client.productName} operated without incidents this quarter. ${preventive.length} preventive maintenance activities were completed as planned.`
-    : `${client.productName} experienced ${incidents.length} incident(s) this quarter, all of which were addressed promptly. ${preventive.length} preventive maintenance activities were also completed.`;
-  for (const line of wrapText(statusText, font, 10, CONTENT_WIDTH - 10)) {
-    draw(line, MARGIN + 10, 10);
-  }
-  y[0] -= 16;
-  hr();
-
-  // Footer
-  page.drawText(COMPANY_FOOTER, {
-    x: MARGIN,
-    y: y[0],
-    size: 8,
-    font,
-    color: rgb(0.6, 0.6, 0.6),
-  });
-
-  return doc.save();
+  return generateClientSummaryPdf({ client, sourceData, baseUrl: opts.baseUrl });
 }

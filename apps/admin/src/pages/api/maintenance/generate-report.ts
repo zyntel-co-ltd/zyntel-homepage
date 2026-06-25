@@ -3,7 +3,8 @@ import { getServiceClientById, getMaintenanceLogs, getWorkOrders } from '../../.
 import {
   buildQuarterlyReportMarkdown,
   buildQuarterlyReportMarkdownAI,
-  createQuarterlyReport,
+  upsertQuarterlyReport,
+  type ReportInput,
 } from '../../../lib/reports.ts';
 import { fetchCommitsForPeriod, fetchSentryIssues } from '../../../lib/github.ts';
 import { getSnapshots } from '../../../lib/roi.ts';
@@ -47,20 +48,24 @@ export const POST: APIRoute = async ({ request }) => {
     const periodStart = qStart.toISOString().slice(0, 10);
     const periodEnd = qEnd.toISOString().slice(0, 10);
 
-    // ── Fetch all data in parallel ───────────────────────────────────────────
+    // Cursor date: today if the quarter is still running, otherwise quarter end
+    const today = new Date().toISOString().slice(0, 10);
+    const dataCursorDate = today < periodEnd ? today : periodEnd;
+    const isCurrentQuarter = today <= periodEnd && today >= periodStart;
+
     const githubToken = import.meta.env.GITHUB_TOKEN as string | undefined;
     const sentryToken = import.meta.env.SENTRY_AUTH_TOKEN as string | undefined;
     const anthropicKey = import.meta.env.ANTHROPIC_API_KEY as string | undefined;
 
     const [allLogs, allWOs, commits, roiSnapshots, sentryIssues] = await Promise.all([
-      getMaintenanceLogs(serviceClientId, { dateFrom: periodStart, dateTo: periodEnd }),
+      getMaintenanceLogs(serviceClientId, { dateFrom: periodStart, dateTo: dataCursorDate }),
       getWorkOrders(serviceClientId),
       client.repoUrl
-        ? fetchCommitsForPeriod(client.repoUrl, periodStart, periodEnd, githubToken)
+        ? fetchCommitsForPeriod(client.repoUrl, periodStart, dataCursorDate, githubToken)
         : Promise.resolve([]),
-      getSnapshots(serviceClientId, periodStart, periodEnd),
+      getSnapshots(serviceClientId, periodStart, dataCursorDate),
       client.sentryUrl && sentryToken
-        ? fetchSentryIssues(client.sentryUrl, periodStart, periodEnd, sentryToken)
+        ? fetchSentryIssues(client.sentryUrl, periodStart, dataCursorDate, sentryToken)
         : Promise.resolve([]),
     ]);
 
@@ -70,13 +75,15 @@ export const POST: APIRoute = async ({ request }) => {
     const closedWOs = allWOs.filter((w) => ['completed', 'invoiced'].includes(w.status));
     const openWOs = allWOs.filter((w) => !['completed', 'invoiced'].includes(w.status));
 
-    const reportInput = {
+    const reportInput: ReportInput = {
       clientName: client.name,
       productName: client.productName,
       quarter,
       year,
       periodStart,
       periodEnd,
+      dataCursorDate,
+      isCurrentQuarter,
       incidents: incidents.map((i) => ({
         logDate: i.logDate,
         area: i.area,
@@ -110,7 +117,6 @@ export const POST: APIRoute = async ({ request }) => {
       sentryIssues: sentryIssues.length ? sentryIssues : undefined,
     };
 
-    // ── Generate markdown ────────────────────────────────────────────────────
     let markdownContent: string;
     if (anthropicKey) {
       markdownContent = await buildQuarterlyReportMarkdownAI(reportInput, anthropicKey);
@@ -118,25 +124,50 @@ export const POST: APIRoute = async ({ request }) => {
       markdownContent = buildQuarterlyReportMarkdown(reportInput);
     }
 
-    const title = `${client.name} — ${client.productName} Maintenance Report ${quarter} ${year}`;
-    const report = await createQuarterlyReport({
-      serviceClientId,
-      quarter,
-      year,
-      title,
-      markdownContent,
-      status: 'draft',
-    });
+    const title = `${client.name} — ${client.productName} ${quarter} ${year} Report`;
 
-    return new Response(JSON.stringify({ ...report, _sources: {
-      commits: commits.length,
-      roiSnapshots: roiSnapshots.length,
-      sentryIssues: sentryIssues.length,
-      aiGenerated: !!anthropicKey,
-    }}), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    let upsertResult: Awaited<ReturnType<typeof upsertQuarterlyReport>>;
+    try {
+      upsertResult = await upsertQuarterlyReport({
+        serviceClientId,
+        quarter,
+        year,
+        title,
+        markdownContent,
+        dataCursorDate,
+        sourceData: reportInput,
+        status: 'draft',
+      });
+    } catch (err: any) {
+      if (err.message === 'REPORT_FINALIZED') {
+        return new Response(
+          JSON.stringify({ error: 'This report has been marked as final and cannot be regenerated. Delete it first if you need to start fresh.' }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      throw err;
+    }
+
+    const { report, wasUpdated } = upsertResult;
+
+    return new Response(
+      JSON.stringify({
+        ...report,
+        wasUpdated,
+        _sources: {
+          commits: commits.length,
+          roiSnapshots: roiSnapshots.length,
+          sentryIssues: sentryIssues.length,
+          aiGenerated: !!anthropicKey,
+          dataCursorDate,
+          isCurrentQuarter,
+        },
+      }),
+      {
+        status: wasUpdated ? 200 : 201,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
   } catch (err: any) {
     console.error('[generate-report]', err);
     return new Response(JSON.stringify({ error: err.message ?? 'Server error' }), {
