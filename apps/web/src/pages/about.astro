@@ -8,7 +8,7 @@ const team = [
     initials: 'ND',
     name: 'Ntale Nithamu Diini',
     role: 'Chief Executive Officer',
-    bio: 'Product strategy and commercial growth — driving Zyntel\'s vision of building digital infrastructure for East African businesses.',
+    bio: "Product strategy and commercial growth — driving Zyntel's vision of building digital infrastructure for East African businesses.",
   },
   {
     initials: 'WM',
@@ -28,20 +28,20 @@ const values = [
   {
     accent: 'violet',
     title: 'Built for Africa first',
-    body: 'We don\'t port Western solutions onto African problems. We design from the ground up for the networks, devices, and workflows that East African businesses actually use.',
+    body: "We don't port Western solutions onto African problems. We design from the ground up for the networks, devices, and workflows that East African businesses actually use.",
   },
   {
-    accent: 'cyan',
+    accent: 'pink',
     title: 'Engineering over shortcuts',
     body: 'Clean architecture, proper testing, and maintainable code. We build things the right way because bad foundations are expensive to fix later.',
   },
   {
     accent: 'violet',
     title: 'Long-term partners',
-    body: 'We don\'t disappear after launch. Our best client relationships have lasted years — growing alongside the products we help build.',
+    body: "We don't disappear after launch. Our best client relationships have lasted years — growing alongside the products we help build.",
   },
   {
-    accent: 'cyan',
+    accent: 'pink',
     title: 'Transparency always',
     body: 'Honest timelines, clear pricing, and direct communication. No hidden fees, no overpromising — just straightforward collaboration.',
   },
@@ -56,11 +56,11 @@ const values = [
   <main class="ag-page">
 
     <!-- HERO -->
-    <section class="ag-hero">
-      <div class="ag-hero-glow ag-hero-glow--v" aria-hidden="true"></div>
-      <div class="ag-wrap ag-hero-inner">
+    <section class="ag-hero ag-hero--left">
+      <div class="ag-blob ag-blob--1" aria-hidden="true"></div>
+      <div class="ag-wrap">
         <div class="ag-eyebrow">
-          <span class="ag-dot" aria-hidden="true"></span>
+          <svg class="ag-eyebrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2l2.09 6.26L21 10l-6.91 1.74L12 18l-2.09-5.26L3 11l6.91-1.74z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
           Our story
         </div>
         <h1 class="ag-hero-title">
@@ -77,8 +77,8 @@ const values = [
       </div>
     </section>
 
-    <!-- MISSION / VALUES -->
-    <section class="ag-section ag-values-section">
+    <!-- VALUES -->
+    <section class="ag-section ag-section--alt">
       <div class="ag-wrap">
         <p class="ag-section-eyebrow">What we stand for</p>
         <h2 class="ag-section-title">Values that shape<br>how we build</h2>
@@ -94,7 +94,7 @@ const values = [
     </section>
 
     <!-- TEAM -->
-    <section class="ag-section ag-team-section">
+    <section class="ag-section">
       <div class="ag-wrap">
         <p class="ag-section-eyebrow">The people</p>
         <h2 class="ag-section-title">The team behind Zyntel</h2>
@@ -116,36 +116,34 @@ const values = [
     <section class="ag-section ag-product-strip">
       <div class="ag-wrap">
         <div class="ag-strip-inner">
-          <div class="ag-strip-content">
+          <div>
             <p class="ag-section-eyebrow" style="text-align:left; margin-bottom: 0.75rem;">Our flagship product</p>
             <h2 class="ag-strip-title"><span class="ag-zf-brand">ZyntForms</span> — offline data<br>collection, reimagined.</h2>
             <p class="ag-strip-desc">Our newest product grew out of real problems we kept seeing: field teams losing data, broken syncs, forms that don't work without Wi-Fi. ZyntForms solves all of it.</p>
             <div class="ag-strip-actions">
               <a href="https://zyntforms.com" target="_blank" rel="noopener noreferrer" class="ag-btn ag-btn--violet">Visit ZyntForms ↗</a>
-              <a href="/contact" class="ag-btn ag-btn--ghost">Learn more</a>
+              <a href="/contact" class="ag-btn ag-btn--zf">Learn more</a>
             </div>
           </div>
           <div class="ag-strip-art" aria-hidden="true">
-            <div class="ag-strip-art-inner">
-              <span>ZF</span>
-            </div>
+            <div class="ag-strip-art-inner">ZF</div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- CTA -->
-    <section class="ag-section ag-cta-section">
+    <section class="ag-section">
       <div class="ag-wrap">
         <div class="ag-cta-card">
-          <div class="ag-cta-glow ag-cta-glow--v" aria-hidden="true"></div>
-          <div class="ag-cta-glow ag-cta-glow--c" aria-hidden="true"></div>
-          <p class="ag-section-eyebrow">Work with us</p>
+          <div class="ag-cta-blob ag-cta-blob--v" aria-hidden="true"></div>
+          <div class="ag-cta-blob ag-cta-blob--p" aria-hidden="true"></div>
+          <p class="ag-cta-eyebrow">Work with us</p>
           <h2 class="ag-cta-title">Ready to build<br><span class="ag-grad-text">something great?</span></h2>
           <p class="ag-cta-sub">We're based in Kampala and work with clients across East Africa and beyond. Let's start with a conversation.</p>
           <div class="ag-cta-actions">
-            <a href="/contact" class="ag-btn ag-btn--grad">Get in touch</a>
-            <a href="/services" class="ag-btn ag-btn--ghost-light">See our services</a>
+            <a href="/contact" class="ag-btn ag-btn--violet">Get in touch</a>
+            <a href="/services" class="ag-btn ag-btn--white-outline">See our services</a>
           </div>
         </div>
       </div>
@@ -154,463 +152,3 @@ const values = [
   </main>
   <Footer />
 </BaseLayout>
-
-<style>
-  .ag-page {
-    background: var(--ag-bg, #08090f);
-    color: var(--ag-text, #f1f5f9);
-    min-height: 100vh;
-  }
-
-  .ag-wrap {
-    max-width: 80rem;
-    margin-inline: auto;
-    padding-inline: clamp(1rem, 4vw, 3rem);
-  }
-
-  .ag-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.35rem 0.9rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: #94a3b8;
-    margin-bottom: 1.5rem;
-  }
-
-  .ag-dot {
-    width: 0.4rem;
-    height: 0.4rem;
-    border-radius: 50%;
-    background: #94a3b8;
-  }
-
-  .ag-grad-text {
-    background: linear-gradient(135deg, #c084fc 0%, #67e8f9 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .ag-section {
-    padding: clamp(4rem, 9vw, 7rem) 0;
-  }
-
-  .ag-section-eyebrow {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: #a855f7;
-    margin-bottom: 0.85rem;
-    text-align: center;
-  }
-
-  .ag-section-title {
-    font-size: clamp(1.85rem, 4vw, 2.75rem);
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    line-height: 1.12;
-    color: #f1f5f9;
-    text-align: center;
-    margin-bottom: 0.85rem;
-  }
-
-  .ag-section-sub {
-    font-size: 1.05rem;
-    color: #94a3b8;
-    text-align: center;
-    max-width: 36rem;
-    margin: 0 auto 3rem;
-    line-height: 1.65;
-  }
-
-  .ag-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.85rem 1.75rem;
-    border-radius: 999px;
-    font-weight: 600;
-    font-size: 0.92rem;
-    text-decoration: none;
-    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
-    white-space: nowrap;
-  }
-
-  .ag-btn:hover { transform: translateY(-2px); }
-
-  .ag-btn--grad {
-    background: linear-gradient(135deg, #a855f7, #22d3ee);
-    color: #fff;
-    box-shadow: 0 8px 28px rgba(168, 85, 247, 0.35);
-  }
-
-  .ag-btn--grad:hover { box-shadow: 0 12px 36px rgba(168, 85, 247, 0.5); }
-
-  .ag-btn--ghost {
-    background: rgba(255, 255, 255, 0.05);
-    color: #f1f5f9;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-  }
-
-  .ag-btn--ghost:hover {
-    background: rgba(255, 255, 255, 0.09);
-  }
-
-  .ag-btn--ghost-light {
-    background: transparent;
-    color: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .ag-btn--ghost-light:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: #fff;
-  }
-
-  .ag-btn--violet {
-    background: linear-gradient(135deg, #a855f7, #7c3aed);
-    color: #fff;
-    box-shadow: 0 8px 28px rgba(168, 85, 247, 0.35);
-  }
-
-  .ag-btn--violet:hover { box-shadow: 0 12px 36px rgba(168, 85, 247, 0.5); }
-
-  /* Hero */
-  .ag-hero {
-    position: relative;
-    overflow: hidden;
-    padding: clamp(7rem, 14vw, 11rem) 0 clamp(4rem, 8vw, 5rem);
-  }
-
-  .ag-hero-glow {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(80px);
-    opacity: 0.45;
-  }
-
-  .ag-hero-glow--v {
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(168, 85, 247, 0.45), transparent 70%);
-    top: -220px;
-    right: -100px;
-  }
-
-  .ag-hero-inner {
-    position: relative;
-    z-index: 1;
-    max-width: 56rem;
-  }
-
-  .ag-hero-title {
-    font-size: clamp(2.5rem, 6vw, 4.25rem);
-    font-weight: 700;
-    line-height: 1.06;
-    letter-spacing: -0.035em;
-    color: #f1f5f9;
-    margin-bottom: 1.25rem;
-  }
-
-  .ag-hero-sub {
-    font-size: clamp(1rem, 2vw, 1.15rem);
-    line-height: 1.7;
-    color: #94a3b8;
-    max-width: 40rem;
-    margin-bottom: 2rem;
-  }
-
-  .ag-hero-quote {
-    margin: 0;
-    padding: 1.5rem 2rem;
-    border-left: 3px solid rgba(168, 85, 247, 0.6);
-    background: rgba(168, 85, 247, 0.05);
-    border-radius: 0 1rem 1rem 0;
-    max-width: 40rem;
-  }
-
-  .ag-hero-quote p {
-    font-style: italic;
-    font-size: 0.97rem;
-    color: #cbd5e1;
-    line-height: 1.7;
-    margin-bottom: 0.6rem;
-  }
-
-  .ag-hero-quote cite {
-    font-size: 0.8rem;
-    font-weight: 600;
-    font-style: normal;
-    color: #a855f7;
-  }
-
-  /* Values */
-  .ag-values-section {
-    background: rgba(255, 255, 255, 0.015);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .ag-values-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1px;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 1.5rem;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  .ag-value-card {
-    background: #0d1017;
-    padding: 2.25rem 2rem;
-    transition: background 0.3s;
-    border-left: 3px solid transparent;
-  }
-
-  .ag-value-card:hover {
-    background: #111827;
-  }
-
-  .ag-value-card--violet {
-    border-left-color: rgba(168, 85, 247, 0.5);
-  }
-
-  .ag-value-card--cyan {
-    border-left-color: rgba(34, 211, 238, 0.4);
-  }
-
-  .ag-value-card h3 {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    margin-bottom: 0.6rem;
-  }
-
-  .ag-value-card--violet h3 { color: #c084fc; }
-  .ag-value-card--cyan h3 { color: #67e8f9; }
-
-  .ag-value-card p {
-    font-size: 0.9rem;
-    color: #94a3b8;
-    line-height: 1.7;
-  }
-
-  /* Team */
-  .ag-team-section {
-    background: #08090f;
-  }
-
-  .ag-team-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-  }
-
-  .ag-team-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 1.25rem;
-    padding: 1.75rem;
-    transition: border-color 0.3s, background 0.3s;
-  }
-
-  .ag-team-card:hover {
-    border-color: rgba(168, 85, 247, 0.3);
-    background: rgba(168, 85, 247, 0.04);
-  }
-
-  .ag-team-avatar {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 0.875rem;
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(34, 211, 238, 0.15));
-    border: 1px solid rgba(168, 85, 247, 0.25);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    font-weight: 800;
-    color: #c084fc;
-    margin-bottom: 1rem;
-    letter-spacing: 0.02em;
-  }
-
-  .ag-team-name {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #f1f5f9;
-    margin-bottom: 0.25rem;
-  }
-
-  .ag-team-role {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #a855f7;
-    margin-bottom: 0.75rem;
-  }
-
-  .ag-team-bio {
-    font-size: 0.88rem;
-    color: #94a3b8;
-    line-height: 1.65;
-  }
-
-  /* Product strip */
-  .ag-product-strip {
-    background: rgba(168, 85, 247, 0.04);
-    border-top: 1px solid rgba(168, 85, 247, 0.15);
-    border-bottom: 1px solid rgba(168, 85, 247, 0.15);
-  }
-
-  .ag-strip-inner {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 3rem;
-    align-items: center;
-  }
-
-  .ag-strip-title {
-    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    line-height: 1.12;
-    color: #f1f5f9;
-    margin-bottom: 1rem;
-  }
-
-  .ag-zf-brand {
-    background: linear-gradient(135deg, #c084fc, #a855f7);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .ag-strip-desc {
-    font-size: 0.97rem;
-    color: #94a3b8;
-    line-height: 1.7;
-    max-width: 36rem;
-    margin-bottom: 1.75rem;
-  }
-
-  .ag-strip-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.85rem;
-  }
-
-  .ag-strip-art {
-    flex-shrink: 0;
-  }
-
-  .ag-strip-art-inner {
-    width: 10rem;
-    height: 10rem;
-    border-radius: 2rem;
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(124, 58, 237, 0.2));
-    border: 1px solid rgba(168, 85, 247, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5rem;
-    font-weight: 900;
-    letter-spacing: -0.04em;
-    background-clip: text;
-    color: transparent;
-    background-image: linear-gradient(135deg, #c084fc, #67e8f9);
-    -webkit-background-clip: text;
-    box-shadow: 0 0 60px rgba(168, 85, 247, 0.25);
-  }
-
-  /* CTA */
-  .ag-cta-section {
-    background: #08090f;
-  }
-
-  .ag-cta-card {
-    background: #0d1017;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 2rem;
-    padding: clamp(3rem, 7vw, 5rem) clamp(1.5rem, 4vw, 3rem);
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .ag-cta-glow {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(60px);
-    opacity: 0.4;
-  }
-
-  .ag-cta-glow--v {
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(168, 85, 247, 0.5), transparent 70%);
-    top: -150px;
-    left: -100px;
-  }
-
-  .ag-cta-glow--c {
-    width: 350px;
-    height: 350px;
-    background: radial-gradient(circle, rgba(34, 211, 238, 0.4), transparent 70%);
-    bottom: -120px;
-    right: -80px;
-  }
-
-  .ag-cta-card > * { position: relative; z-index: 1; }
-
-  .ag-cta-title {
-    font-size: clamp(2rem, 4.5vw, 3.25rem);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-    color: #f1f5f9;
-    margin-bottom: 1rem;
-  }
-
-  .ag-cta-sub {
-    font-size: 1.05rem;
-    color: #94a3b8;
-    max-width: 32rem;
-    margin: 0 auto 2rem;
-    line-height: 1.65;
-  }
-
-  .ag-cta-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.85rem;
-    justify-content: center;
-  }
-
-  @media (max-width: 768px) {
-    .ag-values-grid,
-    .ag-team-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .ag-strip-inner {
-      grid-template-columns: 1fr;
-    }
-
-    .ag-strip-art {
-      display: none;
-    }
-  }
-</style>

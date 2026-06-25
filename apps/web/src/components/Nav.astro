@@ -6,9 +6,16 @@ const isAbout = currentPath.startsWith('/about');
 const isBlog = currentPath.startsWith('/blog');
 const isContact = currentPath.startsWith('/contact');
 ---
+
 <header class="ag-nav" id="site-nav">
   <div class="ag-nav-pill">
     <a href="/" class="ag-nav-logo" aria-label="Zyntel home">
+      <span class="ag-nav-logo-mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="512" cy="512" r="512" fill="#7c3aed"/>
+          <text x="80" y="700" font-family="'Geist Sans','Segoe UI',system-ui,sans-serif" font-weight="700" font-size="1200" fill="#ffffff">}</text>
+        </svg>
+      </span>
       Zyntel<span class="ag-nav-logo-dot">.</span>
     </a>
 
@@ -23,35 +30,112 @@ const isContact = currentPath.startsWith('/contact');
     <div class="ag-nav-actions">
       <a href="https://zyntforms.com" target="_blank" rel="noopener" class="ag-nav-product">ZyntForms ↗</a>
       <a href="/contact" class="ag-nav-cta">Start a project</a>
-      <button class="ag-nav-toggle" id="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">
+      <button class="ag-nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
         <span></span><span></span><span></span>
       </button>
     </div>
   </div>
 </header>
 
+<!-- Full-screen mobile menu overlay -->
+<div class="ag-mobile-menu" id="mobile-menu" aria-hidden="true" role="dialog" aria-label="Navigation">
+  <div class="ag-mobile-menu-inner">
+
+    <div class="ag-mobile-top">
+      <a href="/" class="ag-mobile-logo" aria-label="Zyntel home">
+        <span aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="512" cy="512" r="512" fill="#9333ea"/>
+            <text x="80" y="700" font-family="'Geist Sans','Segoe UI',system-ui,sans-serif" font-weight="700" font-size="1200" fill="#ffffff">}</text>
+          </svg>
+        </span>
+        Zyntel<span>.</span>
+      </a>
+      <button class="ag-mobile-close" id="menu-close" type="button" aria-label="Close menu">
+        CLOSE
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="ag-mobile-nav" aria-label="Mobile navigation">
+      <a href="/" class:list={['ag-mobile-link', isHome && 'is-active']} style="--i:0">Home</a>
+      <a href="/services" class:list={['ag-mobile-link', isServices && 'is-active']} style="--i:1">Services</a>
+      <a href="/about" class:list={['ag-mobile-link', isAbout && 'is-active']} style="--i:2">About</a>
+      <a href="/blog" class:list={['ag-mobile-link', isBlog && 'is-active']} style="--i:3">Blog</a>
+      <a href="/contact" class:list={['ag-mobile-link', isContact && 'is-active']} style="--i:4">Contact</a>
+    </nav>
+
+    <div class="ag-mobile-footer">
+      <div class="ag-mobile-footer-left">
+        <a href="mailto:contact@zyntel.net" class="ag-mobile-email">contact@zyntel.net</a>
+        <span class="ag-mobile-time" id="mobile-time" aria-live="off">—</span>
+      </div>
+      <div class="ag-mobile-footer-right">
+        <a href="https://x.com/ZyntelTech" target="_blank" rel="noopener noreferrer" class="ag-mobile-social">↗ TWITTER (X)</a>
+        <a href="https://www.linkedin.com/company/zynteltech" target="_blank" rel="noopener noreferrer" class="ag-mobile-social">↗ LINKEDIN</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <script>
-  const toggle = document.getElementById('nav-toggle');
-  const links = document.getElementById('nav-links');
-  if (toggle && links) {
-    toggle.addEventListener('click', () => {
-      const open = links.classList.toggle('is-open');
-      toggle.setAttribute('aria-expanded', String(open));
-    });
-    links.querySelectorAll('a').forEach(a =>
-      a.addEventListener('click', () => links.classList.remove('is-open'))
-    );
+  const toggle = document.getElementById('nav-toggle') as HTMLButtonElement | null;
+  const overlay = document.getElementById('mobile-menu') as HTMLElement | null;
+  const closeBtn = document.getElementById('menu-close') as HTMLButtonElement | null;
+  const timeEl = document.getElementById('mobile-time') as HTMLElement | null;
+
+  function openMenu() {
+    if (!overlay || !toggle) return;
+    overlay.classList.add('is-open');
+    overlay.removeAttribute('aria-hidden');
+    toggle.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
   }
+
+  function closeMenu() {
+    if (!overlay || !toggle) return;
+    overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden', 'true');
+    toggle.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  toggle?.addEventListener('click', openMenu);
+  closeBtn?.addEventListener('click', closeMenu);
+
+  overlay?.querySelectorAll('.ag-mobile-link').forEach(link => {
+    link.addEventListener('click', closeMenu);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay?.classList.contains('is-open')) closeMenu();
+  });
+
+  function updateTime() {
+    if (!timeEl) return;
+    timeEl.textContent = new Date().toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZone: 'Africa/Nairobi',
+    }) + ' EAT';
+  }
+  updateTime();
+  setInterval(updateTime, 1000);
 </script>
 
 <style>
+  /* ── Desktop floating pill nav ── */
   .ag-nav {
     position: fixed;
-    top: 1rem;
+    top: 2rem;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
-    width: calc(100% - 2.5rem);
+    width: calc(100% - 3.5rem);
     max-width: 72rem;
   }
 
@@ -70,6 +154,9 @@ const isContact = currentPath.startsWith('/contact');
   }
 
   .ag-nav-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
     font-size: 1.2rem;
     font-weight: 800;
     letter-spacing: -0.04em;
@@ -78,11 +165,19 @@ const isContact = currentPath.startsWith('/contact');
     flex-shrink: 0;
   }
 
+  .ag-nav-logo-mark {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .ag-nav-logo-mark svg {
+    border-radius: 50%;
+    display: block;
+  }
+
   .ag-nav-logo-dot {
-    background: linear-gradient(135deg, #7c3aed, #db2777);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #9333ea;
   }
 
   .ag-nav-links {
@@ -98,7 +193,22 @@ const isContact = currentPath.startsWith('/contact');
     text-decoration: none;
     padding: 0.45rem 0.85rem;
     border-radius: 999px;
+    position: relative;
     transition: color 0.2s, background 0.2s;
+  }
+
+  .ag-nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0.1rem;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: calc(100% - 1.4rem);
+    height: 2px;
+    border-radius: 999px;
+    background: #9333ea;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: center;
   }
 
   .ag-nav-link:hover {
@@ -109,7 +219,10 @@ const isContact = currentPath.startsWith('/contact');
   .ag-nav-link.is-active {
     color: #0f0f14;
     font-weight: 600;
-    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .ag-nav-link.is-active::after {
+    transform: translateX(-50%) scaleX(1);
   }
 
   .ag-nav-actions {
@@ -125,53 +238,86 @@ const isContact = currentPath.startsWith('/contact');
     text-decoration: none;
     padding: 0.4rem 0.85rem;
     border-radius: 999px;
-    border: 1.5px solid rgba(124, 58, 237, 0.25);
-    background: rgba(124, 58, 237, 0.06);
-    transition: background 0.2s, border-color 0.2s;
+    border: none;
+    background: linear-gradient(to bottom, #ffffff 0%, #f0eeff 100%);
+    box-shadow:
+      inset 0 1.5px 0px rgba(255, 255, 255, 1),
+      0 6px 14px rgba(124, 58, 237, 0.12),
+      0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+    white-space: nowrap;
   }
 
   .ag-nav-product:hover {
-    background: rgba(124, 58, 237, 0.1);
-    border-color: rgba(124, 58, 237, 0.4);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1.5px 0px rgba(255, 255, 255, 1),
+      0 10px 20px rgba(124, 58, 237, 0.18),
+      0 3px 6px rgba(0, 0, 0, 0.07);
+  }
+
+  .ag-nav-product:active {
+    transform: translateY(1px);
+    box-shadow:
+      inset 0 1px 0px rgba(255, 255, 255, 0.8),
+      0 3px 6px rgba(124, 58, 237, 0.1);
   }
 
   .ag-nav-cta {
     padding: 0.6rem 1.25rem;
     border-radius: 999px;
-    background: #0f0f14;
     color: #ffffff;
     font-size: 0.85rem;
     font-weight: 600;
     text-decoration: none;
-    transition: opacity 0.2s, transform 0.2s;
     white-space: nowrap;
+    background: linear-gradient(to bottom, #2b2b2b 0%, #111111 100%);
+    box-shadow:
+      inset 0 1.5px 0px rgba(255, 255, 255, 0.4),
+      0 8px 16px rgba(0, 0, 0, 0.28),
+      0 2px 4px rgba(0, 0, 0, 0.18);
+    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
   }
 
   .ag-nav-cta:hover {
-    opacity: 0.85;
     transform: translateY(-1px);
+    box-shadow:
+      inset 0 1.5px 0px rgba(255, 255, 255, 0.45),
+      0 12px 24px rgba(0, 0, 0, 0.35),
+      0 3px 6px rgba(0, 0, 0, 0.2);
   }
 
+  .ag-nav-cta:active {
+    transform: translateY(1px);
+    box-shadow:
+      inset 0 1px 0px rgba(255, 255, 255, 0.2),
+      0 3px 6px rgba(0, 0, 0, 0.15);
+  }
+
+  /* ── Hamburger button (dark circle) ── */
   .ag-nav-toggle {
     display: none;
-    flex-direction: column;
-    gap: 4.5px;
-    padding: 8px;
-    background: rgba(0, 0, 0, 0.05);
-    border: none;
+    width: 2.6rem;
+    height: 2.6rem;
     border-radius: 50%;
+    background: #1c1c1e;
+    border: none;
     cursor: pointer;
-    width: 2.25rem;
-    height: 2.25rem;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 4.5px;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
   }
+
+  .ag-nav-toggle:hover { opacity: 0.8; }
 
   .ag-nav-toggle span {
     display: block;
-    width: 18px;
+    width: 15px;
     height: 1.5px;
-    background: #0f0f14;
+    background: #ffffff;
     border-radius: 2px;
   }
 
@@ -182,39 +328,187 @@ const isContact = currentPath.startsWith('/contact');
   @media (max-width: 768px) {
     .ag-nav-toggle { display: flex; }
     .ag-nav-cta { display: none; }
-
-    .ag-nav-links {
-      position: fixed;
-      top: 5rem;
-      left: 1rem;
-      right: 1rem;
-      flex-direction: column;
-      gap: 0;
-      padding: 0.5rem;
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      border-radius: 1.25rem;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
-      transform: translateY(-8px);
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity 0.25s, transform 0.25s, visibility 0.25s;
-    }
-
-    .ag-nav-links.is-open {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transform: translateY(0);
-    }
-
-    .ag-nav-link {
-      display: block;
-      width: 100%;
-      padding: 0.85rem 1.25rem;
-      border-radius: 0.75rem;
-    }
+    .ag-nav-links { display: none; }
   }
+
+  /* ── Full-screen mobile menu overlay ── */
+  .ag-mobile-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 1999;
+    background: rgba(10, 8, 18, 0.93);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+
+  .ag-mobile-menu.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .ag-mobile-menu-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.5rem 1.75rem 2rem;
+  }
+
+  /* Top bar inside overlay */
+  .ag-mobile-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .ag-mobile-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .ag-mobile-logo span {
+    color: #c084fc;
+  }
+
+  .ag-mobile-logo svg {
+    border-radius: 50%;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .ag-mobile-close {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    padding: 0.45rem 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .ag-mobile-close:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+  }
+
+  /* Nav links — large, right-aligned */
+  .ag-mobile-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 0.15rem;
+    padding: 1rem 0;
+  }
+
+  .ag-mobile-link {
+    font-size: clamp(3rem, 10vw, 5.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    text-align: right;
+    transition: color 0.2s;
+    /* Slide-in animation with stagger */
+    opacity: 0;
+    transform: translateX(30px);
+    transition: opacity 0.4s ease calc(var(--i, 0) * 0.07s),
+                transform 0.4s ease calc(var(--i, 0) * 0.07s),
+                color 0.2s;
+  }
+
+  .ag-mobile-menu.is-open .ag-mobile-link {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .ag-mobile-link:hover,
+  .ag-mobile-link.is-active {
+    color: #ffffff;
+  }
+
+  .ag-mobile-link.is-active {
+    background: linear-gradient(135deg, #a78bfa, #818cf8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Footer row */
+  .ag-mobile-footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    flex-wrap: wrap;
+  }
+
+  .ag-mobile-footer-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .ag-mobile-email {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    text-decoration: none;
+    letter-spacing: 0.01em;
+    transition: color 0.2s;
+  }
+
+  .ag-mobile-email:hover { color: #ffffff; }
+
+  .ag-mobile-time {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.3);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  .ag-mobile-footer-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+  }
+
+  .ag-mobile-social {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .ag-mobile-social:hover { color: rgba(255, 255, 255, 0.9); }
 </style>

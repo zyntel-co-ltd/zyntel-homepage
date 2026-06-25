@@ -108,24 +108,7 @@
   --card-shadow: rgba(0, 0, 0, 0.5);
 }
 
-/* === Agency dark design system === */
-:root {
-  --ag-bg: #08090f;
-  --ag-surface: #0d1017;
-  --ag-card: #111827;
-  --ag-border: rgba(255, 255, 255, 0.07);
-  --ag-border-hover: rgba(255, 255, 255, 0.14);
-  --ag-text: #f1f5f9;
-  --ag-muted: #94a3b8;
-  --ag-violet: #a855f7;
-  --ag-violet-dim: #9333ea;
-  --ag-cyan: #22d3ee;
-  --ag-cyan-dim: #06b6d4;
-  --ag-gradient: linear-gradient(135deg, #a855f7 0%, #22d3ee 100%);
-  --ag-gradient-text: linear-gradient(135deg, #c084fc 0%, #67e8f9 100%);
-  --ag-glow-v: rgba(168, 85, 247, 0.35);
-  --ag-glow-c: rgba(34, 211, 238, 0.25);
-}
+/* agency.css defines all --ag-* tokens with the correct light values */
 
 * {
   margin: 0;
@@ -141,7 +124,7 @@ body {
   font-family: var(--font-sans);
   line-height: 1.6;
   color: var(--text-primary);
-  background: var(--bg-dark);
+  background: #c8cad4; /* slightly darker than --ag-bg so rounded card floats */
   overflow-x: hidden;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   letter-spacing: -0.01em;

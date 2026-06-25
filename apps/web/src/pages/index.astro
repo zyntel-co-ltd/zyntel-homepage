@@ -2,6 +2,72 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+
+const homeServices = [
+  {
+    num: '01',
+    title: 'Web Applications',
+    desc: 'Complex dashboards, SaaS platforms, and data-heavy systems engineered for performance. Built to grow with your business from day one.',
+    tags: ['React / Next.js', 'Node.js & Python', 'REST & GraphQL APIs', 'Cloud deployment'],
+  },
+  {
+    num: '02',
+    title: 'Mobile Apps',
+    desc: 'Cross-platform iOS & Android apps built offline-first for East African connectivity realities — low-bandwidth, high reliability.',
+    tags: ['React Native', 'Offline-first', 'Low-bandwidth optimized'],
+  },
+  {
+    num: '03',
+    title: 'Websites & Landing Pages',
+    desc: 'Fast, SEO-optimized sites that make strong first impressions and turn visitors into clients. Corporate sites to high-converting landing pages.',
+    tags: ['Astro / Next.js', 'CMS integration', 'SEO-first architecture'],
+  },
+  {
+    num: '04',
+    title: 'Custom Software & APIs',
+    desc: 'Bespoke backend systems, third-party integrations, data pipelines, and APIs that connect your entire stack seamlessly.',
+    tags: ['Custom REST APIs', 'System integrations', 'Data pipelines'],
+  },
+  {
+    num: '05',
+    title: 'UI/UX Design',
+    desc: 'Intuitive interfaces that reduce friction and make complex workflows feel simple and natural. Research-driven, accessibility-first.',
+    tags: ['Figma design systems', 'Prototyping & testing', 'WCAG accessible'],
+  },
+];
+
+const clients = [
+  'Nakasero Hospital',
+  'Ace Cleaning Company',
+  'Prime Property Management',
+];
+
+const faqs = [
+  {
+    q: "What's the typical timeline from idea to launch?",
+    a: "A simple website takes 2–4 weeks. A full web application typically takes 6–12 weeks. We give you a precise timeline after an initial discovery session — no vague estimates.",
+  },
+  {
+    q: "What do we need to get started?",
+    a: "A clear brief or problem statement, access to a decision-maker, and a rough budget range. We handle all the technical scoping, wireframing, and planning from there.",
+  },
+  {
+    q: "Which technologies do you use?",
+    a: "React, Next.js, and Astro for frontends; Node.js, Python, and Go for backends; PostgreSQL and MongoDB for data. We choose the stack that best fits your project — not our habit.",
+  },
+  {
+    q: "Do you provide ongoing support after launch?",
+    a: "Yes. We offer monthly maintenance retainers, performance monitoring, security updates, and can scale features as your product grows. We don't disappear post-launch.",
+  },
+  {
+    q: "Can you work with our existing codebase?",
+    a: "Absolutely. We regularly take over existing projects, conduct code audits, and build incrementally — without recommending a full rewrite unless it's truly necessary.",
+  },
+  {
+    q: "How does pricing work?",
+    a: "Fixed-price per project based on scope, not hourly billing. After a discovery call you receive a detailed proposal with clear deliverables and no surprise costs.",
+  },
+];
 ---
 <BaseLayout
   title="Web Agency — Apps, Websites & Software"
@@ -14,14 +80,11 @@ import Footer from '../components/Footer.astro';
   <main class="ag-page">
 
     <!-- ── HERO ── -->
+    <div class="ag-hero-wrapper">
     <section class="ag-hero">
       <div class="ag-blob ag-blob--1" aria-hidden="true"></div>
       <div class="ag-blob ag-blob--2" aria-hidden="true"></div>
       <div class="ag-wrap">
-        <div class="ag-eyebrow">
-          <svg class="ag-eyebrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2l2.09 6.26L21 10l-6.91 1.74L12 18l-2.09-5.26L3 11l6.91-1.74z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-          Web Agency · Kampala, Uganda
-        </div>
         <h1 class="ag-hero-title">
           We build digital products<br>
           <span class="ag-grad-text">that move Africa forward.</span>
@@ -51,167 +114,290 @@ import Footer from '../components/Footer.astro';
         </div>
       </div>
     </section>
+    </div><!-- end .ag-hero-wrapper -->
 
-    <!-- ── SERVICES ── -->
-    <section class="ag-section ag-section--alt" id="services">
-      <div class="ag-wrap">
-        <p class="ag-section-eyebrow">What we do</p>
-        <h2 class="ag-section-title">End-to-end digital<br>product development</h2>
-        <p class="ag-section-sub">From first idea to live product — design, engineering, and delivery under one roof.</p>
-        <div class="ag-services-grid">
-
-          <article class="ag-service-card">
-            <div class="ag-service-icon ag-service-icon--v">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+    <!-- ── CLIENTS MARQUEE (standalone, floats between hero and services pill) ── -->
+    <div class="ag-clients-section" aria-label="Our clients">
+      <div class="ag-clients-inner">
+        <p class="ag-clients-label">Clients<br>served</p>
+        <div class="ag-clients-track-wrap">
+          <div class="ag-clients-track" aria-hidden="true">
+            <!-- Group 1 -->
+            <div class="ag-clients-group">
+              {clients.map((name, i) => (
+                <>
+                  <span class="ag-client-name">{name}</span>
+                  {i < clients.length - 1 && <span class="ag-client-sep">·</span>}
+                </>
+              ))}
+              <span class="ag-client-sep" style="padding: 0 1rem">·</span>
             </div>
-            <h3>Web Applications</h3>
-            <p>Powerful, scalable web apps with great UX. Dashboards, platforms, and SaaS products built on modern stacks.</p>
-            <a href="/services#web-apps" class="ag-card-link">Learn more →</a>
-          </article>
-
-          <article class="ag-service-card">
-            <div class="ag-service-icon ag-service-icon--c">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.75"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
-            </div>
-            <h3>Websites & Landing Pages</h3>
-            <p>Fast, SEO-friendly websites that convert. Corporate sites, portfolios, and marketing pages done right.</p>
-            <a href="/services#websites" class="ag-card-link">Learn more →</a>
-          </article>
-
-          <article class="ag-service-card">
-            <div class="ag-service-icon ag-service-icon--v">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="1.75"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>
-            </div>
-            <h3>Mobile Apps</h3>
-            <p>Cross-platform mobile applications for iOS and Android, built for East African connectivity realities.</p>
-            <a href="/services#mobile" class="ag-card-link">Learn more →</a>
-          </article>
-
-          <article class="ag-service-card">
-            <div class="ag-service-icon ag-service-icon--c">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 20l4-16M4 9l-3 3 3 3M20 9l3 3-3 3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <h3>Custom Software & APIs</h3>
-            <p>Bespoke backend systems, REST APIs, integrations, and data pipelines tailored to your operations.</p>
-            <a href="/services#custom" class="ag-card-link">Learn more →</a>
-          </article>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- ── ZYNTFORMS SPOTLIGHT ── -->
-    <section class="ag-section">
-      <div class="ag-wrap">
-        <div class="ag-zf-card">
-          <div class="ag-zf-glow" aria-hidden="true"></div>
-          <div>
-            <div class="ag-zf-eyebrow">
-              <span class="ag-zf-dot" aria-hidden="true"></span>
-              New product
-            </div>
-            <h2 class="ag-zf-title">
-              <span class="ag-zf-brand">ZyntForms</span> —<br>
-              built for field teams.
-            </h2>
-            <p class="ag-zf-desc">
-              Enterprise-grade data collection that works offline. ZyntForms lets remote teams capture, validate, and sync data without reliable internet — with AI-assisted field intelligence built in.
-            </p>
-            <ul class="ag-zf-features">
-              <li>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
-                Offline-first — zero data loss without Wi-Fi
-              </li>
-              <li>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
-                AI-powered validation and smart suggestions
-              </li>
-              <li>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
-                Instant sync when connectivity returns
-              </li>
-              <li>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
-                Built for NGOs, researchers, and field operations
-              </li>
-            </ul>
-            <div class="ag-zf-actions">
-              <a href="https://zyntforms.com" target="_blank" rel="noopener noreferrer" class="ag-btn ag-btn--violet">Explore ZyntForms ↗</a>
-              <a href="/contact" class="ag-btn ag-btn--zf">Get early access</a>
+            <!-- Group 2 (duplicate for seamless loop) -->
+            <div class="ag-clients-group">
+              {clients.map((name, i) => (
+                <>
+                  <span class="ag-client-name">{name}</span>
+                  {i < clients.length - 1 && <span class="ag-client-sep">·</span>}
+                </>
+              ))}
+              <span class="ag-client-sep" style="padding: 0 1rem">·</span>
             </div>
           </div>
-          <div aria-hidden="true">
-            <div class="ag-zf-mock">
-              <div class="ag-zf-mock-topbar">
-                <div class="ag-zf-mock-dots"><span></span><span></span><span></span></div>
-                <span class="ag-zf-mock-title">Field Survey</span>
-              </div>
-              <div class="ag-zf-mock-body">
-                <div class="ag-zf-mock-label">Respondent name</div>
-                <div class="ag-zf-mock-field"></div>
-                <div class="ag-zf-mock-label">Location</div>
-                <div class="ag-zf-mock-field ag-zf-mock-field--sm"></div>
-                <div class="ag-zf-mock-label">Response type</div>
-                <div class="ag-zf-mock-pills">
-                  <span class="active">Option A</span>
-                  <span>Option B</span>
-                  <span>Option C</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SERVICES PILL ── -->
+    <div class="ag-section-pill" id="services-pill">
+
+      <!-- ── SERVICES (Aigocy accordion) ── -->
+      <section class="ag-section" id="services">
+        <div class="ag-wrap">
+          <div class="ag-home-svc">
+
+            <!-- Left: sticky header -->
+            <div class="ag-home-svc-header">
+              <p class="ag-section-eyebrow" style="text-align:left">Services</p>
+              <h2 class="ag-home-svc-big-title">End-to-end<br>digital services</h2>
+              <p class="ag-home-svc-big-desc">From first idea to live product — design, engineering, and delivery under one roof in Kampala.</p>
+              <a href="/services" class="ag-btn ag-btn--dark">See all services →</a>
+            </div>
+
+            <!-- Right: accordion -->
+            <div class="ag-home-svc-list" id="home-svc-list">
+              {homeServices.map((svc, i) => (
+                <div class:list={["ag-home-svc-item", i === 0 && "is-active"]} data-svc-index={i}>
+                  <button class="ag-home-svc-trigger" type="button" aria-expanded={i === 0 ? "true" : "false"}>
+                    <span class="ag-home-svc-trigger-title">{svc.title}</span>
+                    <span class="ag-home-svc-trigger-num">({svc.num})</span>
+                  </button>
+                  <div class="ag-home-svc-body">
+                    <p class="ag-home-svc-body-desc">{svc.desc}</p>
+                    <div class="ag-home-svc-tags">
+                      {svc.tags.map(tag => <span class="ag-home-svc-tag">{tag}</span>)}
+                    </div>
+                  </div>
                 </div>
-                <div class="ag-zf-mock-submit">Submit response</div>
+              ))}
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ── ZYNTFORMS SPOTLIGHT ── -->
+      <section class="ag-section ag-section--alt">
+        <div class="ag-wrap">
+          <div class="ag-zf-card">
+            <div class="ag-zf-glow" aria-hidden="true"></div>
+            <div>
+              <div class="ag-zf-eyebrow">
+                <span class="ag-zf-dot" aria-hidden="true"></span>
+                New product
               </div>
-              <div class="ag-zf-sync-badge">
-                <span class="ag-sync-dot"></span> Syncing 3 of 12…
+              <h2 class="ag-zf-title">
+                <span class="ag-zf-brand">ZyntForms</span> —<br>
+                forms that feel like<br>conversations.
+              </h2>
+              <p class="ag-zf-desc">
+                Build beautiful forms, surveys, and feedback tools — without writing a single line of code. Describe what you need and AI generates it in seconds.
+              </p>
+              <ul class="ag-zf-features">
+                <li>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
+                  AI generation — describe it, done in seconds
+                </li>
+                <li>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
+                  AI insights — sentiment analysis & follow-up suggestions
+                </li>
+                <li>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
+                  Multi-company & teams with role-based access
+                </li>
+                <li>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
+                  QR code sharing — print and collect responses instantly
+                </li>
+              </ul>
+              <div class="ag-zf-actions">
+                <a href="https://zyntforms.com" target="_blank" rel="noopener noreferrer" class="ag-btn ag-btn--zf-primary">Start for free →</a>
+                <a href="https://zyntforms.com" target="_blank" rel="noopener noreferrer" class="ag-btn ag-btn--zf">See templates</a>
+              </div>
+            </div>
+            <div aria-hidden="true">
+              <div class="ag-zf-mock">
+                <div class="ag-zf-mock-topbar">
+                  <div class="ag-zf-mock-dots"><span></span><span></span><span></span></div>
+                  <span class="ag-zf-mock-title">Patient Feedback Form</span>
+                </div>
+                <div class="ag-zf-mock-body">
+                  <div class="ag-zf-mock-ai-prompt">
+                    <span class="ag-zf-mock-ai-icon">✦</span>
+                    "A patient feedback form with name, rating, department visited, and open comments"
+                  </div>
+                  <div class="ag-zf-mock-label">Full name</div>
+                  <div class="ag-zf-mock-field"></div>
+                  <div class="ag-zf-mock-label">Department visited</div>
+                  <div class="ag-zf-mock-field ag-zf-mock-field--sm"></div>
+                  <div class="ag-zf-mock-label">Rating out of 10</div>
+                  <div class="ag-zf-mock-rating">
+                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                      <span class:list={[n <= 8 && "active"]}>{n}</span>
+                    ))}
+                  </div>
+                  <div class="ag-zf-mock-submit">Submit feedback</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ── PROCESS ── -->
-    <section class="ag-section ag-section--alt">
-      <div class="ag-wrap">
-        <p class="ag-section-eyebrow">How we work</p>
-        <h2 class="ag-section-title">From idea to live product<br>in three clear stages</h2>
-        <div class="ag-process-grid">
-          <div class="ag-process-step">
-            <div class="ag-process-num">01</div>
-            <h3>Discover</h3>
-            <p>We learn your business, users, and goals. Then we map the right technology to the right problem — no jargon, just clarity.</p>
-          </div>
-          <div class="ag-process-arrow" aria-hidden="true">→</div>
-          <div class="ag-process-step">
-            <div class="ag-process-num">02</div>
-            <h3>Design & Build</h3>
-            <p>UI/UX design, rapid prototyping, then full-stack development with regular milestone check-ins and your feedback built in.</p>
-          </div>
-          <div class="ag-process-arrow" aria-hidden="true">→</div>
-          <div class="ag-process-step">
-            <div class="ag-process-num">03</div>
-            <h3>Launch & Grow</h3>
-            <p>We deploy, test, and remain your technical partner for maintenance, iterations, and scaling as your business grows.</p>
+      <!-- ── PROCESS ── -->
+      <section class="ag-section ag-section--alt">
+        <div class="ag-wrap">
+          <p class="ag-section-eyebrow">How we work</p>
+          <h2 class="ag-section-title">From idea to live product<br>in three clear stages</h2>
+          <div class="ag-process-grid">
+            <div class="ag-process-step">
+              <div class="ag-process-num">01</div>
+              <h3>Discover</h3>
+              <p>We learn your business, users, and goals. Then we map the right technology to the right problem — no jargon, just clarity.</p>
+            </div>
+            <div class="ag-process-arrow" aria-hidden="true">→</div>
+            <div class="ag-process-step">
+              <div class="ag-process-num">02</div>
+              <h3>Design & Build</h3>
+              <p>UI/UX design, rapid prototyping, then full-stack development with regular milestone check-ins and your feedback built in.</p>
+            </div>
+            <div class="ag-process-arrow" aria-hidden="true">→</div>
+            <div class="ag-process-step">
+              <div class="ag-process-num">03</div>
+              <h3>Launch & Grow</h3>
+              <p>We deploy, test, and remain your technical partner for maintenance, iterations, and scaling as your business grows.</p>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ── CTA ── -->
-    <section class="ag-section">
-      <div class="ag-wrap">
-        <div class="ag-cta-card">
-          <div class="ag-cta-blob ag-cta-blob--v" aria-hidden="true"></div>
-          <div class="ag-cta-blob ag-cta-blob--p" aria-hidden="true"></div>
-          <p class="ag-cta-eyebrow">Ready when you are</p>
-          <h2 class="ag-cta-title">Let's build something<br><span class="ag-grad-text">great together.</span></h2>
-          <p class="ag-cta-sub">Tell us about your project and we'll get back to you within one business day.</p>
-          <div class="ag-cta-actions">
-            <a href="/contact" class="ag-btn ag-btn--violet">Start a project</a>
-            <a href="mailto:contact@zyntel.net" class="ag-btn ag-btn--white-outline">contact@zyntel.net</a>
+    </div><!-- end #services-pill -->
+
+    <!-- ── FAQ PILL ── -->
+    <div class="ag-section-pill" id="faq-pill">
+
+      <!-- ── FAQ ── -->
+      <section class="ag-section">
+        <div class="ag-wrap">
+          <div class="ag-faq-eyebrow">
+            <span class="ag-faq-dot" aria-hidden="true"></span>
+            FAQs
+          </div>
+          <h2 class="ag-faq-big-title">Frequently Asked<br>Questions</h2>
+          <div class="ag-faq-list" id="faq-list">
+            {faqs.map((faq, i) => (
+              <div class:list={["ag-faq-item", i === 0 && "is-open"]}>
+                <button class="ag-faq-btn" type="button" aria-expanded={i === 0 ? "true" : "false"}>
+                  <span class="ag-faq-question">{faq.q}</span>
+                  <span class="ag-faq-icon" aria-hidden="true">+</span>
+                </button>
+                <div class="ag-faq-answer">
+                  <p>{faq.a}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <!-- ── CTA ── -->
+      <section class="ag-section ag-section--alt">
+        <div class="ag-wrap">
+          <div class="ag-cta-card">
+            <div class="ag-cta-blob ag-cta-blob--v" aria-hidden="true"></div>
+            <div class="ag-cta-blob ag-cta-blob--p" aria-hidden="true"></div>
+            <p class="ag-cta-eyebrow">Ready when you are</p>
+            <h2 class="ag-cta-title">Let's build something<br><span class="ag-grad-text">great together.</span></h2>
+            <p class="ag-cta-sub">Tell us about your project and we'll get back to you within one business day.</p>
+            <div class="ag-cta-actions">
+              <a href="/contact" class="ag-btn ag-btn--violet">Start a project</a>
+              <a href="mailto:contact@zyntel.net" class="ag-btn ag-btn--white-outline">contact@zyntel.net</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- end #faq-pill -->
 
   </main>
   <Footer />
 </BaseLayout>
+
+<script>
+  // ── Hero mouse parallax + spotlight ──
+  const hero = document.querySelector<HTMLElement>('.ag-hero');
+  const blob1 = document.querySelector<HTMLElement>('.ag-blob--1');
+  const blob2 = document.querySelector<HTMLElement>('.ag-blob--2');
+  const heroWrap = document.querySelector<HTMLElement>('.ag-hero .ag-wrap');
+
+  if (hero && blob1 && blob2) {
+    let tx = 0, ty = 0, cx = 0, cy = 0;
+
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+    hero.addEventListener('mousemove', (e: MouseEvent) => {
+      const r = hero.getBoundingClientRect();
+      tx = ((e.clientX - r.left) / r.width  - 0.5) * 2;
+      ty = ((e.clientY - r.top)  / r.height - 0.5) * 2;
+      hero.style.setProperty('--spotlight-x', `${e.clientX - r.left}px`);
+      hero.style.setProperty('--spotlight-y', `${e.clientY - r.top}px`);
+    });
+
+    hero.addEventListener('mouseleave', () => {
+      tx = 0; ty = 0;
+      hero.style.setProperty('--spotlight-x', '50%');
+      hero.style.setProperty('--spotlight-y', '50%');
+    });
+
+    (function tick() {
+      cx = lerp(cx, tx, 0.055);
+      cy = lerp(cy, ty, 0.055);
+      blob1.style.transform = `translate(${cx * 45}px, ${cy * 32}px)`;
+      blob2.style.transform = `translate(${cx * -28}px, ${cy * -22}px)`;
+      if (heroWrap) heroWrap.style.transform = `translate(${cx * -9}px, ${cy * -7}px)`;
+      requestAnimationFrame(tick);
+    })();
+  }
+
+  // ── Services accordion ──
+  const svcItems = document.querySelectorAll<HTMLElement>('.ag-home-svc-item');
+  svcItems.forEach((item) => {
+    item.querySelector('.ag-home-svc-trigger')?.addEventListener('click', () => {
+      const isAlreadyActive = item.classList.contains('is-active');
+      if (isAlreadyActive) return;
+      svcItems.forEach(el => {
+        el.classList.remove('is-active');
+        el.querySelector('.ag-home-svc-trigger')?.setAttribute('aria-expanded', 'false');
+      });
+      item.classList.add('is-active');
+      item.querySelector('.ag-home-svc-trigger')?.setAttribute('aria-expanded', 'true');
+    });
+  });
+
+  // ── FAQ accordion ──
+  const faqItems = document.querySelectorAll<HTMLElement>('.ag-faq-item');
+  faqItems.forEach(item => {
+    const btn = item.querySelector('.ag-faq-btn');
+    btn?.addEventListener('click', () => {
+      const isOpen = item.classList.contains('is-open');
+      faqItems.forEach(el => {
+        el.classList.remove('is-open');
+        el.querySelector('.ag-faq-btn')?.setAttribute('aria-expanded', 'false');
+      });
+      if (!isOpen) {
+        item.classList.add('is-open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+</script>

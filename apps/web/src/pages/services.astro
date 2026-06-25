@@ -27,7 +27,7 @@ const services = [
     icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="1.75"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>`,
     accent: 'violet',
     title: 'Mobile App Development',
-    tagline: 'Built for Africa\'s connectivity realities',
+    tagline: "Built for Africa's connectivity realities",
     description: 'Cross-platform mobile apps for iOS and Android using React Native. We build offline-capable apps designed to work reliably on the networks and devices your users actually have.',
     features: ['React Native for iOS & Android', 'Offline-first architecture', 'Push notifications & background sync', 'Biometric authentication', 'App store submission & review', 'Low-bandwidth optimization'],
   },
@@ -37,7 +37,7 @@ const services = [
     accent: 'cyan',
     title: 'Custom Software & APIs',
     tagline: 'Bespoke systems for complex problems',
-    description: 'When off-the-shelf software doesn\'t cut it, we build exactly what you need. Custom backend systems, third-party integrations, data pipelines, and APIs that connect your stack together.',
+    description: "When off-the-shelf software doesn't cut it, we build exactly what you need. Custom backend systems, third-party integrations, data pipelines, and APIs that connect your stack together.",
     features: ['Custom REST & GraphQL APIs', 'Third-party integrations', 'Automated data pipelines', 'Webhook & event-driven systems', 'Legacy system modernization', 'Internal tooling & automation'],
   },
   {
@@ -55,7 +55,7 @@ const services = [
     accent: 'cyan',
     title: 'Maintenance & Support',
     tagline: 'A partner, not just a vendor',
-    description: 'We don\'t disappear after launch. Our ongoing support packages keep your product secure, performant, and up-to-date — so you can focus on your business while we keep the tech running.',
+    description: "We don't disappear after launch. Our ongoing support packages keep your product secure, performant, and up-to-date — so you can focus on your business while we keep the tech running.",
     features: ['Monthly maintenance retainers', 'Performance monitoring & alerts', 'Security patches & updates', 'Feature additions & improvements', 'Priority response SLA', 'Technical consulting & code review'],
   },
 ];
@@ -70,11 +70,11 @@ const services = [
 
     <!-- HERO -->
     <section class="ag-hero">
-      <div class="ag-hero-glow ag-hero-glow--v" aria-hidden="true"></div>
-      <div class="ag-hero-glow ag-hero-glow--c" aria-hidden="true"></div>
+      <div class="ag-blob ag-blob--1" aria-hidden="true"></div>
+      <div class="ag-blob ag-blob--2" aria-hidden="true"></div>
       <div class="ag-wrap">
         <div class="ag-eyebrow">
-          <span class="ag-dot" aria-hidden="true"></span>
+          <svg class="ag-eyebrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2l2.09 6.26L21 10l-6.91 1.74L12 18l-2.09-5.26L3 11l6.91-1.74z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
           What we build
         </div>
         <h1 class="ag-hero-title">
@@ -84,12 +84,12 @@ const services = [
         <p class="ag-hero-sub">
           Full-service web and mobile development for businesses that need more than a template. We build real products that solve real problems.
         </p>
-        <a href="/contact" class="ag-btn ag-btn--grad">Discuss your project</a>
+        <a href="/contact" class="ag-btn ag-btn--dark">Discuss your project</a>
       </div>
     </section>
 
     <!-- SERVICES LIST -->
-    <section class="ag-section ag-services-list">
+    <section class="ag-section ag-section--alt">
       <div class="ag-wrap">
         {services.map((svc) => (
           <article class="ag-svc-item" id={svc.id}>
@@ -113,17 +113,17 @@ const services = [
     </section>
 
     <!-- CTA -->
-    <section class="ag-section ag-cta-section">
+    <section class="ag-section">
       <div class="ag-wrap">
         <div class="ag-cta-card">
-          <div class="ag-cta-glow ag-cta-glow--v" aria-hidden="true"></div>
-          <div class="ag-cta-glow ag-cta-glow--c" aria-hidden="true"></div>
-          <p class="ag-section-eyebrow">Let's work together</p>
+          <div class="ag-cta-blob ag-cta-blob--v" aria-hidden="true"></div>
+          <div class="ag-cta-blob ag-cta-blob--p" aria-hidden="true"></div>
+          <p class="ag-cta-eyebrow">Let's work together</p>
           <h2 class="ag-cta-title">Ready to start<br><span class="ag-grad-text">your project?</span></h2>
           <p class="ag-cta-sub">Tell us what you're building and we'll put together a plan. No commitment required.</p>
           <div class="ag-cta-actions">
-            <a href="/contact" class="ag-btn ag-btn--grad">Get in touch</a>
-            <a href="mailto:contact@zyntel.net" class="ag-btn ag-btn--ghost-light">contact@zyntel.net</a>
+            <a href="/contact" class="ag-btn ag-btn--violet">Get in touch</a>
+            <a href="mailto:contact@zyntel.net" class="ag-btn ag-btn--white-outline">contact@zyntel.net</a>
           </div>
         </div>
       </div>
@@ -132,329 +132,3 @@ const services = [
   </main>
   <Footer />
 </BaseLayout>
-
-<style>
-  /* ─── Page shell ─── */
-  .ag-page {
-    background: var(--ag-bg, #08090f);
-    color: var(--ag-text, #f1f5f9);
-    min-height: 100vh;
-  }
-
-  .ag-wrap {
-    max-width: 80rem;
-    margin-inline: auto;
-    padding-inline: clamp(1rem, 4vw, 3rem);
-  }
-
-  .ag-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.35rem 0.9rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: #94a3b8;
-    margin-bottom: 1.5rem;
-  }
-
-  .ag-dot {
-    width: 0.4rem;
-    height: 0.4rem;
-    border-radius: 50%;
-    background: #94a3b8;
-  }
-
-  .ag-grad-text {
-    background: linear-gradient(135deg, #c084fc 0%, #67e8f9 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .ag-section {
-    padding: clamp(4rem, 9vw, 7rem) 0;
-  }
-
-  .ag-section-eyebrow {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: #a855f7;
-    margin-bottom: 0.85rem;
-    text-align: center;
-  }
-
-  /* ─── Buttons ─── */
-  .ag-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.85rem 1.75rem;
-    border-radius: 999px;
-    font-weight: 600;
-    font-size: 0.92rem;
-    text-decoration: none;
-    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
-  }
-
-  .ag-btn:hover { transform: translateY(-2px); }
-
-  .ag-btn--grad {
-    background: linear-gradient(135deg, #a855f7, #22d3ee);
-    color: #fff;
-    box-shadow: 0 8px 28px rgba(168, 85, 247, 0.35);
-  }
-
-  .ag-btn--grad:hover { box-shadow: 0 12px 36px rgba(168, 85, 247, 0.5); }
-
-  .ag-btn--ghost-light {
-    background: transparent;
-    color: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .ag-btn--ghost-light:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: #fff;
-  }
-
-  /* ─── Hero ─── */
-  .ag-hero {
-    position: relative;
-    overflow: hidden;
-    padding: clamp(7rem, 14vw, 11rem) 0 clamp(4rem, 8vw, 6rem);
-    text-align: center;
-  }
-
-  .ag-hero-glow {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(80px);
-    opacity: 0.5;
-  }
-
-  .ag-hero-glow--v {
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(168, 85, 247, 0.5), transparent 70%);
-    top: -180px;
-    left: 50%;
-    transform: translateX(-65%);
-  }
-
-  .ag-hero-glow--c {
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(34, 211, 238, 0.35), transparent 70%);
-    top: -80px;
-    left: 50%;
-    transform: translateX(10%);
-  }
-
-  .ag-hero .ag-wrap {
-    position: relative;
-    z-index: 1;
-  }
-
-  .ag-hero-title {
-    font-size: clamp(2.5rem, 6vw, 4.25rem);
-    font-weight: 700;
-    line-height: 1.06;
-    letter-spacing: -0.035em;
-    color: #f1f5f9;
-    margin-bottom: 1.25rem;
-  }
-
-  .ag-hero-sub {
-    font-size: clamp(1rem, 2vw, 1.15rem);
-    line-height: 1.65;
-    color: #94a3b8;
-    max-width: 36rem;
-    margin: 0 auto 2.25rem;
-  }
-
-  /* ─── Services list ─── */
-  .ag-services-list {
-    background: rgba(255, 255, 255, 0.01);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .ag-services-list .ag-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .ag-svc-item {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 2.5rem;
-    padding: 3rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    align-items: start;
-    transition: background 0.3s;
-  }
-
-  .ag-svc-item:last-child {
-    border-bottom: none;
-  }
-
-  .ag-svc-icon {
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-top: 0.25rem;
-  }
-
-  .ag-svc-icon--violet {
-    background: rgba(168, 85, 247, 0.1);
-    color: #a855f7;
-    border: 1px solid rgba(168, 85, 247, 0.2);
-  }
-
-  .ag-svc-icon--cyan {
-    background: rgba(34, 211, 238, 0.08);
-    color: #22d3ee;
-    border: 1px solid rgba(34, 211, 238, 0.16);
-  }
-
-  .ag-svc-tagline {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #a855f7;
-    margin-bottom: 0.4rem;
-  }
-
-  .ag-svc-title {
-    font-size: clamp(1.35rem, 2.5vw, 1.75rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: #f1f5f9;
-    margin-bottom: 0.85rem;
-  }
-
-  .ag-svc-desc {
-    font-size: 0.97rem;
-    color: #94a3b8;
-    line-height: 1.7;
-    max-width: 42rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .ag-svc-features {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem 2rem;
-  }
-
-  .ag-svc-features li {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.88rem;
-    color: #cbd5e1;
-    font-weight: 500;
-  }
-
-  .ag-svc-features svg {
-    flex-shrink: 0;
-    color: #a855f7;
-  }
-
-  /* ─── CTA ─── */
-  .ag-cta-section {
-    background: #08090f;
-  }
-
-  .ag-cta-card {
-    background: #0d1017;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 2rem;
-    padding: clamp(3rem, 7vw, 5rem) clamp(1.5rem, 4vw, 3rem);
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .ag-cta-glow {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(60px);
-    opacity: 0.4;
-  }
-
-  .ag-cta-glow--v {
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(168, 85, 247, 0.5), transparent 70%);
-    top: -150px;
-    left: -100px;
-  }
-
-  .ag-cta-glow--c {
-    width: 350px;
-    height: 350px;
-    background: radial-gradient(circle, rgba(34, 211, 238, 0.4), transparent 70%);
-    bottom: -120px;
-    right: -80px;
-  }
-
-  .ag-cta-card > * {
-    position: relative;
-    z-index: 1;
-  }
-
-  .ag-cta-title {
-    font-size: clamp(2rem, 4.5vw, 3.25rem);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-    color: #f1f5f9;
-    margin-bottom: 1rem;
-  }
-
-  .ag-cta-sub {
-    font-size: 1.05rem;
-    color: #94a3b8;
-    max-width: 32rem;
-    margin: 0 auto 2rem;
-    line-height: 1.65;
-  }
-
-  .ag-cta-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.85rem;
-    justify-content: center;
-  }
-
-  @media (max-width: 768px) {
-    .ag-svc-item {
-      grid-template-columns: 1fr;
-      gap: 1.25rem;
-    }
-
-    .ag-svc-features {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
