@@ -114,12 +114,32 @@ const isContact = currentPath.startsWith('/contact');
     if (e.key === 'Escape' && overlay?.classList.contains('is-open')) closeMenu();
   });
 
-  // Scroll-triggered dark nav
+  // Scroll-triggered dark nav with enter/exit animations
   const nav = document.getElementById('site-nav') as HTMLElement | null;
+  let navIsScrolled = false;
+  let navAnimTimer: ReturnType<typeof setTimeout> | null = null;
+
   function updateNavScroll() {
     if (!nav) return;
-    nav.classList.toggle('is-scrolled', window.scrollY > 60);
+    const shouldBeScrolled = window.scrollY > 60;
+
+    if (shouldBeScrolled && !navIsScrolled) {
+      navIsScrolled = true;
+      if (navAnimTimer) clearTimeout(navAnimTimer);
+      nav.classList.remove('is-leaving');
+      nav.classList.add('is-scrolled', 'is-entering');
+      navAnimTimer = setTimeout(() => nav.classList.remove('is-entering'), 650);
+    } else if (!shouldBeScrolled && navIsScrolled) {
+      navIsScrolled = false;
+      if (navAnimTimer) clearTimeout(navAnimTimer);
+      nav.classList.remove('is-entering');
+      nav.classList.add('is-leaving');
+      navAnimTimer = setTimeout(() => {
+        nav.classList.remove('is-scrolled', 'is-leaving');
+      }, 380);
+    }
   }
+
   window.addEventListener('scroll', updateNavScroll, { passive: true });
   updateNavScroll();
 
@@ -305,11 +325,23 @@ const isContact = currentPath.startsWith('/contact');
       0 3px 6px rgba(0, 0, 0, 0.15);
   }
 
-  /* ── Scrolled: dark pill nav ── */
+  /* ── Scrolled: detach from floating pill, stick to top edge ── */
+  .ag-nav.is-scrolled {
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    transform: none;
+  }
+
+  /* ── Scrolled: dark full-width bar ── */
   .ag-nav.is-scrolled .ag-nav-pill {
-    background: rgba(10, 8, 18, 0.94);
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    background: rgba(10, 8, 18, 0.96);
+    border-color: rgba(255, 255, 255, 0.06);
+    border-radius: 0;
+    padding: 0.75rem 2.5rem;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 32px rgba(0, 0, 0, 0.4);
   }
 
   .ag-nav.is-scrolled .ag-nav-logo {
@@ -361,6 +393,46 @@ const isContact = currentPath.startsWith('/contact');
       linear-gradient(135deg, #7c3aed 0%, #db2777 60%, #ef4444 100%);
     transform: translateY(-1px);
   }
+
+  /* ── Nav enter / exit animations ── */
+  @keyframes ag-nav-enter {
+    from { transform: translateY(-100%); }
+    to   { transform: translateY(0); }
+  }
+
+  @keyframes ag-nav-exit {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-100%); }
+  }
+
+  @keyframes ag-nav-link-fall {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .ag-nav.is-entering {
+    animation: ag-nav-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .ag-nav.is-leaving {
+    animation: ag-nav-exit 0.35s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+  }
+
+  /* Snap pill styles instantly — no cross-fade during the slide */
+  .ag-nav.is-entering .ag-nav-pill,
+  .ag-nav.is-leaving .ag-nav-pill {
+    transition: none;
+  }
+
+  /* Staggered word fall-in while nav slides down */
+  .ag-nav.is-entering .ag-nav-logo                          { animation: ag-nav-link-fall 0.4s  cubic-bezier(0.16,1,0.3,1) 0.08s both; }
+  .ag-nav.is-entering .ag-nav-links .ag-nav-link:nth-child(1) { animation: ag-nav-link-fall 0.38s cubic-bezier(0.16,1,0.3,1) 0.14s both; }
+  .ag-nav.is-entering .ag-nav-links .ag-nav-link:nth-child(2) { animation: ag-nav-link-fall 0.38s cubic-bezier(0.16,1,0.3,1) 0.19s both; }
+  .ag-nav.is-entering .ag-nav-links .ag-nav-link:nth-child(3) { animation: ag-nav-link-fall 0.38s cubic-bezier(0.16,1,0.3,1) 0.24s both; }
+  .ag-nav.is-entering .ag-nav-links .ag-nav-link:nth-child(4) { animation: ag-nav-link-fall 0.38s cubic-bezier(0.16,1,0.3,1) 0.28s both; }
+  .ag-nav.is-entering .ag-nav-links .ag-nav-link:nth-child(5) { animation: ag-nav-link-fall 0.38s cubic-bezier(0.16,1,0.3,1) 0.32s both; }
+  .ag-nav.is-entering .ag-nav-product                        { animation: ag-nav-link-fall 0.38s cubic-bezier(0.16,1,0.3,1) 0.35s both; }
+  .ag-nav.is-entering .ag-nav-cta                            { animation: ag-nav-link-fall 0.38s cubic-bezier(0.16,1,0.3,1) 0.39s both; }
 
   /* ── Hamburger button (dark circle) ── */
   .ag-nav-toggle {
