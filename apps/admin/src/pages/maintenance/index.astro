@@ -86,9 +86,18 @@ const serviceClients = await getAllServiceClients();
           <div id="conn-obs-display" class="maint-connection-value">—</div>
         </div>
       </div>
+      <div class="maint-connection-grid" style="margin-top:0;">
+        <div>
+          <span class="maint-kicker">Service Client ID <span style="font-size:0.6875rem;font-weight:400;text-transform:none;letter-spacing:0;">(ZYNTEL_SERVICE_CLIENT_ID)</span></span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <code id="conn-client-id" class="maint-connection-value" style="font-family:ui-monospace,monospace;font-size:0.75rem;">—</code>
+            <button type="button" id="btn-copy-scid" class="admin-btn admin-btn-secondary" style="padding:3px 10px;font-size:0.6875rem;display:none;">Copy</button>
+          </div>
+        </div>
+      </div>
       <div class="maint-connection-actions">
         <button type="button" id="btn-gen-api-key" class="admin-btn admin-btn-primary">Generate / rotate API key</button>
-        <span class="maint-hint">Shown once — update <code>ZYNTEL_API_KEY</code> (or your app's env name) on the client server.</span>
+        <span class="maint-hint">Shown once — update <code>ZYNTEL_API_KEY</code> on the client server.</span>
       </div>
       <div class="maint-roi-inset">
         <h3>ROI auto-sync (recommended)</h3>
@@ -203,28 +212,25 @@ const serviceClients = await getAllServiceClients();
       <div id="roi-comparison" class="roi-comparison"></div>
     </section>
 
-    <!-- ── Database Migrations ── -->
-    <section class="maint-section maint-migrations">
-      <div class="maint-section-header">
-        <div>
-          <h2 class="maint-section-title">Database Migrations</h2>
-          <p class="maint-help" style="margin:2px 0 0;">Run once after deploying new features. Safe to re-run (all use IF NOT EXISTS).</p>
+    <!-- ── Database Migrations (developer tool — collapsed by default) ── -->
+    <section class="maint-section" style="padding:0;">
+      <details class="maint-dev-tools">
+        <summary class="maint-dev-tools-summary">Developer tools</summary>
+        <div class="maint-migration-grid" style="padding:16px 24px 20px;">
+          <div class="maint-migration-item">
+            <div class="maint-kicker">Reports schema</div>
+            <p class="maint-help" style="margin:4px 0 8px;">Adds <code>data_cursor_date</code>, <code>last_refreshed_at</code>, <code>source_data</code> + unique index to quarterly_reports. Run once after deploy.</p>
+            <button type="button" id="btn-migrate-reports" class="admin-btn admin-btn-secondary">Run Report Migrations</button>
+            <span id="mig-reports-status" class="maint-mig-status"></span>
+          </div>
+          <div class="maint-migration-item">
+            <div class="maint-kicker">App events log schema</div>
+            <p class="maint-help" style="margin:4px 0 8px;">Creates <code>app_events</code> table + 5 indexes. Run once after deploy.</p>
+            <button type="button" id="btn-migrate-logs" class="admin-btn admin-btn-secondary">Run Log Migrations</button>
+            <span id="mig-logs-status" class="maint-mig-status"></span>
+          </div>
         </div>
-      </div>
-      <div class="maint-migration-grid">
-        <div class="maint-migration-item">
-          <div class="maint-kicker">Reports schema</div>
-          <p class="maint-help" style="margin:4px 0 8px;">Adds <code>data_cursor_date</code>, <code>last_refreshed_at</code>, <code>source_data</code> columns + unique index to quarterly_reports.</p>
-          <button type="button" id="btn-migrate-reports" class="admin-btn admin-btn-secondary">Run Report Migrations</button>
-          <span id="mig-reports-status" class="maint-mig-status"></span>
-        </div>
-        <div class="maint-migration-item">
-          <div class="maint-kicker">App events log schema</div>
-          <p class="maint-help" style="margin:4px 0 8px;">Creates <code>app_events</code> table + 5 indexes for the structured event log system.</p>
-          <button type="button" id="btn-migrate-logs" class="admin-btn admin-btn-secondary">Run Log Migrations</button>
-          <span id="mig-logs-status" class="maint-mig-status"></span>
-        </div>
-      </div>
+      </details>
     </section>
 
   </div><!-- end maint-page-card -->
@@ -307,11 +313,21 @@ const serviceClients = await getAllServiceClients();
   <!-- One-time API key -->
   <div id="modal-api-key-result" class="preview-modal-overlay" style="display:none">
     <div class="modal">
-      <h3>API key</h3>
-      <p class="maint-help">Copy this key now. It will not be shown again.</p>
-      <textarea id="api-key-result-text" class="admin-form-input maint-api-key-text" readonly rows="3"></textarea>
-      <div class="modal-actions">
-        <button type="button" class="admin-btn admin-btn-secondary" id="btn-copy-api-key">Copy</button>
+      <h3>API key generated</h3>
+      <p class="maint-help">Copy both values now. The key will not be shown again.</p>
+      <div id="api-key-client-id-row" style="display:none;margin-bottom:10px;">
+        <label class="maint-kicker" style="margin-bottom:4px;display:block;">Service Client ID <span style="font-size:0.6875rem;font-weight:400;text-transform:none;letter-spacing:0;">(paste as ZYNTEL_SERVICE_CLIENT_ID)</span></label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="api-key-client-id-text" class="admin-form-input maint-api-key-text" readonly style="font-family:ui-monospace,monospace;font-size:0.6875rem;" />
+          <button type="button" class="admin-btn admin-btn-secondary" id="btn-copy-client-id" style="flex-shrink:0;">Copy</button>
+        </div>
+      </div>
+      <label class="maint-kicker" style="margin-bottom:4px;display:block;">API Key <span style="font-size:0.6875rem;font-weight:400;text-transform:none;letter-spacing:0;">(paste as ZYNTEL_API_KEY)</span></label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <textarea id="api-key-result-text" class="admin-form-input maint-api-key-text" readonly rows="2" style="flex:1;"></textarea>
+        <button type="button" class="admin-btn admin-btn-secondary" id="btn-copy-api-key" style="flex-shrink:0;">Copy</button>
+      </div>
+      <div class="modal-actions" style="margin-top:12px;">
         <button type="button" class="admin-btn admin-btn-primary" id="btn-api-key-done">Done</button>
       </div>
     </div>
@@ -418,7 +434,12 @@ const serviceClients = await getAllServiceClients();
     .maint-checkbox-row { margin-top: 6px; }
     .maint-inline-check { font-size: 0.75rem; font-weight: 500; color: var(--admin-text); display: flex; align-items: center; gap: 8px; cursor: pointer; }
 
-    /* ── Migrations ── */
+    /* ── Migrations / Dev tools ── */
+    .maint-dev-tools { border: none; }
+    .maint-dev-tools-summary { padding: 12px 24px; font-size: 0.75rem; font-weight: 600; color: var(--admin-text-muted); cursor: pointer; list-style: none; border-top: 1px solid var(--admin-border); user-select: none; }
+    .maint-dev-tools-summary::before { content: '▶ '; font-size: 0.625rem; }
+    .maint-dev-tools[open] .maint-dev-tools-summary::before { content: '▼ '; }
+    .maint-dev-tools-summary:hover { color: var(--admin-text); }
     .maint-migration-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 640px) { .maint-migration-grid { grid-template-columns: 1fr; } }
     .maint-migration-item { border: 1px solid var(--admin-border); border-radius: 8px; padding: 14px 16px; background: var(--admin-bg-elevated); }
@@ -451,16 +472,32 @@ const serviceClients = await getAllServiceClients();
     document.querySelectorAll('.preview-modal-overlay').forEach((o) => o.addEventListener('click', (e) => { if (e.target === o) closeModal(o.id); }));
     document.getElementById('confirm-btn').addEventListener('click', async () => { if (confirmCallback) await confirmCallback(); closeModal('modal-confirm'); });
 
-    function showApiKeyOnce(key, reloadOnDone) {
+    function showApiKeyOnce(key, reloadOnDone, clientId) {
       const ta = document.getElementById('api-key-result-text');
       if (ta) ta.value = key;
+      const idRow = document.getElementById('api-key-client-id-row');
+      const idInput = document.getElementById('api-key-client-id-text');
+      const resolvedId = clientId || selectedClientId || '';
+      if (idRow && idInput && resolvedId) {
+        idInput.value = resolvedId;
+        idRow.style.display = '';
+      } else if (idRow) {
+        idRow.style.display = 'none';
+      }
       window.__apiKeyReloadOnDone = !!reloadOnDone;
       showModal('modal-api-key-result');
     }
+    document.getElementById('btn-copy-client-id')?.addEventListener('click', async () => {
+      const inp = document.getElementById('api-key-client-id-text');
+      if (inp?.value) {
+        try { await navigator.clipboard.writeText(inp.value); showToast('Service client ID copied'); }
+        catch (_) { showToast('Copy failed — select and copy manually', 'error'); }
+      }
+    });
     document.getElementById('btn-copy-api-key')?.addEventListener('click', async () => {
       const ta = document.getElementById('api-key-result-text');
       if (ta?.value) {
-        try { await navigator.clipboard.writeText(ta.value); showToast('Copied to clipboard'); }
+        try { await navigator.clipboard.writeText(ta.value); showToast('API key copied'); }
         catch (_) { showToast('Copy failed — select and copy manually', 'error'); }
       }
     });
@@ -505,7 +542,16 @@ const serviceClients = await getAllServiceClients();
       const last = (opt?.dataset)?.roiLast || '';
       const err = (opt?.dataset)?.roiErr || '';
       lastEl.textContent = last ? (err ? `${last} (error: ${err})` : last) : '—';
+      const scidEl = document.getElementById('conn-client-id');
+      const scidCopyBtn = document.getElementById('btn-copy-scid');
+      if (scidEl) scidEl.textContent = selectedClientId || '—';
+      if (scidCopyBtn) scidCopyBtn.style.display = selectedClientId ? '' : 'none';
     }
+
+    document.getElementById('btn-copy-scid')?.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(selectedClientId); showToast('Service client ID copied'); }
+      catch (_) { showToast('Copy failed', 'error'); }
+    });
 
     function openConfirm(opts) {
       document.getElementById('confirm-title').textContent = opts.title;
@@ -756,7 +802,7 @@ const serviceClients = await getAllServiceClients();
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { showToast(data.error || 'Failed to create client', 'error'); return; }
       closeModal('modal-new-client');
-      if (data.apiKey) { showToast('Service client created'); showApiKeyOnce(data.apiKey, true); }
+      if (data.apiKey) { showToast('Service client created'); showApiKeyOnce(data.apiKey, true, data.client?.id); }
       else { window.location.reload(); }
     });
 
