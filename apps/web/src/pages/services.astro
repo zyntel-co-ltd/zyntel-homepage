@@ -2,80 +2,459 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import ContactForm from '../components/ContactForm.astro';
-import { getServices } from '../lib/sanity';
 
-const sanityServices = await getServices();
-const FALLBACK_SERVICES = [
-  { title: 'Implementation & Onboarding', description: 'End-to-end setup of Zyntel products with data import, configuration, and go-live support.' },
-  { title: 'Custom Integration', description: 'Connect Zyntel to your ERP, CRM, and BI tools via our API and pre-built connectors.' },
-  { title: 'Training & Adoption', description: 'Onboarding sessions and training programs so your team gets the most from the platform.' },
-  { title: 'Dedicated Support', description: 'Priority support and dedicated account managers for Enterprise plans.' },
-  { title: 'Data Migration', description: 'Secure migration of existing data into Zyntel with validation and reconciliation.' },
-  { title: 'API & Integration Support', description: 'Technical assistance for custom integrations and webhook setup.' },
+const services = [
+  {
+    id: 'web-apps',
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>`,
+    accent: 'violet',
+    title: 'Web Application Development',
+    tagline: 'Powerful platforms that scale',
+    description: 'We build complex web applications from scratch — dashboards, SaaS platforms, internal tools, and data-heavy systems. Every app is engineered for performance and built to grow with your business.',
+    features: ['React / Next.js / Astro frontends', 'Node.js, Python & Go backends', 'PostgreSQL, MongoDB & Redis', 'REST & GraphQL APIs', 'Authentication & access control', 'Cloud deployment (AWS, Railway, Vercel)'],
+  },
+  {
+    id: 'websites',
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.75"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>`,
+    accent: 'cyan',
+    title: 'Websites & Landing Pages',
+    tagline: 'Fast, beautiful, and built to convert',
+    description: 'From corporate sites to high-converting landing pages, we design and build websites that make strong first impressions. Fully responsive, SEO-optimized, and blazing fast.',
+    features: ['Corporate & portfolio sites', 'Marketing & product landing pages', 'CMS integration (Sanity, Contentful)', 'SEO-first architecture', 'Core Web Vitals optimization', 'Custom animations & interactions'],
+  },
+  {
+    id: 'mobile',
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="1.75"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>`,
+    accent: 'violet',
+    title: 'Mobile App Development',
+    tagline: 'Built for Africa\'s connectivity realities',
+    description: 'Cross-platform mobile apps for iOS and Android using React Native. We build offline-capable apps designed to work reliably on the networks and devices your users actually have.',
+    features: ['React Native for iOS & Android', 'Offline-first architecture', 'Push notifications & background sync', 'Biometric authentication', 'App store submission & review', 'Low-bandwidth optimization'],
+  },
+  {
+    id: 'custom',
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M10 20l4-16M4 9l-3 3 3 3M20 9l3 3-3 3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    accent: 'cyan',
+    title: 'Custom Software & APIs',
+    tagline: 'Bespoke systems for complex problems',
+    description: 'When off-the-shelf software doesn\'t cut it, we build exactly what you need. Custom backend systems, third-party integrations, data pipelines, and APIs that connect your stack together.',
+    features: ['Custom REST & GraphQL APIs', 'Third-party integrations', 'Automated data pipelines', 'Webhook & event-driven systems', 'Legacy system modernization', 'Internal tooling & automation'],
+  },
+  {
+    id: 'design',
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.75"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>`,
+    accent: 'violet',
+    title: 'UI/UX Design',
+    tagline: 'Interfaces people actually enjoy using',
+    description: 'Great design is invisible — users just feel it. We design intuitive interfaces that reduce friction, guide users naturally, and make complex workflows feel simple.',
+    features: ['User research & journey mapping', 'Wireframing & rapid prototyping', 'High-fidelity UI design (Figma)', 'Design systems & component libraries', 'Accessibility (WCAG 2.1 AA)', 'Usability testing & iteration'],
+  },
+  {
+    id: 'support',
+    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg>`,
+    accent: 'cyan',
+    title: 'Maintenance & Support',
+    tagline: 'A partner, not just a vendor',
+    description: 'We don\'t disappear after launch. Our ongoing support packages keep your product secure, performant, and up-to-date — so you can focus on your business while we keep the tech running.',
+    features: ['Monthly maintenance retainers', 'Performance monitoring & alerts', 'Security patches & updates', 'Feature additions & improvements', 'Priority response SLA', 'Technical consulting & code review'],
+  },
 ];
-const services = sanityServices.length > 0 ? sanityServices.map(s => ({ title: s.title, desc: s.description || '' })) : FALLBACK_SERVICES.map(s => ({ title: s.title, desc: s.description }));
 ---
-<BaseLayout title="Implementation & Support" description="Get the most out of Zyntel with implementation, training, integrations, and dedicated support.">
+<BaseLayout
+  title="Services — Web Apps, Websites & Mobile"
+  description="Zyntel builds web applications, websites, mobile apps, and custom software for East African businesses. Based in Kampala, Uganda."
+  hideStickyCta={true}
+>
   <Nav />
-  <main>
-    <section class="page-hero">
-      <div class="container">
-        <h1>Professional Services</h1>
-        <p>Strategic support to maximize the value of your digital investments</p>
+  <main class="ag-page">
+
+    <!-- HERO -->
+    <section class="ag-hero">
+      <div class="ag-hero-glow ag-hero-glow--v" aria-hidden="true"></div>
+      <div class="ag-hero-glow ag-hero-glow--c" aria-hidden="true"></div>
+      <div class="ag-wrap">
+        <div class="ag-eyebrow">
+          <span class="ag-dot" aria-hidden="true"></span>
+          What we build
+        </div>
+        <h1 class="ag-hero-title">
+          Digital products,<br>
+          <span class="ag-grad-text">engineered to last.</span>
+        </h1>
+        <p class="ag-hero-sub">
+          Full-service web and mobile development for businesses that need more than a template. We build real products that solve real problems.
+        </p>
+        <a href="/contact" class="ag-btn ag-btn--grad">Discuss your project</a>
       </div>
     </section>
 
-    <section class="section">
-      <div class="container">
-        <div class="services-grid">
-          {services.map((s) => (
-            <div class="service-card">
-              <h3>{s.title}</h3>
-              <p>{s.desc}</p>
+    <!-- SERVICES LIST -->
+    <section class="ag-section ag-services-list">
+      <div class="ag-wrap">
+        {services.map((svc) => (
+          <article class="ag-svc-item" id={svc.id}>
+            <div class={`ag-svc-icon ag-svc-icon--${svc.accent}`} set:html={svc.icon} />
+            <div class="ag-svc-body">
+              <p class="ag-svc-tagline">{svc.tagline}</p>
+              <h2 class="ag-svc-title">{svc.title}</h2>
+              <p class="ag-svc-desc">{svc.description}</p>
+              <ul class="ag-svc-features">
+                {svc.features.map((f) => (
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
             </div>
-          ))}
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="ag-section ag-cta-section">
+      <div class="ag-wrap">
+        <div class="ag-cta-card">
+          <div class="ag-cta-glow ag-cta-glow--v" aria-hidden="true"></div>
+          <div class="ag-cta-glow ag-cta-glow--c" aria-hidden="true"></div>
+          <p class="ag-section-eyebrow">Let's work together</p>
+          <h2 class="ag-cta-title">Ready to start<br><span class="ag-grad-text">your project?</span></h2>
+          <p class="ag-cta-sub">Tell us what you're building and we'll put together a plan. No commitment required.</p>
+          <div class="ag-cta-actions">
+            <a href="/contact" class="ag-btn ag-btn--grad">Get in touch</a>
+            <a href="mailto:contact@zyntel.net" class="ag-btn ag-btn--ghost-light">contact@zyntel.net</a>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="section cta">
-      <div class="container">
-        <h2>Ready to transform?</h2>
-        <p>Start your free trial or talk to our team about Enterprise plans</p>
-        <ContactForm />
-      </div>
-    </section>
   </main>
   <Footer />
 </BaseLayout>
 
 <style>
-  .page-hero { padding: 8rem 0 4rem; text-align: center; }
-  .page-hero h1 { font-size: clamp(2.5rem, 5vw, 3.5rem); margin-bottom: 0.75rem; }
-  .page-hero p { color: var(--text-secondary); font-size: 1.2rem; }
-  .section { padding: 4rem 0; }
-  .services-grid {
+  /* ─── Page shell ─── */
+  .ag-page {
+    background: var(--ag-bg, #08090f);
+    color: var(--ag-text, #f1f5f9);
+    min-height: 100vh;
+  }
+
+  .ag-wrap {
+    max-width: 80rem;
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 4vw, 3rem);
+  }
+
+  .ag-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 1.5rem;
+  }
+
+  .ag-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: #94a3b8;
+  }
+
+  .ag-grad-text {
+    background: linear-gradient(135deg, #c084fc 0%, #67e8f9 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .ag-section {
+    padding: clamp(4rem, 9vw, 7rem) 0;
+  }
+
+  .ag-section-eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #a855f7;
+    margin-bottom: 0.85rem;
+    text-align: center;
+  }
+
+  /* ─── Buttons ─── */
+  .ag-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.85rem 1.75rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    text-decoration: none;
+    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+
+  .ag-btn:hover { transform: translateY(-2px); }
+
+  .ag-btn--grad {
+    background: linear-gradient(135deg, #a855f7, #22d3ee);
+    color: #fff;
+    box-shadow: 0 8px 28px rgba(168, 85, 247, 0.35);
+  }
+
+  .ag-btn--grad:hover { box-shadow: 0 12px 36px rgba(168, 85, 247, 0.5); }
+
+  .ag-btn--ghost-light {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .ag-btn--ghost-light:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+  }
+
+  /* ─── Hero ─── */
+  .ag-hero {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(7rem, 14vw, 11rem) 0 clamp(4rem, 8vw, 6rem);
+    text-align: center;
+  }
+
+  .ag-hero-glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(80px);
+    opacity: 0.5;
+  }
+
+  .ag-hero-glow--v {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.5), transparent 70%);
+    top: -180px;
+    left: 50%;
+    transform: translateX(-65%);
+  }
+
+  .ag-hero-glow--c {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.35), transparent 70%);
+    top: -80px;
+    left: 50%;
+    transform: translateX(10%);
+  }
+
+  .ag-hero .ag-wrap {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ag-hero-title {
+    font-size: clamp(2.5rem, 6vw, 4.25rem);
+    font-weight: 700;
+    line-height: 1.06;
+    letter-spacing: -0.035em;
+    color: #f1f5f9;
+    margin-bottom: 1.25rem;
+  }
+
+  .ag-hero-sub {
+    font-size: clamp(1rem, 2vw, 1.15rem);
+    line-height: 1.65;
+    color: #94a3b8;
+    max-width: 36rem;
+    margin: 0 auto 2.25rem;
+  }
+
+  /* ─── Services list ─── */
+  .ag-services-list {
+    background: rgba(255, 255, 255, 0.01);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .ag-services-list .ag-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .ag-svc-item {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: auto 1fr;
+    gap: 2.5rem;
+    padding: 3rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    align-items: start;
+    transition: background 0.3s;
   }
-  .service-card {
-    background: var(--bg-card);
-    padding: 2rem 1.5rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-light);
-    transition: all 0.3s;
+
+  .ag-svc-item:last-child {
+    border-bottom: none;
   }
-  .service-card:hover {
-    border-color: var(--cyan);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+
+  .ag-svc-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
   }
-  .service-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-  .service-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
-  .cta { text-align: center; background: var(--bg-elevated); }
-  .cta h2 { margin-bottom: 0.5rem; }
-  .cta p { color: var(--text-secondary); margin-bottom: 1.5rem; }
-  @media (max-width: 900px) { .services-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 600px) { .services-grid { grid-template-columns: 1fr; } }
+
+  .ag-svc-icon--violet {
+    background: rgba(168, 85, 247, 0.1);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+  }
+
+  .ag-svc-icon--cyan {
+    background: rgba(34, 211, 238, 0.08);
+    color: #22d3ee;
+    border: 1px solid rgba(34, 211, 238, 0.16);
+  }
+
+  .ag-svc-tagline {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #a855f7;
+    margin-bottom: 0.4rem;
+  }
+
+  .ag-svc-title {
+    font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #f1f5f9;
+    margin-bottom: 0.85rem;
+  }
+
+  .ag-svc-desc {
+    font-size: 0.97rem;
+    color: #94a3b8;
+    line-height: 1.7;
+    max-width: 42rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .ag-svc-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem 2rem;
+  }
+
+  .ag-svc-features li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    color: #cbd5e1;
+    font-weight: 500;
+  }
+
+  .ag-svc-features svg {
+    flex-shrink: 0;
+    color: #a855f7;
+  }
+
+  /* ─── CTA ─── */
+  .ag-cta-section {
+    background: #08090f;
+  }
+
+  .ag-cta-card {
+    background: #0d1017;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 2rem;
+    padding: clamp(3rem, 7vw, 5rem) clamp(1.5rem, 4vw, 3rem);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ag-cta-glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(60px);
+    opacity: 0.4;
+  }
+
+  .ag-cta-glow--v {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.5), transparent 70%);
+    top: -150px;
+    left: -100px;
+  }
+
+  .ag-cta-glow--c {
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.4), transparent 70%);
+    bottom: -120px;
+    right: -80px;
+  }
+
+  .ag-cta-card > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ag-cta-title {
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: #f1f5f9;
+    margin-bottom: 1rem;
+  }
+
+  .ag-cta-sub {
+    font-size: 1.05rem;
+    color: #94a3b8;
+    max-width: 32rem;
+    margin: 0 auto 2rem;
+    line-height: 1.65;
+  }
+
+  .ag-cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    justify-content: center;
+  }
+
+  @media (max-width: 768px) {
+    .ag-svc-item {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+
+    .ag-svc-features {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>

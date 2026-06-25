@@ -77,7 +77,7 @@ const isZyntelForms = slug === 'zyntel-forms';
 >
   <Nav />
   <main>
-    <section class="page-hero">
+    <section class:list={['page-hero', isZyntelForms && 'product-hero--zyntforms']}>
       <div class="container">
         <a href="/products" class="back-link">← Products</a>
         {data.logo ? (
@@ -95,7 +95,7 @@ const isZyntelForms = slug === 'zyntel-forms';
             </>
           ) : isZyntelForms ? (
             <>
-              <a href="https://zyntforms.com" class="btn btn-primary">Try zyntForms</a>
+              <a href="https://zyntforms.com" class="btn btn-zyntforms">Try ZyntForms</a>
               <a href="/contact" class="btn btn-secondary">Talk to us</a>
             </>
           ) : (
@@ -138,4 +138,12 @@ const isZyntelForms = slug === 'zyntel-forms';
   .section { padding: 4rem 0; }
   .prose h2 { margin-bottom: 1rem; }
   .prose ul { color: var(--text-secondary); line-height: 2; }
+
+  .product-hero--zyntforms + .section .prose h2 {
+    color: var(--zf-brand);
+  }
+
+  .product-hero--zyntforms + .section .prose ul li::marker {
+    color: var(--zf-brand);
+  }
 </style>

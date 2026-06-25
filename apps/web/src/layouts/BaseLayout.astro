@@ -1,5 +1,7 @@
 ---
 import '../styles/global.css';
+import '../styles/marketing.css';
+import '../styles/agency.css';
 import ScrollToTop from '../components/ScrollToTop.astro';
 import StickyCTA from '../components/StickyCTA.astro';
 import Analytics from '../components/Analytics.astro';
@@ -19,11 +21,13 @@ interface Props {
   canonicalUrl?: string;
   /** Homepage: inject Organization JSON-LD */
   jsonLdOrganization?: boolean;
+  /** Lock light theme (no dark mode on this page) */
+  forceLightTheme?: boolean;
 }
 
 const {
   title,
-  description = 'Zyntel Co. Limited — building Kanta and ZyntForms for East Africa. Kanta is the hospital intelligence platform for labs and facilities. ZyntForms is the team forms platform.',
+  description = 'Zyntel is a web agency based in Kampala, Uganda. We build web apps, websites, mobile apps, and custom software for East African businesses. Our product ZyntForms powers offline field data collection.',
   ogTitle,
   ogImage = '/og-default.png',
   ogType = 'website',
@@ -31,6 +35,7 @@ const {
   hideStickyCta = false,
   canonicalUrl: canonicalUrlProp,
   jsonLdOrganization = false,
+  forceLightTheme = false,
 } = Astro.props;
 
 const siteOrigin = Astro.site?.origin ?? 'https://zyntel.net';
@@ -54,18 +59,23 @@ const organizationLd = {
 };
 ---
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class:list={[forceLightTheme && 'theme-locked-light']}>
   <head>
-    <script is:inline>
+    <script is:inline define:vars={{ forceLightTheme }}>
       (function(){
-        var k='zyntel-theme',s=localStorage.getItem(k);
-        var t=s==='light'||s==='dark'?s:'light';
-        document.documentElement.setAttribute('data-theme',t);
+        var t;
+        if (forceLightTheme) {
+          t = 'light';
+        } else {
+          try { localStorage.setItem('zyntel-theme','light'); } catch(e) {}
+          t = 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
       })();
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f8fafc" />
+    <meta name="theme-color" content="#08090f" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="description" content={description} />
     <meta name="robots" content={noIndex ? 'noindex, nofollow' : 'index, follow'} />

@@ -9,6 +9,14 @@
   --violet-glow: rgba(124, 77, 255, 0.25);
   --violet-subtle: rgba(124, 77, 255, 0.1);
   --violet-bg: rgba(124, 77, 255, 0.06);
+
+  --zf-brand: #7c4dff;
+  --zf-brand-dim: #651fff;
+  --zf-brand-soft: rgba(124, 77, 255, 0.14);
+  --zf-brand-border: rgba(124, 77, 255, 0.32);
+  --zf-brand-bg: rgba(124, 77, 255, 0.07);
+  --zf-brand-on: #ffffff;
+
   --gray: #94a3b8;
   --gray-light: #cbd5e1;
   --gray-muted: #64748b;
@@ -60,6 +68,14 @@
   --violet-glow: rgba(139, 92, 246, 0.35);
   --violet-subtle: rgba(139, 92, 246, 0.12);
   --violet-bg: rgba(139, 92, 246, 0.08);
+
+  --zf-brand: #8b5cf6;
+  --zf-brand-dim: #6d28d9;
+  --zf-brand-soft: rgba(139, 92, 246, 0.18);
+  --zf-brand-border: rgba(139, 92, 246, 0.4);
+  --zf-brand-bg: rgba(139, 92, 246, 0.1);
+  --zf-brand-on: #f8fafc;
+
   --gray: #94a3b8;
   --gray-light: #cbd5e1;
   --gray-muted: #64748b;
@@ -90,6 +106,25 @@
 
   --card-glass: rgba(30, 41, 59, 0.9);
   --card-shadow: rgba(0, 0, 0, 0.5);
+}
+
+/* === Agency dark design system === */
+:root {
+  --ag-bg: #08090f;
+  --ag-surface: #0d1017;
+  --ag-card: #111827;
+  --ag-border: rgba(255, 255, 255, 0.07);
+  --ag-border-hover: rgba(255, 255, 255, 0.14);
+  --ag-text: #f1f5f9;
+  --ag-muted: #94a3b8;
+  --ag-violet: #a855f7;
+  --ag-violet-dim: #9333ea;
+  --ag-cyan: #22d3ee;
+  --ag-cyan-dim: #06b6d4;
+  --ag-gradient: linear-gradient(135deg, #a855f7 0%, #22d3ee 100%);
+  --ag-gradient-text: linear-gradient(135deg, #c084fc 0%, #67e8f9 100%);
+  --ag-glow-v: rgba(168, 85, 247, 0.35);
+  --ag-glow-c: rgba(34, 211, 238, 0.25);
 }
 
 * {
@@ -167,6 +202,34 @@ a {
 [data-theme="dark"] .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-zyntforms {
+  background: linear-gradient(135deg, var(--zf-brand), var(--zf-brand-dim));
+  color: var(--zf-brand-on);
+  box-shadow: 0 4px 20px var(--zf-brand-soft);
+}
+
+.btn-zyntforms:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px rgba(124, 77, 255, 0.35);
+}
+
+.zf-brand-text {
+  color: var(--zf-brand);
+}
+
+.zf-brand-label {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: var(--zf-brand-soft);
+  color: var(--zf-brand);
+  border: 1px solid var(--zf-brand-border);
 }
 
 /* === Light sections (soft contrast, readable text) === */

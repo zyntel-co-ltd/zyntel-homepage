@@ -15,7 +15,7 @@ import Footer from '../../components/Footer.astro';
       <div class="container">
         <p class="page-eyebrow">Products</p>
         <h1 class="page-title">Kanta first. Forms when you need them.</h1>
-        <p class="page-sub">Hospital operations intelligence is our flagship; zyntForms powers digital workflows across teams.</p>
+        <p class="page-sub">Hospital operations intelligence is our flagship; <span class="zf-brand-text">ZyntForms</span> powers digital workflows across teams.</p>
       </div>
     </section>
 
@@ -55,10 +55,10 @@ import Footer from '../../components/Footer.astro';
     </section>
 
     <!-- zyntForms — secondary -->
-    <section class="product-section product-forms">
+    <section class="product-section product-forms product-section--forms">
       <div class="container product-inner">
-        <div class="product-label">Also from Zyntel</div>
-        <h2 class="product-name">zyntForms</h2>
+        <div class="product-label forms-label">Also from Zyntel</div>
+        <h2 class="product-name zf-brand-text">ZyntForms</h2>
         <p class="product-tagline">Create forms. No account required to start.</p>
         <p class="product-desc">Build and share forms instantly — no login, no friction. Start collecting responses in seconds. Create an account when you're ready to keep your data. Pay only when your form delivers value, not by the month.</p>
 
@@ -82,7 +82,7 @@ import Footer from '../../components/Footer.astro';
         </div>
 
         <div class="product-actions">
-          <a href="https://zyntforms.com" class="btn btn-primary">Try zyntForms free →</a>
+          <a href="https://zyntforms.com" class="btn btn-zyntforms">Try ZyntForms free →</a>
         </div>
       </div>
     </section>
@@ -160,6 +160,21 @@ import Footer from '../../components/Footer.astro';
     background: rgba(0, 96, 100, 0.1);
     color: var(--cyan);
     border-color: rgba(0, 151, 167, 0.3);
+  }
+
+  .forms-label {
+    background: var(--zf-brand-soft);
+    color: var(--zf-brand);
+    border-color: var(--zf-brand-border);
+  }
+
+  .product-section--forms {
+    background: linear-gradient(180deg, var(--zf-brand-bg) 0%, var(--bg-elevated) 40%);
+    border-left: 4px solid var(--zf-brand);
+  }
+
+  .product-section--forms .pf-item svg {
+    color: var(--zf-brand);
   }
 
   .product-name {
