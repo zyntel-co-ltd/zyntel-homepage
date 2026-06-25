@@ -207,10 +207,146 @@ export async function deleteCaseStudy(id: string): Promise<void> {
 
 // --- AI Report Generation ---
 
+export interface ReportInput {
+  clientName: string;
+  productName: string;
+  quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
+  year: number;
+  periodStart: string;
+  periodEnd: string;
+  incidents: Array<{ logDate: string; area: string; summary: string; actionTaken?: string; outcome?: string }>;
+  preventive: Array<{ logDate: string; area: string; summary: string }>;
+  support: Array<{ logDate: string; area: string; summary: string }>;
+  closedWOs: Array<{ woNumber: string; title: string; coverage: string; estimatedCost: number | null; currency: string }>;
+  openWOs: Array<{ woNumber: string; title: string; coverage: string; status: string }>;
+  commits?: Array<{ sha: string; message: string; author: string; date: string }>;
+  sentryIssues?: Array<{ title: string; count: number; firstSeen: string; lastSeen: string }>;
+  roiSnapshots?: Array<{ metricKey: string; metricValue: number; snapshotDate: string }>;
+  commitSummaries?: Array<{ repo: string; commitCount: number; highlights: string[] }>;
+}
+
 /**
- * Build a structured Markdown quarterly report from maintenance data.
- * This is a deterministic formatter — it does not call any LLM.
- * Pass the result to an LLM or save it directly as a draft.
+ * AI-powered quarterly report generator using Claude.
+ * Requires ANTHROPIC_API_KEY env var. Falls back to deterministic formatter on failure.
+ */
+export async function buildQuarterlyReportMarkdownAI(
+  opts: ReportInput,
+  apiKey: string,
+): Promise<string> {
+  const { default: Anthropic } = await import('@anthropic-ai/sdk');
+  const client = new Anthropic({ apiKey });
+
+  const covLabel: Record<string, string> = {
+    contract_included: 'contract-included',
+    paid_extra: 'paid extra',
+    goodwill_free: 'goodwill/free',
+  };
+
+  const contextBlocks: string[] = [];
+
+  contextBlocks.push(`CLIENT: ${opts.clientName}
+PRODUCT: ${opts.productName}
+PERIOD: ${opts.quarter} ${opts.year} (${opts.periodStart} to ${opts.periodEnd})`);
+
+  if (opts.commits && opts.commits.length) {
+    contextBlocks.push(`## GitHub Commits (${opts.commits.length} total)
+${opts.commits.map((c) => `- ${c.date} [${c.sha}] ${c.message} (${c.author})`).join('\n')}`);
+  }
+
+  if (opts.incidents.length) {
+    contextBlocks.push(`## Incidents (${opts.incidents.length})
+${opts.incidents.map((i) => `- ${i.logDate} | ${i.area} | ${i.summary}${i.actionTaken ? ' | Action: ' + i.actionTaken : ''}${i.outcome ? ' | Outcome: ' + i.outcome : ''}`).join('\n')}`);
+  } else {
+    contextBlocks.push('## Incidents: None — system operated without incidents this quarter.');
+  }
+
+  if (opts.preventive.length) {
+    contextBlocks.push(`## Preventive Maintenance (${opts.preventive.length})
+${opts.preventive.map((p) => `- ${p.logDate} | ${p.area} | ${p.summary}`).join('\n')}`);
+  }
+
+  if (opts.support.length) {
+    contextBlocks.push(`## Support Requests (${opts.support.length})
+${opts.support.map((s) => `- ${s.logDate} | ${s.area} | ${s.summary}`).join('\n')}`);
+  }
+
+  if (opts.closedWOs.length || opts.openWOs.length) {
+    contextBlocks.push(`## Work Orders
+Closed (${opts.closedWOs.length}):
+${opts.closedWOs.map((w) => `- ${w.woNumber}: ${w.title} [${covLabel[w.coverage] ?? w.coverage}]${w.estimatedCost ? ' — ' + w.currency + ' ' + w.estimatedCost.toLocaleString() : ''}`).join('\n')}
+Open/In-progress (${opts.openWOs.length}):
+${opts.openWOs.map((w) => `- ${w.woNumber}: ${w.title} [${w.status}]`).join('\n')}`);
+  }
+
+  if (opts.sentryIssues && opts.sentryIssues.length) {
+    contextBlocks.push(`## Sentry Error Tracking (${opts.sentryIssues.length} issues this period)
+${opts.sentryIssues.map((i) => `- "${i.title}" — ${i.count} occurrences (first: ${i.firstSeen}, last: ${i.lastSeen})`).join('\n')}`);
+  }
+
+  if (opts.roiSnapshots && opts.roiSnapshots.length) {
+    const grouped: Record<string, number[]> = {};
+    for (const s of opts.roiSnapshots) {
+      if (!grouped[s.metricKey]) grouped[s.metricKey] = [];
+      grouped[s.metricKey].push(s.metricValue);
+    }
+    const latest = Object.entries(grouped).map(([k, vals]) => `${k}: ${vals[vals.length - 1].toLocaleString()}`);
+    contextBlocks.push(`## Latest ROI / App Metrics\n${latest.join('\n')}`);
+  }
+
+  const dataContext = contextBlocks.join('\n\n');
+
+  const systemPrompt = `You are a senior technical writer at Zyntel Co. Limited, a Ugandan software development company. You write quarterly maintenance and activity reports for clients about their custom software products.
+
+Report style:
+- Professional, confident, and client-facing — written to demonstrate value and build trust
+- Comprehensive: executive summary first, then detailed sections with evidence
+- Group git commits into meaningful feature/fix themes (Phase 1, Phase 2, etc.) rather than listing raw commits
+- Include a commit summary table at the end
+- For incidents logged manually: describe what happened, what was done, and outcome
+- For preventive maintenance: show this as proactive care, not just a list
+- For support requests: show responsiveness and resolution quality
+- Tone: honest and direct. If it was a quiet quarter, say so. If there were incidents, own them and show resolution.
+- Always end with "Prepared by Zyntel Co. Limited · P.O Box 860954 · zyntel.net · info@zyntel.net"
+- Use markdown tables, headers (h1 for title, h2 for sections, h3 for subsections), and --- dividers
+- Do not use emojis`;
+
+  const userPrompt = `Write a comprehensive ${opts.quarter} ${opts.year} quarterly maintenance and activity report using the data below. The report should demonstrate the full value of Zyntel's work this quarter — both the technical work done and the system's stability/health.
+
+${dataContext}
+
+The report must include:
+1. Executive Summary (3-5 sentences — key achievements and system health)
+2. System Health Overview (availability, incidents, uptime indicators)
+3. Development Activity (if commits exist: group by theme, show phases, explain what was built and why it matters — not just a raw commit list)
+4. Maintenance Activities (incidents, preventive checks, support — with narrative context)
+5. Work Orders (what was completed, what's in progress)
+6. Sentry / Error Tracking summary (if data provided)
+7. Key Metrics (if ROI snapshots provided)
+8. Summary Table of commits if applicable
+9. Overall Assessment and next quarter outlook
+
+Generate the full markdown report now.`;
+
+  try {
+    const message = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: userPrompt }],
+      system: systemPrompt,
+    });
+    const content = message.content[0];
+    if (content.type === 'text') return content.text;
+  } catch (err) {
+    console.error('[buildQuarterlyReportMarkdownAI] Claude call failed, falling back:', err);
+  }
+
+  // Fallback to deterministic formatter
+  return buildQuarterlyReportMarkdown(opts);
+}
+
+/**
+ * Deterministic formatter — no LLM, always works.
+ * Used as fallback when ANTHROPIC_API_KEY is not set or Claude call fails.
  */
 export function buildQuarterlyReportMarkdown(opts: {
   clientName: string;

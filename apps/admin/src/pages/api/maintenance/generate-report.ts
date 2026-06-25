@@ -1,6 +1,12 @@
 import type { APIRoute } from 'astro';
 import { getServiceClientById, getMaintenanceLogs, getWorkOrders } from '../../../lib/maintenance.ts';
-import { buildQuarterlyReportMarkdown, createQuarterlyReport } from '../../../lib/reports.ts';
+import {
+  buildQuarterlyReportMarkdown,
+  buildQuarterlyReportMarkdownAI,
+  createQuarterlyReport,
+} from '../../../lib/reports.ts';
+import { fetchCommitsForPeriod, fetchSentryIssues } from '../../../lib/github.ts';
+import { getSnapshots } from '../../../lib/roi.ts';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -18,7 +24,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
     if (!['Q1', 'Q2', 'Q3', 'Q4'].includes(quarter)) {
-      return new Response(JSON.stringify({ error: 'quarter must be Q1, Q2, Q3, or Q4' }), {
+      return new Response(JSON.stringify({ error: 'quarter must be Q1–Q4' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -41,9 +47,21 @@ export const POST: APIRoute = async ({ request }) => {
     const periodStart = qStart.toISOString().slice(0, 10);
     const periodEnd = qEnd.toISOString().slice(0, 10);
 
-    const [allLogs, allWOs] = await Promise.all([
+    // ── Fetch all data in parallel ───────────────────────────────────────────
+    const githubToken = import.meta.env.GITHUB_TOKEN as string | undefined;
+    const sentryToken = import.meta.env.SENTRY_AUTH_TOKEN as string | undefined;
+    const anthropicKey = import.meta.env.ANTHROPIC_API_KEY as string | undefined;
+
+    const [allLogs, allWOs, commits, roiSnapshots, sentryIssues] = await Promise.all([
       getMaintenanceLogs(serviceClientId, { dateFrom: periodStart, dateTo: periodEnd }),
       getWorkOrders(serviceClientId),
+      client.repoUrl
+        ? fetchCommitsForPeriod(client.repoUrl, periodStart, periodEnd, githubToken)
+        : Promise.resolve([]),
+      getSnapshots(serviceClientId, periodStart, periodEnd),
+      client.sentryUrl && sentryToken
+        ? fetchSentryIssues(client.sentryUrl, periodStart, periodEnd, sentryToken)
+        : Promise.resolve([]),
     ]);
 
     const incidents = allLogs.filter((l) => l.type === 'incident');
@@ -52,7 +70,7 @@ export const POST: APIRoute = async ({ request }) => {
     const closedWOs = allWOs.filter((w) => ['completed', 'invoiced'].includes(w.status));
     const openWOs = allWOs.filter((w) => !['completed', 'invoiced'].includes(w.status));
 
-    const markdownContent = buildQuarterlyReportMarkdown({
+    const reportInput = {
       clientName: client.name,
       productName: client.productName,
       quarter,
@@ -81,7 +99,24 @@ export const POST: APIRoute = async ({ request }) => {
         coverage: w.coverage,
         status: w.status,
       })),
-    });
+      commits: commits.length ? commits : undefined,
+      roiSnapshots: roiSnapshots.length
+        ? roiSnapshots.map((s) => ({
+            metricKey: s.metricKey,
+            metricValue: s.metricValue,
+            snapshotDate: s.snapshotDate,
+          }))
+        : undefined,
+      sentryIssues: sentryIssues.length ? sentryIssues : undefined,
+    };
+
+    // ── Generate markdown ────────────────────────────────────────────────────
+    let markdownContent: string;
+    if (anthropicKey) {
+      markdownContent = await buildQuarterlyReportMarkdownAI(reportInput, anthropicKey);
+    } else {
+      markdownContent = buildQuarterlyReportMarkdown(reportInput);
+    }
 
     const title = `${client.name} — ${client.productName} Maintenance Report ${quarter} ${year}`;
     const report = await createQuarterlyReport({
@@ -93,7 +128,12 @@ export const POST: APIRoute = async ({ request }) => {
       status: 'draft',
     });
 
-    return new Response(JSON.stringify(report), {
+    return new Response(JSON.stringify({ ...report, _sources: {
+      commits: commits.length,
+      roiSnapshots: roiSnapshots.length,
+      sentryIssues: sentryIssues.length,
+      aiGenerated: !!anthropicKey,
+    }}), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     });

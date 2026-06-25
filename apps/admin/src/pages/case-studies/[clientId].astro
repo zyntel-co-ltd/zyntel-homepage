@@ -1,0 +1,448 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getServiceClientById } from '../../lib/maintenance.ts';
+import { getCaseStudies } from '../../lib/reports.ts';
+
+const { clientId } = Astro.params;
+const client = clientId ? await getServiceClientById(clientId) : null;
+const caseStudies = client ? await getCaseStudies(client.id) : [];
+---
+<AdminLayout title={client ? `Case Studies — ${client.name}` : 'Case Studies'}>
+  <div class="cs-root">
+    <header class="admin-header cs-header">
+      <div>
+        <a href="/case-studies" class="cs-back">← Case Studies</a>
+        <h1 class="admin-title">
+          {client ? `${client.name} — Case Studies` : 'Case Studies'}
+        </h1>
+        {client && (
+          <p class="admin-subtitle">
+            {client.productName} · {client.contactName}
+            {client.repoUrl && (
+              <span> · <a href={client.repoUrl} target="_blank" rel="noopener noreferrer" style="color:var(--admin-accent);">GitHub ↗</a></span>
+            )}
+          </p>
+        )}
+      </div>
+      {client && (
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap;">
+          <a href={`/maintenance/reports/${client.id}`} class="admin-btn admin-btn-secondary" style="font-size:0.8125rem;">
+            Reports →
+          </a>
+          <button id="btn-new-cs" class="admin-btn admin-btn-primary" type="button">
+            + New Case Study
+          </button>
+        </div>
+      )}
+    </header>
+
+    {!client && (
+      <div class="admin-card" style="padding:2rem;text-align:center;color:var(--admin-text-muted);">
+        Client not found. <a href="/case-studies" style="color:var(--admin-accent);">Go back</a>
+      </div>
+    )}
+
+    {client && (
+      <>
+        <!-- Case studies list -->
+        <section class="cs-section">
+          <div class="cs-section-header">
+            <h2 class="cs-section-title">Case Studies</h2>
+            <span class="cs-count">{caseStudies.length} stud{caseStudies.length !== 1 ? 'ies' : 'y'}</span>
+          </div>
+
+          {caseStudies.length === 0 ? (
+            <div class="cs-empty">
+              No case studies yet. Create the first one to document the ROI and impact of {client.productName}.
+              <br />
+              <span style="font-size:0.8rem;color:var(--admin-text-muted);margin-top:6px;display:block;">
+                Published case studies will be available to the public marketing site via Sanity.
+              </span>
+            </div>
+          ) : (
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Summary</th>
+                    <th>Tags</th>
+                    <th>Status</th>
+                    <th>Published</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {caseStudies.map((cs) => (
+                    <tr data-cs-id={cs.id}>
+                      <td style="max-width:260px;font-weight:600;">{cs.title}</td>
+                      <td style="max-width:280px;font-size:0.8125rem;color:var(--admin-text-muted);">
+                        {cs.summary ? cs.summary.slice(0, 100) + (cs.summary.length > 100 ? '…' : '') : '—'}
+                      </td>
+                      <td style="font-size:0.75rem;">{cs.tags.length ? cs.tags.join(', ') : '—'}</td>
+                      <td>
+                        <span class={`cs-badge cs-badge--${cs.status}`}>{cs.status}</span>
+                      </td>
+                      <td style="font-size:0.75rem;color:var(--admin-text-muted);white-space:nowrap;">
+                        {cs.publishedAt
+                          ? cs.publishedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                          : '—'}
+                      </td>
+                      <td style="display:flex;gap:6px;justify-content:flex-end;">
+                        <button class="act-btn" data-view-cs={cs.id} type="button">Edit</button>
+                        <button class="act-btn act-btn--danger" data-del-cs={cs.id} type="button">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <!-- Template guidance -->
+        <section class="cs-section" style="margin-top:1.5rem;">
+          <div class="cs-section-header">
+            <h2 class="cs-section-title">Case Study Playbook</h2>
+          </div>
+          <div style="padding:1.25rem;font-size:0.875rem;color:var(--admin-text-muted);line-height:1.7;">
+            <p style="margin:0 0 0.75rem;"><strong style="color:var(--admin-text);">Case studies are the primary sales asset.</strong> Every active client should have at least one published case study.</p>
+            <p style="margin:0 0 0.5rem;"><strong style="color:var(--admin-text);">Recommended structure:</strong></p>
+            <ol style="margin:0 0 0.75rem;padding-left:1.4em;">
+              <li><strong>Headline</strong> — "[Client] [quantified result] in [timeframe]" e.g. "Five S Investments manages 2,231 tenants across 228 landlords with zero spreadsheets"</li>
+              <li><strong>The Challenge</strong> — 2–3 sentences on the before-state (what was painful, what was manual, what was missing)</li>
+              <li><strong>The Solution</strong> — 1–2 sentences on what Zyntel built and why it matters</li>
+              <li><strong>The Results</strong> — 3–5 specific, quantified metrics (numbers, percentages, time saved)</li>
+              <li><strong>The Quote</strong> — direct quote from the client contact</li>
+              <li><strong>What's Next</strong> — expansion, upsell, or next phase</li>
+            </ol>
+            <p style="margin:0;">Published case studies will be linked to the public <a href="https://zyntel.net" target="_blank" rel="noopener noreferrer" style="color:var(--admin-accent);">zyntel.net</a> marketing site via Sanity CMS.</p>
+          </div>
+        </section>
+      </>
+    )}
+
+    <div id="toast-root-cs"></div>
+
+    <!-- Modal: New case study -->
+    <div id="modal-new-cs" class="preview-modal-overlay" style="display:none;">
+      <div class="modal modal--wide">
+        <h3>New Case Study</h3>
+        <form id="form-new-cs" class="grid-form">
+          <div class="full">
+            <label>Title *</label>
+            <input id="cs-title" class="admin-form-input" required placeholder='e.g. "Five S Investments manages 2,231 tenants with zero spreadsheets"' />
+          </div>
+          <div class="full">
+            <label>Summary (1–2 sentences — used in previews)</label>
+            <textarea id="cs-summary" class="admin-form-input" rows="2" placeholder="How Zyntel solved X for Y client…"></textarea>
+          </div>
+          <div class="full">
+            <label>Tags (comma-separated)</label>
+            <input id="cs-tags" class="admin-form-input" placeholder="property, automation, ROI, finance" />
+          </div>
+          <div class="full">
+            <label>Content (Markdown) *</label>
+            <textarea id="cs-content" class="admin-form-input cs-md-editor" rows="16"
+              placeholder="## The Challenge&#10;...&#10;&#10;## The Solution&#10;...&#10;&#10;## The Results&#10;- **2,231 tenants** managed across 228 landlords&#10;- UGX 725M in rent tracked&#10;- ...&#10;&#10;## What the Client Says&#10;> Quote here&#10;&#10;## What's Next&#10;..."></textarea>
+          </div>
+          <div class="modal-actions full">
+            <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-new-cs">Cancel</button>
+            <button class="admin-btn admin-btn-primary" type="submit" id="btn-cs-submit">Create Draft</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: View / edit case study -->
+    <div id="modal-view-cs" class="preview-modal-overlay" style="display:none;">
+      <div class="modal modal--report">
+        <div class="cs-modal-header">
+          <h3 id="view-cs-title">Case Study</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span id="view-cs-status" class="cs-badge"></span>
+            <button id="btn-publish-cs" class="admin-btn admin-btn-secondary" type="button" style="font-size:0.75rem;">Publish</button>
+            <button id="btn-unpublish-cs" class="admin-btn admin-btn-secondary" type="button" style="font-size:0.75rem;display:none;">Unpublish</button>
+            <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-view-cs" style="font-size:0.75rem;">Close</button>
+          </div>
+        </div>
+        <div id="view-cs-content" class="cs-markdown-body"></div>
+        <div class="cs-edit-row">
+          <details class="cs-edit-details">
+            <summary>Edit</summary>
+            <div style="display:grid;gap:10px;margin-top:10px;">
+              <div>
+                <label style="font-size:0.8125rem;font-weight:600;">Title</label>
+                <input id="edit-cs-title" class="admin-form-input" style="margin-top:4px;" />
+              </div>
+              <div>
+                <label style="font-size:0.8125rem;font-weight:600;">Summary</label>
+                <textarea id="edit-cs-summary" class="admin-form-input" rows="2" style="margin-top:4px;"></textarea>
+              </div>
+              <div>
+                <label style="font-size:0.8125rem;font-weight:600;">Tags (comma-separated)</label>
+                <input id="edit-cs-tags" class="admin-form-input" style="margin-top:4px;" />
+              </div>
+              <div>
+                <label style="font-size:0.8125rem;font-weight:600;">Content (Markdown)</label>
+                <textarea id="edit-cs-md" class="admin-form-input cs-md-editor" rows="20" style="margin-top:4px;"></textarea>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button id="btn-save-cs" class="admin-btn admin-btn-primary" type="button">Save changes</button>
+                <button id="btn-preview-cs" class="admin-btn admin-btn-secondary" type="button">Preview</button>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm -->
+    <div id="modal-confirm-cs" class="preview-modal-overlay" style="display:none;">
+      <div class="modal modal--narrow">
+        <h3 id="cs-confirm-title"></h3>
+        <p id="cs-confirm-message" style="color:var(--admin-text-muted);font-size:0.875rem;margin-top:-0.5rem;"></p>
+        <div class="modal-actions">
+          <button type="button" class="admin-btn admin-btn-secondary" data-close="modal-confirm-cs">Cancel</button>
+          <button id="cs-confirm-btn" type="button" class="admin-btn admin-btn-primary">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .cs-root { margin: 0 auto; max-width: 1120px; }
+    .cs-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+    .cs-back { font-size: 0.875rem; color: var(--admin-text-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+    .cs-back:hover { color: var(--admin-text); }
+
+    .cs-section { background: var(--admin-card); border: 1px solid var(--admin-border); border-radius: 10px; overflow: hidden; }
+    .cs-section-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--admin-border); }
+    .cs-section-title { font-size: 0.9375rem; font-weight: 700; color: var(--admin-text); margin: 0; }
+    .cs-count { font-size: 0.75rem; color: var(--admin-text-muted); font-weight: 600; }
+    .cs-empty { padding: 2rem; text-align: center; color: var(--admin-text-muted); font-size: 0.875rem; }
+
+    .cs-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .cs-badge--draft { background: rgba(245,158,11,.12); color: #92400e; }
+    .cs-badge--published { background: rgba(59,130,246,.12); color: #1d4ed8; }
+
+    .modal--report { width: min(860px, 98vw); max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; }
+    .modal--wide { width: min(700px, 98vw); }
+    .modal--narrow { width: min(440px, 100%); }
+
+    .cs-modal-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; flex-shrink: 0; }
+    .cs-modal-header h3 { margin: 0; font-size: 1rem; }
+    .cs-edit-row { margin-top: 16px; flex-shrink: 0; }
+    .cs-edit-details { border: 1px solid var(--admin-border); border-radius: 8px; padding: 10px 14px; }
+    .cs-edit-details summary { cursor: pointer; font-size: 0.8125rem; font-weight: 600; color: var(--admin-text); }
+    .cs-md-editor { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.8125rem; }
+
+    .cs-markdown-body { font-size: 0.9rem; line-height: 1.65; color: var(--admin-text); flex: 1; overflow-y: auto; }
+    .cs-markdown-body h1 { font-size: 1.375rem; font-weight: 800; margin: 1.2em 0 0.5em; }
+    .cs-markdown-body h2 { font-size: 1.1rem; font-weight: 700; margin: 1.1em 0 0.4em; border-bottom: 1px solid var(--admin-border); padding-bottom: 4px; }
+    .cs-markdown-body h3 { font-size: 0.9375rem; font-weight: 700; margin: 0.9em 0 0.3em; }
+    .cs-markdown-body p { margin: 0.6em 0; }
+    .cs-markdown-body ul, .cs-markdown-body ol { margin: 0.5em 0 0.5em 1.4em; }
+    .cs-markdown-body li { margin: 0.25em 0; }
+    .cs-markdown-body code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.8125rem; background: var(--admin-bg-elevated); border: 1px solid var(--admin-border); padding: 1px 6px; border-radius: 4px; }
+    .cs-markdown-body blockquote { border-left: 3px solid var(--admin-accent); padding-left: 12px; margin: 0.6em 0; color: var(--admin-text-muted); font-style: italic; }
+    .cs-markdown-body hr { border: none; border-top: 1px solid var(--admin-border); margin: 1.2em 0; }
+    .cs-markdown-body strong { font-weight: 700; }
+    .cs-markdown-body table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 0.8em 0; }
+    .cs-markdown-body th { background: var(--admin-bg-elevated); font-weight: 700; text-align: left; padding: 6px 10px; border: 1px solid var(--admin-border); font-size: 0.8rem; }
+    .cs-markdown-body td { padding: 6px 10px; border: 1px solid var(--admin-border); vertical-align: top; }
+    .cs-markdown-body tr:nth-child(even) td { background: var(--admin-bg-elevated); }
+
+    #toast-root-cs { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; pointer-events: none; }
+    .toast { background: var(--admin-text); color: var(--admin-card); border-radius: 8px; padding: 10px 14px; font-size: 0.8125rem; min-width: 260px; pointer-events: auto; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+    .toast.error { background: #7f1d1d; color: #fff; }
+  </style>
+
+  <script define:vars={{ clientId }}>
+    function showToast(msg, type = 'success') {
+      const t = document.createElement('div');
+      t.className = `toast${type === 'error' ? ' error' : ''}`;
+      t.textContent = msg;
+      document.getElementById('toast-root-cs').appendChild(t);
+      setTimeout(() => t.remove(), 5000);
+    }
+    function showModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'flex'; }
+    function closeModal(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+    document.addEventListener('click', (e) => { const c = e.target.closest('[data-close]'); if (c) closeModal(c.dataset.close); });
+    document.querySelectorAll('.preview-modal-overlay').forEach((o) => o.addEventListener('click', (e) => { if (e.target === o) closeModal(o.id); }));
+
+    let csConfirmCallback = null;
+    function openConfirm(opts) {
+      document.getElementById('cs-confirm-title').textContent = opts.title;
+      document.getElementById('cs-confirm-message').textContent = opts.message;
+      document.getElementById('cs-confirm-btn').textContent = opts.label || 'Confirm';
+      csConfirmCallback = opts.onConfirm;
+      showModal('modal-confirm-cs');
+    }
+    document.getElementById('cs-confirm-btn').addEventListener('click', async () => {
+      if (csConfirmCallback) await csConfirmCallback();
+      closeModal('modal-confirm-cs');
+    });
+
+    function renderMarkdown(md) {
+      if (!md) return '';
+      const lines = md.split('\n');
+      const out = [];
+      let inUl = false, inTable = false, tableHeader = false;
+      function flushList() { if (inUl) { out.push('</ul>'); inUl = false; } }
+      function flushTable() { if (inTable) { out.push('</tbody></table>'); inTable = false; tableHeader = false; } }
+      for (const raw of lines) {
+        const line = raw.trimEnd();
+        if (/^---+$/.test(line.trim())) { flushList(); flushTable(); out.push('<hr>'); continue; }
+        if (/^\|/.test(line)) {
+          flushList();
+          if (!inTable) { out.push('<table><thead>'); inTable = true; tableHeader = true; }
+          const cells = line.split('|').slice(1, -1).map((c) => c.trim());
+          if (cells.every((c) => /^-+$/.test(c))) { out.push('</thead><tbody>'); tableHeader = false; continue; }
+          const tag = tableHeader ? 'th' : 'td';
+          out.push(`<tr>${cells.map((c) => `<${tag}>${fmt(c)}</${tag}>`).join('')}</tr>`);
+          continue;
+        }
+        flushTable();
+        const h3 = line.match(/^### (.+)/); if (h3) { flushList(); out.push(`<h3>${fmt(h3[1])}</h3>`); continue; }
+        const h2 = line.match(/^## (.+)/);  if (h2) { flushList(); out.push(`<h2>${fmt(h2[1])}</h2>`); continue; }
+        const h1 = line.match(/^# (.+)/);   if (h1) { flushList(); out.push(`<h1>${fmt(h1[1])}</h1>`); continue; }
+        const bq = line.match(/^> (.+)/);   if (bq) { flushList(); out.push(`<blockquote><p>${fmt(bq[1])}</p></blockquote>`); continue; }
+        const li = line.match(/^[-*] (.+)/); if (li) { if (!inUl) { out.push('<ul>'); inUl = true; } out.push(`<li>${fmt(li[1])}</li>`); continue; }
+        flushList();
+        if (!line.trim()) continue;
+        out.push(`<p>${fmt(line)}</p>`);
+      }
+      flushList(); flushTable();
+      return out.join('\n');
+    }
+    function fmt(t) {
+      return t
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/(?<!\*)\*(?!\*)([^*]+)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    }
+
+    // ── Create ────────────────────────────────────────────────────────────
+    document.getElementById('btn-new-cs').addEventListener('click', () => showModal('modal-new-cs'));
+
+    document.getElementById('form-new-cs').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-cs-submit');
+      btn.disabled = true;
+      try {
+        const title = document.getElementById('cs-title').value.trim();
+        const summary = document.getElementById('cs-summary').value.trim() || null;
+        const tags = document.getElementById('cs-tags').value.trim().split(',').map((t) => t.trim()).filter(Boolean);
+        const markdownContent = document.getElementById('cs-content').value.trim();
+        if (!title || !markdownContent) { showToast('Title and content are required', 'error'); return; }
+        const res = await fetch('/api/maintenance/case-study', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ serviceClientId: clientId, title, summary, tags, markdownContent }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { showToast(data.error || 'Failed to create', 'error'); return; }
+        closeModal('modal-new-cs');
+        showToast('Case study created as draft');
+        setTimeout(() => window.location.reload(), 800);
+      } finally { btn.disabled = false; }
+    });
+
+    // ── View / edit / publish ─────────────────────────────────────────────
+    let currentCsId = null;
+    document.addEventListener('click', async (e) => {
+      const viewBtn = e.target.closest('[data-view-cs]');
+      if (viewBtn) {
+        const id = viewBtn.dataset.viewCs;
+        currentCsId = id;
+        const res = await fetch(`/api/maintenance/case-study?id=${encodeURIComponent(id)}`);
+        const cs = await res.json().catch(() => null);
+        if (!cs) { showToast('Failed to load', 'error'); return; }
+        document.getElementById('view-cs-title').textContent = cs.title;
+        const badge = document.getElementById('view-cs-status');
+        badge.textContent = cs.status;
+        badge.className = `cs-badge cs-badge--${cs.status}`;
+        document.getElementById('view-cs-content').innerHTML = renderMarkdown(cs.markdownContent || '');
+        document.getElementById('edit-cs-title').value = cs.title;
+        document.getElementById('edit-cs-summary').value = cs.summary || '';
+        document.getElementById('edit-cs-tags').value = cs.tags.join(', ');
+        document.getElementById('edit-cs-md').value = cs.markdownContent || '';
+        document.getElementById('btn-publish-cs').style.display = cs.status === 'published' ? 'none' : '';
+        document.getElementById('btn-unpublish-cs').style.display = cs.status === 'published' ? '' : 'none';
+        showModal('modal-view-cs');
+      }
+
+      const delBtn = e.target.closest('[data-del-cs]');
+      if (delBtn) {
+        const id = delBtn.dataset.delCs;
+        openConfirm({
+          title: 'Delete case study?', message: 'This cannot be undone.', label: 'Delete',
+          onConfirm: async () => {
+            const res = await fetch(`/api/maintenance/case-study?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+            if (!res.ok) { showToast('Failed to delete', 'error'); return; }
+            showToast('Case study deleted');
+            setTimeout(() => window.location.reload(), 800);
+          },
+        });
+      }
+    });
+
+    document.getElementById('btn-save-cs').addEventListener('click', async () => {
+      if (!currentCsId) return;
+      const payload = {
+        id: currentCsId,
+        title: document.getElementById('edit-cs-title').value.trim(),
+        summary: document.getElementById('edit-cs-summary').value.trim() || null,
+        tags: document.getElementById('edit-cs-tags').value.split(',').map((t) => t.trim()).filter(Boolean),
+        markdownContent: document.getElementById('edit-cs-md').value,
+      };
+      const res = await fetch('/api/maintenance/case-study', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { showToast(data.error || 'Save failed', 'error'); return; }
+      document.getElementById('view-cs-title').textContent = payload.title;
+      document.getElementById('view-cs-content').innerHTML = renderMarkdown(payload.markdownContent);
+      showToast('Saved');
+    });
+
+    document.getElementById('btn-preview-cs').addEventListener('click', () => {
+      const md = document.getElementById('edit-cs-md').value;
+      document.getElementById('view-cs-content').innerHTML = renderMarkdown(md);
+    });
+
+    document.getElementById('btn-publish-cs').addEventListener('click', async () => {
+      if (!currentCsId) return;
+      const res = await fetch('/api/maintenance/case-study', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: currentCsId, status: 'published', publishedAt: new Date().toISOString() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { showToast(data.error || 'Failed', 'error'); return; }
+      const badge = document.getElementById('view-cs-status');
+      badge.textContent = 'published'; badge.className = 'cs-badge cs-badge--published';
+      document.getElementById('btn-publish-cs').style.display = 'none';
+      document.getElementById('btn-unpublish-cs').style.display = '';
+      const row = document.querySelector(`[data-cs-id="${currentCsId}"]`);
+      if (row) { const b = row.querySelector('.cs-badge'); if (b) { b.textContent = 'published'; b.className = 'cs-badge cs-badge--published'; } }
+      showToast('Case study published');
+    });
+
+    document.getElementById('btn-unpublish-cs').addEventListener('click', async () => {
+      if (!currentCsId) return;
+      const res = await fetch('/api/maintenance/case-study', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: currentCsId, status: 'draft', publishedAt: null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { showToast(data.error || 'Failed', 'error'); return; }
+      const badge = document.getElementById('view-cs-status');
+      badge.textContent = 'draft'; badge.className = 'cs-badge cs-badge--draft';
+      document.getElementById('btn-unpublish-cs').style.display = 'none';
+      document.getElementById('btn-publish-cs').style.display = '';
+      showToast('Reverted to draft');
+    });
+  </script>
+</AdminLayout>

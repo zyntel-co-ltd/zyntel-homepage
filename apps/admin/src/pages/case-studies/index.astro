@@ -1,0 +1,102 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAllServiceClients } from '../../lib/maintenance.ts';
+import { getCaseStudies } from '../../lib/reports.ts';
+
+const clients = await getAllServiceClients();
+
+const allStudies = await Promise.all(
+  clients.map(async (c) => {
+    const studies = await getCaseStudies(c.id);
+    return studies.map((s) => ({ ...s, clientName: c.name, productName: c.productName, clientId: c.id }));
+  })
+);
+const studies = allStudies.flat().sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+const published = studies.filter((s) => s.status === 'published');
+const drafts = studies.filter((s) => s.status === 'draft');
+---
+<AdminLayout title="Case Studies">
+  <header class="admin-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+    <div>
+      <h1 class="admin-title">Case Studies</h1>
+      <p class="admin-subtitle">
+        Client success stories and ROI narratives. Published case studies feed the public marketing site via Sanity.
+        <strong style="color:var(--admin-text);">{published.length} published · {drafts.length} draft</strong>
+      </p>
+    </div>
+  </header>
+
+  {clients.length === 0 ? (
+    <div class="admin-card" style="padding:2rem;text-align:center;color:var(--admin-text-muted);">
+      No service clients found. <a href="/maintenance" style="color:var(--admin-accent);">Add a service client</a> first.
+    </div>
+  ) : (
+    <div class="cs-grid">
+      {clients.map((c) => {
+        const clientStudies = studies.filter((s) => s.clientId === c.id);
+        const pub = clientStudies.filter((s) => s.status === 'published').length;
+        const draft = clientStudies.filter((s) => s.status === 'draft').length;
+        return (
+          <a href={`/case-studies/${c.id}`} class="cs-client-card">
+            <div class="cs-client-header">
+              <div>
+                <div class="cs-client-name">{c.name}</div>
+                <div class="cs-client-product">{c.productName}</div>
+              </div>
+              <div class="cs-client-counts">
+                {pub > 0 && <span class="cs-badge cs-badge--published">{pub} published</span>}
+                {draft > 0 && <span class="cs-badge cs-badge--draft">{draft} draft</span>}
+                {clientStudies.length === 0 && <span class="cs-badge cs-badge--none">No studies</span>}
+              </div>
+            </div>
+            {clientStudies.length > 0 && (
+              <ul class="cs-study-list">
+                {clientStudies.slice(0, 3).map((s) => (
+                  <li class="cs-study-item">
+                    <span class={`cs-dot cs-dot--${s.status}`}></span>
+                    <span class="cs-study-title">{s.title}</span>
+                  </li>
+                ))}
+                {clientStudies.length > 3 && (
+                  <li class="cs-study-item" style="color:var(--admin-text-muted);font-style:italic;">
+                    +{clientStudies.length - 3} more
+                  </li>
+                )}
+              </ul>
+            )}
+            <div class="cs-client-footer">
+              View &amp; manage →
+            </div>
+          </a>
+        );
+      })}
+    </div>
+  )}
+
+  <style>
+    .cs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+
+    .cs-client-card { display: flex; flex-direction: column; gap: 10px; padding: 1.25rem; background: var(--admin-card); border: 1px solid var(--admin-border); border-radius: 10px; text-decoration: none; color: inherit; transition: border-color 0.15s, box-shadow 0.15s; }
+    .cs-client-card:hover { border-color: var(--admin-accent); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+
+    .cs-client-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .cs-client-name { font-weight: 700; font-size: 0.9375rem; color: var(--admin-text); }
+    .cs-client-product { font-size: 0.8rem; color: var(--admin-text-muted); margin-top: 2px; }
+    .cs-client-counts { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+
+    .cs-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; }
+    .cs-badge--published { background: rgba(59,130,246,.12); color: #1d4ed8; }
+    .cs-badge--draft { background: rgba(245,158,11,.12); color: #92400e; }
+    .cs-badge--none { background: var(--admin-bg-elevated); color: var(--admin-text-muted); }
+
+    .cs-study-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+    .cs-study-item { display: flex; align-items: center; gap: 8px; font-size: 0.8375rem; color: var(--admin-text); }
+    .cs-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .cs-dot--published { background: #3b82f6; }
+    .cs-dot--draft { background: #f59e0b; }
+    .cs-study-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .cs-client-footer { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--admin-border); font-size: 0.8125rem; color: var(--admin-accent); font-weight: 600; }
+  </style>
+</AdminLayout>

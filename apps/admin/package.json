@@ -12,6 +12,7 @@
     "preview": "astro preview"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.106.0",
     "@aws-sdk/client-s3": "^3.890.0",
     "@aws-sdk/s3-request-presigner": "^3.890.0",
     "@zyntel/db": "*",
