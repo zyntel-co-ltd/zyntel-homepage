@@ -29,7 +29,7 @@ const isContact = currentPath.startsWith('/contact');
 
     <div class="ag-nav-actions">
       <a href="https://zyntforms.com" target="_blank" rel="noopener" class="ag-nav-product">ZyntForms ↗</a>
-      <a href="/contact" class="ag-nav-cta">Start a project</a>
+      <a href="/contact" class="ag-nav-cta">Get in touch</a>
       <button class="ag-nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
         <span></span><span></span><span></span>
       </button>
@@ -114,6 +114,15 @@ const isContact = currentPath.startsWith('/contact');
     if (e.key === 'Escape' && overlay?.classList.contains('is-open')) closeMenu();
   });
 
+  // Scroll-triggered dark nav
+  const nav = document.getElementById('site-nav') as HTMLElement | null;
+  function updateNavScroll() {
+    if (!nav) return;
+    nav.classList.toggle('is-scrolled', window.scrollY > 60);
+  }
+  window.addEventListener('scroll', updateNavScroll, { passive: true });
+  updateNavScroll();
+
   function updateTime() {
     if (!timeEl) return;
     timeEl.textContent = new Date().toLocaleTimeString('en-GB', {
@@ -151,6 +160,7 @@ const isContact = currentPath.startsWith('/contact');
     border-radius: 999px;
     padding: 0.65rem 0.75rem 0.65rem 1.5rem;
     box-shadow: 0 4px 28px rgba(0, 0, 0, 0.1);
+    transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
   }
 
   .ag-nav-logo {
@@ -163,6 +173,7 @@ const isContact = currentPath.startsWith('/contact');
     color: #0f0f14;
     text-decoration: none;
     flex-shrink: 0;
+    transition: color 0.4s ease;
   }
 
   .ag-nav-logo-mark {
@@ -276,7 +287,7 @@ const isContact = currentPath.startsWith('/contact');
       inset 0 1.5px 0px rgba(255, 255, 255, 0.4),
       0 8px 16px rgba(0, 0, 0, 0.28),
       0 2px 4px rgba(0, 0, 0, 0.18);
-    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out, background-image 0.4s ease, color 0.3s ease;
   }
 
   .ag-nav-cta:hover {
@@ -292,6 +303,63 @@ const isContact = currentPath.startsWith('/contact');
     box-shadow:
       inset 0 1px 0px rgba(255, 255, 255, 0.2),
       0 3px 6px rgba(0, 0, 0, 0.15);
+  }
+
+  /* ── Scrolled: dark pill nav ── */
+  .ag-nav.is-scrolled .ag-nav-pill {
+    background: rgba(10, 8, 18, 0.94);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  }
+
+  .ag-nav.is-scrolled .ag-nav-logo {
+    color: #ffffff;
+  }
+
+  .ag-nav.is-scrolled .ag-nav-link {
+    color: rgba(255, 255, 255, 0.52);
+  }
+
+  .ag-nav.is-scrolled .ag-nav-link:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .ag-nav.is-scrolled .ag-nav-link.is-active {
+    color: #0f0f14;
+    background: #ffffff;
+    font-weight: 600;
+  }
+
+  .ag-nav.is-scrolled .ag-nav-link.is-active::after {
+    display: none;
+  }
+
+  .ag-nav.is-scrolled .ag-nav-product {
+    background: rgba(167, 139, 250, 0.12);
+    color: #c4b5fd;
+    box-shadow: none;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+  }
+
+  /* Gradient-border "Get in touch" button */
+  .ag-nav.is-scrolled .ag-nav-cta {
+    background-image:
+      linear-gradient(rgba(10, 8, 18, 0.94), rgba(10, 8, 18, 0.94)),
+      linear-gradient(135deg, #7c3aed 0%, #db2777 60%, #ef4444 100%);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    border: 1.5px solid transparent;
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow: none;
+  }
+
+  .ag-nav.is-scrolled .ag-nav-cta:hover {
+    color: #ffffff;
+    background-image:
+      linear-gradient(rgba(20, 14, 30, 0.96), rgba(20, 14, 30, 0.96)),
+      linear-gradient(135deg, #7c3aed 0%, #db2777 60%, #ef4444 100%);
+    transform: translateY(-1px);
   }
 
   /* ── Hamburger button (dark circle) ── */
