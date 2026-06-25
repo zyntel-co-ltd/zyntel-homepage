@@ -203,6 +203,30 @@ const serviceClients = await getAllServiceClients();
       <div id="roi-comparison" class="roi-comparison"></div>
     </section>
 
+    <!-- ── Database Migrations ── -->
+    <section class="maint-section maint-migrations">
+      <div class="maint-section-header">
+        <div>
+          <h2 class="maint-section-title">Database Migrations</h2>
+          <p class="maint-help" style="margin:2px 0 0;">Run once after deploying new features. Safe to re-run (all use IF NOT EXISTS).</p>
+        </div>
+      </div>
+      <div class="maint-migration-grid">
+        <div class="maint-migration-item">
+          <div class="maint-kicker">Reports schema</div>
+          <p class="maint-help" style="margin:4px 0 8px;">Adds <code>data_cursor_date</code>, <code>last_refreshed_at</code>, <code>source_data</code> columns + unique index to quarterly_reports.</p>
+          <button type="button" id="btn-migrate-reports" class="admin-btn admin-btn-secondary">Run Report Migrations</button>
+          <span id="mig-reports-status" class="maint-mig-status"></span>
+        </div>
+        <div class="maint-migration-item">
+          <div class="maint-kicker">App events log schema</div>
+          <p class="maint-help" style="margin:4px 0 8px;">Creates <code>app_events</code> table + 5 indexes for the structured event log system.</p>
+          <button type="button" id="btn-migrate-logs" class="admin-btn admin-btn-secondary">Run Log Migrations</button>
+          <span id="mig-logs-status" class="maint-mig-status"></span>
+        </div>
+      </div>
+    </section>
+
   </div><!-- end maint-page-card -->
 
   <!-- ── Modals ── -->
@@ -393,6 +417,15 @@ const serviceClients = await getAllServiceClients();
     .grid-form--nested { margin-top: 10px; }
     .maint-checkbox-row { margin-top: 6px; }
     .maint-inline-check { font-size: 0.75rem; font-weight: 500; color: var(--admin-text); display: flex; align-items: center; gap: 8px; cursor: pointer; }
+
+    /* ── Migrations ── */
+    .maint-migration-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 640px) { .maint-migration-grid { grid-template-columns: 1fr; } }
+    .maint-migration-item { border: 1px solid var(--admin-border); border-radius: 8px; padding: 14px 16px; background: var(--admin-bg-elevated); }
+    .maint-mig-status { font-size: 0.75rem; margin-left: 10px; font-weight: 600; }
+    .maint-mig-status.ok   { color: #166534; }
+    .maint-mig-status.err  { color: #b91c1c; }
+    .maint-mig-status.running { color: var(--admin-text-muted); }
 
     /* ── Toast ── */
     #toast-root { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; pointer-events: none; }
@@ -766,5 +799,40 @@ const serviceClients = await getAllServiceClients();
       const year = now.getFullYear();
       window.open(`/api/maintenance/report-pdf?clientId=${encodeURIComponent(selectedClientId)}&quarter=${q}&year=${year}`, '_blank');
     });
+
+    async function runMigration(endpoint, statusId, btnId) {
+      const statusEl = document.getElementById(statusId);
+      const btn = document.getElementById(btnId);
+      if (!btn || !statusEl) return;
+      btn.disabled = true;
+      statusEl.textContent = 'Running…';
+      statusEl.className = 'maint-mig-status running';
+      try {
+        const res = await fetch(endpoint, { method: 'POST' });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          statusEl.textContent = d.error || `Error ${res.status}`;
+          statusEl.className = 'maint-mig-status err';
+          showToast(d.error || `Migration failed (${res.status})`, 'error');
+        } else {
+          statusEl.textContent = d.message ?? 'Done ✓';
+          statusEl.className = 'maint-mig-status ok';
+          showToast(d.message ?? 'Migration applied');
+        }
+      } catch (e) {
+        statusEl.textContent = 'Network error';
+        statusEl.className = 'maint-mig-status err';
+        showToast('Network error', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('btn-migrate-reports')?.addEventListener('click', () =>
+      runMigration('/api/maintenance/apply-report-migrations', 'mig-reports-status', 'btn-migrate-reports')
+    );
+    document.getElementById('btn-migrate-logs')?.addEventListener('click', () =>
+      runMigration('/api/maintenance/apply-log-migrations', 'mig-logs-status', 'btn-migrate-logs')
+    );
   </script>
 </AdminLayout>

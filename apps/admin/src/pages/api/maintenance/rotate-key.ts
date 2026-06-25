@@ -14,7 +14,8 @@ function hashApiKey(key: string): string {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { id } = await request.json();
+    const body = await request.json();
+    const id = body.id ?? body.serviceClientId;
     if (!id) {
       return new Response(JSON.stringify({ error: 'id required' }), {
         status: 400,
