@@ -425,17 +425,27 @@ const faqs = [
   });
   wmObserver.observe(document.body, { childList: true, subtree: true });
 
-  if (splineCanvas) {
+  if (splineCanvas && splineBg) {
     const splineApp = new Application(splineCanvas);
     splineApp.load('https://prod.spline.design/apWLHlfV6wU1reTE/scene.splinecode')
       .then(() => {
-        splineBg?.classList.add('is-ready');
+        splineBg.classList.add('is-ready');
         wmObserver.disconnect();
       })
       .catch(() => {
-        splineBg?.classList.add('is-ready');
+        splineBg.classList.add('is-ready');
         wmObserver.disconnect();
       });
+
+    // Stop GPU compositing when hero is off-screen. Observe the parent section
+    // (not splineBg itself) — display:none zeroes its rect and breaks re-entry.
+    const heroSection = splineBg.parentElement;
+    if (heroSection) {
+      const heroVisIo = new IntersectionObserver((entries) => {
+        splineBg.style.display = entries[0].isIntersecting ? '' : 'none';
+      }, { rootMargin: '120px 0px' });
+      heroVisIo.observe(heroSection);
+    }
   }
 
   // ── CTA Spline scene ──
@@ -449,7 +459,7 @@ const faqs = [
     });
   };
 
-  if (ctaCanvas) {
+  if (ctaCanvas && ctaBg) {
     const ctaWmObserver = new MutationObserver(removeWatermarks);
     ctaWmObserver.observe(document.body, { childList: true, subtree: true });
 
@@ -466,9 +476,19 @@ const faqs = [
             if (obj) { obj.visible = false; }
           }
         } catch (_) {}
-        ctaBg?.classList.add('is-ready');
+        ctaBg.classList.add('is-ready');
       })
-      .catch(() => { removeWatermarks(); ctaWmObserver.disconnect(); ctaBg?.classList.add('is-ready'); });
+      .catch(() => { removeWatermarks(); ctaWmObserver.disconnect(); ctaBg.classList.add('is-ready'); });
+
+    // Observe the card element (not ctaBg) for the same reason — display:none
+    // on ctaBg zeroes its rect and prevents re-entry detection.
+    const ctaCardEl = ctaBg.closest<HTMLElement>('.ag-cta-card--home') ?? ctaBg.parentElement;
+    if (ctaCardEl) {
+      const ctaVisIo = new IntersectionObserver((entries) => {
+        ctaBg.style.display = entries[0].isIntersecting ? '' : 'none';
+      }, { rootMargin: '120px 0px' });
+      ctaVisIo.observe(ctaCardEl);
+    }
   }
 
   // ── Hero: organic sine-wave float + mouse parallax (all driven from one rAF loop) ──
@@ -658,6 +678,8 @@ const faqs = [
     mix-blend-mode: screen;
     opacity: 0;
     transition: opacity 1.2s ease;
+    will-change: opacity;
+    transform: translateZ(0);
   }
 
   .hero-spline-bg.is-ready {
@@ -721,6 +743,8 @@ const faqs = [
     opacity: 0;
     transition: opacity 1s ease;
     overflow: hidden;
+    will-change: opacity;
+    transform: translateZ(0);
   }
 
   .cta-spline-bg.is-ready {
