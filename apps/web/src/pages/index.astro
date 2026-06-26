@@ -69,7 +69,16 @@ const faqs = [
 
     <!-- ── HERO ── -->
     <div class="ag-hero-wrapper">
-    <section class="ag-hero">
+    <section class="ag-hero" style="background: var(--ag-bg);">
+      <!-- Spline wave — full-bleed background layer.
+           mix-blend-mode is on this div (a regular DOM element), not the WebGL
+           canvas directly — browsers don't reliably apply CSS blend modes to
+           WebGL canvases. The div creates a compositing group; screen() then
+           runs against the hero's explicit background above. -->
+      <div class="hero-spline-bg" aria-hidden="true">
+        <canvas id="spline-canvas"></canvas>
+      </div>
+
       <div class="ag-blob ag-blob--1" aria-hidden="true"></div>
       <div class="ag-blob ag-blob--2" aria-hidden="true"></div>
       <div class="ag-blob ag-blob--3" aria-hidden="true"></div>
@@ -88,6 +97,7 @@ const faqs = [
           <a href="/services" class="ag-btn ag-btn--white">Explore services →</a>
         </div>
       </div>
+
       <!-- Scroll indicator -->
       <div class="ag-hero-scroll" aria-hidden="true">
         <span class="ag-hero-scroll-dot"></span>
@@ -419,6 +429,35 @@ const faqs = [
 </BaseLayout>
 
 <script>
+  import { Application } from '@splinetool/runtime';
+
+  // ── Spline 3D scene ──
+  const splineCanvas  = document.getElementById('spline-canvas') as HTMLCanvasElement | null;
+  const splineBg      = splineCanvas?.parentElement as HTMLElement | null;
+
+  // MutationObserver: remove watermark the instant Spline injects it
+  const wmObserver = new MutationObserver(() => {
+    document.querySelectorAll<HTMLElement>('a[href*="spline.design"]').forEach(el => {
+      el.style.setProperty('display', 'none', 'important');
+      el.remove();
+    });
+  });
+  wmObserver.observe(document.body, { childList: true, subtree: true });
+
+  if (splineCanvas) {
+    const splineApp = new Application(splineCanvas);
+    splineApp.load('https://prod.spline.design/apWLHlfV6wU1reTE/scene.splinecode')
+      .then(() => {
+        // Fade in the container div (which carries mix-blend-mode: screen)
+        splineBg?.classList.add('is-ready');
+        wmObserver.disconnect();
+      })
+      .catch(() => {
+        splineBg?.classList.add('is-ready');
+        wmObserver.disconnect();
+      });
+  }
+
   // ── Hero: organic sine-wave float + mouse parallax (all driven from one rAF loop) ──
   const hero = document.querySelector<HTMLElement>('.ag-hero');
   const blob1 = document.querySelector<HTMLElement>('.ag-blob--1');
@@ -579,3 +618,41 @@ const faqs = [
     });
   });
 </script>
+
+<style>
+  /*
+   * Blend mode lives on the container div — a regular DOM element that Astro
+   * scopes reliably. WebGL canvases are composited by the GPU before CSS
+   * blend modes run, so putting screen on the canvas itself does nothing.
+   *
+   * screen(black, page-bg) = page-bg   → Spline's black fill disappears
+   * screen(wave, page-bg)  = brightened wave → purple/blue tones show through
+   */
+  .hero-spline-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+    mix-blend-mode: screen;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+  }
+
+  .hero-spline-bg.is-ready {
+    opacity: 1;
+  }
+
+  /* Canvas fills the container — no blend mode here */
+  :global(#spline-canvas) {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+  }
+
+  /* Watermark guard */
+  :global(a[href*="spline.design"]) {
+    display: none !important;
+    pointer-events: none !important;
+  }
+</style>

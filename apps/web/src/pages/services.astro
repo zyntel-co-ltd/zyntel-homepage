@@ -88,47 +88,344 @@ const services = [
       </div>
     </section>
 
-    <!-- SERVICES LIST -->
-    <section class="ag-section ag-section--alt">
+    <!-- SERVICES INDEX STRIP -->
+    <nav class="svc-index" aria-label="Services navigation">
       <div class="ag-wrap">
-        {services.map((svc) => (
-          <article class="ag-svc-item" id={svc.id}>
-            <div class={`ag-svc-icon ag-svc-icon--${svc.accent}`} set:html={svc.icon} />
-            <div class="ag-svc-body">
-              <p class="ag-svc-tagline">{svc.tagline}</p>
-              <h2 class="ag-svc-title">{svc.title}</h2>
-              <p class="ag-svc-desc">{svc.description}</p>
-              <ul class="ag-svc-features">
-                {svc.features.map((f) => (
-                  <li>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </article>
-        ))}
+        <ul class="svc-index-inner">
+          {services.map((svc, i) => (
+            <li>
+              <a href={`#${svc.id}`} class="svc-index-item">
+                <span class="svc-index-num">0{i + 1}</span>
+                <span class="svc-index-label">{svc.title}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </nav>
+
+    <!-- SERVICES NUMBERED LIST -->
+    <section class="ag-section svc-section">
+      <div class="ag-wrap">
+
+        <header class="svc-section-head">
+          <p class="ag-section-eyebrow">Our Services</p>
+          <h2 class="ag-section-title">Everything you need to ship</h2>
+          <p class="ag-section-sub">From idea to production — we handle the full stack so you can focus on your business.</p>
+        </header>
+
+        <div class="svc-rows">
+          {services.map((svc, i) => (
+            <article class="svc-row" id={svc.id}>
+
+              <div class="svc-row-left">
+                <span class="svc-row-num">0{i + 1}</span>
+              </div>
+
+              <div class="svc-row-body">
+                <div class="svc-row-head">
+                  <div>
+                    <p class="svc-row-tagline">{svc.tagline}</p>
+                    <h3 class="svc-row-title">{svc.title}</h3>
+                  </div>
+                  <div class={`svc-row-icon svc-row-icon--${svc.accent}`} set:html={svc.icon} />
+                </div>
+
+                <p class="svc-row-desc">{svc.description}</p>
+
+                <ul class="svc-row-chips" aria-label="Included in this service">
+                  {svc.features.map((f) => (
+                    <li>{f}</li>
+                  ))}
+                </ul>
+              </div>
+
+            </article>
+          ))}
+        </div>
+
       </div>
     </section>
 
     <!-- CTA -->
-    <section class="ag-section">
-      <div class="ag-wrap">
-        <div class="ag-cta-card">
-          <div class="ag-cta-blob ag-cta-blob--v" aria-hidden="true"></div>
-          <div class="ag-cta-blob ag-cta-blob--p" aria-hidden="true"></div>
-          <p class="ag-cta-eyebrow">Let's work together</p>
-          <h2 class="ag-cta-title">Ready to start<br><span class="ag-grad-text">your project?</span></h2>
-          <p class="ag-cta-sub">Tell us what you're building and we'll put together a plan. No commitment required.</p>
-          <div class="ag-cta-actions">
-            <a href="/contact" class="ag-btn ag-btn--violet">Get in touch</a>
-            <a href="mailto:contact@zyntel.net" class="ag-btn ag-btn--white-outline">contact@zyntel.net</a>
-          </div>
-        </div>
+    <div class="ag-cta-light">
+      <div class="ag-cta-light-mark" aria-hidden="true">Zyntel</div>
+      <div class="ag-cta-light-icon" aria-hidden="true">
+        <svg width="36" height="36" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <text x="80" y="700" font-family="'Geist Sans','Segoe UI',system-ui,sans-serif" font-weight="700" font-size="1200" fill="#ffffff">}</text>
+        </svg>
       </div>
-    </section>
+      <h2 class="ag-cta-light-title">Ready to start<br>your project?</h2>
+      <p class="ag-cta-light-sub">Tell us what you're building and we'll put together a plan. No commitment required.</p>
+      <div class="ag-cta-light-links">
+        <a href="/contact" class="ag-cta-light-pill">
+          Get in touch
+          <span class="ag-cta-light-pill-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+        <a href="mailto:contact@zyntel.net" class="ag-cta-light-pill">
+          contact@zyntel.net
+          <span class="ag-cta-light-pill-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </span>
+        </a>
+        <a href="https://x.com/ZyntelTech" target="_blank" rel="noopener noreferrer" class="ag-cta-light-pill">
+          Twitter / X
+          <span class="ag-cta-light-pill-icon" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.26 5.632 5.904-5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </span>
+        </a>
+        <a href="https://www.linkedin.com/company/zynteltech" target="_blank" rel="noopener noreferrer" class="ag-cta-light-pill">
+          LinkedIn
+          <span class="ag-cta-light-pill-icon" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          </span>
+        </a>
+      </div>
+    </div>
 
   </main>
   <Footer />
 </BaseLayout>
+
+<style>
+/* ─── Services index strip ─── */
+.svc-index {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.svc-index::-webkit-scrollbar { display: none; }
+
+.svc-index-inner {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: stretch;
+  min-width: max-content;
+}
+
+.svc-index-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.9rem 1.4rem;
+  text-decoration: none;
+  color: var(--ag-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-right: 1px solid rgba(0, 0, 0, 0.07);
+  transition: color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+
+.svc-index-item:hover {
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.03);
+}
+
+.svc-index-num {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #7c3aed;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.svc-index-item:hover .svc-index-num {
+  opacity: 1;
+}
+
+/* ─── Services section ─── */
+.svc-section {
+  background: #ffffff;
+}
+
+.svc-section-head {
+  margin-bottom: 3.5rem;
+}
+
+/* ─── Numbered rows ─── */
+.svc-rows {
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.svc-row {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 2rem;
+  padding: 2.75rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  transition: background 0.25s;
+  margin: 0 -1.5rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  border-radius: 0;
+}
+
+.svc-row:hover {
+  background: rgba(124, 58, 237, 0.025);
+}
+
+/* Big ghost number */
+.svc-row-left {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.35rem;
+}
+
+.svc-row-num {
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  color: rgba(124, 58, 237, 0.13);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  transition: color 0.25s;
+}
+
+.svc-row:hover .svc-row-num {
+  color: rgba(124, 58, 237, 0.22);
+}
+
+/* Row body */
+.svc-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.svc-row-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.svc-row-tagline {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7c3aed;
+  margin-bottom: 0.3rem;
+}
+
+.svc-row-title {
+  font-size: clamp(1.25rem, 2.5vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #0f0f14;
+  line-height: 1.2;
+}
+
+/* Icon badge */
+.svc-row-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.25s;
+}
+
+.svc-row:hover .svc-row-icon {
+  transform: scale(1.05);
+}
+
+.svc-row-icon--violet {
+  background: rgba(124, 58, 237, 0.08);
+  color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+}
+
+.svc-row-icon--cyan {
+  background: rgba(79, 70, 229, 0.08);
+  color: #4f46e5;
+  border: 1px solid rgba(79, 70, 229, 0.12);
+}
+
+/* Description */
+.svc-row-desc {
+  font-size: 0.95rem;
+  color: #6b7280;
+  line-height: 1.75;
+  max-width: 46rem;
+  margin-bottom: 1.4rem;
+}
+
+/* Feature chips */
+.svc-row-chips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.svc-row-chips li {
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.06);
+  border: 1px solid rgba(124, 58, 237, 0.13);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #5b21b6;
+  letter-spacing: -0.01em;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.svc-row:hover .svc-row-chips li {
+  background: rgba(124, 58, 237, 0.09);
+  border-color: rgba(124, 58, 237, 0.2);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  .svc-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 2rem 1rem;
+    margin: 0 -1rem;
+  }
+
+  .svc-row-num {
+    font-size: 1rem;
+    font-weight: 800;
+    color: rgba(124, 58, 237, 0.5);
+    letter-spacing: 0.06em;
+  }
+
+  .svc-row-left {
+    padding-top: 0;
+  }
+
+  .svc-row-head {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  .svc-row-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .svc-index-item {
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+  }
+}
+</style>
