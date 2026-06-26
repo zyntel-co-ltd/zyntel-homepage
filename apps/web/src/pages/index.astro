@@ -373,52 +373,33 @@ const faqs = [
     <section class="ag-section ag-section--naked" style="padding-top:1.5rem;padding-bottom:4rem;">
       <div class="ag-wrap">
         <div class="ag-cta-card ag-cta-card--home">
+          <!-- Spline scene — fills card, clipped to its border-radius -->
+          <div class="cta-spline-bg" aria-hidden="true">
+            <canvas id="cta-spline-canvas"></canvas>
+          </div>
+
+          <!-- Ambient colour blobs peek from corners behind the scene -->
           <div class="ag-cta-blob ag-cta-blob--v" aria-hidden="true"></div>
           <div class="ag-cta-blob ag-cta-blob--p" aria-hidden="true"></div>
 
-          <!-- Floating code tokens rising into space -->
+          <!-- Floating code tokens drifting up in the background -->
           <div class="ag-cta-code-field" aria-hidden="true">
-            <span class="ag-code-token" style="--cx:4%;  --cd:0s;   --dur:9s;  --cr:-3deg">&lt;div class="idea"&gt;</span>
-            <span class="ag-code-token" style="--cx:24%; --cd:2s;   --dur:7s;  --cr:4deg">const ship = await build()</span>
-            <span class="ag-code-token" style="--cx:10%; --cd:4.5s; --dur:8s;  --cr:-5deg">npm run deploy 🚀</span>
-            <span class="ag-code-token" style="--cx:48%; --cd:1.2s; --dur:10s; --cr:2deg">git push origin main</span>
-            <span class="ag-code-token" style="--cx:65%; --cd:3.8s; --dur:7.5s;--cr:-4deg">&#123; success: true &#125;</span>
-            <span class="ag-code-token" style="--cx:35%; --cd:6s;   --dur:8.5s;--cr:3deg">✓ Tests passed</span>
-            <span class="ag-code-token" style="--cx:55%; --cd:0.6s; --dur:11s; --cr:-2deg">v2.0 ✦ shipped</span>
-            <span class="ag-code-token" style="--cx:18%; --cd:7.5s; --dur:6.5s;--cr:5deg">await launch()</span>
+            <span class="ag-code-token" style="--cx:6%;  --dur:9s;  --cd:0s;   --cr:-3deg">const app = build()</span>
+            <span class="ag-code-token" style="--cx:18%; --dur:11s; --cd:1.5s; --cr:2deg">npm run dev</span>
+            <span class="ag-code-token" style="--cx:32%; --dur:8s;  --cd:3s;   --cr:-1deg">git push origin main</span>
+            <span class="ag-code-token" style="--cx:48%; --dur:13s; --cd:0.8s; --cr:3deg">&#123; ship: true &#125;</span>
+            <span class="ag-code-token" style="--cx:62%; --dur:10s; --cd:2.2s; --cr:-2deg">await deploy()</span>
+            <span class="ag-code-token" style="--cx:74%; --dur:7s;  --cd:4s;   --cr:1deg">type Product = 🚀</span>
+            <span class="ag-code-token" style="--cx:86%; --dur:12s; --cd:1s;   --cr:-4deg">200 OK</span>
           </div>
 
-          <!-- Cartoon jumping character -->
-          <div class="ag-cta-character" aria-hidden="true">
-            <div class="ag-char-shadow"></div>
-            <div class="ag-char-wrap">
-              <!-- Cap -->
-              <div class="ag-char-cap"></div>
-              <!-- Head -->
-              <div class="ag-char-head">
-                <div class="ag-char-eye ag-char-eye--l"></div>
-                <div class="ag-char-eye ag-char-eye--r"></div>
-              </div>
-              <!-- Body -->
-              <div class="ag-char-torso"></div>
-              <!-- Legs -->
-              <div class="ag-char-legs">
-                <div class="ag-char-leg ag-char-leg--l"></div>
-                <div class="ag-char-leg ag-char-leg--r"></div>
-              </div>
-            </div>
-            <!-- Sparkles -->
-            <span class="ag-char-spark ag-char-spark--1">✦</span>
-            <span class="ag-char-spark ag-char-spark--2">✦</span>
-            <span class="ag-char-spark ag-char-spark--3">·</span>
+          <div class="cta-split">
+            <h2 class="cta-split-text cta-split-text--left">Ready to start</h2>
+            <div class="cta-split-gap" aria-hidden="true"></div>
+            <h2 class="cta-split-text cta-split-text--right"><span class="ag-grad-text">your project?</span></h2>
           </div>
-
-          <p class="ag-cta-eyebrow">Let's work together</p>
-          <h2 class="ag-cta-title">Ready to start<br><span class="ag-grad-text">your project?</span></h2>
-          <p class="ag-cta-sub">Tell us what you're building and we'll put together a plan. No commitment required.</p>
           <div class="ag-cta-actions">
             <a href="/contact" class="ag-btn ag-btn--violet ag-magnetic">Get in touch</a>
-            <a href="mailto:contact@zyntel.net" class="ag-btn ag-btn--white-outline ag-magnetic">contact@zyntel.net</a>
           </div>
         </div>
       </div>
@@ -448,7 +429,6 @@ const faqs = [
     const splineApp = new Application(splineCanvas);
     splineApp.load('https://prod.spline.design/apWLHlfV6wU1reTE/scene.splinecode')
       .then(() => {
-        // Fade in the container div (which carries mix-blend-mode: screen)
         splineBg?.classList.add('is-ready');
         wmObserver.disconnect();
       })
@@ -456,6 +436,39 @@ const faqs = [
         splineBg?.classList.add('is-ready');
         wmObserver.disconnect();
       });
+  }
+
+  // ── CTA Spline scene ──
+  const ctaCanvas = document.getElementById('cta-spline-canvas') as HTMLCanvasElement | null;
+  const ctaBg     = ctaCanvas?.parentElement as HTMLElement | null;
+
+  const removeWatermarks = () => {
+    document.querySelectorAll<HTMLElement>('a[href*="spline.design"]').forEach(el => {
+      el.style.setProperty('display', 'none', 'important');
+      el.remove();
+    });
+  };
+
+  if (ctaCanvas) {
+    const ctaWmObserver = new MutationObserver(removeWatermarks);
+    ctaWmObserver.observe(document.body, { childList: true, subtree: true });
+
+    const ctaApp = new Application(ctaCanvas);
+    ctaApp.load('https://prod.spline.design/2cukQm8HPsTZa17t/scene.splinecode')
+      .then(() => {
+        removeWatermarks();
+        ctaWmObserver.disconnect();
+        // Hide any "Get in touch" button object baked into the Spline scene
+        try {
+          const btnNames = ['Get in touch', 'get in touch', 'Button', 'CTA', 'btn', 'GetInTouch'];
+          for (const name of btnNames) {
+            const obj = (ctaApp as any).findObjectByName?.(name);
+            if (obj) { obj.visible = false; }
+          }
+        } catch (_) {}
+        ctaBg?.classList.add('is-ready');
+      })
+      .catch(() => { removeWatermarks(); ctaWmObserver.disconnect(); ctaBg?.classList.add('is-ready'); });
   }
 
   // ── Hero: organic sine-wave float + mouse parallax (all driven from one rAF loop) ──
@@ -571,6 +584,14 @@ const faqs = [
   const ctaCard = document.querySelector<HTMLElement>('.ag-cta-card--home');
 
   if (ctaCard) {
+    // Spline registers wheel listeners on window that preventDefault — intercept
+    // in capture phase and manually scroll so the page doesn't get stuck.
+    window.addEventListener('wheel', (e) => {
+      if (ctaCard.contains(e.target as Node) || ctaCard === e.target) {
+        window.scrollBy({ top: (e as WheelEvent).deltaY, behavior: 'auto' });
+      }
+    }, { capture: true, passive: true });
+
     ctaCard.addEventListener('mousemove', (e: MouseEvent) => {
       const r = ctaCard.getBoundingClientRect();
       ctaCard.style.setProperty('--cta-x', `${e.clientX - r.left}px`);
@@ -643,16 +664,85 @@ const faqs = [
     opacity: 1;
   }
 
-  /* Canvas fills the container — no blend mode here */
+  /* Canvas is 112% tall — bottom ~12% clipped by overflow:hidden on the
+     container, taking the watermark badge with it. */
   :global(#spline-canvas) {
     width: 100% !important;
-    height: 100% !important;
+    height: 112% !important;
     display: block !important;
   }
 
-  /* Watermark guard */
+  /* ─── CTA card: sized to the Spline scene ─── */
+  /*
+   * max-width + aspect-ratio give the card natural Spline proportions.
+   * overflow:hidden on the card clips the canvas to the 2rem border-radius.
+   * padding is reduced on smaller cards so text doesn't crowd the scene.
+   */
+  :global(.ag-cta-card--home) {
+    max-width: min(1100px, 92vw);
+    margin-inline: auto;
+    aspect-ratio: 16 / 7;
+    padding: clamp(2rem, 5vw, 3.5rem);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.75rem;
+  }
+
+  .cta-split {
+    display: grid;
+    grid-template-columns: 1fr 28% 1fr;
+    align-items: center;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-split-text {
+    font-size: clamp(1.4rem, 2.8vw, 2.6rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: #fff;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .cta-split-text--left  { text-align: right; padding-right: clamp(1.5rem, 3vw, 2.5rem); }
+  .cta-split-text--right { text-align: left;  padding-left:  clamp(1.5rem, 3vw, 2.5rem); }
+  .cta-split-gap { /* robot lives here in the Spline scene */ }
+
+  /* ─── CTA Spline background ─── */
+  .cta-spline-bg {
+    position: absolute !important;
+    inset: 0;
+    z-index: 0 !important;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1s ease;
+    overflow: hidden;
+  }
+
+  .cta-spline-bg.is-ready {
+    opacity: 1;
+  }
+
+  /* Canvas is 112% tall so the bottom ~12% (where the watermark sits) is
+     clipped by the parent overflow:hidden — no DOM selector needed. */
+  :global(#cta-spline-canvas) {
+    width: 100% !important;
+    height: 112% !important;
+    display: block !important;
+    pointer-events: none !important;
+  }
+
+  /* Belt-and-suspenders: hide any injected watermark anchor/element by name */
+  :global(#spline-logo),
+  :global(.spline-watermark),
+  :global([class*="watermark"]),
   :global(a[href*="spline.design"]) {
     display: none !important;
-    pointer-events: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
   }
 </style>
