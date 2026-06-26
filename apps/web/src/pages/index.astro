@@ -7,30 +7,35 @@ const homeServices = [
   {
     num: '01',
     title: 'Web Applications',
+    image: '/images/services/web development.jpg',
     desc: 'Complex dashboards, SaaS platforms, and data-heavy systems engineered for performance. Built to grow with your business from day one.',
     tags: ['React / Next.js', 'Node.js & Python', 'REST & GraphQL APIs', 'Cloud deployment'],
   },
   {
     num: '02',
     title: 'Mobile Apps',
+    image: '/images/services/mobile.jpg',
     desc: 'Cross-platform iOS & Android apps built offline-first for East African connectivity realities — low-bandwidth, high reliability.',
     tags: ['React Native', 'Offline-first', 'Low-bandwidth optimized'],
   },
   {
     num: '03',
     title: 'Websites & Landing Pages',
+    image: '/images/services/website.jpg',
     desc: 'Fast, SEO-optimized sites that make strong first impressions and turn visitors into clients. Corporate sites to high-converting landing pages.',
     tags: ['Astro / Next.js', 'CMS integration', 'SEO-first architecture'],
   },
   {
     num: '04',
     title: 'Custom Software & APIs',
+    image: '/images/services/custom.jpg',
     desc: 'Bespoke backend systems, third-party integrations, data pipelines, and APIs that connect your entire stack seamlessly.',
     tags: ['Custom REST APIs', 'System integrations', 'Data pipelines'],
   },
   {
     num: '05',
     title: 'UI/UX Design',
+    image: '/images/services/ui.jpg',
     desc: 'Intuitive interfaces that reduce friction and make complex workflows feel simple and natural. Research-driven, accessibility-first.',
     tags: ['Figma design systems', 'Prototyping & testing', 'WCAG accessible'],
   },
@@ -167,41 +172,46 @@ const faqs = [
     <!-- ── SERVICES PILL ── -->
     <div class="ag-section-pill" id="services-pill">
 
-      <!-- ── SERVICES (Aigocy accordion) ── -->
-      <section class="ag-section" id="services">
+      <!-- ── SERVICES (Big type list) ── -->
+      <section class="ag-section svc-big-section" id="services">
         <div class="ag-wrap">
-          <div class="ag-home-svc">
 
-            <!-- Left: sticky header -->
-            <div class="ag-home-svc-header">
-              <div class="ag-label-pill">
-                <span class="ag-label-pill-dot" aria-hidden="true"></span>
-                Services
-              </div>
-              <h2 class="ag-home-svc-big-title">End-to-end<br>digital services</h2>
-              <p class="ag-home-svc-big-desc">From first idea to live product — design, engineering, and delivery under one roof in Kampala.</p>
-              <a href="/services" class="ag-btn ag-btn--dark">See all services →</a>
+          <div class="svc-big-header">
+            <div class="ag-label-pill">
+              <span class="ag-label-pill-dot" aria-hidden="true"></span>
+              Services
             </div>
+            <a href="/services" class="svc-big-explore">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              Explore more
+            </a>
+          </div>
 
-            <!-- Right: accordion -->
-            <div class="ag-home-svc-list" id="home-svc-list">
-              {homeServices.map((svc, i) => (
-                <div class:list={["ag-home-svc-item", i === 0 && "is-active"]} data-svc-index={i}>
-                  <button class="ag-home-svc-trigger" type="button" aria-expanded={i === 0 ? "true" : "false"}>
-                    <span class="ag-home-svc-trigger-title">{svc.title}</span>
-                    <span class="ag-home-svc-trigger-num">({svc.num})</span>
-                  </button>
-                  <div class="ag-home-svc-body">
-                    <p class="ag-home-svc-body-desc">{svc.desc}</p>
-                    <div class="ag-home-svc-tags">
-                      {svc.tags.map(tag => <span class="ag-home-svc-tag">{tag}</span>)}
+          <h2 class="svc-big-heading">Digital services<br><span>for your business.</span></h2>
+
+          <div class="svc-big-list">
+            {homeServices.map((svc) => (
+              <div class="svc-big-item" data-img={svc.image}>
+                <button class="svc-big-item-trigger" type="button" aria-expanded="false">
+                  <span class="svc-big-item-num">{svc.num}</span>
+                  <span class="svc-name-wrap">
+                    <span class="svc-name-original">/{svc.title}/</span>
+                    <span class="svc-name-hover" aria-hidden="true">/{svc.title}/</span>
+                  </span>
+                </button>
+                <div class="svc-big-body" aria-hidden="true">
+                  <div class="svc-big-body-inner">
+                    <p class="svc-big-body-desc">{svc.desc}</p>
+                    <div class="svc-big-body-tags">
+                      {svc.tags.map(tag => <span class="svc-big-body-tag">{tag}</span>)}
                     </div>
+                    <a href="/services" class="svc-big-body-link">See full details →</a>
                   </div>
                 </div>
-              ))}
-            </div>
-
+              </div>
+            ))}
           </div>
+
         </div>
       </section>
 
@@ -558,20 +568,6 @@ const faqs = [
     })();
   }
 
-  // ── Services accordion ──
-  const svcItems = document.querySelectorAll<HTMLElement>('.ag-home-svc-item');
-  svcItems.forEach((item) => {
-    item.querySelector('.ag-home-svc-trigger')?.addEventListener('click', () => {
-      const isAlreadyActive = item.classList.contains('is-active');
-      if (isAlreadyActive) return;
-      svcItems.forEach(el => {
-        el.classList.remove('is-active');
-        el.querySelector('.ag-home-svc-trigger')?.setAttribute('aria-expanded', 'false');
-      });
-      item.classList.add('is-active');
-      item.querySelector('.ag-home-svc-trigger')?.setAttribute('aria-expanded', 'true');
-    });
-  });
 
   // ── Process card slider ──
   const procSlider = document.getElementById('ag-proc-slider') as HTMLElement | null;
@@ -641,6 +637,86 @@ const faqs = [
     });
     btn.addEventListener('mouseenter', () => { btn.style.transition = 'transform 0.1s ease'; });
   });
+
+  // ── Services big list: click to expand with slide-up/down animations ──
+  {
+    const items = document.querySelectorAll<HTMLElement>('.svc-big-item');
+    let currentOpen: HTMLElement | null = null;
+
+    function closeItem(item: HTMLElement) {
+      const body = item.querySelector<HTMLElement>('.svc-big-body')!;
+      const trigger = item.querySelector<HTMLElement>('.svc-big-item-trigger')!;
+      item.classList.remove('is-open');
+      trigger.setAttribute('aria-expanded', 'false');
+      body.setAttribute('aria-hidden', 'true');
+      // snapshot rendered height before collapsing
+      body.style.height = body.offsetHeight + 'px';
+      body.style.overflow = 'hidden';
+      body.offsetHeight; // force reflow
+      body.style.transition = 'height 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease, transform 0.28s ease';
+      body.style.height = '0px';
+      body.style.opacity = '0';
+      body.style.transform = 'translateY(-20px)';
+      body.addEventListener('transitionend', function handler(e) {
+        if ((e as TransitionEvent).propertyName !== 'height') return;
+        body.style.transform = '';
+        body.style.overflow = '';
+        body.removeEventListener('transitionend', handler);
+      });
+      currentOpen = null;
+    }
+
+    function openItem(item: HTMLElement) {
+      const body = item.querySelector<HTMLElement>('.svc-big-body')!;
+      const trigger = item.querySelector<HTMLElement>('.svc-big-item-trigger')!;
+      item.classList.add('is-open');
+      trigger.setAttribute('aria-expanded', 'true');
+      body.setAttribute('aria-hidden', 'false');
+      // set initial hidden state with no transition
+      body.style.transition = 'none';
+      body.style.height = '0px';
+      body.style.opacity = '0';
+      body.style.transform = 'translateY(-14px)';
+      body.style.overflow = 'hidden';
+      body.offsetHeight; // force reflow
+      const targetH = body.scrollHeight + 'px';
+      body.style.transition = 'height 0.42s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease 0.07s, transform 0.36s ease 0.07s';
+      body.style.height = targetH;
+      body.style.opacity = '1';
+      body.style.transform = 'translateY(0)';
+      body.addEventListener('transitionend', function handler(e) {
+        if ((e as TransitionEvent).propertyName !== 'height') return;
+        body.style.height = 'auto';
+        body.style.overflow = '';
+        body.removeEventListener('transitionend', handler);
+      });
+      currentOpen = item;
+    }
+
+    items.forEach(item => {
+      item.querySelector('.svc-big-item-trigger')?.addEventListener('click', () => {
+        const isOpen = item.classList.contains('is-open');
+        if (currentOpen && currentOpen !== item) closeItem(currentOpen);
+        if (isOpen) closeItem(item); else openItem(item);
+      });
+    });
+  }
+
+  // ── Services: staggered scroll reveal ──
+  {
+    const revealItems = Array.from(document.querySelectorAll<HTMLElement>('.svc-big-item'));
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target as HTMLElement;
+        const i = revealItems.indexOf(el);
+        setTimeout(() => el.classList.add('svc-revealed'), i * 90);
+        io.unobserve(el);
+      });
+    }, { threshold: 0.08 });
+    revealItems.forEach(item => io.observe(item));
+  }
+
 
   // ── FAQ accordion ──
   const faqItems = document.querySelectorAll<HTMLElement>('.ag-faq-item');
@@ -768,5 +844,204 @@ const faqs = [
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
+  }
+
+  /* ── Services big-type list ── */
+  .svc-big-section {
+    padding-top: 2.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .svc-big-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+  }
+
+  .svc-big-explore {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-decoration: none;
+    padding: 0.4rem 1rem;
+    border: 1.5px solid rgba(0, 0, 0, 0.11);
+    border-radius: 999px;
+    letter-spacing: 0.01em;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .svc-big-explore:hover {
+    color: #7c3aed;
+    border-color: rgba(124, 58, 237, 0.3);
+  }
+
+  .svc-big-heading {
+    font-size: clamp(1.5rem, 3.2vw, 2.75rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.15;
+    color: #0f0f14;
+    margin-bottom: 2rem;
+  }
+  .svc-big-heading span { color: #b0b7c3; }
+
+  .svc-big-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid rgba(0, 0, 0, 0.07);
+  }
+
+  /* ── Item: stagger reveal initial state ── */
+  .svc-big-item {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  .svc-big-item.svc-revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Trigger row ── */
+  .svc-big-item-trigger {
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    padding: 0.4rem 0 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    /* Leave: slow drift back down */
+    transition: transform 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  /* Enter: quick upward spring */
+  .svc-big-item-trigger:hover {
+    transform: translateY(-5px);
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  /* Open state: no vertical shift */
+  .svc-big-item.is-open .svc-big-item-trigger,
+  .svc-big-item.is-open .svc-big-item-trigger:hover {
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+  }
+
+  .svc-big-item-num {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #9ca3af;
+    width: 2rem;
+    flex-shrink: 0;
+    padding-bottom: 0.45rem;
+  }
+
+  /* ── Dual-layer slide-up text ── */
+  .svc-name-wrap {
+    position: relative;
+    overflow: hidden;
+    display: block;
+  }
+
+  .svc-name-original,
+  .svc-name-hover {
+    font-size: clamp(1.25rem, 4.5vw, 4rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    display: block;
+    transition: transform 0.52s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+
+  /* Default layer: muted gray */
+  .svc-name-original {
+    color: #9ca3af;
+    transform: translateY(0);
+  }
+
+  /* Hover layer: gradient, hidden below until triggered */
+  .svc-name-hover {
+    position: absolute;
+    inset: 0;
+    transform: translateY(102%);
+    background: linear-gradient(90deg, #312e81 0%, #7c3aed 50%, #0891b2 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* On hover or open: original slides up, gradient rolls in from below */
+  .svc-big-item-trigger:hover .svc-name-original,
+  .svc-big-item.is-open       .svc-name-original { transform: translateY(-102%); }
+
+  .svc-big-item-trigger:hover .svc-name-hover,
+  .svc-big-item.is-open       .svc-name-hover    { transform: translateY(0); }
+
+  /* ── Expandable body panel ── */
+  .svc-big-body {
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+
+  .svc-big-body-inner {
+    padding: 0.25rem 0 1.75rem 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 44rem;
+  }
+
+  .svc-big-body-desc {
+    font-size: 0.93rem;
+    color: #4b5563;
+    line-height: 1.75;
+  }
+
+  .svc-big-body-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .svc-big-body-tag {
+    padding: 0.28rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(124, 58, 237, 0.06);
+    border: 1px solid rgba(124, 58, 237, 0.13);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #5b21b6;
+    letter-spacing: -0.01em;
+  }
+
+  .svc-big-body-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #7c3aed;
+    text-decoration: none;
+    letter-spacing: -0.01em;
+    transition: gap 0.2s ease;
+  }
+  .svc-big-body-link:hover { gap: 0.7rem; }
+
+
+  @media (max-width: 640px) {
+    .svc-name-original,
+    .svc-name-hover  { font-size: clamp(1.1rem, 6vw, 2rem); }
+    .svc-big-heading { font-size: clamp(1.25rem, 5vw, 1.8rem); }
+    .svc-big-item-num { width: 1.6rem; font-size: 0.55rem; }
+    .svc-big-body-inner { padding-left: 1.5rem; }
   }
 </style>
