@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Nav from '../../components/Nav.astro';
 import Footer from '../../components/Footer.astro';
-const updated = "May 2026";
+const updated = "June 2026";
 ---
 <BaseLayout
   title="Privacy Policy"
@@ -33,6 +33,13 @@ const updated = "May 2026";
           <li>Contact form submissions</li>
           <li>Data you enter into KantaHub or zyntForms (equipment records, lab results, form responses)</li>
         </ul>
+        <h3>Payment and financial information (zyntForms creators)</h3>
+        <p>If you enable payment collection on a zyntForms form, we collect payout details so we can disburse funds to you after a successful payment. Depending on your chosen disbursement method, this may include:</p>
+        <ul>
+          <li>MTN or Airtel Mobile Money phone number</li>
+          <li>Bank name, branch code, account number, and account holder name</li>
+        </ul>
+        <p>This information is stored securely and used solely to process disbursements to you via our payment processor (Pesapal). It is never sold, rented, or used for any purpose other than completing payouts you have authorised. We do not store card numbers or full payment credentials of form respondents — payment card and MoMo collection is handled entirely by Pesapal and never touches our servers.</p>
         <h3>Information collected automatically</h3>
         <ul>
           <li>Log data: IP address, browser type, pages visited, timestamps</li>
@@ -50,18 +57,20 @@ const updated = "May 2026";
 
         <h2>4. Data storage and security</h2>
         <p>Your data is stored on Neon PostgreSQL (serverless Postgres) with encryption at rest and in transit. Hosting is provided by Railway. We apply role-based access control so only authorised team members can access production data. We do not sell your data to third parties.</p>
+        <p><strong>Financial credentials (payout details):</strong> Mobile Money numbers and bank account details provided for payouts are stored in our database with the same encryption-at-rest protections as all other data. Access is restricted to the automated payout system and authorised Zyntel staff. These details are transmitted to Pesapal (our payment processor) over TLS-encrypted connections solely to execute disbursements. We retain payout records for 7 years in accordance with Ugandan financial record-keeping requirements.</p>
         <p><strong>zyntForms — anonymous sessions:</strong> If you create a form without registering an account, your form and any responses collected are stored for 14 days. After 14 days, all data from unregistered sessions is permanently and automatically deleted. Creating an account before the 14-day window preserves your data indefinitely under your account.</p>
 
         <h2>5. Third-party services (sub-processors)</h2>
         <p>We use the following third-party services to operate our products. Each has its own privacy policy and meets adequate data protection standards.</p>
         <ul>
-          <li><strong>Neon</strong> — PostgreSQL database hosting (AWS infrastructure, us-east-1 region)</li>
+          <li><strong>Neon</strong> — PostgreSQL database hosting (AWS infrastructure, EU Central region)</li>
           <li><strong>Railway</strong> — application hosting and deployment</li>
-          <li><strong>Cloudflare</strong> — DNS, CDN, DDoS protection, and file storage (R2)</li>
+          <li><strong>Cloudflare R2</strong> — file storage for generated PDF tickets and receipts (signed URLs only — no public access)</li>
           <li><strong>Resend</strong> — transactional email delivery</li>
-          <li><strong>Flutterwave</strong> — payment processing for African markets</li>
-          <li><strong>Stripe</strong> — payment processing for international markets</li>
-          <li><strong>PostHog</strong> — product analytics (anonymised usage events)</li>
+          <li><strong>Pesapal</strong> — payment collection and creator disbursement (MTN MoMo, Airtel Money, bank transfer). Your payout details are shared with Pesapal solely to execute disbursements you have authorised. Pesapal is a licensed payment service provider regulated in Uganda.</li>
+          <li><strong>Africa's Talking</strong> — SMS and WhatsApp message delivery for ticket and receipt notifications</li>
+          <li><strong>PostHog</strong> — product analytics (anonymised usage events; no response data is sent to PostHog)</li>
+          <li><strong>Upstash</strong> — Redis-based rate limiting (IP addresses only; not linked to personal accounts)</li>
         </ul>
 
         <h2>6. Data retention</h2>
