@@ -56,13 +56,10 @@ const values = [
   <main class="ag-page">
 
     <!-- HERO -->
-    <section class="ag-hero ag-hero--left">
+    <div class="ag-hero-wrapper">
+    <section class="ag-hero ag-hero--left ag-hero--compact">
       <div class="ag-blob ag-blob--1" aria-hidden="true"></div>
       <div class="ag-wrap">
-        <div class="ag-eyebrow">
-          <svg class="ag-eyebrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2l2.09 6.26L21 10l-6.91 1.74L12 18l-2.09-5.26L3 11l6.91-1.74z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-          Our story
-        </div>
         <h1 class="ag-hero-title">
           Built in Kampala,<br>
           <span class="ag-grad-text">building for Africa.</span>
@@ -70,12 +67,9 @@ const values = [
         <p class="ag-hero-sub">
           Zyntel started with a simple observation: East African businesses deserved better software — built for their reality, not adapted from somewhere else. That conviction drives every line of code we write.
         </p>
-        <blockquote class="ag-hero-quote">
-          <p>"We aren't just building software — we're building the digital infrastructure that African businesses will run on."</p>
-          <cite>— Zyntel leadership</cite>
-        </blockquote>
       </div>
     </section>
+    </div>
 
     <!-- VALUES -->
     <section class="ag-section ag-section--alt">
@@ -90,6 +84,16 @@ const values = [
             </article>
           ))}
         </div>
+      </div>
+    </section>
+
+    <!-- QUOTE STRIP -->
+    <section class="ag-section--naked ag-quote-strip">
+      <div class="ag-wrap">
+        <blockquote class="ag-about-quote">
+          <p>"We aren't just building software — we're building the digital infrastructure that African businesses will run on."</p>
+          <cite>— Zyntel leadership</cite>
+        </blockquote>
       </div>
     </section>
 

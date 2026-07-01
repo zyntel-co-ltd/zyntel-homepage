@@ -312,6 +312,34 @@
   text-align: center;
 }
 
+.ag-hero--compact {
+  height: clamp(460px, 62vh, 620px);
+}
+
+.ag-hero--compact .ag-wrap {
+  padding-top: clamp(4rem, 7vw, 5.5rem);
+  padding-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.ag-hero--compact .ag-hero-title {
+  font-size: clamp(1.9rem, 4vw, 3.2rem);
+  margin-bottom: 0.85rem;
+}
+
+.ag-hero--compact .ag-hero-sub {
+  font-size: clamp(0.88rem, 1.4vw, 1rem);
+  margin-bottom: 1.5rem;
+}
+
+.ag-hero--compact .ag-hero-quote {
+  padding: 0.9rem 1.25rem;
+  margin-top: 0.75rem;
+}
+
+.ag-hero--left.ag-hero--compact .ag-hero-title {
+  max-width: 22ch;
+}
+
 /* Subtle dot grid texture — Stripe-style premium background */
 .ag-hero::after {
   content: '';
@@ -1150,6 +1178,39 @@
   background: rgba(124, 58, 237, 0.04);
   border-radius: 0 1rem 1rem 0;
   max-width: 40rem;
+}
+
+/* Standalone quote strip on the about page */
+.ag-quote-strip {
+  padding: 3rem 0;
+}
+
+.ag-about-quote {
+  margin: 0 auto;
+  max-width: 52rem;
+  padding: 2.5rem 3rem;
+  border-left: 4px solid rgba(124, 58, 237, 0.5);
+  background: rgba(124, 58, 237, 0.04);
+  border-radius: 0 1.5rem 1.5rem 0;
+}
+
+.ag-about-quote p {
+  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+  font-style: italic;
+  font-weight: 500;
+  color: var(--ag-text);
+  line-height: 1.65;
+  margin-bottom: 1rem;
+}
+
+.ag-about-quote cite {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-style: normal;
+  background: var(--ag-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .ag-hero-quote p {
