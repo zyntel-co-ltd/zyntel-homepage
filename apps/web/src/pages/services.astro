@@ -6,64 +6,165 @@ import Footer from '../components/Footer.astro';
 const services = [
   {
     id: 'web-apps',
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>`,
+    num: '01',
+    icon: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>`,
     accent: 'violet',
-    image: '/images/services/web development.jpg',
+    image: '/images/services/web-apps-hero.jpg',
     title: 'Web Application Development',
-    tagline: 'Powerful platforms that scale',
-    description: 'We build complex web applications from scratch — dashboards, SaaS platforms, internal tools, and data-heavy systems. Every app is engineered for performance and built to grow with your business.',
-    features: ['React / Next.js / Astro frontends', 'Node.js, Python & Go backends', 'PostgreSQL, MongoDB & Redis', 'REST & GraphQL APIs', 'Authentication & access control', 'Cloud deployment (AWS, Railway, Vercel)'],
+    tagline: 'Powerful platforms built to scale',
+    description: 'We build complex web applications from scratch — dashboards, SaaS platforms, internal tools, and data-heavy systems. Every app is engineered for performance, security, and built to grow with your business from day one.',
+    description2: 'Whether you need a customer portal, an operations dashboard, or a full SaaS product, we handle the complete stack — frontend, backend, databases, APIs, and cloud deployment. You own the product vision; we own the engineering.',
+    bestFor: 'SaaS startups · Internal tools · Data platforms · Customer portals',
+    timeline: '6–12 weeks',
+    features: [
+      'React / Next.js / Astro frontends',
+      'Node.js, Python & Go backends',
+      'PostgreSQL, MongoDB & Redis',
+      'REST & GraphQL APIs',
+      'Role-based authentication & access control',
+      'Cloud deployment (AWS, Railway, Vercel)',
+    ],
   },
   {
     id: 'websites',
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.75"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>`,
+    num: '02',
+    icon: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.75"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>`,
     accent: 'cyan',
-    image: '/images/services/website.jpg',
+    image: '/images/services/websites-hero.jpg',
     title: 'Websites & Landing Pages',
     tagline: 'Fast, beautiful, and built to convert',
-    description: 'From corporate sites to high-converting landing pages, we design and build websites that make strong first impressions. Fully responsive, SEO-optimized, and blazing fast.',
-    features: ['Corporate & portfolio sites', 'Marketing & product landing pages', 'CMS integration (Sanity, Contentful)', 'SEO-first architecture', 'Core Web Vitals optimization', 'Custom animations & interactions'],
+    description: 'Your website is the first impression most clients will ever have of your business. We design and build websites that make that impression count — fast, responsive, and crafted to turn visitors into clients.',
+    description2: 'From corporate sites to high-converting product landing pages, every site we build is SEO-optimised from the first line of code, scores green on Core Web Vitals, and looks sharp on every screen size.',
+    bestFor: 'Businesses · NGOs · Product launches · Agencies & studios',
+    timeline: '2–5 weeks',
+    features: [
+      'Corporate & portfolio sites',
+      'Marketing & product landing pages',
+      'CMS integration (Sanity, Contentful)',
+      'SEO-first architecture & metadata',
+      'Core Web Vitals optimisation',
+      'Custom animations & micro-interactions',
+    ],
   },
   {
     id: 'mobile',
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="1.75"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>`,
+    num: '03',
+    icon: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="1.75"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>`,
     accent: 'violet',
-    image: '/images/services/mobile.jpg',
+    image: '/images/services/mobile-hero.jpg',
     title: 'Mobile App Development',
     tagline: "Built for Africa's connectivity realities",
-    description: 'Cross-platform mobile apps for iOS and Android using React Native. We build offline-capable apps designed to work reliably on the networks and devices your users actually have.',
-    features: ['React Native for iOS & Android', 'Offline-first architecture', 'Push notifications & background sync', 'Biometric authentication', 'App store submission & review', 'Low-bandwidth optimization'],
+    description: 'Cross-platform iOS and Android apps built with React Native. We build mobile experiences that work reliably on the devices and networks your users actually have — including offline-first apps for areas with unreliable connectivity.',
+    description2: 'We have shipped offline-capable field collection apps, B2B management tools, and consumer apps. Every mobile app includes proper background sync, push notifications, and a smooth submission path through the App Store and Google Play.',
+    bestFor: 'Field teams · Healthcare · Logistics · Consumer apps',
+    timeline: '8–14 weeks',
+    features: [
+      'React Native for iOS & Android',
+      'Offline-first architecture with sync',
+      'Push notifications & background tasks',
+      'Biometric & OTP authentication',
+      'App Store & Google Play submission',
+      'Low-bandwidth optimisation',
+    ],
   },
   {
     id: 'custom',
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M10 20l4-16M4 9l-3 3 3 3M20 9l3 3-3 3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    num: '04',
+    icon: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M10 20l4-16M4 9l-3 3 3 3M20 9l3 3-3 3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     accent: 'cyan',
-    image: '/images/services/custom.jpg',
+    image: '/images/services/custom-hero.jpg',
     title: 'Custom Software & APIs',
     tagline: 'Bespoke systems for complex problems',
-    description: "When off-the-shelf software doesn't cut it, we build exactly what you need. Custom backend systems, third-party integrations, data pipelines, and APIs that connect your stack together.",
-    features: ['Custom REST & GraphQL APIs', 'Third-party integrations', 'Automated data pipelines', 'Webhook & event-driven systems', 'Legacy system modernization', 'Internal tooling & automation'],
+    description: "When off-the-shelf software doesn't fit — or the integration you need doesn't exist yet — we build it. Custom backend systems, third-party integrations, automated data pipelines, and APIs that connect your entire stack together.",
+    description2: 'We have built integrations with local payment gateways (MTN MoMo, Airtel Money), HMIS systems, WhatsApp Business API, and M-Pesa. If your business runs on data flows, we can automate, connect, and scale them.',
+    bestFor: 'Fintech · Healthcare systems · Logistics · Enterprise automation',
+    timeline: '4–10 weeks',
+    features: [
+      'Custom REST & GraphQL APIs',
+      'Third-party & payment integrations',
+      'Automated data pipelines & ETL',
+      'Webhook & event-driven systems',
+      'Legacy system modernisation',
+      'Internal tooling & workflow automation',
+    ],
   },
   {
     id: 'design',
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.75"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>`,
+    num: '05',
+    icon: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     accent: 'violet',
-    image: '/images/services/ui.jpg',
+    image: '/images/services/design-hero.jpg',
     title: 'UI/UX Design',
     tagline: 'Interfaces people actually enjoy using',
-    description: 'Great design is invisible — users just feel it. We design intuitive interfaces that reduce friction, guide users naturally, and make complex workflows feel simple.',
-    features: ['User research & journey mapping', 'Wireframing & rapid prototyping', 'High-fidelity UI design (Figma)', 'Design systems & component libraries', 'Accessibility (WCAG 2.1 AA)', 'Usability testing & iteration'],
+    description: 'Great design is invisible — users simply feel it working. We design intuitive interfaces that reduce friction, guide users naturally through complex flows, and make products feel effortless to use.',
+    description2: 'We do research-driven design: user journey mapping, wireframing, high-fidelity Figma prototypes, and usability testing. Every design decision is grounded in how real users think and behave, not just what looks good in a mockup.',
+    bestFor: 'Product teams · Founders · Existing products needing a redesign',
+    timeline: '2–4 weeks',
+    features: [
+      'User research & journey mapping',
+      'Wireframing & rapid prototyping',
+      'High-fidelity UI design in Figma',
+      'Design systems & component libraries',
+      'Accessibility (WCAG 2.1 AA compliant)',
+      'Usability testing & iteration rounds',
+    ],
   },
   {
     id: 'support',
-    icon: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg>`,
+    num: '06',
+    icon: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg>`,
     accent: 'cyan',
-    image: '/images/services/maintain.jpg',
+    image: '/images/services/maintenance-hero.jpg',
     title: 'Maintenance & Support',
-    tagline: 'A partner, not just a vendor',
-    description: "We don't disappear after launch. Our ongoing support packages keep your product secure, performant, and up-to-date — so you can focus on your business while we keep the tech running.",
-    features: ['Monthly maintenance retainers', 'Performance monitoring & alerts', 'Security patches & updates', 'Feature additions & improvements', 'Priority response SLA', 'Technical consulting & code review'],
+    tagline: 'A long-term partner, not a one-off vendor',
+    description: "We don't disappear after launch. Our ongoing support retainers keep your product secure, performant, and up-to-date — so you can focus on running your business while we keep the tech running smoothly.",
+    description2: 'Every retainer includes a dedicated response SLA, monthly performance reports, proactive security patching, and a clear process for requesting feature additions or improvements. One monthly rate. No surprises.',
+    bestFor: 'Live products · Growing teams · Clients without in-house devs',
+    timeline: 'Ongoing monthly',
+    features: [
+      'Monthly maintenance retainers',
+      'Uptime & performance monitoring',
+      'Security patches & dependency updates',
+      'Feature additions & improvements',
+      'Priority response SLA (< 4 hours)',
+      'Monthly technical health reports',
+    ],
   },
+];
+
+const advantages = [
+  {
+    accent: 'violet',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+    title: 'Africa-first engineering',
+    body: "We don't adapt Western solutions — we build from scratch for low bandwidth, diverse devices, local payment systems, and the operational realities of East African businesses.",
+  },
+  {
+    accent: 'pink',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+    title: 'One team, full ownership',
+    body: 'Design, frontend, backend, deployment — one team owns all of it. No hand-offs between agencies, no finger-pointing, no coordination overhead. Accountable from brief to live.',
+  },
+  {
+    accent: 'violet',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`,
+    title: 'Fixed-price transparency',
+    body: 'We scope projects thoroughly upfront and deliver a fixed-price proposal — clear deliverables, clear cost, no billable-hour anxiety. You always know exactly what you are getting and what it costs.',
+  },
+  {
+    accent: 'pink',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+    title: 'Long-term partnership',
+    body: "Our best client relationships span years. We stay invested in the products we build — maintenance retainers, feature roadmaps, and the technical guidance to keep growing as your business does.",
+  },
+];
+
+const techStack = [
+  'React', 'Next.js', 'Astro', 'TypeScript',
+  'Node.js', 'Python', 'Go', 'PostgreSQL',
+  'MongoDB', 'Redis', 'React Native', 'Figma',
+  'AWS', 'Railway', 'Vercel', 'Sanity CMS',
+  'REST APIs', 'GraphQL', 'Docker', 'MTN MoMo',
 ];
 ---
 <BaseLayout
@@ -74,87 +175,153 @@ const services = [
   <Nav />
   <main class="ag-page">
 
-    <!-- HERO -->
+    <!-- ── HERO ── -->
     <div class="ag-hero-wrapper">
-    <section class="ag-hero ag-hero--compact">
-      <div class="ag-blob ag-blob--1" aria-hidden="true"></div>
-      <div class="ag-blob ag-blob--2" aria-hidden="true"></div>
-      <div class="ag-wrap">
-        <h1 class="ag-hero-title">
-          Digital products,<br>
-          <span class="ag-grad-text">engineered to last.</span>
-        </h1>
-        <p class="ag-hero-sub">
-          Full-service web and mobile development for businesses that need more than a template. We build real products that solve real problems.
-        </p>
-      </div>
-    </section>
+      <section class="ag-hero ag-hero--compact">
+        <div class="ag-blob ag-blob--1" aria-hidden="true"></div>
+        <div class="ag-blob ag-blob--2" aria-hidden="true"></div>
+        <div class="ag-wrap">
+          <h1 class="ag-hero-title">
+            Everything you need<br>
+            <span class="ag-grad-text">to ship great software.</span>
+          </h1>
+          <p class="ag-hero-sub">
+            Six services. One team. No hand-offs. We handle the complete journey — from first wireframe to live product — and stay your partner long after launch.
+          </p>
+          <div class="ag-hero-actions">
+            <a href="/contact" class="ag-btn ag-btn--dark">Start a project</a>
+            <a href="#web-apps" class="ag-btn ag-btn--white">Explore services ↓</a>
+          </div>
+        </div>
+      </section>
     </div>
 
-    <!-- SERVICES INDEX STRIP -->
+    <!-- ── SERVICES NAV STRIP ── -->
     <nav class="svc-index" aria-label="Services navigation">
-      <div class="ag-wrap">
-        <ul class="svc-index-inner">
-          {services.map((svc, i) => (
-            <li>
-              <a href={`#${svc.id}`} class="svc-index-item">
-                <span class="svc-index-num">0{i + 1}</span>
-                <span class="svc-index-label">{svc.title}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
+      <div class="svc-index-inner">
+        {services.map((svc) => (
+          <a href={`#${svc.id}`} class="svc-index-item" data-svc={svc.id}>
+            <span class="svc-index-num">{svc.num}</span>
+            <span class="svc-index-label">{svc.title}</span>
+          </a>
+        ))}
       </div>
     </nav>
 
-    <!-- SERVICES NUMBERED LIST -->
-    <section class="ag-section svc-section">
-      <div class="ag-wrap">
+    <!-- ── SERVICES SECTIONS ── -->
+    <div class="ag-section-pill" id="services-pill">
+      <section class="ag-section svc-section">
+        <div class="ag-wrap">
 
-        <header class="svc-section-head">
-          <p class="ag-section-eyebrow">Our Services</p>
-          <h2 class="ag-section-title">Everything you need to ship</h2>
-          <p class="ag-section-sub">From idea to production — we handle the full stack so you can focus on your business.</p>
-        </header>
+          <div class="svc-rows">
+            {services.map((svc, i) => (
+              <article class:list={["svc-row", i % 2 !== 0 && "svc-row--flip"]} id={svc.id}>
 
-        <div class="svc-rows">
-          {services.map((svc, i) => (
-            <article class="svc-row" id={svc.id}>
+                <!-- Ghost number -->
+                <div class="svc-row-left" aria-hidden="true">
+                  <span class="svc-row-num">{svc.num}</span>
+                </div>
 
-              <div class="svc-row-left">
-                <span class="svc-row-num">0{i + 1}</span>
-              </div>
+                <!-- Main body: text | image split -->
+                <div class="svc-row-body">
 
-              <div class="svc-row-body">
-                <div class="svc-row-head">
-                  <div>
-                    <p class="svc-row-tagline">{svc.tagline}</p>
-                    <h3 class="svc-row-title">{svc.title}</h3>
+                  <!-- Text column -->
+                  <div class="svc-row-text">
+                    <div class="svc-row-header">
+                      <div class={`svc-icon svc-icon--${svc.accent}`} set:html={svc.icon} aria-hidden="true" />
+                      <div>
+                        <p class="svc-row-tagline">{svc.tagline}</p>
+                        <h2 class="svc-row-title">{svc.title}</h2>
+                      </div>
+                    </div>
+
+                    <p class="svc-row-desc">{svc.description}</p>
+                    <p class="svc-row-desc">{svc.description2}</p>
+
+                    <div class="svc-meta-row">
+                      <div class="svc-meta-item">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>{svc.timeline}</span>
+                      </div>
+                      <div class="svc-meta-divider" aria-hidden="true"></div>
+                      <div class="svc-meta-item">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                        <span class="svc-meta-best">{svc.bestFor}</span>
+                      </div>
+                    </div>
+
+                    <!-- Feature list -->
+                    <ul class="svc-feat-list" aria-label="Included in this service">
+                      {svc.features.map((f) => (
+                        <li>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <a href="/contact" class="svc-cta-link">
+                      Start this service
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </a>
                   </div>
-                  <div class={`svc-row-icon svc-row-icon--${svc.accent}`} set:html={svc.icon} />
-                </div>
 
-                <p class="svc-row-desc">{svc.description}</p>
+                  <!-- Image column -->
+                  <div class="svc-row-img-wrap">
+                    <img
+                      src={svc.image}
+                      alt={svc.title}
+                      class="svc-row-img"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <div class="svc-row-img-overlay" aria-hidden="true"></div>
+                  </div>
 
-                <div class="svc-row-img-wrap">
-                  <img src={svc.image} alt={svc.title} class="svc-row-img" loading="lazy" decoding="async" />
-                </div>
+                </div><!-- end .svc-row-body -->
+              </article>
+            ))}
+          </div>
 
-                <ul class="svc-row-chips" aria-label="Included in this service">
-                  {svc.features.map((f) => (
-                    <li>{f}</li>
-                  ))}
-                </ul>
-              </div>
+        </div>
+      </section>
+    </div>
 
+    <!-- ── WHY ZYNTEL ── -->
+    <section class="ag-section--free why-section" id="why-zyntel">
+      <div class="ag-wrap">
+        <div class="ag-label-pill">
+          <span class="ag-label-pill-dot" aria-hidden="true"></span>
+          Why Zyntel
+        </div>
+        <h2 class="ag-section-title">Four reasons clients<br>choose us and stay.</h2>
+        <p class="ag-section-sub">We're not the cheapest, and we don't try to be. We're the team you call when quality, reliability, and partnership matter.</p>
+
+        <div class="why-grid">
+          {advantages.map((adv) => (
+            <article class={`why-card why-card--${adv.accent}`}>
+              <div class={`why-icon why-icon--${adv.accent}`} set:html={adv.icon} aria-hidden="true" />
+              <h3 class="why-card-title">{adv.title}</h3>
+              <p class="why-card-body">{adv.body}</p>
             </article>
           ))}
         </div>
-
       </div>
     </section>
 
-    <!-- CTA -->
+    <!-- ── TECH STACK STRIP ── -->
+    <section class="ag-section--naked stack-strip">
+      <div class="ag-wrap">
+        <p class="stack-label">Technologies we work with</p>
+        <div class="stack-tags">
+          {techStack.map((tech) => (
+            <span class="stack-tag">{tech}</span>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CTA ── -->
     <div class="ag-cta-light">
       <div class="ag-cta-light-mark" aria-hidden="true">Zyntel</div>
       <div class="ag-cta-light-icon" aria-hidden="true">
@@ -163,7 +330,7 @@ const services = [
         </svg>
       </div>
       <h2 class="ag-cta-light-title">Ready to start<br>your project?</h2>
-      <p class="ag-cta-light-sub">Tell us what you're building and we'll put together a plan. No commitment required.</p>
+      <p class="ag-cta-light-sub">Tell us what you're building and we'll put together a plan. No commitment required — just a conversation.</p>
       <div class="ag-cta-light-links">
         <a href="/contact" class="ag-cta-light-pill">
           Get in touch
@@ -196,124 +363,219 @@ const services = [
   <Footer />
 </BaseLayout>
 
+<script>
+  // ── Services nav: sticky active-state highlight on scroll ──
+  const navItems = document.querySelectorAll<HTMLElement>('.svc-index-item');
+  const sections = document.querySelectorAll<HTMLElement>('.svc-row[id]');
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        navItems.forEach(a => {
+          a.classList.toggle('is-active', a.dataset.svc === id);
+        });
+      }
+    });
+  }, { rootMargin: '-40% 0px -50% 0px' });
+
+  sections.forEach(s => io.observe(s));
+
+  // ── Service rows: staggered scroll reveal ──
+  const rows = document.querySelectorAll<HTMLElement>('.svc-row');
+  const revealIo = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('svc-revealed');
+        revealIo.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.07 });
+  rows.forEach(r => revealIo.observe(r));
+
+  // ── Why cards: staggered reveal ──
+  const whyCards = Array.from(document.querySelectorAll<HTMLElement>('.why-card'));
+  const whyIo = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target as HTMLElement;
+      const i = whyCards.indexOf(el);
+      setTimeout(() => el.classList.add('why-revealed'), i * 110);
+      whyIo.unobserve(el);
+    });
+  }, { threshold: 0.1 });
+  whyCards.forEach(c => whyIo.observe(c));
+</script>
+
 <style>
-/* ─── Services index strip ─── */
+
+/* ─── Services nav strip ─── */
 .svc-index {
   background: #ffffff;
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
   overflow-x: auto;
   scrollbar-width: none;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.05);
 }
 .svc-index::-webkit-scrollbar { display: none; }
 
 .svc-index-inner {
-  list-style: none;
-  padding: 0;
-  margin: 0;
   display: flex;
   align-items: stretch;
   min-width: max-content;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 5vw, 3.5rem);
 }
 
 .svc-index-item {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.9rem 1.4rem;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
   text-decoration: none;
   color: var(--ag-muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: -0.01em;
-  border-right: 1px solid rgba(0, 0, 0, 0.07);
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
   transition: color 0.2s, background 0.2s;
   white-space: nowrap;
+  position: relative;
 }
 
-.svc-index-item:hover {
+.svc-index-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #7c3aed, #4f46e5);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease;
+}
+
+.svc-index-item:hover,
+.svc-index-item.is-active {
   color: #7c3aed;
   background: rgba(124, 58, 237, 0.03);
 }
 
+.svc-index-item:hover::after,
+.svc-index-item.is-active::after {
+  transform: scaleX(1);
+}
+
 .svc-index-num {
-  font-size: 0.65rem;
+  font-size: 0.63rem;
   font-weight: 800;
   color: #7c3aed;
   letter-spacing: 0.06em;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.7;
+  opacity: 0.6;
+  transition: opacity 0.2s;
 }
+.svc-index-item:hover .svc-index-num,
+.svc-index-item.is-active .svc-index-num { opacity: 1; }
 
-.svc-index-item:hover .svc-index-num {
-  opacity: 1;
-}
-
-/* ─── Services section ─── */
+/* ─── Service section ─── */
 .svc-section {
   background: #ffffff;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
-.svc-section-head {
-  margin-bottom: 3.5rem;
-}
-
-/* ─── Numbered rows ─── */
+/* ─── Service rows ─── */
 .svc-rows {
   border-top: 1px solid rgba(0, 0, 0, 0.07);
 }
 
 .svc-row {
   display: grid;
-  grid-template-columns: 5.5rem 1fr;
+  grid-template-columns: 4.5rem 1fr;
   gap: 2rem;
-  padding: 2.75rem 0;
+  padding: 4rem 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
-  transition: background 0.25s;
-  margin: 0 -1.5rem;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-  border-radius: 0;
+  /* scroll reveal initial state */
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.svc-row:hover {
-  background: rgba(124, 58, 237, 0.025);
+.svc-row.svc-revealed {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-/* Big ghost number */
+/* Ghost number column */
 .svc-row-left {
-  display: flex;
-  align-items: flex-start;
-  padding-top: 0.35rem;
+  padding-top: 0.5rem;
 }
 
 .svc-row-num {
-  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  font-size: clamp(2rem, 4vw, 3.5rem);
   font-weight: 900;
   letter-spacing: -0.06em;
   line-height: 1;
-  color: rgba(124, 58, 237, 0.13);
+  color: rgba(124, 58, 237, 0.1);
   font-variant-numeric: tabular-nums;
   user-select: none;
-  transition: color 0.25s;
+  transition: color 0.3s;
 }
 
 .svc-row:hover .svc-row-num {
-  color: rgba(124, 58, 237, 0.22);
+  color: rgba(124, 58, 237, 0.2);
 }
 
-/* Row body */
+/* Body: two-column text | image */
 .svc-row-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.5rem;
+  align-items: start;
+}
+
+/* Alternating: flip image to the left */
+.svc-row--flip .svc-row-text  { order: 2; }
+.svc-row--flip .svc-row-img-wrap { order: 1; }
+
+/* ── Text column ── */
+.svc-row-text {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 1.1rem;
 }
 
-.svc-row-head {
+.svc-row-header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 1.5rem;
-  margin-bottom: 0.9rem;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.svc-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.svc-icon--violet {
+  background: rgba(124, 58, 237, 0.09);
+  color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.16);
+}
+
+.svc-icon--cyan {
+  background: rgba(79, 70, 229, 0.08);
+  color: #4f46e5;
+  border: 1px solid rgba(79, 70, 229, 0.14);
 }
 
 .svc-row-tagline {
@@ -322,127 +584,120 @@ const services = [
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #7c3aed;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.2rem;
+  line-height: 1;
 }
 
 .svc-row-title {
-  font-size: clamp(1.25rem, 2.5vw, 1.65rem);
+  font-size: clamp(1.25rem, 2.2vw, 1.6rem);
   font-weight: 700;
   letter-spacing: -0.03em;
   color: #0f0f14;
   line-height: 1.2;
 }
 
-/* Icon badge */
-.svc-row-icon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.875rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: transform 0.25s;
-}
-
-.svc-row:hover .svc-row-icon {
-  transform: scale(1.05);
-}
-
-.svc-row-icon--violet {
-  background: rgba(124, 58, 237, 0.08);
-  color: #7c3aed;
-  border: 1px solid rgba(124, 58, 237, 0.15);
-}
-
-.svc-row-icon--cyan {
-  background: rgba(79, 70, 229, 0.08);
-  color: #4f46e5;
-  border: 1px solid rgba(79, 70, 229, 0.12);
-}
-
-/* Description */
 .svc-row-desc {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: #6b7280;
   line-height: 1.75;
-  max-width: 46rem;
-  margin-bottom: 1.4rem;
+  margin: 0;
 }
 
-/* Feature chips */
-.svc-row-chips {
+/* Meta: timeline + best for */
+.svc-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(124, 58, 237, 0.04);
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  border-radius: 10px;
+}
+
+.svc-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #5b21b6;
+  flex-shrink: 0;
+}
+
+.svc-meta-best {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.73rem;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.svc-meta-divider {
+  width: 1px;
+  height: 1.2rem;
+  background: rgba(124, 58, 237, 0.18);
+  flex-shrink: 0;
+}
+
+/* Feature list */
+.svc-feat-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem 1rem;
+}
+
+.svc-feat-list li {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #374151;
+  line-height: 1.4;
 }
 
-.svc-row-chips li {
-  padding: 0.3rem 0.8rem;
-  border-radius: 999px;
-  background: rgba(124, 58, 237, 0.06);
-  border: 1px solid rgba(124, 58, 237, 0.13);
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #5b21b6;
+.svc-feat-list li svg {
+  flex-shrink: 0;
+  color: #7c3aed;
+  margin-top: 0.05rem;
+}
+
+/* CTA link */
+.svc-cta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #7c3aed;
+  text-decoration: none;
   letter-spacing: -0.01em;
-  transition: background 0.2s, border-color 0.2s;
+  transition: gap 0.2s ease;
+  margin-top: 0.25rem;
 }
 
-.svc-row:hover .svc-row-chips li {
-  background: rgba(124, 58, 237, 0.09);
-  border-color: rgba(124, 58, 237, 0.2);
-}
+.svc-cta-link:hover { gap: 0.8rem; }
 
-/* ─── Responsive ─── */
-@media (max-width: 640px) {
-  .svc-row {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-    padding: 2rem 1rem;
-    margin: 0 -1rem;
-  }
-
-  .svc-row-num {
-    font-size: 1rem;
-    font-weight: 800;
-    color: rgba(124, 58, 237, 0.5);
-    letter-spacing: 0.06em;
-  }
-
-  .svc-row-left {
-    padding-top: 0;
-  }
-
-  .svc-row-head {
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-    gap: 1rem;
-  }
-
-  .svc-row-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .svc-index-item {
-    padding: 0.75rem 1rem;
-    font-size: 0.75rem;
-  }
-}
-
-/* ─── Service row image ─── */
+/* ── Image column ── */
 .svc-row-img-wrap {
-  margin-bottom: 1.4rem;
-  border-radius: 0.75rem;
+  position: relative;
+  border-radius: 1.25rem;
   overflow: hidden;
-  max-width: 46rem;
-  aspect-ratio: 16 / 7;
+  aspect-ratio: 4 / 3;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.1),
+    0 1px 4px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.svc-row:hover .svc-row-img-wrap {
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    0 3px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
 }
 
 .svc-row-img {
@@ -450,10 +705,206 @@ const services = [
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.4s ease;
+  transition: transform 0.5s ease;
 }
 
 .svc-row:hover .svc-row-img {
-  transform: scale(1.03);
+  transform: scale(1.04);
+}
+
+.svc-row-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom right,
+    rgba(124, 58, 237, 0.08) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+/* ─── Why Zyntel section ─── */
+.why-section {
+  padding: clamp(4rem, 9vw, 7rem) 0;
+}
+
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-top: 2rem;
+}
+
+.why-card {
+  background: #ffffff;
+  border-radius: 1.25rem;
+  padding: 2rem 1.75rem;
+  border-top: 3px solid transparent;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* reveal initial state */
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+.why-card.why-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.25, 1, 0.5, 1),
+              box-shadow 0.3s ease;
+}
+
+.why-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.why-card--violet { border-top-color: #7c3aed; }
+.why-card--pink   { border-top-color: #4f46e5; }
+
+.why-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.why-icon--violet {
+  background: rgba(124, 58, 237, 0.08);
+  color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.14);
+}
+
+.why-icon--pink {
+  background: rgba(79, 70, 229, 0.08);
+  color: #4f46e5;
+  border: 1px solid rgba(79, 70, 229, 0.12);
+}
+
+.why-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0f0f14;
+  margin-bottom: 0.65rem;
+  line-height: 1.25;
+}
+
+.why-card-body {
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+/* ─── Tech stack strip ─── */
+.stack-strip {
+  padding: 2.5rem 0 3rem;
+}
+
+.stack-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.stack-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.stack-tag {
+  padding: 0.32rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: -0.01em;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.stack-tag:hover {
+  background: rgba(124, 58, 237, 0.07);
+  border-color: rgba(124, 58, 237, 0.2);
+  color: #5b21b6;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 1024px) {
+  .why-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .svc-row-body {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  /* On mobile, always show: text first, image second */
+  .svc-row--flip .svc-row-text  { order: 1; }
+  .svc-row--flip .svc-row-img-wrap { order: 2; }
+
+  .svc-row-img-wrap {
+    aspect-ratio: 16 / 7;
+  }
+}
+
+@media (max-width: 640px) {
+  .svc-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    padding: 2.5rem 0;
+  }
+
+  .svc-row-left {
+    padding-top: 0;
+  }
+
+  .svc-row-num {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: rgba(124, 58, 237, 0.4);
+    letter-spacing: 0.04em;
+  }
+
+  .svc-feat-list {
+    grid-template-columns: 1fr;
+  }
+
+  .why-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .svc-meta-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .svc-meta-best {
+    display: none;
+  }
+
+  .svc-meta-divider {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .svc-index-item {
+    padding: 0.75rem 1rem;
+    font-size: 0.72rem;
+  }
 }
 </style>
