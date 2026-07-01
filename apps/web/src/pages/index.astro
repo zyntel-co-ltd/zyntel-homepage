@@ -1025,4 +1025,53 @@ const faqs = [
     .svc-big-item-num { width: 1.6rem; font-size: 0.55rem; }
     .svc-big-body-inner { padding-left: 1.5rem; }
   }
+
+  /* ── CTA card: mobile fixes ── */
+
+  /* Tablet (600–900px): reduce aspect ratio so card is taller and robot fits */
+  @media (max-width: 900px) {
+    :global(.ag-cta-card--home) {
+      aspect-ratio: 16 / 9;
+    }
+
+    .cta-split-text {
+      font-size: clamp(1.2rem, 3.5vw, 2rem);
+    }
+  }
+
+  /* Mobile (≤ 600px): drop aspect-ratio, hide Spline (watermark + GPU),
+     stack text vertically so nothing gets clipped */
+  @media (max-width: 600px) {
+    :global(.ag-cta-card--home) {
+      aspect-ratio: auto;
+      min-height: 300px;
+      padding: 3rem 1.5rem 2.5rem;
+      /* Gradient fallback when Spline is hidden */
+      background: linear-gradient(135deg, #0f0f14 0%, #1a0a2e 50%, #0f0f14 100%);
+    }
+
+    /* Hide Spline canvas entirely — eliminates watermark and GPU drain */
+    .cta-spline-bg {
+      display: none !important;
+    }
+
+    /* Stack "Ready to start" and "your project?" vertically, centered */
+    .cta-split {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      text-align: center;
+    }
+
+    .cta-split-gap { display: none; }
+
+    .cta-split-text {
+      font-size: clamp(1.9rem, 9vw, 2.6rem);
+      white-space: normal;
+      text-align: center !important;
+      padding: 0 !important;
+      line-height: 1.15;
+    }
+  }
 </style>
