@@ -42,9 +42,9 @@ const homeServices = [
 ];
 
 const clients = [
-  'Nakasero Hospital',
-  'Ace Cleaning Company',
-  'Prime Property Management',
+  { name: 'Nakasero Hospital', logo: '/logos/nakasero.png' },
+  { name: 'Ace Cleaning Company', logo: '/logos/ace-logo.png' },
+  { name: 'Prime Property Management', logo: '/logos/prime.png' },
 ];
 
 const faqs = [
@@ -110,37 +110,6 @@ const faqs = [
     </section>
     </div><!-- end .ag-hero-wrapper -->
 
-    <!-- ── CLIENTS MARQUEE (standalone, floats between hero and services pill) ── -->
-    <div class="ag-clients-section" aria-label="Our clients">
-      <div class="ag-clients-inner">
-        <p class="ag-clients-label">Clients<br>served</p>
-        <div class="ag-clients-track-wrap">
-          <div class="ag-clients-track" aria-hidden="true">
-            <!-- Group 1 -->
-            <div class="ag-clients-group">
-              {clients.map((name, i) => (
-                <>
-                  <span class="ag-client-name">{name}</span>
-                  {i < clients.length - 1 && <span class="ag-client-sep">·</span>}
-                </>
-              ))}
-              <span class="ag-client-sep" style="padding: 0 1rem">·</span>
-            </div>
-            <!-- Group 2 (duplicate for seamless loop) -->
-            <div class="ag-clients-group">
-              {clients.map((name, i) => (
-                <>
-                  <span class="ag-client-name">{name}</span>
-                  {i < clients.length - 1 && <span class="ag-client-sep">·</span>}
-                </>
-              ))}
-              <span class="ag-client-sep" style="padding: 0 1rem">·</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- ── ABOUT STRIP (no card) ── -->
     <section class="ag-about-strip">
       <div class="ag-wrap">
@@ -151,23 +120,35 @@ const faqs = [
               About us
             </div>
             <h2 class="ag-about-title">Expert web engineering<br>for East Africa.</h2>
-            <p class="ag-about-desc">We're a Kampala-based studio designing and engineering apps, websites, and custom software for businesses across East Africa. Your technical partner from first idea to live product.</p>
-            <p class="ag-about-desc">Built on transparency, reliable delivery, and code that lasts — not just launches.</p>
+            <p class="ag-about-desc">We're a young Kampala-based studio designing and engineering apps, websites, and custom software for businesses across East Africa. Your technical partner from first idea to live product.</p>
+            <p class="ag-about-desc">Three years in, five projects delivered — each one built with the same care, precision, and commitment to lasting quality.</p>
             <a href="/about" class="ag-btn ag-btn--outline ag-btn--sm">› Our story</a>
           </div>
           <div class="ag-about-stats">
             <div class="ag-about-stat">
-              <span class="ag-about-stat-num">25+</span>
+              <span class="ag-about-stat-num">5</span>
               <span class="ag-about-stat-label">Projects delivered</span>
             </div>
             <div class="ag-about-stat">
-              <span class="ag-about-stat-num">15+</span>
-              <span class="ag-about-stat-label">Clients served</span>
+              <span class="ag-about-stat-num">3</span>
+              <span class="ag-about-stat-label">Years in business</span>
             </div>
           </div>
         </div>
       </div>
     </section>
+
+    <!-- ── CLIENT LOGOS (static, centered, below about section) ── -->
+    <div class="ag-clients-section" aria-label="Our clients">
+      <p class="ag-clients-heading">Our clients</p>
+      <div class="ag-clients-logos">
+        {clients.map((client) => (
+          <div class="ag-client-logo-item">
+            <img src={client.logo} alt={client.name} class="ag-client-logo-img" loading="lazy" />
+          </div>
+        ))}
+      </div>
+    </div>
 
     <!-- ── SERVICES PILL ── -->
     <div class="ag-section-pill" id="services-pill">
@@ -879,7 +860,7 @@ const faqs = [
   }
 
   .svc-big-heading {
-    font-size: clamp(1.5rem, 3.2vw, 2.75rem);
+    font-size: clamp(2rem, 3.2vw, 3rem);
     font-weight: 800;
     letter-spacing: -0.04em;
     line-height: 1.15;
@@ -951,7 +932,7 @@ const faqs = [
 
   .svc-name-original,
   .svc-name-hover {
-    font-size: clamp(1.25rem, 4.5vw, 4rem);
+    font-size: clamp(1.25rem, 3.2vw, 3rem);
     font-weight: 600;
     letter-spacing: -0.03em;
     line-height: 1.05;
@@ -1039,7 +1020,7 @@ const faqs = [
 
   @media (max-width: 640px) {
     .svc-name-original,
-    .svc-name-hover  { font-size: clamp(1.1rem, 6vw, 2rem); }
+    .svc-name-hover  { font-size: clamp(1.1rem, 5vw, 1.75rem); }
     .svc-big-heading { font-size: clamp(1.25rem, 5vw, 1.8rem); }
     .svc-big-item-num { width: 1.6rem; font-size: 0.55rem; }
     .svc-big-body-inner { padding-left: 1.5rem; }
